@@ -1,0 +1,4 @@
+g++ -c -fopenmp -O3 -fPIC spectroscopy.cc -o spectroscopy.o
+g++ -g -fopenmp -shared -Wl,-soname,libspectroscopy.so -o libspectroscopy.so spectroscopy.o
+
+rm spectroscopy.o
