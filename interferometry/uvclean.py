@@ -21,7 +21,7 @@ def uvclean(image,beam,gain=0.1,maxiter=1000,threshold=0.001,box=None):
     else:
         mask += 1.
     
-    n = 0L
+    n = 0
     cont = True
     while (n < maxiter) and cont:
         maxval = dirty*mask == (dirty*mask).max()

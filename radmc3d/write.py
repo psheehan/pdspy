@@ -189,9 +189,9 @@ def amr_grid(x, y, z, gridstyle="regular", coordsystem="cartesian", \
     f.write("{0:i}  {1:i}  {2:i}\n".format(nx, ny, nz))
 
     if (gridstyle == "octtree"):
-        print "OctTree grids not yet implemented."
+        print("OctTree grids not yet implemented.")
     elif (gridstyle == "amr"):
-        print "Layer-style AMR grids not yet implemented."
+        print("Layer-style AMR grids not yet implemented.")
 
     for i in range(nx+1):
         f.write(str(x[i])+"\n")

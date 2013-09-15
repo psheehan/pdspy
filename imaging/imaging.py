@@ -1,11 +1,10 @@
 import ctypes
 import numpy
 import os
-import pyfits
+import astropy
 from ..constants.physics import c
 
-lib = ctypes.cdll.LoadLibrary(os.environ["HOME"]+ \
-        '/Documents/Programs/Python_Programs/pdspy/imaging/libimaging.so')
+lib = ctypes.cdll.LoadLibrary(os.path.dirname(__file__)+'/libimaging.so')
 lib.new_Image.restype = ctypes.c_void_p
 
 class Image:
@@ -56,7 +55,7 @@ class Image:
         lib.delete_Image(ctypes.c_void_p(self.obj))
 
     def asFITS(self):
-        hdulist = pyfits.HDUList([])
+        hdulist = astropy.io.fits.HDUList([])
         for i in range(self.image[0,0,:].size):
             hdu = pyfits.PrimaryHDU(self.image[:,:,i])
 

@@ -1,4 +1,4 @@
-from pyfits import open
+from astropy.io.fits import open
 from numpy import concatenate, arange, mod, repeat
 from ..constants.physics import c
 from .interferometry import Visibilities

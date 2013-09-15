@@ -5,7 +5,6 @@ from numpy import arange,ones,concatenate,sqrt,exp,where,array,mat,sin,log
 from numpy import abs as absv
 from scipy.optimize import leastsq
 import matplotlib.pyplot as plt
-from mpfit import mpfit
 
 def line_flux(data,lines,nleft=8,nright=8,plotout=None,quiet=False, \
     fixed_width=False,fringing=False):
@@ -95,13 +94,13 @@ def line_flux(data,lines,nleft=8,nright=8,plotout=None,quiet=False, \
         axis=1)
     
     if quiet == False:
-        print ""
+        print("")
         for i in arange(lines.size):
-            print "  {0:>6.3f}  {1:>9.3e}  {2:>9.3e}  {3:>6.4f}".format( \
-                Results[i,0],Results[i,1],Results[i,2],Results[i,3])
-        print ""
-        print "Reduced chi-squared of the fit: ",chisq
-        print ""
+            print("  {0:>6.3f}  {1:>9.3e}  {2:>9.3e}  {3:>6.4f}".format( \
+                Results[i,0],Results[i,1],Results[i,2],Results[i,3]))
+        print("")
+        print("Reduced chi-squared of the fit: ",chisq)
+        print("")
     
     # Plot the results.
     

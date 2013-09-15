@@ -11,7 +11,7 @@ def uvmodel_fit(data, funct=['point'], nsteps=1e3, niter=3):
 
     # First do a coarse grid search to find the location of the minimum.
 
-    print "Doing coarse grid search."
+    print("Doing coarse grid search.")
 
     x = arange(-5,5,0.1)
     y = arange(-5,5,0.1)
@@ -79,7 +79,7 @@ def uvmodel_fit(data, funct=['point'], nsteps=1e3, niter=3):
         if (i == niter-1):
             nsteps *= 100
 
-        print "Doing MCMC iteration #", i+1, "with", nsteps, "steps."
+        print("Doing MCMC iteration #", i+1, "with", nsteps, "steps.")
 
         accepted_params = mcmc2d(x, y, z, sigma_z, params, sigma, \
                 uvmodel, args=args, nsteps=nsteps, limits=limits)

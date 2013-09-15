@@ -1,8 +1,5 @@
 from numpy import array,arange,zeros,concatenate,mat,ones
 from .imaging import Image
-from pywcs import WCS
-from pfits import FITS
-from pyfits import open as openfits
 from time import time
 
 def readimfits(filename):

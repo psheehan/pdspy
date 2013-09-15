@@ -32,9 +32,7 @@ def image(filename=None,ext=None):
             filename = "image_"+str(ext)+".out"
 
     if (exists(filename) == False):
-        print "Sorry, cannot find "+filename+". Presumably radmc2d exited "+ \
-              "without success. See above for possible error messages of "+ \
-              "radmc3d!"
+        print("Sorry, cannot find {0:s}. Presumably radmc2d exited without success. See above for possible error messages of radmc3d!".format(filename))
         return
     else:
         f = open(filename, "r")
@@ -44,7 +42,7 @@ def image(filename=None,ext=None):
     iformat = int(f.readline())
 
     if (iformat < 1) or (iformat > 4):
-        print "ERROR: File format of "+filename+" not recognized."
+        print("ERROR: File format of {0:s} not recognized.".format(filename))
         return
 
     if (iformat == 1) or (iformat == 3):
@@ -124,16 +122,14 @@ def spectrum(filename=None,ext=None):
     if exists(filename):
         f = open(filename, "r")
     else:
-        print "Sorry, cannot find "+filename+". Presumably radmc3d exited "+ \
-              "without success. See above for possible error messages of "+ \
-              "radmc3d!"
+        print("Sorry, cannot find {0:s}. Presumably radmc2d exited without success. See above for possible error messages of radmc3d!".format(filename))
 
     # Read the spectrum.
 
     iformat = int(f.readline())
 
     if (iformat != 1):
-        print "ERROR: File format of "+filename+" not recognized."
+        print("ERROR: File format of {0:s} not recognized.".format(filename))
         return
 
     nf = int(f.readline())
@@ -151,8 +147,6 @@ def spectrum(filename=None,ext=None):
     freq = 1e4*cc/lam
 
     f.close()
-
-    print spectrum
 
     return
 

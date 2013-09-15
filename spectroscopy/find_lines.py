@@ -31,8 +31,8 @@ def find_lines(data,thresh=3):
         
         #if (chisq_test & flux_test) & (SN_test & width_test):
         if (chisq_test & SN_test):
-            print "    {0:f}   {1:e}   {2:e}   {3:f}   {4:f}".format( \
-                results[0,0],results[0,1],results[0,2],results[0,3],chisq)
+            print("    {0:f}   {1:e}   {2:e}   {3:f}   {4:f}".format( \
+                results[0,0],results[0,1],results[0,2],results[0,3],chisq))
             
             results,chisq = line_flux(data,lines,nleft=nleft,nright=nright, \
                 plotout="{0:6.3f}.pdf".format(results[0,0]),quiet=True)

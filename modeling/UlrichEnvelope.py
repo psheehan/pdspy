@@ -14,4 +14,4 @@ class UlrichEnvelope:
     def density(self, r, theta):
         return ulrich_envelope(r, theta, rin=self.rmin, rout=self.rmax, \
                 mass=self.mass, rcent=self.rcent, cavpl=self.cavpl, \
-                cavrfact=self.cavrfact))
+                cavrfact=self.cavrfact)

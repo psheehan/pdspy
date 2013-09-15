@@ -1,11 +1,9 @@
 import ctypes
 import numpy
 import os
-import pyfits
+import astropy
 
-lib = ctypes.cdll.LoadLibrary(os.environ["HOME"]+ \
-        '/Documents/Programs/Python_Programs/pdspy/spectroscopy/'
-        'libspectroscopy.so')
+lib = ctypes.cdll.LoadLibrary(os.path.dirname(__file__)+'/libspectroscopy.so')
 lib.new_Spectrum.restype = ctypes.c_void_p
 
 class Spectrum:
@@ -25,7 +23,7 @@ class Spectrum:
         lib.delete_Spectrum(ctypes.c_void_p(self.obj))
 
     def asFITS(self):
-        hdulist = pyfits.HDUList([])
+        hdulist = astropy.io.fits.HDUList([])
 
         hdu = pyfits.PrimaryHDU(numpy.concatenate(( \
                 self.wave.reshape((1,self.wave.size)), \

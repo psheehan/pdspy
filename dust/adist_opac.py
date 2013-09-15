@@ -1,4 +1,4 @@
-from calc_opac import calc_opac
+from .calc_opac import calc_opac
 from numpy import arange,log10,zeros
 from scipy.integrate import trapz
 

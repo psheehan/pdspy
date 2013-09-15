@@ -1,2 +1,2 @@
-from binomial import binomial
-from fisher_exact import fisher_exact
+from .binomial import binomial
+from .fisher_exact import fisher_exact

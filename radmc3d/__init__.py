@@ -1,3 +1,3 @@
-import read
-import write
-import run
+from . import read
+from . import write
+from . import run

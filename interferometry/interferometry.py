@@ -1,11 +1,9 @@
 import ctypes
 import numpy
 import os
-import pyfits
+import astropy
 
-lib = ctypes.cdll.LoadLibrary(os.environ["HOME"]+ \
-        '/Documents/Programs/Python_Programs/pdspy/interferometry/'
-        'libinterferometry.so')
+lib = ctypes.cdll.LoadLibrary(os.path.dirname(__file__)+'/libinterferometry.so')
 lib.new_Visibilities.restype = ctypes.c_void_p
 
 class Visibilities:
@@ -52,10 +50,10 @@ class Visibilities:
         self.header = header
 
     def asFITS(self):
-        hdulist = pyfits.HDUList([])
+        hdulist = astropy.fits.HDUList([])
 
         nvis = self.u.size
-        hdu = pyfits.PrimaryHDU(numpy.concatenate((self.u.reshape((1,nvis)), \
+        hdu = astropy.fits.PrimaryHDU(numpy.concatenate((self.u.reshape((1,nvis)), \
                 self.v.reshape((1,nvis)),self.real.reshape((1,nvis)), \
                 self.imag.reshape((1,nvis)), \
                 self.weights.reshape((1,nvis))), axis=0))
