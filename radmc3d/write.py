@@ -209,9 +209,7 @@ def dust_density(density, gridstyle="normal"):
     nspecies = len(density)
 
     if (gridstyle == "normal"):
-        nx = density[0].shape[2]
-        ny = density[0].shape[1]
-        nz = density[0].shape[0]
+        nx, ny, nz = density[0].shape
         ncells = nx*ny*nz
 
     f = open("dust_density.inp","w")
@@ -224,7 +222,7 @@ def dust_density(density, gridstyle="normal"):
             for iz in range(nz):
                 for iy in range(ny):
                     for ix in range(nx):
-                        f.write("{0:f}\n".format(density[ispec][iz,iy,ix]))
+                        f.write("{0:f}\n".format(density[ispec][ix,iy,iz]))
 
     f.close()
 
@@ -233,9 +231,7 @@ def dust_temperature(temperature, gridstyle="normal"):
     nspecies = len(temperature)
 
     if (gridstyle == "normal"):
-        nx = temperature[0].shape[2]
-        ny = temperature[0].shape[1]
-        nz = temperature[0].shape[0]
+        nx, ny, nz = temperature[0].shape
         ncells = nx*ny*nz
 
     f = open("dust_temperature.dat","w")
@@ -248,7 +244,7 @@ def dust_temperature(temperature, gridstyle="normal"):
             for iz in range(nz):
                 for iy in range(ny):
                     for ix in range(nx):
-                        f.write("{0:f}\n".format(temperature[ispec][iz,iy,ix]))
+                        f.write("{0:f}\n".format(temperature[ispec][ix,iy,iz]))
 
     f.close()
 
