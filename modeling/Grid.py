@@ -1,5 +1,4 @@
 import numpy
-import ..radmc3d
 
 class Grid:
 

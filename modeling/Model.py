@@ -1,4 +1,4 @@
-import ..radmc3d
+from .. import radmc3d
 from .Grid import Grid
 
 class Model:
