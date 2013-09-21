@@ -1,5 +1,6 @@
 import numpy
 import scipy
+import h5py
 from ..constants.physics import c
 from ..constants.math import pi
 from .bhmie import bhmie
@@ -148,8 +149,74 @@ class Dust:
         self.kext = self.kabs + self.ksca
         self.albedo = self.ksca / self.kext
 
-    def set_properties_from_file(self, filename):
-        print("Function not yet implemented.")
+    def set_properties_from_file(self, filename=None, usefile=None):
+        if (usefile == None):
+            f = h5py.File(filename, "r")
+        else:
+            f = usefile
 
-    def write(self, filename):
-        print("Function not yet implemented.")
+        self.lam = f['lam'].value
+        self.nu = c / self.lam
+
+        if ('n' in f):
+            self.n = f['n'].value
+        if ('k' in f):
+            self.k = f['k'].value
+        if (hasattr(self, 'n') and hasattr(self, 'k')):
+            self.m = self.n + 1j*self.k
+
+        if ('rho' in f):
+            self.rho = f['rho'].value[0]
+
+        if ('kabs' in f):
+            self.kabs = f['kabs'].value
+        if ('ksca' in f):
+            self.ksca = f['ksca'].value
+        if (hasattr(self, 'kabs') and hasattr(self, 'ksca')):
+            self.kext = self.kabs + self.ksca
+            self.albedo = self.ksca / self.kext
+
+        if ('coat' in f):
+            self.coat = Dust()
+            self.coat.set_properties_from_file(usefile=f['coat'])
+
+        if (usefile == None):
+            f.close()
+
+    def write(self, filename=None, usefile=None):
+        if (usefile == None):
+            f = h5py.File(filename, "w")
+        else:
+            f = usefile
+
+        if hasattr(self, 'lam'):
+            lam_dset = f.create_dataset("lam", (self.lam.size,), dtype='f')
+            lam_dset[...] = self.lam
+        if hasattr(self, 'n'):
+            n_dset = f.create_dataset("n", (self.n.size,), dtype='f')
+            n_dset[...] = self.n
+        if hasattr(self, 'k'):
+            k_dset = f.create_dataset("k", (self.k.size,), dtype='f')
+            k_dset[...] = self.k
+        
+        if hasattr(self, 'rho'):
+            rho_dset = f.create_dataset("rho", (1,), dtype='f')
+            rho_dset[...] = [self.rho]
+
+        if hasattr(self, 'kabs'):
+            kabs_dset = f.create_dataset("kabs", (self.kabs.size,), dtype='f')
+            kabs_dset[...] = self.kabs
+        if hasattr(self, 'ksca'):
+            ksca_dset = f.create_dataset("ksca", (self.ksca.size,), dtype='f')
+            ksca_dset[...] = self.ksca
+        if hasattr(self, 'g'):
+            g_dset = f.create_dataset("g", (self.g.size,), dtype='f')
+            g_dset[...] = self.g
+
+        if hasattr(self, 'coat'):
+            coat_group = f.create_group("coat")
+
+            self.coat.write(usefile=coat_group)
+
+        if (usefile == None):
+            f.close()
