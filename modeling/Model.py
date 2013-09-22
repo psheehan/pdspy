@@ -1,3 +1,4 @@
+import h5py
 from .. import radmc3d
 from .Grid import Grid
 
@@ -27,12 +28,12 @@ class Model:
         tstar = []
 
         for i in range(len(self.stars)):
-            mstar.append(self.grid.stars[i].mstar)
-            rstar.append(self.grid.stars[i].rstar)
-            xstar.append(self.grid.stars[i].xstar)
-            ystar.append(self.grid.stars[i].ystar)
-            zstar.append(self.grid.stars[i].zstar)
-            tstar.append(self.grid.stars[i].tstar)
+            mstar.append(self.grid.stars[i].mass)
+            rstar.append(self.grid.stars[i].radius)
+            xstar.append(self.grid.stars[i].x)
+            ystar.append(self.grid.stars[i].y)
+            zstar.append(self.grid.stars[i].z)
+            tstar.append(self.grid.stars[i].temperature)
 
         radmc3d.write.stars(rstar, mstar, self.lam, xstar, ystar, zstar, \
                 tstar=tstar)
@@ -44,4 +45,36 @@ class Model:
 
         radmc3d.write.dust_density(self.grid.density)
 
-        radmc3d.write.dustopac(self.grid.dust)
+        #radmc3d.write.dustopac(self.grid.dust)
+
+    def read(self, filename=None, usefile=None):
+        if (usefile == None):
+            f = h5py.File(filename, "r")
+        else:
+            f = usefile
+
+        if ('Grid' in f):
+            self.grid = Grid()
+            self.grid.read(usefile=f['Grid'])
+
+        if (usefile == None):
+            f.close()
+
+    def write(self, filename=None, usefile=None):
+        if (usefile == None):
+            f = h5py.File(filename, "w")
+        else:
+            f = usefile
+
+        grid = f.create_group("Grid")
+        if hasattr(self, 'grid'):
+            self.grid.write(usefile=grid)
+
+        spectra = f.create_group("Spectra")
+
+        images = f.create_group("Images")
+
+        visibilities = f.create_group("Visibilities")
+
+        if (usefile == None):
+            f.close()

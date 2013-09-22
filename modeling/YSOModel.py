@@ -1,4 +1,5 @@
 import numpy
+import h5py
 from .Model import Model
 from .Disk import Disk
 from .UlrichEnvelope import UlrichEnvelope
@@ -6,8 +7,9 @@ from .Star import Star
 
 class YSOModel(Model):
 
-    def add_star(self, mstar=0.5, lstar=1, tstar=4000.):
-        self.grid.add_star(Star(mstar, lstar, tstar))
+    def add_star(self, mass=0.5, luminosity=1, temperature=4000.):
+        self.grid.add_star(Star(mass=mass, luminosity=luminosity, \
+                temperature=temperature))
 
     def set_spherical_grid(self, rmin, rmax, nr, ntheta, nphi, log=True):
         if log:
@@ -35,3 +37,33 @@ class YSOModel(Model):
 
         self.grid.add_density(self.envelope.density(self.grid.r, \
                 self.grid.theta, self.grid.phi),dust)
+
+    def read_yso(self, filename):
+        f = h5py.File(filename, "r")
+
+        if ('Disk' in f):
+            self.disk = Disk()
+            self.disk.read(usefile=f['Disk'])
+
+        if ('Envelope' in f):
+            self.envelope = UlrichEnvelope()
+            self.envelope.read(usefile=f['Envelope'])
+
+        self.read(usefile=f)
+
+        f.close()
+
+    def write_yso(self, filename):
+        f = h5py.File(filename, "w")
+
+        self.write(usefile=f)
+
+        disk = f.create_group("Disk")
+        if hasattr(self, "disk"):
+            self.disk.write(usefile=disk)
+
+        envelope = f.create_group("Envelope")
+        if hasattr(self, "envelope"):
+            self.envelope.write(usefile=envelope)
+
+        f.close()
