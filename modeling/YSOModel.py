@@ -11,13 +11,20 @@ class YSOModel(Model):
         self.grid.add_star(Star(mass=mass, luminosity=luminosity, \
                 temperature=temperature))
 
-    def set_spherical_grid(self, rmin, rmax, nr, ntheta, nphi, log=True):
+    def set_spherical_grid(self, rmin, rmax, nr, ntheta, nphi, log=True, \
+            code="radmc3d"):
         if log:
             r = numpy.logspace(numpy.log10(rmin), numpy.log10(rmax), nr)
         else:
             r = numpy.linspace(rmin, rmax, nr)
+        if (code == "hyperion"):
+            r = numpy.hstack([0.0,r])
 
-        theta = numpy.linspace(0.0, numpy.pi, ntheta)
+        if (code == "radmc3d"):
+            theta = numpy.linspace(0.0, numpy.pi/2, ntheta)
+        elif (code == "hyperion"):
+            theta = numpy.linspace(0.0, numpy.pi, ntheta)
+
         phi = numpy.linspace(0.0, 2*numpy.pi, nphi)
 
         self.grid.set_spherical_grid(r, theta, phi)

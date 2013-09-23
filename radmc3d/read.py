@@ -101,7 +101,7 @@ def image(filename=None,ext=None):
     x = linspace(-(nx-1)/2.,(nx-1)/2.,nx)*sizepix_x
     y = linspace(-(ny-1)/2.,(ny-1)/2.,ny)*sizepix_y
     
-    return
+    return 0
 
 #==========================================================================
 #                        ROUTINES FOR SPECTRA
@@ -123,6 +123,7 @@ def spectrum(filename=None,ext=None):
         f = open(filename, "r")
     else:
         print("Sorry, cannot find {0:s}. Presumably radmc2d exited without success. See above for possible error messages of radmc3d!".format(filename))
+        return
 
     # Read the spectrum.
 
@@ -148,7 +149,7 @@ def spectrum(filename=None,ext=None):
 
     f.close()
 
-    return
+    return 0
 
 #==========================================================================
 #               ROUTINES FOR READING DENSITY AND TEMPERATURE
@@ -157,3 +158,25 @@ def spectrum(filename=None,ext=None):
 #--------------------------------------------------------------------------
 #                    READ THE AMR GRID INFORMATION
 #--------------------------------------------------------------------------
+
+def dust_temperature(filename=None, ext=None):
+
+    f = open("dust_temperature.dat","r")
+
+    f.readline()
+
+    ncells = int(f.readline())
+    nspecies = int(f.readline())
+
+    temperature = []
+    for i in range(nspecies):
+        temp = empty((ncells,))
+
+        for j in range(ncells):
+            temp[j] = float(f.readline())
+
+        temperature.append(temp)
+
+    f.close()
+
+    return temperature

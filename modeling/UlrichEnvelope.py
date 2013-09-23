@@ -20,7 +20,7 @@ class UlrichEnvelope:
             self.dust = dust
 
     def density(self, r, theta, phi):
-        numpy.seterr(all='ignore')
+        #numpy.seterr(all='ignore')
         ##### Star parameters
 
         mstar = M_sun
@@ -51,8 +51,8 @@ class UlrichEnvelope:
         mu0 = mu*0.
         for ir in range(rr.shape[0]):
             for it in range(rr.shape[1]):
-                mu0[ir,it] = brenth(func,-1.0,1.0,args=(rr[ir,it],mu[ir,it], \
-                        rcent))
+                mu0[ir,it,0] = brenth(func,-1.0,1.0,args=(rr[ir,it,0], \
+                        mu[ir,it,0],rcent))
 
         ##### Make the dust density model for an Ulrich envelope.
         
@@ -67,8 +67,8 @@ class UlrichEnvelope:
 
         ##### Normalize the mass correctly.
         
-        mdot = mass/(4*pi*trapz(trapz(rho*rr**2*numpy.sin(tt),tt,axis=0), \
-                rr[0,:],axis=0))[0]
+        mdot = mass/(4*pi*trapz(trapz(rho*rr**2*numpy.sin(tt),tt,axis=1), \
+                rr[:,0,:],axis=0))[0]
         rho *= mdot
 
         ##### Add an outflow cavity.
@@ -76,7 +76,7 @@ class UlrichEnvelope:
         zz = rr*numpy.cos(tt)
         rho[zz-cavz0-(rr*numpy.sin(tt))**cavpl > 0.0] *= cavrfact
         
-        numpy.seterr(all='warn')
+        #numpy.seterr(all='warn')
 
         return rho
 
