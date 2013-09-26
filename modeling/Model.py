@@ -61,6 +61,7 @@ class Model:
             sources[i].temperature = self.grid.stars[i].temperature
 
         m.set_mrw(mrw)
+        m.set_n_initial_iterations(20)
         m.set_n_photons(initial=nphot, imaging=0)
         m.set_convergence(True, percentile=99., absolute=2., relative=1.02)
 

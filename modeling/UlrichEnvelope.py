@@ -55,13 +55,19 @@ class UlrichEnvelope:
                         mu[ir,it,0],rcent))
 
         ##### Make the dust density model for an Ulrich envelope.
+
+        rho0 = 1.0
         
-        rho = 1.0/(4*pi)*(G*mstar*rr**3)**(-0.5)*(1+mu/mu0)**(-0.5)* \
-                (mu/mu0+2*mu0**2*rcent/rr)**(-1)
+        rho = rho0 * (rr / rcent)**(-1.5) * (1 + mu/mu0)**(-0.5)* \
+                (mu/mu0 + 2*mu0**2 * rcent/rr)**(-1)
 
         mid1 = (numpy.abs(mu) < 1.0e-10) & (rr < rcent)
+        rho[mid1] = rho0 * (rr[mid1] / rcent)**(-0.5) * \
+                (1. - rr[mid1] / rcent)**(-1) / 2.
 
         mid2 = (numpy.abs(mu) < 1.0e-10) & (rr > rcent)
+        rho[mid2] = rho0 * (2.*rr[mid2]/rcent - 1)**(-0.5) * \
+                (rr[mid2]/rcent - 1.)**(-1)
 
         rho[(rr >= rout) ^ (rr <= rin)] = 0e0
 
@@ -74,7 +80,7 @@ class UlrichEnvelope:
         ##### Add an outflow cavity.
 
         zz = rr*numpy.cos(tt)
-        rho[zz-cavz0-(rr*numpy.sin(tt))**cavpl > 0.0] *= cavrfact
+        rho[numpy.abs(zz)-cavz0-(rr*numpy.sin(tt))**cavpl > 0.0] *= cavrfact
         
         #numpy.seterr(all='warn')
 
