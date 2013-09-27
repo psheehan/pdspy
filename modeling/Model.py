@@ -73,6 +73,7 @@ class Model:
 
         grid = n.get_quantities()
 
+        self.temperature = []
         temperature = grid.quantities['temperature']
         for i in range(len(temperature)):
             if (self.grid.coordsystem == "cartesian"):
