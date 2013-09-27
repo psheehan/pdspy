@@ -17,13 +17,14 @@ class Model:
         self.spectra = {}
         self.visibilities = {}
 
-    def run_thermal(self, nphot=1e6, mrw=False, code="radmc3d", **keywords):
+    def run_thermal(self, nphot=1e6, mrw=False, pda=False, code="radmc3d", \
+            **keywords):
         if (code == "radmc3d"):
             self.run_thermal_radmc3d(nphot=nphot, mrw=mrw, **keywords)
         else:
             self.run_thermal_hyperion(nphot=nphot, mrw=mrw, **keywords)
 
-    def run_thermal_hyperion(self, nphot=1e6, mrw=False, **keywords):
+    def run_thermal_hyperion(self, nphot=1e6, mrw=False, pda=False, **keywords):
         d = []
         for i in range(len(self.grid.dust)):
             d.append(IsotropicDust( \
@@ -61,6 +62,7 @@ class Model:
             sources[i].temperature = self.grid.stars[i].temperature
 
         m.set_mrw(mrw)
+        m.set_pda(pda)
         m.set_n_initial_iterations(20)
         m.set_n_photons(initial=nphot, imaging=0)
         m.set_convergence(True, percentile=99., absolute=2., relative=1.02)
