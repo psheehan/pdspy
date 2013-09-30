@@ -22,7 +22,7 @@ class Model:
         if (code == "radmc3d"):
             self.run_thermal_radmc3d(nphot=nphot, mrw=mrw, **keywords)
         else:
-            self.run_thermal_hyperion(nphot=nphot, mrw=mrw, **keywords)
+            self.run_thermal_hyperion(nphot=nphot, mrw=mrw, pda=pda, **keywords)
 
     def run_thermal_hyperion(self, nphot=1e6, mrw=False, pda=False, **keywords):
         d = []
