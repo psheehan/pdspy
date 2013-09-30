@@ -37,9 +37,7 @@ class UlrichEnvelope:
 
         # Set up the coordinates.
         
-        rr, tt, pp = numpy.meshgrid(0.5*(r[0:r.size-1]+r[1:r.size])*AU, \
-                0.5*(theta[0:theta.size-1]+theta[1:theta.size]), \
-                0.5*(phi[0:phi.size-1]+phi[1:phi.size]),indexing='ij')
+        rr, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
 
         mu = numpy.cos(tt)
 

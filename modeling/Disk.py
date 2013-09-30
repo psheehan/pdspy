@@ -28,9 +28,7 @@ class Disk:
 
         ##### Set up the coordinates
 
-        rt, tt, pp = numpy.meshgrid(0.5*(r[0:r.size-1]+r[1:r.size])*AU, \
-                0.5*(theta[0:theta.size-1]+theta[1:theta.size]), \
-                0.5*(phi[0:phi.size-1]+phi[1:phi.size]),indexing='ij')
+        rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
 
         rr = rt*numpy.sin(tt)
         zz = rt*numpy.cos(tt)

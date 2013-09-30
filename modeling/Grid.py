@@ -21,38 +21,38 @@ class Grid:
     def add_temperature(self, temperature):
         self.temperature.append(temperature)
 
-    def set_cartesian_grid(self, x, y, z):
+    def set_cartesian_grid(self, w1, w2, w3):
         self.coordsystem = "cartesian"
 
-        self.x = x
-        self.y = y
-        self.z = z
+        self.x = 0.5*(w1[0:w1.size-1] + w1[1:w1.size])
+        self.y = 0.5*(w1[0:w2.size-1] + w1[1:w2.size])
+        self.z = 0.5*(w1[0:w3.size-1] + w1[1:w3.size])
 
-        self.w1 = self.x
-        self.w2 = self.y
-        self.w3 = self.z
+        self.w1 = w1
+        self.w2 = w2
+        self.w3 = w3
 
-    def set_cylindrical_grid(self, r, phi, z):
+    def set_cylindrical_grid(self, w1, w2, w3):
         self.coordsystem = "cylindrical"
 
-        self.x = r
-        self.y = phi
-        self.z = z
+        self.r = 0.5*(w1[0:w1.size-1] + w1[1:w1.size])
+        self.phi = 0.5*(w1[0:w2.size-1] + w1[1:w2.size])
+        self.z = 0.5*(w1[0:w3.size-1] + w1[1:w3.size])
 
-        self.w1 = self.r
-        self.w2 = self.phi
-        self.w3 = self.z
+        self.w1 = w1
+        self.w2 = w2
+        self.w3 = w3
 
-    def set_spherical_grid(self, r, theta, phi):
+    def set_spherical_grid(self, w1, w2, w3):
         self.coordsystem = "spherical"
 
-        self.r = r
-        self.theta = theta
-        self.phi = phi
+        self.r = 0.5*(w1[0:w1.size-1] + w1[1:w1.size])
+        self.theta = 0.5*(w1[0:w2.size-1] + w1[1:w2.size])
+        self.phi = 0.5*(w1[0:w3.size-1] + w1[1:w3.size])
 
-        self.w1 = self.r
-        self.w2 = self.theta
-        self.w3 = self.phi
+        self.w1 = w1
+        self.w2 = w2
+        self.w3 = w3
 
     def set_wavelength_grid(self, lmin, lmax, nlam, log=False):
         if log:
