@@ -25,8 +25,8 @@ class Grid:
         self.coordsystem = "cartesian"
 
         self.x = 0.5*(w1[0:w1.size-1] + w1[1:w1.size])
-        self.y = 0.5*(w1[0:w2.size-1] + w1[1:w2.size])
-        self.z = 0.5*(w1[0:w3.size-1] + w1[1:w3.size])
+        self.y = 0.5*(w2[0:w2.size-1] + w2[1:w2.size])
+        self.z = 0.5*(w3[0:w3.size-1] + w3[1:w3.size])
 
         self.w1 = w1
         self.w2 = w2
@@ -36,8 +36,8 @@ class Grid:
         self.coordsystem = "cylindrical"
 
         self.r = 0.5*(w1[0:w1.size-1] + w1[1:w1.size])
-        self.phi = 0.5*(w1[0:w2.size-1] + w1[1:w2.size])
-        self.z = 0.5*(w1[0:w3.size-1] + w1[1:w3.size])
+        self.phi = 0.5*(w2[0:w2.size-1] + w2[1:w2.size])
+        self.z = 0.5*(w3[0:w3.size-1] + w3[1:w3.size])
 
         self.w1 = w1
         self.w2 = w2
@@ -47,8 +47,8 @@ class Grid:
         self.coordsystem = "spherical"
 
         self.r = 0.5*(w1[0:w1.size-1] + w1[1:w1.size])
-        self.theta = 0.5*(w1[0:w2.size-1] + w1[1:w2.size])
-        self.phi = 0.5*(w1[0:w3.size-1] + w1[1:w3.size])
+        self.theta = 0.5*(w2[0:w2.size-1] + w2[1:w2.size])
+        self.phi = 0.5*(w3[0:w3.size-1] + w3[1:w3.size])
 
         self.w1 = w1
         self.w2 = w2
