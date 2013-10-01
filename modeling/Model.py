@@ -138,8 +138,10 @@ class Model:
 
         self.grid.temperature = radmc3d.read.dust_temperature()
         for i in range(len(self.grid.temperature)):
-            self.grid.temperature[i] = self.grid.temperature[i].reshape( \
-                    self.grid.density[i].shape)
+            n1, n2, n3 = self.grid.density[i].shape
+            self.grid.temperature[i] = numpy.transpose( \
+                    self.grid.temperature[i].reshape((n3,n2,n1)), \
+                    axes=(2,1,0))
 
         os.system("rm *.out *.inp *.dat")
 
