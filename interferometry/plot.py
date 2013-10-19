@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from numpy import array,sqrt
 
-def uvplot(data,xaxis,yaxis,filename=None,channel=None,ploterr=False, \
+def plot(data,xaxis,yaxis,filename=None,channel=None,ploterr=False, \
     xrange=None,yrange=None):
     
     if channel == None:

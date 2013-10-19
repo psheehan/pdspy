@@ -4,7 +4,7 @@ from scipy.signal import fftconvolve
 from scipy.optimize import leastsq
 from ..imaging import Image
 
-def uvclean(image,beam,gain=0.1,maxiter=1000,threshold=0.001,box=None):
+def clean(image,beam,gain=0.1,maxiter=1000,threshold=0.001,box=None):
     
     dirty = image.image[:,:,0]
     dirtybeam = beam.image[:,:,0]

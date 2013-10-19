@@ -8,18 +8,18 @@ def readuvfits(filename,fmt="miriad",fast=False):
     data = open(filename)
     
     header = data[0].header
-    u = data[0].data.field("c1")
-    v = data[0].data.field("c2")
+    u = data[0].data.field(0)
+    v = data[0].data.field(1)
     if fmt == "casa":
         real = (data[0].data.field("data"))[:,0,0,0,:,0,0]
         imag = (data[0].data.field("data"))[:,0,0,0,:,0,1]
         weights = (data[0].data.field("data"))[:,0,0,0,:,0,2]
-        baselines = data[0].data.field("c6")
+        baselines = data[0].data.field(5)
     elif fmt == "miriad":
         real = (data[0].data.field("data"))[:,0,0,:,0,0]
         imag = (data[0].data.field("data"))[:,0,0,:,0,1]
         weights = (data[0].data.field("data"))[:,0,0,:,0,2]
-        baselines = data[0].data.field("c4")
+        baselines = data[0].data.field(3)
     ant2 = mod(baselines,256)
     ant1 = (baselines-ant2)/256
     baseline = repeat("  6.1-6.1",u.size)

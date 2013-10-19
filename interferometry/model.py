@@ -3,7 +3,7 @@ from ..constants.astronomy import arcsec
 from ..constants.physics import c
 from .interferometry import Visibilities
 
-def uvmodel(u,v,params,return_type="complex",funct=["gauss"], \
+def model(u,v,params,return_type="complex",funct=["gauss"], \
             nparams=None,freq=array([226999690470.0])):
     
     params=array(params)

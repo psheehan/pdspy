@@ -1,9 +1,9 @@
 from numpy import array,mat,sqrt,exp,sinc,zeros,transpose, \
         roll, concatenate, where, abs, unique, linspace, meshgrid
-from .uvaverage import uvaverage
-from .uvgrid import uvgrid
-from .uvclean import uvclean
-from .uvfreqcorrect import uvfreqcorrect
+from .average import average
+from .grid import grid
+from .clean import clean
+from .freqcorrect import freqcorrect
 from ..imaging import Image
 from ..constants.physics import c
 from ..constants.math import pi
@@ -11,7 +11,7 @@ from ..constants.astronomy import arcsec
 from scipy.fftpack import fft2,fftshift
 from scipy.special import jn
 
-def uvinvert(data,imsize=256,pixel_size=0.25,weights="natural", \
+def invert(data,imsize=256,pixel_size=0.25,weights="natural", \
         convolution="pillbox",mfs=False,spectral=False,restfreq=None, \
         start_velocity=None,beam=False,nchannels=1,clean=False,maxiter=1000, \
         threshold=0.001,box=None):
@@ -19,7 +19,7 @@ def uvinvert(data,imsize=256,pixel_size=0.25,weights="natural", \
     kms = 1.0e5
     
     if (data.freq.size > 1) and (mfs == False) and (spectral == False):
-        averaged_data = uvaverage(data,only_freq=True)
+        averaged_data = average(data,only_freq=True)
     else:
         averaged_data = data
 
@@ -52,7 +52,7 @@ def uvinvert(data,imsize=256,pixel_size=0.25,weights="natural", \
                         & (baseline_data.imag != 0.)].sum()
 
             binsize = 1.0/(pixel_size*imsize*arcsec)
-            gridded_data = uvgrid(baseline_data,gridsize=imsize, \
+            gridded_data = grid(baseline_data,gridsize=imsize, \
                 binsize=binsize,convolution=convolution,mfs=mfs, \
                 channel=i)
             
@@ -103,7 +103,7 @@ def uvinvert(data,imsize=256,pixel_size=0.25,weights="natural", \
                 image = fftshift(fft2(fftshift(comp))).real/convolve
                 beam = fftshift(fft2(fftshift(weights))).real/convolve
 
-                cleanim = uvclean(Image(image.reshape((imsize,imsize,1))), \
+                cleanim = clean(Image(image.reshape((imsize,imsize,1))), \
                         Image(beam.reshape((imsize,imsize,1))), \
                         maxiter=maxiter, threshold=threshold, \
                         box=box).image[:,:,0]

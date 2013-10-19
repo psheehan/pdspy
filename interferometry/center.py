@@ -1,16 +1,16 @@
-from .uvaverage import uvaverage
-from .uvmodel import uvmodel
+from .average import average
+from .model import model
 from .interferometry import Visibilities
 from numpy import array
 
-def uvcenter(data,params):
+def center(data,params):
     
     params=array(params)
     
     if params.size > 2:
         params[2] = 1.0
     
-    model = uvmodel(data.u,data.v,params,funct=array(["point"]), \
+    model = model(data.u,data.v,params,funct=array(["point"]), \
                     return_type="data")
     
     data_complex = data.real+1j*data.imag

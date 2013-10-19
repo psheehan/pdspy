@@ -1,14 +1,14 @@
 from numpy import where,zeros,sqrt,cos,sin,arange,array,exp,abs,mat,ones, \
                   round,sinc
 from .interferometry import Visibilities
-from .uvfreqcorrect import uvfreqcorrect
+from .freqcorrect import freqcorrect
 from ..constants.math import pi
 
-def uvgrid(data,gridsize=256,binsize=2.0,channels=False,convolution="pillbox", \
+def grid(data,gridsize=256,binsize=2.0,channels=False,convolution="pillbox", \
            mfs=False,channel=None):
     
     if mfs:
-        vis = uvfreqcorrect(data)
+        vis = freqcorrect(data)
         u = vis.u
         v = vis.v
         real = vis.real

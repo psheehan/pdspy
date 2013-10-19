@@ -2,7 +2,7 @@ from numpy import array, concatenate
 from .interferometry import Visibilities
 from ..constants.physics import c
 
-def uvfreqcorrect(data):
+def freqcorrect(data):
 
     new_freq = array([data.freq.mean()])
 

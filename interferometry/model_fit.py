@@ -1,8 +1,8 @@
 from numpy import arange, zeros, concatenate, sqrt, array, where, repeat, pi
 from ..mcmc import mcmc2d
-from .uvmodel import uvmodel
+from .model import model
 
-def uvmodel_fit(data, funct=['point'], nsteps=1e3, niter=3):
+def model_fit(data, funct=['point'], nsteps=1e3, niter=3):
 
     funct = array(funct)
 
@@ -22,7 +22,7 @@ def uvmodel_fit(data, funct=['point'], nsteps=1e3, niter=3):
         chisq = zeros((x.size,y.size))
 
         def calc_chisq(d, params, funct):
-            model = uvmodel(d.u, d.v, params, return_type='data', \
+            model = model(d.u, d.v, params, return_type='data', \
                     funct=funct)
 
             return ((d.real-model.real)**2*d.weights+(d.imag-model.imag)**2* \
@@ -82,7 +82,7 @@ def uvmodel_fit(data, funct=['point'], nsteps=1e3, niter=3):
         print("Doing MCMC iteration #", i+1, "with", nsteps, "steps.")
 
         accepted_params = mcmc2d(x, y, z, sigma_z, params, sigma, \
-                uvmodel, args=args, nsteps=nsteps, limits=limits)
+                model, args=args, nsteps=nsteps, limits=limits)
 
         accepted_params = accepted_params[int(accepted_params.shape[0]*0.25):,:]
 
