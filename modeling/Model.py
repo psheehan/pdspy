@@ -17,14 +17,15 @@ class Model:
         self.spectra = {}
         self.visibilities = {}
 
-    def run_thermal(self, nphot=1e6, mrw=False, pda=False, code="radmc3d", \
-            **keywords):
+    def run_thermal(self, nphot=1e6, code="radmc3d", **keywords):
         if (code == "radmc3d"):
-            self.run_thermal_radmc3d(nphot=nphot, mrw=mrw, **keywords)
+            self.run_thermal_radmc3d(nphot=nphot, **keywords)
         else:
-            self.run_thermal_hyperion(nphot=nphot, mrw=mrw, pda=pda, **keywords)
+            self.run_thermal_hyperion(nphot=nphot, **keywords)
 
-    def run_thermal_hyperion(self, nphot=1e6, mrw=False, pda=False, **keywords):
+    def run_thermal_hyperion(self, nphot=1e6, mrw=False, pda=False, \
+            niterations=20, percentile=99., absolute=2.0, relative=1.02, \
+            max_interactions=1e8, mpi=False, nprocesses=None):
         d = []
         for i in range(len(self.grid.dust)):
             d.append(IsotropicDust( \
@@ -57,21 +58,23 @@ class Model:
         sources = []
         for i in range(len(self.grid.stars)):
             sources.append(m.add_spherical_source())
-            sources[i].luminosity = self.grid.stars[i].luminosity* L_sun
+            sources[i].luminosity = self.grid.stars[i].luminosity * L_sun
             sources[i].radius = self.grid.stars[i].radius * R_sun
             sources[i].temperature = self.grid.stars[i].temperature
 
         m.set_mrw(mrw)
         m.set_pda(pda)
-        m.set_n_initial_iterations(20)
+        m.set_max_interactions(max_interactions)
+        m.set_n_initial_iterations(niterations)
         m.set_n_photons(initial=nphot, imaging=0)
-        m.set_convergence(True, percentile=99., absolute=2., relative=1.02)
+        m.set_convergence(True, percentile=percentile, absolute=absolute, \
+                relative=relative)
 
-        m.write("test.rtin")
+        m.write("temp.rtin")
 
-        m.run("test.rtout", mpi=False)
+        m.run("temp.rtout", mpi=mpi, n_processes=nprocesses)
 
-        n = ModelOutput("test.rtout")
+        n = ModelOutput("temp.rtout")
 
         grid = n.get_quantities()
 
@@ -88,9 +91,9 @@ class Model:
                 self.grid.temperature.append(numpy.transpose(temperature[i], \
                         axes=(2,1,0)))
 
-        os.system("rm test.rtin test.rtout")
+        os.system("rm temp.rtin temp.rtout")
 
-    def run_thermal_radmc3d(self, nphot=1e6, mrw=False, **keywords):
+    def run_thermal_radmc3d(self, nphot=1e6, **keywords):
         radmc3d.write.control(nphot_therm=nphot, **keywords)
 
         mstar = []
