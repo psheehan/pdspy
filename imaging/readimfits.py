@@ -1,10 +1,11 @@
+from astropy.io.fits import open
 from numpy import array,arange,zeros,concatenate,mat,ones
 from .imaging import Image
 from time import time
 
 def readimfits(filename):
     
-    f = openfits(filename)
+    f = open(filename)
     data = array(f)
 
     if array(data[0].data.shape).size == 4:
