@@ -1,7 +1,6 @@
 from astropy.io.fits import open
 from numpy import array,arange,zeros,concatenate,mat,ones
 from .imaging import Image
-from time import time
 
 def readimfits(filename):
     
@@ -12,7 +11,7 @@ def readimfits(filename):
         nx = data[0].data.shape[3]
         ny = data[0].data.shape[2]
         nspec = data[0].data.shape[1]
-        nz = data.size
+        nz = 1 #data.size
     else:
         nx = data[0].data.shape[1]
         ny = data[0].data.shape[0]
