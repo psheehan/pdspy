@@ -9,5 +9,4 @@ from .grid import grid
 from .invert import invert
 from .model import model
 from .model_fit import model_fit
-from .plot import plot
 from .rotate import rotate
