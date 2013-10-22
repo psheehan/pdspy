@@ -5,6 +5,7 @@ from . import interferometry
 from . import mcmc
 from . import misc
 from . import modeling
+from . import plotting
 from . import radmc3d
 from . import spectroscopy
 from . import statistics
