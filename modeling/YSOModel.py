@@ -11,6 +11,13 @@ class YSOModel(Model):
         self.grid.add_star(Star(mass=mass, luminosity=luminosity, \
                 temperature=temperature))
 
+    def set_cartesian_grid(self, xmin, xmax, nx):
+        x = numpy.linspace(xmin, xmax, nx)
+        y = numpy.linspace(xmin, xmax, nx)
+        z = numpy.linspace(xmin, xmax, nx)
+
+        self.grid.set_cartesian_grid(x, y, z)
+
     def set_spherical_grid(self, rmin, rmax, nr, ntheta, nphi, log=True, \
             code="radmc3d"):
         if log:
