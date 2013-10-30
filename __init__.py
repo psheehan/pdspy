@@ -1,5 +1,6 @@
 from . import constants
 from . import dust
+from . import gas
 from . import imaging
 from . import interferometry
 from . import mcmc
