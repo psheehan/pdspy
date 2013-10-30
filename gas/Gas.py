@@ -1,4 +1,4 @@
-from pdspy.constants.physics import m_p
+from pdspy.constants.physics import m_p, c, h
 import numpy
 
 class Gas:
@@ -27,12 +27,15 @@ class Gas:
 
         self.J_u = numpy.empty(ntrans, dtype=int)
         self.J_l = numpy.empty(ntrans, dtype=int)
-        self.A = numpy.empty(ntrans, dtype=float)
+        self.A_ul = numpy.empty(ntrans, dtype=float)
         self.nu = numpy.empty(ntrans, dtype=float)
         self.E_u = numpy.empty(ntrans, dtype=float)
         for i in range(ntrans):
-            temp, self.J_u[i], self.J_l[i], self.A[i], self.nu[i], self.E_u = \
-                    tuple(f.readline().split())
+            temp, self.J_u[i], self.J_l[i], self.A_ul[i], self.nu[i], \
+                    self.E_u = tuple(f.readline().split())
+
+        self.nu *= 1.0e9
+        self.B_ul = c**2 * self.A_ul / (2*h*self.nu**3)
 
         f.readline()
         npartners = int(f.readline())
