@@ -5,7 +5,7 @@ from .Disk import Disk
 from .UlrichEnvelope import UlrichEnvelope
 from .Star import Star
 from ..constants.physics import h, c, G, m_p, k
-from ..constants.astronomy import AU, M_sun
+from ..constants.astronomy import AU, M_sun, kms
 from ..constants.math import pi
 
 class YSOModel(Model):
@@ -55,64 +55,48 @@ class YSOModel(Model):
         self.grid.add_density(self.envelope.density(self.grid.r, \
                 self.grid.theta, self.grid.phi),dust)
 
-    def run_simple_gas_image(self, i=0., pa=0., nu0=230.0e11, A=1.0e-3, n=0.5):
-        # Define a few convenience functions.
+    def run_simple_gas_image(self, i=0., pa=0., npix=256, dx=1., nu0=230.0e11, \
+            vstart=-10, dv=0.5, nv=40, A=1.0e-3, n=0.5, T0=1000., plT=1, \
+            m_mol=m_p, v_z=0.):
+        # Set up the image plane.
 
-        def Sigma(x, y, i, pa):
-            xpp = -x*numpy.cos(pa) - y*numpy.sin(pa)
-            ypp = (-x*numpy.sin(pa) + y*numpy.cos(pa))/numpy.cos(i)
+        xx = numpy.linspace(-(npix-1)/2*dx, (npix-1)/2*dx, 256)
+        yy = numpy.linspace(-(npix-1)/2*dx, (npix-1)/2*dx, 256)
+        v = numpy.linspace(vstart*kms, (vstart+(nv-1)*dv)*kms, nv)
+        nn = nu0 * (1 - v/c)
 
-            rpp = numpy.sqrt(xpp**2 + ypp**2)
+        x, y, nu = numpy.meshgrid(xx, yy, nn)
 
-            return self.disk.surface_density(rpp)
+        # Calculate physical coordinates from image plane coordinates.
 
-        def T(x, y, i, pa, T0=100., p=1):
-            xpp = -x*numpy.cos(pa) - y*numpy.sin(pa)
-            ypp = (-x*numpy.sin(pa) + y*numpy.cos(pa))/numpy.cos(i)
+        xpp = -x*numpy.cos(pa) - y*numpy.sin(pa)
+        ypp = (-x*numpy.sin(pa) + y*numpy.cos(pa))/numpy.cos(i)
+        rpp = numpy.sqrt(xpp**2 + ypp**2)
+        phipp = numpy.arctan2(ypp, xpp) + pi/2
 
-            rpp = numpy.sqrt(xpp**2 + ypp**2)
+        # Calculate physical quantities.
 
-            return self.disk.temperature(rpp, T_0=T0, p=p)
+        Sigma = self.disk.surface_density(rpp)
 
-        def a_tot(x, y, i, pa, m_mol=m_p, T0=1000., p=1):
-            return numpy.sqrt(2*k*T(x, y, i, pa, T0=T0, p=p)/m_mol)
+        T = self.disk.temperature(rpp, T_0=T0, p=plT)
 
-        def v_dot_n(x, y, i, pa, v_z=0.):
-            xpp = -x*numpy.cos(pa) - y*numpy.sin(pa)
-            ypp = (-x*numpy.sin(pa) + y*numpy.cos(pa))/numpy.cos(i)
+        a_tot = numpy.sqrt(2*k*T/m_mol)
 
-            rpp = numpy.sqrt(xpp**2 + ypp**2)
-            phipp = numpy.arctan2(ypp, xpp) + pi/2
+        phi_dot_n = numpy.sin(phipp)*numpy.sin(i)*numpy.cos(pa) - \
+                numpy.cos(phipp)*numpy.sin(i)*numpy.sin(pa)
 
-            phi_dot_n = numpy.sin(phipp)*numpy.sin(i)*numpy.cos(pa) - \
-                    numpy.cos(phipp)*numpy.sin(i)*numpy.sin(pa)
+        v_dot_n = numpy.sqrt(G*self.grid.stars[0].mass*M_sun/(rpp*AU)) * \
+                phi_dot_n + v_z
+        v_dot_n[(rpp >= self.disk.rmax) ^ (rpp <= self.disk.rmin)] = 0.0
 
-            v = numpy.sqrt(G*self.grid.stars[0].mass*M_sun/(rpp*AU))*phi_dot_n + v_z
-
-            v[(rpp >= self.disk.rmax) ^ (rpp <= self.disk.rmin)] = 0.0
-
-            return v
-
-        def phi_tilde(x, y, i, pa, nu, nu_ij=230.e11):
-            return c / (a_tot(x,y,i,pa)*nu_ij*numpy.sqrt(pi)) * \
-                    numpy.exp(-c**2 * (nu - nu_ij)**2 / \
-                    (a_tot(x,y,i,pa)**2 * nu_ij**2))
-
-        def phi(x, y, i, pa, nu, nu_ij=230.e11):
-            return phi_tilde(x, y, i, pa, nu*(1 + \
-                    v_dot_n(x,y,i,pa,v_z=-2.5e5)/c))
+        phi = numpy.zeros(rpp.shape)
+        phi[a_tot != 0] = c / (a_tot[a_tot != 0]*nu0*numpy.sqrt(pi)) * \
+                numpy.exp(-c**2*(nu[a_tot != 0]*(1 + v_dot_n[a_tot != 0]/c) - \
+                nu0)**2 / (a_tot[a_tot != 0]**2 * nu0**2))
 
         # Now do the actual calculation.
 
-        x = numpy.linspace(-100, 100, 256)
-        y = numpy.linspace(-100, 100, 256)
-
-        v = numpy.linspace(-10e5, 9.5e5, 40)
-        nu = nu0 * (1 - v/c)
-
-        xx, yy, nn = numpy.meshgrid(x, y, nu)
-
-        I = h*nu/(4*pi)*A*n*Sigma(xx,yy,i,pa)*phi(xx,yy,i,pa,nn)
+        I = h*nu/(4*pi)*A*n*Sigma*phi
 
         return I, v
 
