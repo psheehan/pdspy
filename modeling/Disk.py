@@ -6,7 +6,7 @@ from ..dust import Dust
 
 class Disk:
     def __init__(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, h0=0.1, \
-            plh=58./45., dust=None):
+            plh=58./45., dust=None, gas=None):
         self.mass = mass
         self.rmin = rmin
         self.rmax = rmax
@@ -15,6 +15,8 @@ class Disk:
         self.plh = plh
         if (dust != None):
             self.dust = dust
+        if (gas != None):
+            self.gas = gas
 
     def density(self, r, theta, phi):
         ##### Disk Parameters

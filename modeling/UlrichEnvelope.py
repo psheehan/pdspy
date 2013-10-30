@@ -9,7 +9,7 @@ from ..dust import Dust
 class UlrichEnvelope:
 
     def __init__(self, mass=1.0e-3, rmin=0.1, rmax=1000, rcent=30, cavpl=1.0, \
-            cavrfact=0.2, dust=None):
+            cavrfact=0.2, dust=None, gas=None):
         self.mass = mass
         self.rmin = rmin
         self.rmax= rmax
@@ -18,6 +18,8 @@ class UlrichEnvelope:
         self.cavrfact = cavrfact
         if (dust != None):
             self.dust = dust
+        if (gas != None):
+            self.gas = gas
 
     def density(self, r, theta, phi):
         #numpy.seterr(all='ignore')

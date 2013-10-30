@@ -40,17 +40,18 @@ class YSOModel(Model):
         self.grid.set_spherical_grid(r, theta, phi)
 
     def add_disk(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, h0=0.1, \
-            plh=58./45., dust="dustkappa_yso.inp"):
+            plh=58./45., dust=None, gas=None):
         self.disk = Disk(mass=mass, rmin=rmin, rmax=rmax, plrho=plrho, h0=h0, \
-                plh=plh,dust=dust)
+                plh=plh, dust=dust, gas=gas)
 
         self.grid.add_density(self.disk.density(self.grid.r, self.grid.theta, \
                 self.grid.phi),dust)
 
     def add_ulrich_envelope(self, mass=1.0e-3, rmin=0.1, rmax=1000, cavpl=1.0, \
-            cavrfact=0.2, dust="dustkappa_yso.inp"):
+            cavrfact=0.2, dust=None, gas=None):
         self.envelope = UlrichEnvelope(mass=mass, rmin=rmin, rmax=rmax, \
-                rcent=self.disk.rmax, cavpl=cavpl, cavrfact=cavrfact, dust=dust)
+                rcent=self.disk.rmax, cavpl=cavpl, cavrfact=cavrfact, \
+                dust=dust, gas=gas)
 
         self.grid.add_density(self.envelope.density(self.grid.r, \
                 self.grid.theta, self.grid.phi),dust)
