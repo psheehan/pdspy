@@ -4,6 +4,9 @@ from .Model import Model
 from .Disk import Disk
 from .UlrichEnvelope import UlrichEnvelope
 from .Star import Star
+from ..constants.physics import h, c, G, m_p, k
+from ..constants.astronomy import AU, M_sun
+from ..constants.math import pi
 
 class YSOModel(Model):
 
@@ -51,6 +54,67 @@ class YSOModel(Model):
 
         self.grid.add_density(self.envelope.density(self.grid.r, \
                 self.grid.theta, self.grid.phi),dust)
+
+    def run_simple_gas_image(self, i=0., pa=0., nu0=230.0e11, A=1.0e-3, n=0.5):
+        # Define a few convenience functions.
+
+        def Sigma(x, y, i, pa):
+            xpp = -x*numpy.cos(pa) - y*numpy.sin(pa)
+            ypp = (-x*numpy.sin(pa) + y*numpy.cos(pa))/numpy.cos(i)
+
+            rpp = numpy.sqrt(xpp**2 + ypp**2)
+
+            return self.disk.surface_density(rpp)
+
+        def T(x, y, i, pa, T0=100., p=1):
+            xpp = -x*numpy.cos(pa) - y*numpy.sin(pa)
+            ypp = (-x*numpy.sin(pa) + y*numpy.cos(pa))/numpy.cos(i)
+
+            rpp = numpy.sqrt(xpp**2 + ypp**2)
+
+            return self.disk.temperature(rpp, T_0=T0, p=p)
+
+        def a_tot(x, y, i, pa, m_mol=m_p, T0=1000., p=1):
+            return numpy.sqrt(2*k*T(x, y, i, pa, T0=T0, p=p)/m_mol)
+
+        def v_dot_n(x, y, i, pa, v_z=0.):
+            xpp = -x*numpy.cos(pa) - y*numpy.sin(pa)
+            ypp = (-x*numpy.sin(pa) + y*numpy.cos(pa))/numpy.cos(i)
+
+            rpp = numpy.sqrt(xpp**2 + ypp**2)
+            phipp = numpy.arctan2(ypp, xpp) + pi/2
+
+            phi_dot_n = numpy.sin(phipp)*numpy.sin(i)*numpy.cos(pa) - \
+                    numpy.cos(phipp)*numpy.sin(i)*numpy.sin(pa)
+
+            v = numpy.sqrt(G*self.grid.stars[0].mass*M_sun/(rpp*AU))*phi_dot_n + v_z
+
+            v[(rpp >= self.disk.rmax) ^ (rpp <= self.disk.rmin)] = 0.0
+
+            return v
+
+        def phi_tilde(x, y, i, pa, nu, nu_ij=230.e11):
+            return c / (a_tot(x,y,i,pa)*nu_ij*numpy.sqrt(pi)) * \
+                    numpy.exp(-c**2 * (nu - nu_ij)**2 / \
+                    (a_tot(x,y,i,pa)**2 * nu_ij**2))
+
+        def phi(x, y, i, pa, nu, nu_ij=230.e11):
+            return phi_tilde(x, y, i, pa, nu*(1 + \
+                    v_dot_n(x,y,i,pa,v_z=-2.5e5)/c))
+
+        # Now do the actual calculation.
+
+        x = numpy.linspace(-100, 100, 256)
+        y = numpy.linspace(-100, 100, 256)
+
+        v = numpy.linspace(-10e5, 9.5e5, 40)
+        nu = nu0 * (1 - v/c)
+
+        xx, yy, nn = numpy.meshgrid(x, y, nu)
+
+        I = h*nu/(4*pi)*A*n*Sigma(xx,yy,i,pa)*phi(xx,yy,i,pa,nn)
+
+        return I, v
 
     def read_yso(self, filename):
         f = h5py.File(filename, "r")

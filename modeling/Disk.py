@@ -45,6 +45,37 @@ class Disk:
         
         return rho
 
+    def surface_density(self, r):
+        rin = self.rmin * AU
+        rout = self.rmax * AU
+        mass = self.mass * M_sun
+        h = self.h0 * AU
+        plrho = self.plrho
+        plh = self.plh
+
+        Sigma0 = (2-plrho+plh)*mass/(2*pi*(1*AU)**(plrho-plh)) / \
+                (rout**(-plrho+plh+2) - rin**(-plrho+plh+2))
+
+        Sigma = Sigma0 * r**(-plrho+plh)
+
+        Sigma[(r >= rout/AU) ^ (r <= rin/AU)] = 0e0
+
+        return Sigma
+
+    def temperature(self, r, T_0=100., p=1):
+        rin = self.rmin * AU
+        rout = self.rmax * AU
+        mass = self.mass * M_sun
+        h = self.h0 * AU
+        plrho = self.plrho
+        plh = self.plh
+
+        T = T_0 * r**(-p)
+
+        T[(r >= rout/AU) ^ (r <= rin/AU)] = 0.0
+
+        return T
+
     def read(self, filename=None, usefile=None):
         if (usefile == None):
             f = h5py.File(filename, "r")
