@@ -56,9 +56,15 @@ class YSOModel(Model):
         self.grid.add_density(self.envelope.density(self.grid.r, \
                 self.grid.theta, self.grid.phi),dust)
 
-    def run_simple_gas_image(self, i=0., pa=0., npix=256, dx=1., nu0=230.0e11, \
-            vstart=-10, dv=0.5, nv=40, A=1.0e-3, n=0.5, T0=1000., plT=1, \
-            m_mol=m_p, v_z=0.):
+    def run_simple_gas_image(self, i=0., pa=0., npix=256, dx=1., species=0, \
+            trans=0, vstart=-10, dv=0.5, nv=40, n=0.5, T0=10000., plT=1, \
+            v_z=0.):
+        # Get a few constants from the molecule.
+
+        A = self.disk.gas[species].A_ul[trans]
+        nu0 = self.disk.gas[species].nu[trans]
+        m_mol = self.disk.gas[species].mass
+
         # Set up the image plane.
 
         xx = numpy.linspace(-(npix-1)/2*dx, (npix-1)/2*dx, 256)
