@@ -8,7 +8,7 @@ def thermal(noscat=None, nphot_therm=None, nphot_scat=None,
     if (noscat == True):
         command += "noscat "
     if (nphot_therm != None):
-        command += "nphot_therm {0:i} ".format(nphot_therm)
+        command += "nphot_therm {0:d} ".format(nphot_therm)
     if (inclfreefree == True):
         command += "inclfreefree "
     if (nofreefree == True):
@@ -99,7 +99,7 @@ def sed(nrrefine=None, fluxcons=None, norefine=None, nofluxcons=None, \
 
     system(command)
 
-def image(npix=None, npixx=None, npixy=None, nrrefine=None, \
+def image(lam=None, npix=None, npixx=None, npixy=None, nrrefine=None, \
         fluxcons=None, norefine=None, nofluxcons=None, noscat=None, \
         ilambda=None, inu=None, color=None, loadcolor=None, loadlambda=None, \
         sizeau=None, sizepc=None, zoomau=None, zoompc=None, truepix=None, \
@@ -110,10 +110,12 @@ def image(npix=None, npixx=None, npixy=None, nrrefine=None, \
         inclline=None, noline=None, incldust=None, nodust=None, \
         inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None):
 
-    command="radmc3d mctherm "
+    command="radmc3d image "
 
+    if (lam != None):
+        command += "lambda "+lam+" "
     if (npix != None):
-        command += "npix {0:i} ".format(npix)
+        command += "npix {0:d} ".format(npix)
     if (npixx != None):
         command += "npixx {0:i} ".format(npixx)
     if (npixy != None):
