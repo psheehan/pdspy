@@ -45,13 +45,6 @@ def readimfits(filename):
     x = array(mat(ones(ny)).T * arange(nx))
     y = array(mat(arange(ny)).T * ones(nx))
 
-    #wcs = WCS(header=header[0])
-
-    #RA, Dec = wcs.wcs_pix2sky(x,y,0)
-
-    #RA = RA.reshape(ny,nx)
-    #Dec = Dec.reshape(ny,nx)
-
     if nspec != 1:
         v0 = data[0].header["CRVAL3"]
         dv = data[0].header["CDELT3"]
