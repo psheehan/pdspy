@@ -6,6 +6,7 @@ from hyperion.model import Model as HypModel
 from hyperion.model import ModelOutput
 from .. import radmc3d
 from .Grid import Grid
+from ..imaging import Image
 from ..constants.astronomy import AU, M_sun, R_sun, L_sun
 from ..constants.physics import c
 
@@ -145,6 +146,69 @@ class Model:
             self.grid.temperature[i] = numpy.transpose( \
                     self.grid.temperature[i].reshape((n3,n2,n1)), \
                     axes=(2,1,0))
+
+        os.system("rm *.out *.inp *.dat")
+
+    def run_image(self, name=None, nphot=1e6, code="radmc3d", **keywords):
+        if (code == "radmc3d"):
+            self.run_image_radmc3d(name=name, nphot=nphot, **keywords)
+        else:
+            self.run_image_hyperion(name=name, nphot=nphot, **keywords)
+
+    def run_image_hyperion(self, name=None, nphot=1e6):
+        return
+
+    def run_image_radmc3d(self, name=None, nphot=1e6, npix=256, sizeau=1000, \
+            lam="1300", **keywords):
+        radmc3d.write.control(nphot_scat=nphot, **keywords)
+
+        mstar = []
+        rstar = []
+        xstar = []
+        ystar = []
+        zstar = []
+        tstar = []
+
+        for i in range(len(self.grid.stars)):
+            mstar.append(self.grid.stars[i].mass*M_sun)
+            rstar.append(self.grid.stars[i].radius*R_sun)
+            xstar.append(self.grid.stars[i].x*AU)
+            ystar.append(self.grid.stars[i].y*AU)
+            zstar.append(self.grid.stars[i].z*AU)
+            tstar.append(self.grid.stars[i].temperature)
+
+        radmc3d.write.stars(rstar, mstar, self.grid.lam, xstar, ystar, zstar, \
+                tstar=tstar)
+
+        radmc3d.write.wavelength_micron(self.grid.lam)
+
+        if (self.grid.coordsystem == "cartesian"):
+            radmc3d.write.amr_grid(self.grid.w1*AU, self.grid.w2*AU, \
+                    self.grid.w3*AU, coordsystem=self.grid.coordsystem)
+        elif(self.grid.coordsystem == "cylindrical"):
+            radmc3d.write.amr_grid(self.grid.w1*AU, self.grid.w2, \
+                    self.grid.w3*AU, coordsystem=self.grid.coordsystem)
+        elif(self.grid.coordsystem == "spherical"):
+            radmc3d.write.amr_grid(self.grid.w1*AU, self.grid.w2, \
+                    self.grid.w3, coordsystem=self.grid.coordsystem)
+
+        radmc3d.write.dust_density(self.grid.density)
+        radmc3d.write.dust_temperature(self.grid.temperature)
+
+        dustopac = []
+        for i in range(len(self.grid.dust)):
+            dustopac.append("dustkappa_{0:d}.inp".format(i))
+            radmc3d.write.dustkappa("{0:d}".format(i), \
+                    self.grid.dust[i].lam*1.0e4, self.grid.dust[i].kabs, \
+                    ksca=self.grid.dust[i].ksca)
+
+        radmc3d.write.dustopac(dustopac)
+
+        radmc3d.run.image(npix=npix, sizeau=sizeau, lam=lam)
+
+        image, x, y, lam = radmc3d.read.image()
+
+        self.images[name] = Image(image, x=x, y=y, wave=lam*1.0e-4)
 
         os.system("rm *.out *.inp *.dat")
 

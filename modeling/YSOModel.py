@@ -107,6 +107,15 @@ class YSOModel(Model):
 
         return I, v
 
+    def convert_hyperion_to_radmc3d(self):
+        self.grid.r = self.grid.r[1:]
+        self.grid.w1 = self.grid.w1[1:]
+        
+        for i in range(len(self.grid.density)):
+            self.grid.density[i] = self.grid.density[i][1:,:,:]
+        for i in range(len(self.grid.temperature)):
+            self.grid.temperature[i] = self.grid.temperature[i][1:,:,:]
+
     def read_yso(self, filename):
         f = h5py.File(filename, "r")
 

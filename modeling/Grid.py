@@ -28,12 +28,6 @@ class Grid:
         self.y = 0.5*(w2[0:w2.size-1] + w2[1:w2.size])
         self.z = 0.5*(w3[0:w3.size-1] + w3[1:w3.size])
 
-        self.rho = numpy.sqrt(self.x**2 + self.y**2)
-        self.phi = numpy.arctan2(self.y, self.z)
-
-        self.r = numpy.sqrt(self.x**2 + self.y**2 + self.z**2)
-        self.theta = numpy.arccos(self.z / self.r)
-
         self.w1 = w1
         self.w2 = w2
         self.w3 = w3
@@ -45,12 +39,6 @@ class Grid:
         self.phi = 0.5*(w2[0:w2.size-1] + w2[1:w2.size])
         self.z = 0.5*(w3[0:w3.size-1] + w3[1:w3.size])
 
-        self.x = self.r * numpy.cos(self.phi)
-        self.y = self.r * numpy.sin(self.phi)
-
-        self.r = numpy.sqrt(self.rho**2 + self.z**2)
-        self.theta = numpy.arccos(self.z / self.r)
-
         self.w1 = w1
         self.w2 = w2
         self.w3 = w3
@@ -61,12 +49,6 @@ class Grid:
         self.r = 0.5*(w1[0:w1.size-1] + w1[1:w1.size])
         self.theta = 0.5*(w2[0:w2.size-1] + w2[1:w2.size])
         self.phi = 0.5*(w3[0:w3.size-1] + w3[1:w3.size])
-
-        self.x = self.r * numpy.sin(self.theta) * numpy.cos(self.phi)
-        self.y = self.r * numpy.sin(self.theta) * numpy.sin(self.phi)
-        self.z = self.r * numpy.cos(self.theta)
-
-        self.rho = self.r * numpy.sin(self.theta)
 
         self.w1 = w1
         self.w2 = w2
