@@ -199,11 +199,11 @@ def amr_grid(x, y, z, gridstyle="regular", coordsystem="cartesian"):
         print("Layer-style AMR grids not yet implemented.")
 
     for i in range(nx+1):
-        f.write(str(x[i])+"\n")
+        f.write("{0:e}\n".format(x[i]))
     for i in range(ny+1):
-        f.write(str(y[i])+"\n")
+        f.write("{0:e}\n".format(y[i]))
     for i in range(nz+1):
-        f.write(str(z[i])+"\n")
+        f.write("{0:e}\n".format(z[i]))
 
     # Insert extra info for octtree and amr grids here...
 

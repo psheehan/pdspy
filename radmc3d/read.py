@@ -101,7 +101,7 @@ def image(filename=None,ext=None):
     x = linspace(-(nx-1)/2.,(nx-1)/2.,nx)*sizepix_x
     y = linspace(-(ny-1)/2.,(ny-1)/2.,ny)*sizepix_y
     
-    return 0
+    return image, x, y
 
 #==========================================================================
 #                        ROUTINES FOR SPECTRA
