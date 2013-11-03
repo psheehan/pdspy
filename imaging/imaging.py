@@ -50,8 +50,8 @@ class Image:
 
         if (freq != None):
             lib.set_freq(ctypes.c_void_p(self.obj), \
-                    freq.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-                    wave.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+                    self.freq.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
+                    self.wave.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
 
         if (unc != None):
             lib.set_unc(ctypes.c_void_p(self.obj), \
