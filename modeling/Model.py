@@ -222,6 +222,11 @@ class Model:
             self.grid = Grid()
             self.grid.read(usefile=f['Grid'])
 
+        if ('Images' in f):
+            for image in f['Images']:
+                self.images[image] = Image()
+                self.images[image].read(usefile=f['Images'][image])
+
         if (usefile == None):
             f.close()
 
@@ -238,6 +243,9 @@ class Model:
         spectra = f.create_group("Spectra")
 
         images = f.create_group("Images")
+        for image in self.images:
+            images.create_group(image)
+            self.images[image].write(usefile=images[image])
 
         visibilities = f.create_group("Visibilities")
 
