@@ -10,15 +10,21 @@ lib.new_Image.restype = ctypes.c_void_p
 
 class Image:
 
-    def __init__(self,image,x=None,y=None,header=None,wave=None,freq=None, \
-            unc=None,velocity=None):
+    def __init__(self,image=None,x=None,y=None,header=None,wave=None, \
+            freq=None,unc=None,velocity=None):
 
-        self.image = image
-        self.x = x
-        self.y = y
-        self.header = header
-        self.unc = unc
-        self.velocity = velocity
+        if (image != None):
+            self.image = image
+
+        if (x != None):
+            self.x = x
+            self.y = y
+        if (header != None):
+            self.header = header
+        if (unc != None):
+            self.unc = unc
+        if (velocity != None):
+            self.velocity = velocity
 
         if (wave == None) and (freq != None):
             self.freq = freq
@@ -26,14 +32,16 @@ class Image:
         elif (wave != None) and (freq == None):
             self.wave = wave
             self.freq = c / wave
-        else:
+        elif (wave != None) and (freq != None):
             self.wave = wave
             self.freq = freq
 
-        self.obj = lib.new_Image( \
-                image.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-                ctypes.c_int(image.shape[1]), ctypes.c_int(image.shape[0]), \
-                ctypes.c_int(image.shape[2]))
+        if (image != None):
+            self.obj = lib.new_Image( \
+                    image.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
+                    ctypes.c_int(image.shape[1]), \
+                    ctypes.c_int(image.shape[0]), \
+                    ctypes.c_int(image.shape[2]))
 
         if (x != None) and (y != None):
             lib.set_xy(ctypes.c_void_p(self.obj), \
@@ -73,14 +81,21 @@ class Image:
         if ('x' in f):
             x = f['x'].value
             y = f['y'].value
+        else:
+            x = None
+            y = None
 
         if ('freq' in f):
             freq = f['freq'].value
+        else:
+            freq = None
 
         image = f['image'].value
 
         if ('unc' in f):
             unc = f['unc'].value
+        else:
+            unc = None
 
         self.__init__(image, x=x, y=y, unc=unc, freq=freq)
 
