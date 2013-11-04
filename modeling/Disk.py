@@ -1,5 +1,6 @@
 import numpy
 import h5py
+from ..constants.physics import G
 from ..constants.astronomy import AU, M_sun
 from ..constants.math import pi
 from ..dust import Dust
@@ -77,6 +78,16 @@ class Disk:
         T[(r >= rout/AU) ^ (r <= rin/AU)] = 0.0
 
         return T
+
+    def velocity(self, r, mstar=0.5):
+        mstar *= M_sun
+
+        rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+        rr = rt*numpy.sin(tt)
+
+        v_r = numpy.zeros(rr.shape)
+        v_theta = numpy.zeros(rr.shape)
+        v_phi = numpy.sqrt(G*mstar/rr)
 
     def read(self, filename=None, usefile=None):
         if (usefile == None):
