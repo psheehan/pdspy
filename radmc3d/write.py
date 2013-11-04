@@ -339,6 +339,13 @@ def molecule(species, name):
     for i in range(species.J.size):
         f.write("   {0:d}    {1:f}   {2:f}   {3:d}\n")
 
+    f.write("!NUMBER OF RADIATIVE TRANSITIONS\n")
+    f.write("{0:d}\n".format(species.J_u.size))
+    f.write("!TRANS + UP + LOW + EINSTEINA(s^-1) + FREQ(GHz) + E_u(K)\n")
+
+    for i in range(species.J_u.size):
+        f.write("   {0:d}   {1:d}   {2:d}   {3:e}   {4:f}   {5:f}\n")
+
     f.close()
 
 def numberdens(n, species, gridstyle="normal"):
