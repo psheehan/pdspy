@@ -306,3 +306,74 @@ def dustkappa(species, lam, kabs, ksca=None, g=None):
                     kabs[ilam], ksca[ilam], g[ilam]))
 
     f.close()
+
+def line(species, inpstyle, colpartners):
+
+    nspecies = len(species)
+
+    f = open("line.inp", "w")
+
+    f.write("2\n")
+    f.write("{0:d}\n".format(nspecies))
+
+    for i in range(nspecies):
+        f.write("{0:a} {0:a} 0 0 {0:d}\n".format(species[i], inpstyle[i], \
+                len(colpartners[i])))
+        if (len(colpartners[i]) > 0):
+            for j in range(len(colpartners[i])):
+                f.write("{0:a}\n".format(colpartners[i][j]))
+
+    f.close()
+
+def molecule(species, name):
+
+    f = open("molecule_{0:a}.inp".format(name))
+
+    f.write("!MOLECULE\n")
+    f.write("{0:a}\n".format(name))
+    f.write("!NUMBER OF ENERGY LEVELS")
+    f.write("{0:d}\n".format(species.J.size))
+    f.write("!LEVEL + ENERGIES(cm^-1) + WEIGHT + J\n")
+
+    # NOT YET DONE!!!
+    for i in range(species.J.size):
+        f.write("   {0:d}    {1:f}   {2:f}   {3:d}\n")
+
+    f.close()
+
+def numberdens(n, species, gridstyle="normal"):
+
+    if (gridstyle == "normal"):
+        nx, ny, nz = n.shape
+        ncells = nx*ny*nz
+
+    f = open("numberdens_{0:a}.inp".format(species),"w")
+    f.write("1\n")
+    f.write("{0:d}\n".format(ncells))
+
+    if (gridstyle == "normal"):
+        for iz in range(nz):
+            for iy in range(ny):
+                for ix in range(nx):
+                    f.write("{0:e}\n".format(n[ix,iy,iz]))
+
+    f.close()
+
+def gas_velocity(v, species, gridstyle="normal"):
+
+    if (gridstyle == "normal"):
+        nx, ny, nz = v[0].shape
+        ncells = nx*ny*nz
+
+    f = open("gas_velocity.inp".format(species),"w")
+    f.write("1\n")
+    f.write("{0:d}\n".format(ncells))
+
+    if (gridstyle == "normal"):
+        for iz in range(nz):
+            for iy in range(ny):
+                for ix in range(nx):
+                    f.write("{0:e} {1:e} {2:e}\n".format(v[0][ix,iy,iz], \
+                            v[1][ix,iy,iz], v[2][ix,iy,iz]))
+
+    f.close()
