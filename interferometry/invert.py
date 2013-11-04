@@ -21,7 +21,7 @@ def invert(data,imsize=256,pixel_size=0.25,weights="natural", \
     if (data.freq.size > 1) and (mfs == False) and (spectral == False):
         averaged_data = average(data,only_freq=True)
     else:
-        averaged_data = data
+        averaged_data = data.copy()
 
     if beam:
         averaged_data.real[:,:] = 1.
@@ -36,7 +36,7 @@ def invert(data,imsize=256,pixel_size=0.25,weights="natural", \
     else:
         startchannel = 0
 
-    for i in range(nchannels)+startchannel:
+    for i in range(startchannel, startchannel+nchannels):
         baselines = unique(averaged_data.baseline)
 
         im = zeros((imsize,imsize))
