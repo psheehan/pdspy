@@ -86,6 +86,34 @@ class UlrichEnvelope:
 
         return rho
 
+    def velocity(self, r, theta, phi, mstar=0.5):
+        mstar *= M_sun
+
+        # Set up the coordinates.
+        
+        rr, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+
+        mu = numpy.cos(tt)
+
+        # Calculate mu0 at each r, theta combination.
+
+        def func(mu0,r,mu,R_c):
+            return mu0**3-mu0*(1-r/R_c)-mu*(r/R_c)
+
+        mu0 = mu*0.
+        for ir in range(rr.shape[0]):
+            for it in range(rr.shape[1]):
+                mu0[ir,it,0] = brenth(func,-1.0,1.0,args=(rr[ir,it,0], \
+                        mu[ir,it,0],rcent))
+
+        v_r = -numpy.sqrt(G*mstar/rr)*numpy.sqrt(1 + mu/mu0)
+        v_theta = numpy.sqrt(G*mstar/rr) * (mu0 - mu) * \
+                numpy.sqrt((mu0 + mu) / (mu0 * numpy.sin(tt)))
+        v_phi = numpy.sqrt(G*mstar/rr) * numpy.sqrt((1 - mu0**2)/(1 - mu**2)) *\
+                numpy.sqrt(1 - mu/mu0)
+
+        return (v_r, v_theta, v_phi)
+
     def read(self, filename=None, usefile=None):
         if (usefile == None):
             f = h5py.File(filename, "r")

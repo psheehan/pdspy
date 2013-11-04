@@ -79,7 +79,7 @@ class Disk:
 
         return T
 
-    def velocity(self, r, mstar=0.5):
+    def velocity(self, r, theta, phi, mstar=0.5):
         mstar *= M_sun
 
         rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
