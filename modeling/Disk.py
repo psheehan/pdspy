@@ -1,13 +1,13 @@
 import numpy
 import h5py
-from ..constants.physics import G
+from ..constants.physics import G, m_p
 from ..constants.astronomy import AU, M_sun
 from ..constants.math import pi
 from ..dust import Dust
 
 class Disk:
     def __init__(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, h0=0.1, \
-            plh=58./45., dust=None, gas=None):
+            plh=58./45., dust=None):
         self.mass = mass
         self.rmin = rmin
         self.rmax = rmax
@@ -16,8 +16,12 @@ class Disk:
         self.plh = plh
         if (dust != None):
             self.dust = dust
-        if (gas != None):
-            self.gas = gas
+        self.gas = []
+        self.abundance = []
+
+    def add_gas(self, gas, abundance):
+        self.gas.append(gas)
+        self.abundance.append(abundance)
 
     def density(self, r, theta, phi):
         ##### Disk Parameters
@@ -47,6 +51,15 @@ class Disk:
         rho[(rr >= rout) ^ (rr <= rin)] = 0e0
         
         return rho
+
+    def number_density(self, r, theta, phi, gas=0):
+        rho = self.density(r, theta, phi)
+
+        n_H2 = rho * 100. / (2*m_p)
+
+        n = n_H2 * abundance[gas]
+
+        return n
 
     def surface_density(self, r):
         rin = self.rmin * AU

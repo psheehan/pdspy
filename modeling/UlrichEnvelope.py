@@ -3,13 +3,13 @@ from scipy.optimize import brenth
 from scipy.integrate import trapz
 from ..constants.astronomy import AU, M_sun
 from ..constants.math import pi
-from ..constants.physics import G
+from ..constants.physics import G, m_p
 from ..dust import Dust
 
 class UlrichEnvelope:
 
     def __init__(self, mass=1.0e-3, rmin=0.1, rmax=1000, rcent=30, cavpl=1.0, \
-            cavrfact=0.2, dust=None, gas=None):
+            cavrfact=0.2, dust=None):
         self.mass = mass
         self.rmin = rmin
         self.rmax= rmax
@@ -18,8 +18,12 @@ class UlrichEnvelope:
         self.cavrfact = cavrfact
         if (dust != None):
             self.dust = dust
-        if (gas != None):
-            self.gas = gas
+        self.gas = []
+        self.abundance = []
+
+    def add_gas(self, gas, abundance):
+        self.gas.append(gas)
+        self.gas.append(abundance)
 
     def density(self, r, theta, phi):
         #numpy.seterr(all='ignore')
@@ -85,6 +89,15 @@ class UlrichEnvelope:
         #numpy.seterr(all='warn')
 
         return rho
+
+    def number_density(self, r, theta, phi, gas=0):
+        rho = self.density(r, theta, phi)
+
+        n_H2 = rho * 100. / (2*m_p)
+
+        n = n_H2 * abundance[gas]
+
+        return n
 
     def velocity(self, r, theta, phi, mstar=0.5):
         mstar *= M_sun
