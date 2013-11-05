@@ -10,6 +10,9 @@ class Grid:
         self.dust = []
         self.temperature = []
         self.stars = []
+        self.number_density = []
+        self.gas = []
+        self.velocity = []
 
     def add_density(self, density, dust):
         self.density.append(density)
@@ -20,6 +23,13 @@ class Grid:
 
     def add_temperature(self, temperature):
         self.temperature.append(temperature)
+
+    def add_number_density(self, number_density, gas):
+        self.number_density.append(number_density)
+        self.gas.append(gas)
+
+    def add_velocity(self, velocity):
+        self.velocity.append(velocity)
 
     def set_cartesian_grid(self, w1, w2, w3):
         self.coordsystem = "cartesian"
@@ -99,6 +109,20 @@ class Grid:
             star.read(usefile=stars[name])
             self.stars.append(star)
 
+        number_density = f['NumberDensity']
+        for name in number_density:
+            self.number_density.append(number_density[name].value)
+
+        gas = f['Gas']
+        for name in gas:
+            g = Gas()
+            d.set_properties_from_file(usefile=gas[name])
+            self.gas.append(g)
+
+        velocity = f['Velocity']
+        for name in velocity:
+            self.velocity.append(velocity[name].value)
+
         self.lam = f['lam'].value
 
         if (usefile == None):
@@ -144,6 +168,27 @@ class Grid:
         for i in range(len(self.stars)):
             stars_groups.append(stars.create_group("Star{0:d}".format(i)))
             self.stars[i].write(usefile=stars_groups[i])
+
+        number_density = f.create_group("NumberDensity")
+        number_density_dsets = []
+        for i in range(len(self.number_density)):
+            number_density_dsets.append(number_density.create_dataset( \
+                    "NumberDensity{0:d}".format(i), \
+                    self.number_density[i].shape, dtype='f'))
+            number_density_dsets[i][...] = self.number_density[i]
+
+        gas = f.create_group("Gas")
+        gas_groups = []
+        for i in range(len(self.gas)):
+            gas_groups.append(gas.create_group("Gas{0:d}".format(i)))
+            self.gas[i].write(usefile=gas_groups[i])
+
+        velocity = f.create_group("Velocity")
+        velocity_dsets = []
+        for i in range(len(self.velocity)):
+            velocity_dsets.append(velocity.create_dataset("Velocity{0:d}". \
+                    format(i), self.number_density[i].shape, dtype='f'))
+            velocity_dsets[i][...] = self.velocity[i]
 
         lam_dset = f.create_dataset("lam", self.lam.shape, dtype='f')
         lam_dset[...] = self.lam
