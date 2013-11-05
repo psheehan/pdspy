@@ -204,6 +204,18 @@ class Model:
 
         radmc3d.write.dustopac(dustopac)
 
+        gas = []
+        inpstyle = []
+        colpartners = []
+        for i in range(len(self.grid.gas)):
+            gas.append("{0:d}".format(i))
+            inpstyle.append("leiden")
+            colpartners.append([])
+            radmc3d.write.molecule(self.grid.gas[i], gas[i])
+            radmc3d.write.numberdens(self.grid.number_density[i], gas[i])
+
+        radmc3d.write.line(gas, inpstyle, colpartners)
+
         radmc3d.run.image(npix=npix, sizeau=sizeau, lam=lam)
 
         image, x, y, lam = radmc3d.read.image()
