@@ -311,7 +311,7 @@ def line(species, inpstyle, colpartners):
 
     nspecies = len(species)
 
-    f = open("line.inp", "w")
+    f = open("lines.inp", "w")
 
     f.write("2\n")
     f.write("{0:d}\n".format(nspecies))
