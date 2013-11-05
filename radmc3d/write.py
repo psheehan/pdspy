@@ -317,7 +317,7 @@ def line(species, inpstyle, colpartners):
     f.write("{0:d}\n".format(nspecies))
 
     for i in range(nspecies):
-        f.write("{0:a} {0:a} 0 0 {0:d}\n".format(species[i], inpstyle[i], \
+        f.write("{0:s} {1:s} 0 0 {2:d}\n".format(species[i], inpstyle[i], \
                 len(colpartners[i])))
         if (len(colpartners[i]) > 0):
             for j in range(len(colpartners[i])):
@@ -327,24 +327,28 @@ def line(species, inpstyle, colpartners):
 
 def molecule(species, name):
 
-    f = open("molecule_{0:a}.inp".format(name))
+    f = open("molecule_{0:s}.inp".format(name), "w")
 
     f.write("!MOLECULE\n")
-    f.write("{0:a}\n".format(name))
-    f.write("!NUMBER OF ENERGY LEVELS")
+    f.write("{0:s}\n".format(name))
+    f.write("!MOLECULAR WEIGHT\n")
+    f.write("{0:.1f}\n".format(species.mass))
+    f.write("!NUMBER OF ENERGY LEVELS\n")
     f.write("{0:d}\n".format(species.J.size))
     f.write("!LEVEL + ENERGIES(cm^-1) + WEIGHT + J\n")
 
-    # NOT YET DONE!!!
     for i in range(species.J.size):
-        f.write("   {0:d}    {1:f}   {2:f}   {3:d}\n")
+        f.write("{0:>5d}{1:>16.9f}{2:>10.1f}{3:>6d}\n".format(i+1, \
+                species.E[i], species.g[i], int(species.J[i])))
 
     f.write("!NUMBER OF RADIATIVE TRANSITIONS\n")
     f.write("{0:d}\n".format(species.J_u.size))
     f.write("!TRANS + UP + LOW + EINSTEINA(s^-1) + FREQ(GHz) + E_u(K)\n")
 
     for i in range(species.J_u.size):
-        f.write("   {0:d}   {1:d}   {2:d}   {3:e}   {4:f}   {5:f}\n")
+        f.write("{0:>5d}{1:>6d}{2:>6d}{3:>12.3e}{4:>16.7f}{5:>10.2f}\n".format(\
+                i+1, int(species.J_u[i]), int(species.J_l[i]), \
+                species.A_ul[i], species.nu[i]/1.0e9, species.E_u[i]))
 
     f.close()
 
@@ -354,7 +358,7 @@ def numberdens(n, species, gridstyle="normal"):
         nx, ny, nz = n.shape
         ncells = nx*ny*nz
 
-    f = open("numberdens_{0:a}.inp".format(species),"w")
+    f = open("numberdens_{0:s}.inp".format(species),"w")
     f.write("1\n")
     f.write("{0:d}\n".format(ncells))
 
