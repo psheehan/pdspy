@@ -4,6 +4,7 @@ from ..constants.physics import G, m_p
 from ..constants.astronomy import AU, M_sun
 from ..constants.math import pi
 from ..dust import Dust
+from ..gas import Gas
 
 class Disk:
     def __init__(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, h0=0.1, \
@@ -121,6 +122,11 @@ class Disk:
             self.dust = Dust()
             self.dust.set_properties_from_file(usefile=f['Dust'])
 
+        for name in f['Gas']:
+            self.gas.append(Gas())
+            self.abundance.append(f['Gas'][name]['Abundance'].value)
+            self.gas[-1].set_properties_from_file(usefile=f['Gas'][name])
+
         if (usefile == None):
             f.close()
 
@@ -140,6 +146,14 @@ class Disk:
         if hasattr(self, 'dust'):
             dust = f.create_group("Dust")
             self.dust.write(usefile=dust)
+
+        gases = []
+        if hasattr(self, 'gas'):
+            gas = f.create_group("Gas")
+            for i in range(len(self.gas)):
+                gases.append(gas.create_group("Gas{0:d}".format(i)))
+                gases[i]["Abundance"] = self.abundance[i]
+                self.gas[i].write(usefile=gases[i])
 
         if (usefile == None):
             f.close()

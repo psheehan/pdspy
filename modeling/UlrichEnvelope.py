@@ -144,6 +144,11 @@ class UlrichEnvelope:
             self.dust = Dust()
             self.dust.set_properties_from_file(usefile=f['Dust'])
 
+        for name in f['Gas']:
+            self.gas.append(Gas())
+            self.abundance.append(f['Gas'][name]['Abundance'].value)
+            self.gas[-1].set_properties_from_file(usefile=f['Gas'][name])
+
         if (usefile == None):
             f.close()
 
@@ -163,6 +168,14 @@ class UlrichEnvelope:
         if hasattr(self, 'dust'):
             dust = f.create_group("Dust")
             self.dust.write(usefile=dust)
+
+        gases = []
+        if hasattr(self, 'gas'):
+            gas = f.create_group("Gas")
+            for i in range(len(self.gas)):
+                gases.append(gas.create_group("Gas{0:d}".format(i)))
+                gases[i]["Abundance"] = self.abundance[i]
+                self.gas[i].write(usefile=gases[i])
 
         if (usefile == None):
             f.close()

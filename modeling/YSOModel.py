@@ -44,8 +44,9 @@ class YSOModel(Model):
         self.disk = Disk(mass=mass, rmin=rmin, rmax=rmax, plrho=plrho, h0=h0, \
                 plh=plh, dust=dust)
 
-        self.grid.add_density(self.disk.density(self.grid.r, self.grid.theta, \
-                self.grid.phi),dust)
+        if (dust != None):
+            self.grid.add_density(self.disk.density(self.grid.r, \
+                    self.grid.theta, self.grid.phi),dust)
 
         if (gas != None):
             if (type(gas) == list):
@@ -66,8 +67,9 @@ class YSOModel(Model):
                 rcent=self.disk.rmax, cavpl=cavpl, cavrfact=cavrfact, \
                 dust=dust)
 
-        self.grid.add_density(self.envelope.density(self.grid.r, \
-                self.grid.theta, self.grid.phi),dust)
+        if (dust != None):
+            self.grid.add_density(self.envelope.density(self.grid.r, \
+                    self.grid.theta, self.grid.phi),dust)
 
         if (gas != None):
             if (type(gas) == list):
@@ -162,12 +164,12 @@ class YSOModel(Model):
 
         self.write(usefile=f)
 
-        disk = f.create_group("Disk")
         if hasattr(self, "disk"):
+            disk = f.create_group("Disk")
             self.disk.write(usefile=disk)
 
-        envelope = f.create_group("Envelope")
         if hasattr(self, "envelope"):
+            envelope = f.create_group("Envelope")
             self.envelope.write(usefile=envelope)
 
         f.close()

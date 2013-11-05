@@ -1,6 +1,7 @@
 import numpy
 import h5py
 from ..dust import Dust
+from ..gas import Gas
 from .Star import Star
 
 class Grid:
@@ -116,14 +117,15 @@ class Grid:
         gas = f['Gas']
         for name in gas:
             g = Gas()
-            d.set_properties_from_file(usefile=gas[name])
+            g.set_properties_from_file(usefile=gas[name])
             self.gas.append(g)
 
         velocity = f['Velocity']
         for name in velocity:
             self.velocity.append(velocity[name].value)
 
-        self.lam = f['lam'].value
+        if ('lam' in f):
+            self.lam = f['lam'].value
 
         if (usefile == None):
             f.close()
@@ -190,8 +192,9 @@ class Grid:
                     format(i), self.number_density[i].shape, dtype='f'))
             velocity_dsets[i][...] = self.velocity[i]
 
-        lam_dset = f.create_dataset("lam", self.lam.shape, dtype='f')
-        lam_dset[...] = self.lam
+        if hasattr(self, 'lam'):
+            lam_dset = f.create_dataset("lam", self.lam.shape, dtype='f')
+            lam_dset[...] = self.lam
 
         if (usefile == None):
             f.close()
