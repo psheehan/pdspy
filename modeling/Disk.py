@@ -57,7 +57,7 @@ class Disk:
 
         n_H2 = rho * 100. / (2*m_p)
 
-        n = n_H2 * abundance[gas]
+        n = n_H2 * self.abundance[gas]
 
         return n
 
