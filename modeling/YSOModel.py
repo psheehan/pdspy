@@ -40,21 +40,47 @@ class YSOModel(Model):
         self.grid.set_spherical_grid(r, theta, phi)
 
     def add_disk(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, h0=0.1, \
-            plh=58./45., dust=None):
+            plh=58./45., dust=None, gas=None, abundance=None):
         self.disk = Disk(mass=mass, rmin=rmin, rmax=rmax, plrho=plrho, h0=h0, \
                 plh=plh, dust=dust)
 
         self.grid.add_density(self.disk.density(self.grid.r, self.grid.theta, \
                 self.grid.phi),dust)
 
+        if (gas != None):
+            if (type(gas) == list):
+                for i in range(len(gas)):
+                    self.disk.add_gas(gas[i], abundance[i])
+                    self.grid.add_number_density(self.disk.number_density( \
+                            self.grid.r, self.grid.theta, self.grid.phi, \
+                            gas=i), gas[i])
+            else:
+                self.disk.add_gas(gas, abundance)
+                self.grid.add_number_density(self.disk.number_density( \
+                        self.grid.r, self.grid.theta, self.grid.phi, \
+                        gas=0), gas)
+
     def add_ulrich_envelope(self, mass=1.0e-3, rmin=0.1, rmax=1000, cavpl=1.0, \
-            cavrfact=0.2, dust=None):
+            cavrfact=0.2, dust=None, gas=None, abundance=None):
         self.envelope = UlrichEnvelope(mass=mass, rmin=rmin, rmax=rmax, \
                 rcent=self.disk.rmax, cavpl=cavpl, cavrfact=cavrfact, \
                 dust=dust)
 
         self.grid.add_density(self.envelope.density(self.grid.r, \
                 self.grid.theta, self.grid.phi),dust)
+
+        if (gas != None):
+            if (type(gas) == list):
+                for i in range(len(gas)):
+                    self.envelope.add_gas(gas[i], abundance[i])
+                    self.grid.add_number_density(self.envelope.number_density( \
+                            self.grid.r, self.grid.theta, self.grid.phi, \
+                            gas=i), gas[i])
+            else:
+                self.envelope.add_gas(gas, abundance)
+                self.grid.add_number_density(self.envelope.number_density( \
+                        self.grid.r, self.grid.theta, self.grid.phi, gas=0), \
+                        gas)
 
     def run_simple_gas_image(self, i=0., pa=0., npix=256, dx=1., species=0, \
             trans=0, vstart=-10, dv=0.5, nv=40, n=0.5, T0=10000., plT=1, \
