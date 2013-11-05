@@ -10,7 +10,7 @@ class Gas:
         for i in range(3):
             f.readline()
 
-        self.mass = float(f.readline()) * m_p
+        self.mass = float(f.readline())
 
         f.readline()
         nlev = int(f.readline())
@@ -75,6 +75,8 @@ class Gas:
         else:
             f = usefile
 
+        self.mass = f['mass'].value
+
         self.J = f["J"].value
         self.E = f['E'].value
         self.g = f['g'].value
@@ -110,6 +112,8 @@ class Gas:
             f = h5py.File(filename, "w")
         else:
             f = usefile
+
+        f['mass'] = self.mass
 
         J_dset = f.create_dataset("J", (self.J.size,), dtype='f')
         J_dset[...] = self.J
