@@ -155,6 +155,10 @@ class YSOModel(Model):
             self.grid.density[i] = self.grid.density[i][1:,:,:]
         for i in range(len(self.grid.temperature)):
             self.grid.temperature[i] = self.grid.temperature[i][1:,:,:]
+        for i in range(len(self.grid.number_density)):
+            self.grid.number_density[i] = self.grid.number_density[i][1:,:,:]
+        for i in range(len(self.grid.velocity)):
+            self.grid.velocity[i] = self.grid.velocity[i][:,1:,:,:]
 
     def read_yso(self, filename):
         f = h5py.File(filename, "r")
