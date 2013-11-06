@@ -159,7 +159,8 @@ class Model:
         return
 
     def run_image_radmc3d(self, name=None, nphot=1e6, npix=256, sizeau=1000, \
-            lam="1300", **keywords):
+            lam="1300", iline=None,  widthkms=None, linenlam=None, \
+            incl=0, **keywords):
         radmc3d.write.control(nphot_scat=nphot, **keywords)
 
         mstar = []
@@ -216,7 +217,10 @@ class Model:
 
         radmc3d.write.line(gas, inpstyle, colpartners)
 
-        radmc3d.run.image(npix=npix, sizeau=sizeau, lam=lam)
+        radmc3d.write.gas_velocity(self.grid.velocity[0])
+
+        radmc3d.run.image(npix=npix, sizeau=sizeau, lam=lam, iline=iline, \
+                widthkms=widthkms, linenlam=linenlam, incl=incl)
 
         image, x, y, lam = radmc3d.read.image()
 

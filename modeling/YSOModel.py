@@ -55,11 +55,17 @@ class YSOModel(Model):
                     self.grid.add_number_density(self.disk.number_density( \
                             self.grid.r, self.grid.theta, self.grid.phi, \
                             gas=i), gas[i])
+                    self.grid.add_velocity(self.disk.velocity(self.grid.r, \
+                            self.grid.theta, self.grid.phi, \
+                            mstar=self.grid.stars[0].mass))
             else:
                 self.disk.add_gas(gas, abundance)
                 self.grid.add_number_density(self.disk.number_density( \
                         self.grid.r, self.grid.theta, self.grid.phi, \
                         gas=0), gas)
+                self.grid.add_velocity(self.disk.velocity(self.grid.r, \
+                        self.grid.theta, self.grid.phi, \
+                        mstar=self.grid.stars[0].mass))
 
     def add_ulrich_envelope(self, mass=1.0e-3, rmin=0.1, rmax=1000, cavpl=1.0, \
             cavrfact=0.2, dust=None, gas=None, abundance=None):
@@ -78,11 +84,17 @@ class YSOModel(Model):
                     self.grid.add_number_density(self.envelope.number_density( \
                             self.grid.r, self.grid.theta, self.grid.phi, \
                             gas=i), gas[i])
+                    self.grid.add_velocity(self.envelope.velocity(self.grid.r, \
+                            self.grid.theta, self.grid.phi, \
+                            mstar=self.grid.stars[0].mass))
             else:
                 self.envelope.add_gas(gas, abundance)
                 self.grid.add_number_density(self.envelope.number_density( \
                         self.grid.r, self.grid.theta, self.grid.phi, gas=0), \
                         gas)
+                self.grid.add_velocity(self.envelope.velocity(self.grid.r, \
+                        self.grid.theta, self.grid.phi, \
+                        mstar=self.grid.stars[0].mass))
 
     def run_simple_gas_image(self, i=0., pa=0., npix=256, dx=1., species=0, \
             trans=0, vstart=-10, dv=0.5, nv=40, n=0.5, T0=10000., plT=1, \
