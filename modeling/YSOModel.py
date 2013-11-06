@@ -103,7 +103,7 @@ class YSOModel(Model):
 
         A = self.disk.gas[species].A_ul[trans]
         nu0 = self.disk.gas[species].nu[trans]
-        m_mol = self.disk.gas[species].mass
+        m_mol = self.disk.gas[species].mass * m_p
 
         # Set up the image plane.
 
@@ -128,6 +128,7 @@ class YSOModel(Model):
         T = self.disk.temperature(rpp, T_0=T0, p=plT)
 
         a_tot = numpy.sqrt(2*k*T/m_mol)
+        print(a_tot.min(), a_tot.max())
 
         phi_dot_n = numpy.sin(phipp)*numpy.sin(i)*numpy.cos(pa) - \
                 numpy.cos(phipp)*numpy.sin(i)*numpy.sin(pa)
