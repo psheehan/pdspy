@@ -125,7 +125,7 @@ class UlrichEnvelope:
         v_phi = numpy.sqrt(G*mstar/rr) * numpy.sqrt((1 - mu0**2)/(1 - mu**2)) *\
                 numpy.sqrt(1 - mu/mu0)
 
-        return (v_r, v_theta, v_phi)
+        return numpy.array((v_r, v_theta, v_phi))
 
     def read(self, filename=None, usefile=None):
         if (usefile == None):

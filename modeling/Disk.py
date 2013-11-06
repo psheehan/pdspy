@@ -103,7 +103,7 @@ class Disk:
         v_theta = numpy.zeros(rr.shape)
         v_phi = numpy.sqrt(G*mstar/rr)
 
-        return (v_r, v_theta, v_phi)
+        return numpy.array((v_r, v_theta, v_phi))
 
     def read(self, filename=None, usefile=None):
         if (usefile == None):
