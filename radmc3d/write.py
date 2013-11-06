@@ -370,13 +370,13 @@ def numberdens(n, species, gridstyle="normal"):
 
     f.close()
 
-def gas_velocity(v, species, gridstyle="normal"):
+def gas_velocity(v, gridstyle="normal"):
 
     if (gridstyle == "normal"):
         nx, ny, nz = v[0].shape
         ncells = nx*ny*nz
 
-    f = open("gas_velocity.inp".format(species),"w")
+    f = open("gas_velocity.inp", "w")
     f.write("1\n")
     f.write("{0:d}\n".format(ncells))
 
