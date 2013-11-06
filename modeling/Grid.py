@@ -189,7 +189,7 @@ class Grid:
         velocity_dsets = []
         for i in range(len(self.velocity)):
             velocity_dsets.append(velocity.create_dataset("Velocity{0:d}". \
-                    format(i), self.number_density[i].shape, dtype='f'))
+                    format(i), self.velocity[i].shape, dtype='f'))
             velocity_dsets[i][...] = self.velocity[i]
 
         if hasattr(self, 'lam'):
