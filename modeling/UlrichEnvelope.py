@@ -5,6 +5,7 @@ from ..constants.astronomy import AU, M_sun
 from ..constants.math import pi
 from ..constants.physics import G, m_p
 from ..dust import Dust
+from ..gas import Gas
 
 class UlrichEnvelope:
 
