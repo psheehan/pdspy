@@ -23,7 +23,7 @@ class UlrichEnvelope:
 
     def add_gas(self, gas, abundance):
         self.gas.append(gas)
-        self.gas.append(abundance)
+        self.abundance.append(abundance)
 
     def density(self, r, theta, phi):
         #numpy.seterr(all='ignore')
@@ -101,6 +101,7 @@ class UlrichEnvelope:
 
     def velocity(self, r, theta, phi, mstar=0.5):
         mstar *= M_sun
+        rcent = self.rcent * AU
 
         # Set up the coordinates.
         
