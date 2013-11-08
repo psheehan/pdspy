@@ -67,11 +67,15 @@ class YSOModel(Model):
                         self.grid.theta, self.grid.phi, \
                         mstar=self.grid.stars[0].mass))
 
-    def add_ulrich_envelope(self, mass=1.0e-3, rmin=0.1, rmax=1000, cavpl=1.0, \
-            cavrfact=0.2, dust=None, gas=None, abundance=None):
-        self.envelope = UlrichEnvelope(mass=mass, rmin=rmin, rmax=rmax, \
-                rcent=self.disk.rmax, cavpl=cavpl, cavrfact=cavrfact, \
-                dust=dust)
+    def add_ulrich_envelope(self, mass=1.0e-3, rmin=0.1, rmax=1000, rcent=300, \
+            cavpl=1.0, cavrfact=0.2, dust=None, gas=None, abundance=None):
+        if hasattr(self, 'disk'):
+            self.envelope = UlrichEnvelope(mass=mass, rmin=rmin, rmax=rmax, \
+                    rcent=self.disk.rmax, cavpl=cavpl, cavrfact=cavrfact, \
+                    dust=dust)
+        else:
+            self.envelope = UlrichEnvelope(mass=mass, rmin=rmin, rmax=rmax, \
+                    rcent=rcent, cavpl=cavpl, cavrfact=cavrfact, dust=dust)
 
         if (dust != None):
             self.grid.add_density(self.envelope.density(self.grid.r, \
