@@ -217,7 +217,25 @@ class Model:
 
         radmc3d.write.line(gas, inpstyle, colpartners)
 
-        radmc3d.write.gas_velocity(self.grid.velocity[0])
+        number_density = numpy.array(self.grid.number_density)
+        velocity = numpy.array(self.grid.velocity)
+        vx = velocity[:,0,:,:,:]
+        vy = velocity[:,1,:,:,:]
+        vz = velocity[:,2,:,:,:]
+        velocity = numpy.zeros(self.grid.velocity[0].shape)
+
+        nx, ny, nz = self.grid.number_density[0].shape
+
+        for i in range(nx):
+            for j in range(ny):
+                for k in range(nz):
+                    index = number_density[:,i,j,k] == \
+                            number_density[:,i,j,k].max()
+                    velocity[0,i,j,k] = vx[index,i,j,k]
+                    velocity[1,i,j,k] = vy[index,i,j,k]
+                    velocity[2,i,j,k] = vz[index,i,j,k]
+
+        radmc3d.write.gas_velocity(velocity)
 
         radmc3d.run.image(npix=npix, sizeau=sizeau, lam=lam, iline=iline, \
                 widthkms=widthkms, linenlam=linenlam, incl=incl, posang=pa, \
