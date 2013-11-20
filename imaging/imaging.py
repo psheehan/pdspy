@@ -65,7 +65,7 @@ class Image:
         for i in range(self.image[0,0,:].size):
             hdu = astropy.io.fits.PrimaryHDU(self.image[:,:,i])
 
-            if self.header != None:
+            if hasattr(self, "header"):
                 hdu.header = self.header[i]
 
             hdulist.append(hdu)
