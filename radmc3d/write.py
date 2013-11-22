@@ -350,6 +350,30 @@ def molecule(species, name):
                 i+1, int(species.J_u[i]), int(species.J_l[i]), \
                 species.A_ul[i], species.nu[i]/1.0e9, species.E_u[i]))
 
+    f.write("!NUMBER OF COLL PARTNERS\n")
+    f.write("{0:d}\n".format(len(species.partners)))
+    
+    for i in range(len(species.partners)):
+        f.write("!COLLISIONS BETWEEN\n")
+        f.write("{0:s}".format(species.partners[i]))
+        f.write("!NUMBER OF COLL TRANS\n")
+        f.write("{0:d}\n".format(species.J_u_coll[i].size))
+        f.write("!NUMBER OF COLL TEMPS\n")
+        f.write("{0:d}\n".format(species.temp[i].size))
+        f.write("!COLL TEMPS\n")
+        temp_string = ""
+        for j in range(species.temp[i].size):
+            temp_string += "{0:>7.1f}".format(species.temp[i][j])
+        f.write(temp_string+"\n")
+        f.write("!TRANS + UP + LOW + COLLRATES(cm^3 s^-1)\n")
+        for j in range(species.J_u_coll[i].size):
+            string = "{0:>5d}{1:>6d}{2:>6d} ".format(j+1, \
+                    int(species.J_u_coll[i][j]), int(species.J_l_coll[i][j]))
+            for k in range(species.temp[i].size):
+                string += "{0:10.3e}".format(species.gamma[i][j,k])
+            f.write(string+"\n")
+        f.write("\n")
+
     f.close()
 
 def numberdens(n, species, gridstyle="normal"):
