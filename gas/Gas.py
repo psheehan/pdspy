@@ -63,7 +63,7 @@ class Gas:
                     dtype=float))
 
             for j in range(ncolltrans):
-                temp, self.J_u_coll[i][j], self.J_u_coll[i][j], temp2 = \
+                temp, self.J_u_coll[i][j], self.J_l_coll[i][j], temp2 = \
                         tuple(f.readline().split(None,3))
                 self.gamma[i][j,:] = numpy.array(temp2.split())
 
