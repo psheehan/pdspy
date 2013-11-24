@@ -109,7 +109,7 @@ def image(lam=None, npix=None, npixx=None, npixy=None, nrrefine=None, \
         noapert=None, nphot_scat=None, inclstar=None, nostar=None, \
         inclline=None, noline=None, incldust=None, nodust=None, \
         inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None, \
-        widthkms=None, linenlam=None, iline=None):
+        widthkms=None, linenlam=None, iline=None, imolspec=None):
 
     command="radmc3d image "
 
@@ -117,6 +117,8 @@ def image(lam=None, npix=None, npixx=None, npixy=None, nrrefine=None, \
         command += "lambda "+lam+" "
     if (iline != None):
         command += "iline {0:d} ".format(iline)
+    if (imolspec != None):
+        command += "iline {0:d} ".format(imolspec)
     if (widthkms != None):
         command += "widthkms {0:f} ".format(widthkms)
     if (linenlam != None):
