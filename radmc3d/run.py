@@ -118,7 +118,7 @@ def image(lam=None, npix=None, npixx=None, npixy=None, nrrefine=None, \
     if (iline != None):
         command += "iline {0:d} ".format(iline)
     if (imolspec != None):
-        command += "iline {0:d} ".format(imolspec)
+        command += "imolspec {0:d} ".format(imolspec)
     if (widthkms != None):
         command += "widthkms {0:f} ".format(widthkms)
     if (linenlam != None):
