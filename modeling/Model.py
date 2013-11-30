@@ -229,10 +229,8 @@ class Model:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    index = number_density[:,i,j,k] == \
-                            number_density[:,i,j,k].max()
-                    if hasattr(index, '__iter__'):
-                        index = index[0]
+                    index = numpy.where(number_density[:,i,j,k] == \
+                            number_density[:,i,j,k].max())[0][0]
                     velocity[0,i,j,k] = vx[index,i,j,k]
                     velocity[1,i,j,k] = vy[index,i,j,k]
                     velocity[2,i,j,k] = vz[index,i,j,k]
