@@ -48,9 +48,11 @@ def average(data,gridsize=256,binsize=None,radial=False):
     good_data = new_weights != 0.0
     new_u = new_u[good_data]
     new_v = new_v[good_data]
-    new_real = new_real[good_data] / new_weights[good_data]
-    new_imag = new_imag[good_data] / new_weights[good_data]
-    new_weights = new_weights[good_data]
+    new_real = (new_real[good_data] / new_weights[good_data]).reshape( \
+            (new_u.size,1))
+    new_imag = (new_imag[good_data] / new_weights[good_data]).reshape( \
+            (new_u.size,1))
+    new_weights = new_weights[good_data].reshape((new_u.size,1))
     
     freq = array([data.freq.sum()/data.freq.size])
     

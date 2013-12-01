@@ -10,11 +10,11 @@ def center(data,params):
     if params.size > 2:
         params[2] = 1.0
     
-    model = model(data.u,data.v,params,funct=array(["point"]), \
+    mod = model(data.u,data.v,params,funct=array(["point"]), \
                     return_type="data")
     
     data_complex = data.real+1j*data.imag
-    model_complex = model.real+1j*model.imag
+    model_complex = mod.real+1j*mod.imag
     
     centered_data = data_complex * model_complex.conj()
     
