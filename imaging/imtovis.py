@@ -20,8 +20,8 @@ def imtovis(image, dpc=140):
         real[:,i] = vis.real.reshape((image.x.size*image.y.size,))
         imag[:,i] = vis.imag.reshape((image.x.size*image.y.size,))
     
-    max_x = 1.0 / ( (image.x[1] - image.x[0])/r *arcsec )
-    max_y = 1.0 / ( (image.y[1] - image.y[0])/r *arcsec )
+    max_x = 1.0 / ( (image.x[1] - image.x[0])/r )
+    max_y = 1.0 / ( (image.y[1] - image.y[0])/r )
     
     u, v = numpy.meshgrid( numpy.linspace(-max_x, max_x, image.x.size), \
             numpy.linspace(-max_y, max_y, image.y.size), indexing='ij')
