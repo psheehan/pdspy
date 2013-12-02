@@ -27,7 +27,7 @@ class Visibilities:
         self.baseline = baseline
         self.array_name = array_name
 
-        if ((u != None) & (freq != None) & (real != None)):
+        if ((u != None) and (freq != None) and (real != None)):
             self.obj = lib.new_Visibilities( \
                     u.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
                     v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
@@ -38,11 +38,12 @@ class Visibilities:
                     self.uvdist.ctypes.data_as(ctypes.POINTER(\
                         ctypes.c_double)), \
                     self.amp.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-                    self.phase.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
+                    self.phase.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),\
                     ctypes.c_int(u.size), ctypes.c_int(freq.size))
 
     def __del__(self):
-        lib.delete_Visibilities(ctypes.c_void_p(self.obj))
+        if hasattr(self, 'obj'):
+            lib.delete_Visibilities(ctypes.c_void_p(self.obj))
 
     def get_baselines(self, num):
         include = self.baseline == num
