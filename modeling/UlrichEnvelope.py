@@ -78,7 +78,7 @@ class UlrichEnvelope:
 
         ##### Normalize the mass correctly.
         
-        mdot = mass/(4*pi*trapz(trapz(rho*rr**2*numpy.sin(tt),tt,axis=1), \
+        mdot = mass/(2*pi*trapz(trapz(rho*rr**2*numpy.sin(tt),tt,axis=1), \
                 rr[:,0,:],axis=0))[0]
         rho *= mdot
 
