@@ -8,7 +8,7 @@ from .. import radmc3d
 from .Grid import Grid
 from ..imaging import Image, imtovis
 from ..interferometry import Visibilities
-from ..constants.astronomy import AU, M_sun, R_sun, L_sun, Jy
+from ..constants.astronomy import AU, M_sun, R_sun, L_sun, Jy, arcsec, pc
 from ..constants.physics import c
 
 class Model:
@@ -120,7 +120,8 @@ class Model:
 
     def run_image_radmc3d(self, name=None, nphot=1e6, npix=256, sizeau=1000, \
             lam="1300", imolspec=None, iline=None,  widthkms=None, \
-            linenlam=None, doppcatch=False, incl=0, pa=0, phi=0, **keywords):
+            linenlam=None, doppcatch=False, incl=0, pa=0, phi=0, dpc=1, \
+            **keywords):
         self.write_radmc3d(nphot_scat=nphot, **keywords)
 
         radmc3d.run.image(npix=npix, sizeau=sizeau, lam=lam, imolspec=imolspec,\
@@ -129,7 +130,10 @@ class Model:
 
         image, x, y, lam = radmc3d.read.image()
 
-        image /= Jy
+        image = image / Jy * ((x[1] - x[0]) / (dpc * pc)) * \
+                ((y[1] - y[0]) / (dpc * pc))
+        x = x / (dpc * pc) / arcsec
+        y = y / (dpc * pc) / arcsec
 
         self.images[name] = Image(image, x=x, y=y, wave=lam*1.0e-4)
 
@@ -157,7 +161,10 @@ class Model:
 
         image, x, y, lam = radmc3d.read.image()
 
-        image /= Jy
+        image = image / Jy * ((x[1] - x[0]) / (dpc * pc)) * \
+                ((y[1] - y[0]) / (dpc * pc))
+        x = x / (dpc * pc) / arcsec
+        y = y / (dpc * pc) / arcsec
 
         im = Image(image, x=x, y=y, wave=lam*1.0e-4)
 
