@@ -14,7 +14,8 @@ class Spectrum:
             self.wave = wave
             self.flux = flux
             if unc == None:
-                self.unc = numpy.zeros(wave.size)
+                unc = numpy.zeros(wave.size)
+                self.unc = unc
             else:
                 self.unc = unc
 
