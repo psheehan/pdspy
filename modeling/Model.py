@@ -8,7 +8,7 @@ from .. import radmc3d
 from .Grid import Grid
 from ..imaging import Image, imtovis
 from ..interferometry import Visibilities
-from ..constants.astronomy import AU, M_sun, R_sun, L_sun
+from ..constants.astronomy import AU, M_sun, R_sun, L_sun, Jy
 from ..constants.physics import c
 
 class Model:
@@ -129,6 +129,8 @@ class Model:
 
         image, x, y, lam = radmc3d.read.image()
 
+        image /= Jy
+
         self.images[name] = Image(image, x=x, y=y, wave=lam*1.0e-4)
 
         os.system("rm *.out *.inp *.dat")
@@ -154,6 +156,8 @@ class Model:
                 doppcatch=doppcatch, incl=incl, posang=pa, phi=phi)
 
         image, x, y, lam = radmc3d.read.image()
+
+        image /= Jy
 
         im = Image(image, x=x, y=y, wave=lam*1.0e-4)
 
