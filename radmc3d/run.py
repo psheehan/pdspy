@@ -28,7 +28,7 @@ def sed(nrrefine=None, fluxcons=None, norefine=None, nofluxcons=None, \
         inclline=None, noline=None, incldust=None, nodust=None, \
         inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None):
 
-    command="radmc3d mctherm "
+    command="radmc3d sed "
 
     if (nrrefine != None):
         command += "nrrefine {0:i} ".format(nrrefine)
