@@ -8,6 +8,7 @@ from .. import radmc3d
 from .Grid import Grid
 from ..imaging import Image, imtovis
 from ..interferometry import Visibilities
+from ..spectroscopy import Spectrum
 from ..constants.astronomy import AU, M_sun, R_sun, L_sun, Jy, arcsec, pc
 from ..constants.physics import c
 
@@ -152,7 +153,7 @@ class Model:
             phi=0, dpc=1, **keywords):
         self.write_radmc3d(nphot_spec=nphot, **keywords)
 
-        radmc3d.run.sed(incl=incl, posang=pa, phi=phi)
+        radmc3d.run.sed(incl=incl, posang=pa, phi=phi, noline=True)
 
         flux, lam = radmc3d.read.spectrum()
 
