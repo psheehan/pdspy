@@ -140,16 +140,16 @@ class Model:
 
         os.system("rm *.out *.inp *.dat")
 
-    def run_spectrum(self, name=None, nphot=1e6, code="radmc3d", **keywords):
+    def run_sed(self, name=None, nphot=1e6, code="radmc3d", **keywords):
         if (code == "radmc3d"):
             self.run_spectrum_radmc3d(name=name, nphot=nphot, **keywords)
         else:
             self.run_spectrum_hyperion(name=name, nphot=nphot, **keywords)
 
-    def run_spectrum_hyperion(self, name=None, nphot=1e6):
+    def run_sed_hyperion(self, name=None, nphot=1e6):
         return
 
-    def run_spectrum_radmc3d(self, name=None, nphot=1e6, incl=0, pa=0, \
+    def run_sed_radmc3d(self, name=None, nphot=1e6, incl=0, pa=0, \
             phi=0, dpc=1, **keywords):
         self.write_radmc3d(nphot_spec=nphot, **keywords)
 
