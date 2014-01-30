@@ -142,9 +142,9 @@ class Model:
 
     def run_sed(self, name=None, nphot=1e6, code="radmc3d", **keywords):
         if (code == "radmc3d"):
-            self.run_spectrum_radmc3d(name=name, nphot=nphot, **keywords)
+            self.run_sed_radmc3d(name=name, nphot=nphot, **keywords)
         else:
-            self.run_spectrum_hyperion(name=name, nphot=nphot, **keywords)
+            self.run_sed_hyperion(name=name, nphot=nphot, **keywords)
 
     def run_sed_hyperion(self, name=None, nphot=1e6):
         return
