@@ -7,6 +7,7 @@ from hyperion.model import ModelOutput
 from .. import radmc3d
 from .Grid import Grid
 from ..imaging import Image, imtovis
+from ..interferometry import Visibilities
 from ..constants.astronomy import AU, M_sun, R_sun, L_sun
 from ..constants.physics import c
 
@@ -95,48 +96,7 @@ class Model:
         os.system("rm temp.rtin temp.rtout")
 
     def run_thermal_radmc3d(self, nphot=1e6, **keywords):
-        radmc3d.write.control(nphot_therm=nphot, **keywords)
-
-        mstar = []
-        rstar = []
-        xstar = []
-        ystar = []
-        zstar = []
-        tstar = []
-
-        for i in range(len(self.grid.stars)):
-            mstar.append(self.grid.stars[i].mass*M_sun)
-            rstar.append(self.grid.stars[i].radius*R_sun)
-            xstar.append(self.grid.stars[i].x*AU)
-            ystar.append(self.grid.stars[i].y*AU)
-            zstar.append(self.grid.stars[i].z*AU)
-            tstar.append(self.grid.stars[i].temperature)
-
-        radmc3d.write.stars(rstar, mstar, self.grid.lam, xstar, ystar, zstar, \
-                tstar=tstar)
-
-        radmc3d.write.wavelength_micron(self.grid.lam)
-
-        if (self.grid.coordsystem == "cartesian"):
-            radmc3d.write.amr_grid(self.grid.w1*AU, self.grid.w2*AU, \
-                    self.grid.w3*AU, coordsystem=self.grid.coordsystem)
-        elif(self.grid.coordsystem == "cylindrical"):
-            radmc3d.write.amr_grid(self.grid.w1*AU, self.grid.w2, \
-                    self.grid.w3*AU, coordsystem=self.grid.coordsystem)
-        elif(self.grid.coordsystem == "spherical"):
-            radmc3d.write.amr_grid(self.grid.w1*AU, self.grid.w2, \
-                    self.grid.w3, coordsystem=self.grid.coordsystem)
-
-        radmc3d.write.dust_density(self.grid.density)
-
-        dustopac = []
-        for i in range(len(self.grid.dust)):
-            dustopac.append("dustkappa_{0:d}.inp".format(i))
-            radmc3d.write.dustkappa("{0:d}".format(i), \
-                    self.grid.dust[i].lam*1.0e4, self.grid.dust[i].kabs, \
-                    ksca=self.grid.dust[i].ksca)
-
-        radmc3d.write.dustopac(dustopac)
+        self.write_radmc3d(nphot_therm=nphot, **keywords)
 
         radmc3d.run.thermal()
 
@@ -161,81 +121,7 @@ class Model:
     def run_image_radmc3d(self, name=None, nphot=1e6, npix=256, sizeau=1000, \
             lam="1300", imolspec=None, iline=None,  widthkms=None, \
             linenlam=None, doppcatch=False, incl=0, pa=0, phi=0, **keywords):
-        radmc3d.write.control(nphot_scat=nphot, **keywords)
-
-        mstar = []
-        rstar = []
-        xstar = []
-        ystar = []
-        zstar = []
-        tstar = []
-
-        for i in range(len(self.grid.stars)):
-            mstar.append(self.grid.stars[i].mass*M_sun)
-            rstar.append(self.grid.stars[i].radius*R_sun)
-            xstar.append(self.grid.stars[i].x*AU)
-            ystar.append(self.grid.stars[i].y*AU)
-            zstar.append(self.grid.stars[i].z*AU)
-            tstar.append(self.grid.stars[i].temperature)
-
-        radmc3d.write.stars(rstar, mstar, self.grid.lam, xstar, ystar, zstar, \
-                tstar=tstar)
-
-        radmc3d.write.wavelength_micron(self.grid.lam)
-
-        if (self.grid.coordsystem == "cartesian"):
-            radmc3d.write.amr_grid(self.grid.w1*AU, self.grid.w2*AU, \
-                    self.grid.w3*AU, coordsystem=self.grid.coordsystem)
-        elif(self.grid.coordsystem == "cylindrical"):
-            radmc3d.write.amr_grid(self.grid.w1*AU, self.grid.w2, \
-                    self.grid.w3*AU, coordsystem=self.grid.coordsystem)
-        elif(self.grid.coordsystem == "spherical"):
-            radmc3d.write.amr_grid(self.grid.w1*AU, self.grid.w2, \
-                    self.grid.w3, coordsystem=self.grid.coordsystem)
-
-        radmc3d.write.dust_density(self.grid.density)
-        radmc3d.write.dust_temperature(self.grid.temperature)
-
-        dustopac = []
-        for i in range(len(self.grid.dust)):
-            dustopac.append("dustkappa_{0:d}.inp".format(i))
-            radmc3d.write.dustkappa("{0:d}".format(i), \
-                    self.grid.dust[i].lam*1.0e4, self.grid.dust[i].kabs, \
-                    ksca=self.grid.dust[i].ksca)
-
-        radmc3d.write.dustopac(dustopac)
-
-        gas = []
-        inpstyle = []
-        colpartners = []
-        for i in range(len(self.grid.gas)):
-            gas.append("{0:d}".format(i))
-            inpstyle.append("leiden")
-            colpartners.append([])
-            radmc3d.write.molecule(self.grid.gas[i], gas[i])
-            radmc3d.write.numberdens(self.grid.number_density[i], gas[i])
-
-        radmc3d.write.line(gas, inpstyle, colpartners)
-
-        number_density = numpy.array(self.grid.number_density)
-        velocity = numpy.array(self.grid.velocity)
-        vx = velocity[:,0,:,:,:]
-        vy = velocity[:,1,:,:,:]
-        vz = velocity[:,2,:,:,:]
-        velocity = numpy.zeros(self.grid.velocity[0].shape)
-
-        nx, ny, nz = self.grid.number_density[0].shape
-
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
-                    index = numpy.where(number_density[:,i,j,k] == \
-                            number_density[:,i,j,k].max())[0][0]
-                    velocity[0,i,j,k] = vx[index,i,j,k]
-                    velocity[1,i,j,k] = vy[index,i,j,k]
-                    velocity[2,i,j,k] = vz[index,i,j,k]
-
-        radmc3d.write.gas_velocity(velocity)
+        self.write_radmc3d(nphot_scat=nphot, **keywords)
 
         radmc3d.run.image(npix=npix, sizeau=sizeau, lam=lam, imolspec=imolspec,\
                 iline=iline, widthkms=widthkms, linenlam=linenlam, \
@@ -261,7 +147,22 @@ class Model:
             sizeau=1000, lam="1300", imolspec=None, iline=None,  \
             widthkms=None, linenlam=None, doppcatch=False, incl=0, pa=0, \
             phi=0, **keywords):
-        radmc3d.write.control(nphot_scat=nphot, **keywords)
+        self.write_radmc3d(nphot_scat=nphot, **keywords)
+
+        radmc3d.run.image(npix=npix, sizeau=sizeau, lam=lam, imolspec=imolspec,\
+                iline=iline, widthkms=widthkms, linenlam=linenlam, \
+                doppcatch=doppcatch, incl=incl, posang=pa, phi=phi)
+
+        image, x, y, lam = radmc3d.read.image()
+
+        im = Image(image, x=x, y=y, wave=lam*1.0e-4)
+
+        self.visibilities[name] = imtovis(im)
+
+        os.system("rm *.out *.inp *.dat")
+
+    def write_radmc3d(self, **keywords):
+        radmc3d.write.control(**keywords)
 
         mstar = []
         rstar = []
@@ -294,7 +195,8 @@ class Model:
                     self.grid.w3, coordsystem=self.grid.coordsystem)
 
         radmc3d.write.dust_density(self.grid.density)
-        radmc3d.write.dust_temperature(self.grid.temperature)
+        if len(self.grid.temperature) > 0:
+            radmc3d.write.dust_temperature(self.grid.temperature)
 
         dustopac = []
         for i in range(len(self.grid.dust)):
@@ -337,18 +239,6 @@ class Model:
 
         radmc3d.write.gas_velocity(velocity)
 
-        radmc3d.run.image(npix=npix, sizeau=sizeau, lam=lam, imolspec=imolspec,\
-                iline=iline, widthkms=widthkms, linenlam=linenlam, \
-                doppcatch=doppcatch, incl=incl, posang=pa, phi=phi)
-
-        image, x, y, lam = radmc3d.read.image()
-
-        im = Image(image, x=x, y=y, wave=lam*1.0e-4)
-
-        self.visibilities[name] = imtovis(im)
-
-        os.system("rm *.out *.inp *.dat")
-
     def read(self, filename=None, usefile=None):
         if (usefile == None):
             f = h5py.File(filename, "r")
@@ -363,6 +253,12 @@ class Model:
             for image in f['Images']:
                 self.images[image] = Image()
                 self.images[image].read(usefile=f['Images'][image])
+
+        if ('Visibilities' in f):
+            for visibility in f['Visibilities']:
+                self.visibilities[visibility] = Visibilities()
+                self.visibilities[visibility].read( \
+                        usefile=f['Visibilities'][visibility])
 
         if (usefile == None):
             f.close()
@@ -385,6 +281,10 @@ class Model:
             self.images[image].write(usefile=images[image])
 
         visibilities = f.create_group("Visibilities")
+        for visibility in self.visibilities:
+            visibilities.create_group(visibility)
+            self.visibilities[visibility].write( \
+                    usefile=visibilities[visibility])
 
         if (usefile == None):
             f.close()
