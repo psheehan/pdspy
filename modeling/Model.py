@@ -152,7 +152,7 @@ class Model:
     def run_visibilities_radmc3d(self, name=None, nphot=1e6, npix=256, \
             sizeau=1000, lam="1300", imolspec=None, iline=None,  \
             widthkms=None, linenlam=None, doppcatch=False, incl=0, pa=0, \
-            phi=0, **keywords):
+            phi=0, dpc=1, **keywords):
         self.write_radmc3d(nphot_scat=nphot, **keywords)
 
         radmc3d.run.image(npix=npix, sizeau=sizeau, lam=lam, imolspec=imolspec,\
