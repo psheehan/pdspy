@@ -26,7 +26,7 @@ class UlrichEnvelope:
         self.gas.append(gas)
         self.abundance.append(abundance)
 
-    def density(self, r, theta, phi):
+    def density(self, r, theta, phi, code="hyperion"):
         #numpy.seterr(all='ignore')
         ##### Star parameters
 
@@ -78,8 +78,12 @@ class UlrichEnvelope:
 
         ##### Normalize the mass correctly.
         
-        mdot = mass/(2*pi*trapz(trapz(rho*rr**2*numpy.sin(tt),tt,axis=1), \
-                rr[:,0,:],axis=0))[0]
+        if code == "hyperion":
+            mdot = mass/(2*pi*trapz(trapz(rho*rr**2*numpy.sin(tt),tt,axis=1), \
+                    rr[:,0,:],axis=0))[0]
+        else:
+            mdot = mass/(4*pi*trapz(trapz(rho*rr**2*numpy.sin(tt),tt,axis=1), \
+                    rr[:,0,:],axis=0))[0]
         rho *= mdot
 
         ##### Add an outflow cavity.
