@@ -289,6 +289,11 @@ class Model:
                 self.images[image] = Image()
                 self.images[image].read(usefile=f['Images'][image])
 
+        if ('Spectra' in f):
+            for spectrum in f['Spectra']:
+                self.spectra[spectrum] = Spectrum()
+                self.spectra[spectrum].read(usefile=f['Spectra'][spectrum])
+
         if ('Visibilities' in f):
             for visibility in f['Visibilities']:
                 self.visibilities[visibility] = Visibilities()
@@ -309,6 +314,9 @@ class Model:
             self.grid.write(usefile=grid)
 
         spectra = f.create_group("Spectra")
+        for spectrum in self.spectra:
+            spectra.create_group(spectrum)
+            self.spectra[spectrum].write(usefile=spectra[spectrum])
 
         images = f.create_group("Images")
         for image in self.images:
