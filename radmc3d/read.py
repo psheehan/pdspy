@@ -149,7 +149,7 @@ def spectrum(filename=None,ext=None):
 
     f.close()
 
-    return 0
+    return spectrum, lam
 
 #==========================================================================
 #               ROUTINES FOR READING DENSITY AND TEMPERATURE
