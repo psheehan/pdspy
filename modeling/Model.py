@@ -119,11 +119,13 @@ class Model:
     def run_image_hyperion(self, name=None, nphot=1e6):
         return
 
-    def run_image_radmc3d(self, name=None, nphot=1e6, npix=256, sizeau=1000, \
+    def run_image_radmc3d(self, name=None, nphot=1e6, npix=256, pixelsize=1.0, \
             lam="1300", imolspec=None, iline=None,  widthkms=None, \
             linenlam=None, doppcatch=False, incl=0, pa=0, phi=0, dpc=1, \
             **keywords):
         self.write_radmc3d(nphot_scat=nphot, **keywords)
+
+        sizeau = pixelsize * dpc * npix
 
         radmc3d.run.image(npix=npix, sizeau=sizeau, lam=lam, imolspec=imolspec,\
                 iline=iline, widthkms=widthkms, linenlam=linenlam, \
