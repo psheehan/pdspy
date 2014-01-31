@@ -125,9 +125,14 @@ class Model:
             **keywords):
         self.write_radmc3d(nphot_scat=nphot, **keywords)
 
-        sizeau = pixelsize * dpc * npix
+        if npix%2 == 0:
+            zoomau = [-pixelsize*dpc * (npix+1)/2, pixelsize*dpc * (npix-1)/2, \
+                    -pixelsize*dpc * (npix+1)/2, pixelsize*dpc * (npix-1)/2]
+        else:
+            zoomau = [-pixelsize*dpc * npix/2, pixelsize*dpc * npix/2, \
+                    -pixelsize*dpc * npix/2, pixelsize*dpc * npix/2]
 
-        radmc3d.run.image(npix=npix, sizeau=sizeau, lam=lam, imolspec=imolspec,\
+        radmc3d.run.image(npix=npix, zoomau=zoomau, lam=lam, imolspec=imolspec,\
                 iline=iline, widthkms=widthkms, linenlam=linenlam, \
                 doppcatch=doppcatch, incl=incl, posang=pa, phi=phi)
 
@@ -135,8 +140,8 @@ class Model:
 
         image = image / Jy * ((x[1] - x[0]) / (dpc * pc)) * \
                 ((y[1] - y[0]) / (dpc * pc))
-        x = x / (dpc * pc) / arcsec
-        y = y / (dpc * pc) / arcsec
+        x = (x - x[int(npix/2)]) / (dpc * pc) / arcsec
+        y = (y - y[int(npix/2)]) / (dpc * pc) / arcsec
 
         self.images[name] = Image(image, x=x, y=y, wave=lam*1.0e-4)
 
@@ -176,12 +181,19 @@ class Model:
         return
 
     def run_visibilities_radmc3d(self, name=None, nphot=1e6, npix=256, \
-            sizeau=1000, lam="1300", imolspec=None, iline=None,  \
+            pixelsize=1.0, lam="1300", imolspec=None, iline=None,  \
             widthkms=None, linenlam=None, doppcatch=False, incl=0, pa=0, \
             phi=0, dpc=1, **keywords):
         self.write_radmc3d(nphot_scat=nphot, **keywords)
 
-        radmc3d.run.image(npix=npix, sizeau=sizeau, lam=lam, imolspec=imolspec,\
+        if npix%2 == 0:
+            zoomau = [-pixelsize*dpc * (npix+1)/2, pixelsize*dpc * (npix-1)/2, \
+                    -pixelsize*dpc * (npix+1)/2, pixelsize*dpc * (npix-1)/2]
+        else:
+            zoomau = [-pixelsize*dpc * npix/2, pixelsize*dpc * npix/2, \
+                    -pixelsize*dpc * npix/2, pixelsize*dpc * npix/2]
+
+        radmc3d.run.image(npix=npix, zoomau=zoomau, lam=lam, imolspec=imolspec,\
                 iline=iline, widthkms=widthkms, linenlam=linenlam, \
                 doppcatch=doppcatch, incl=incl, posang=pa, phi=phi)
 
