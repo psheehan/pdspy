@@ -43,7 +43,7 @@ class Spectrum:
         if (usefile == None):
             f = h5py.File(filename, "r")
         else:
-            r = usefile
+            f = usefile
 
         wave = f['wave'].value
         flux = f['flux'].value
