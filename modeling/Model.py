@@ -150,8 +150,8 @@ class Model:
         image = image / Jy * ((x[1] - x[0]) / (dpc * pc)) * \
                 ((y[1] - y[0]) / (dpc * pc))
         if iline != None:
-            x = x[int(npix/2)] / (dpc * pc) / arcsec
-            y = y[int(npix/2)] / (dpc * pc) / arcsec
+            x = x / (dpc * pc) / arcsec
+            y = y / (dpc * pc) / arcsec
         else:
             x = (x - x[int(npix/2)]) / (dpc * pc) / arcsec
             y = (y - y[int(npix/2)]) / (dpc * pc) / arcsec
