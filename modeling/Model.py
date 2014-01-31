@@ -132,16 +132,29 @@ class Model:
             zoomau = [-pixelsize*dpc * npix/2, pixelsize*dpc * npix/2, \
                     -pixelsize*dpc * npix/2, pixelsize*dpc * npix/2]
 
-        radmc3d.run.image(npix=npix, zoomau=zoomau, lam=lam, imolspec=imolspec,\
-                iline=iline, widthkms=widthkms, linenlam=linenlam, \
-                doppcatch=doppcatch, incl=incl, posang=pa, phi=phi)
+        sizeau=pixelsize*npix*dpc
+
+        if iline != None:
+            radmc3d.run.image(npix=npix, sizeau=sizeau, lam=lam, \
+                    imolspec=imolspec, iline=iline, widthkms=widthkms, \
+                    linenlam=linenlam, doppcatch=doppcatch, incl=incl, \
+                    posang=pa, phi=phi)
+        else:
+            radmc3d.run.image(npix=npix, zoomau=zoomau, lam=lam, \
+                    imolspec=imolspec, iline=iline, widthkms=widthkms, \
+                    linenlam=linenlam, doppcatch=doppcatch, incl=incl, \
+                    posang=pa, phi=phi)
 
         image, x, y, lam = radmc3d.read.image()
 
         image = image / Jy * ((x[1] - x[0]) / (dpc * pc)) * \
                 ((y[1] - y[0]) / (dpc * pc))
-        x = (x - x[int(npix/2)]) / (dpc * pc) / arcsec
-        y = (y - y[int(npix/2)]) / (dpc * pc) / arcsec
+        if iline != None:
+            x = x[int(npix/2)] / (dpc * pc) / arcsec
+            y = y[int(npix/2)] / (dpc * pc) / arcsec
+        else:
+            x = (x - x[int(npix/2)]) / (dpc * pc) / arcsec
+            y = (y - y[int(npix/2)]) / (dpc * pc) / arcsec
 
         self.images[name] = Image(image, x=x, y=y, wave=lam*1.0e-4)
 
