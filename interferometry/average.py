@@ -48,8 +48,8 @@ def average(data,gridsize=256,binsize=None,radial=False):
             i = numpy.round(u/binsize+gridsize/2.)
             j = numpy.round(v/binsize+gridsize/2.)
         else:
-            i = round(u/binsize+(gridsize-1)/2.)
-            j = round(v/binsize+(gridsize-1)/2.)
+            i = numpy.round(u/binsize+(gridsize-1)/2.)
+            j = numpy.round(v/binsize+(gridsize-1)/2.)
     
     for k in range(u.size):
         new_real[j[k],i[k]] += (real[k,:]*weights[k,:]).sum()
