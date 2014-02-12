@@ -1,5 +1,4 @@
-from numpy import where,zeros,sqrt,cos,sin,arange,array,exp,abs,mat,ones, \
-                  round,sinc
+import numpy
 from .interferometry import Visibilities
 from .freqcorrect import freqcorrect
 
