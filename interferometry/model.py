@@ -1,16 +1,17 @@
-from numpy import exp,sqrt,zeros,cos,sin,concatenate,array
+import numpy
 from ..constants.astronomy import arcsec
 from ..constants.physics import c
+from ..constants.math import py
 from .interferometry import Visibilities
 
-def model(u,v,params,return_type="complex",funct=["gauss"], \
-            nparams=None,freq=array([226999690470.0])):
+def model(u, v, params, return_type="complex", funct=["gauss"], \
+            nparams=None, freq=array([226999690470.0])):
     
-    params=array(params)
-    funct=array(funct)
+    params = numpy.array(params)
+    funct = numpy.array(funct)
     
     if nparams == None:
-        nparams = zeros(funct.size)
+        nparams = numpy.zeros(funct.size)
     
     for i in range(funct.size):
         if (funct[i] == "point") or (funct[i] == "gauss") or \
@@ -22,7 +23,7 @@ def model(u,v,params,return_type="complex",funct=["gauss"], \
             elif funct[i] == "circle":
                 nparams[i] = 6
     
-    model = zeros(u.size)+1j*zeros(u.size)
+    model = numpy.zeros(u.size)+1j*numpy.zeros(u.size)
     for i in range(funct.size):
         index = 0
         for j in range(i):
@@ -37,14 +38,13 @@ def model(u,v,params,return_type="complex",funct=["gauss"], \
                 par[index+3] *= arcsec
         
         if funct[i] == "point":
-            model += point_model(u,v,par[index+0],par[index+1], \
-                par[index+2])
+            model += point_model(u, v, par[index+0], par[index+1], par[index+2])
         elif funct[i] == "gauss":
-            model += gaussian_model(u,v,par[index+0],par[index+1], \
-                par[index+2],par[index+3],par[index+4],par[index+5])
+            model += gaussian_model(u, v, par[index+0], par[index+1], \
+                par[index+2], par[index+3], par[index+4], par[index+5])
         elif funct[i] == "circle":
-            model += circle_model(u,v,par[index+0],par[index+1], \
-                par[index+2],par[index+3],par[index+4],par[index+5])
+            model += circle_model(u, v, par[index+0], par[index+1], \
+                par[index+2], par[index+3], par[index+4], par[index+5])
     
     real = model.real
     imag = model.imag
@@ -54,34 +54,34 @@ def model(u,v,params,return_type="complex",funct=["gauss"], \
     elif return_type == "imag":
         return imag
     elif return_type == "complex":
-        return real+1j*imag
+        return real + 1j*imag
     elif return_type == "amp":
-        return sqrt(real**2+imag**2)
+        return numpy.sqrt(real**2 + imag**2)
     elif return_type == "data":
-        return Visibilities(u,v,array([freq[0]]),real.reshape((real.size,1)), \
-            imag.reshape((imag.size,1)), \
-            (zeros(real.size)+1.0).reshape((real.size,1)))
+        return Visibilities(u, v, numpy.array([freq[0]]), \
+                real.reshape((real.size,1)), imag.reshape((imag.size,1)), \
+                numpy.ones((real.size,1)))
     elif return_type == "append":
-        return concatenate((real,imag))
+        return numpy.concatenate((real,imag))
 
-def point_model(u,v,xcenter,ycenter,flux):
+def point_model(u, v, xcenter, ycenter, flux):
     
-    return flux*exp(-2*3.14159*(0+1j*(u*xcenter+v*ycenter)))
+    return flux * numpy.exp(-2*3.14159 * (0 + 1j*(u * xcenter +v * ycenter)))
 
-def circle_model(u,v,xcenter,ycenter,radius,incline,theta,flux):
+def circle_model(u, v, xcenter, ycenter, radius, incline, theta, flux):
     
-    urot = u*cos(theta)-v*sin(theta)
-    vrot = u*sin(theta)+v*cos(theta)
+    urot = u * numpy.cos(theta) - v * numpy.sin(theta)
+    vrot = u * numpy.sin(theta) + v * numpy.cos(theta)
     
-    return flux*BeselJ(2*3.14159*radius*sqrt(urot**2+vrot**2*cos(incline \
-                       )^2),1)/(3.14159*radius*sqrt(urot**2+vrot**2* \
-                       cos(incline)**2))*exp(-2*3.14159*(0+1j*(u*xcenter+ \
-                       v*ycenter)))
+    return flux * BeselJ(2*pi * radius* numpy.sqrt(urot**2 + vrot**2 * \
+            numpy.cos(incline)**2),1) / (pi * radius * numpy.sqrt(urot**2 + \
+            vrot**2 * numpy.cos(incline)**2)) * numpy.exp(-2*pi * (0 + \
+            1j*(u*xcenter+v*ycenter)))
 
-def gaussian_model(u,v,xcenter,ycenter,usigma,vsigma,theta,flux):
+def gaussian_model(u, v, xcenter, ycenter, usigma, vsigma, theta, flux):
     
-    urot = u*cos(theta)-v*sin(theta)
-    vrot = u*sin(theta)+v*cos(theta)
+    urot = u * numpy.cos(theta) - v * numpy.sin(theta)
+    vrot = u * numpy.sin(theta) + v * numpy.cos(theta)
     
-    return flux*exp(-1*2*3.14159**2*(usigma**2*urot**2+vsigma**2*vrot**2))*\
-            exp(-2*3.14159*(0+1j*(u*xcenter+v*ycenter)))
+    return flux * numpy.exp(-2*pi**2 * (usigma**2 * urot**2 + \
+            vsigma**2 * vrot**2)) * numpy.exp(-2*pi * 1j*(u*xcenter+v*ycenter))
