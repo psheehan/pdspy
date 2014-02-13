@@ -4,22 +4,22 @@ from ..constants.physics import c
 
 def freqcorrect(data):
 
-    new_freq = array([data.freq.mean()])
+    new_freq = numpy.array([data.freq.mean()])
 
-    new_u = array([])
-    new_v = array([])
-    new_real = array([])
-    new_imag = array([])
-    new_weights = array([])
-    new_baseline = array([])
+    new_u = numpy.array([])
+    new_v = numpy.array([])
+    new_real = numpy.array([])
+    new_imag = numpy.array([])
+    new_weights = numpy.array([])
+    new_baseline = numpy.array([])
 
     for i in range(data.freq.size):
-        new_u = concatenate((new_u,data.u*data.freq[i]/new_freq[0]))
-        new_v = concatenate((new_v,data.v*data.freq[i]/new_freq[0]))
-        new_real = concatenate((new_real,data.real[:,i]))
-        new_imag = concatenate((new_imag,data.imag[:,i]))
-        new_weights = concatenate((new_weights,data.weights[:,i]))
-        new_baseline = concatenate((new_baseline,data.baseline))
+        new_u = numpy.concatenate((new_u, data.u * data.freq[i]/new_freq[0]))
+        new_v = numpy.concatenate((new_v, data.v * data.freq[i]/new_freq[0]))
+        new_real = numpy.concatenate((new_real, data.real[:,i]))
+        new_imag = numpy.concatenate((new_imag, data.imag[:,i]))
+        new_weights = numpy.concatenate((new_weights, data.weights[:,i]))
+        new_baseline = numpy.concatenate((new_baseline, data.baseline))
 
     new_u = new_u.reshape((new_u.size,))
     new_v = new_v.reshape((new_v.size,))
@@ -36,5 +36,5 @@ def freqcorrect(data):
     new_weights = new_weights[good,:]
     new_baseline = new_baseline[good,:]
 
-    return Visibilities(new_u,new_v,new_freq,new_real,new_imag,new_weights, \
-            baseline=new_baseline)
+    return Visibilities(new_u, new_v, new_freq, new_real, new_imag, \
+            new_weights, baseline=new_baseline)

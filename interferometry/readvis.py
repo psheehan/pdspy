@@ -12,7 +12,7 @@ def readvis(filename):
             vis = readuvfits(filenames[i],fmt="casa")
 
             vis.u /= vis.freq.mean()
-            vis.u /= vis.freq.mean()
+            vis.v /= vis.freq.mean()
         else:
             new = readuvfits(filenames[i],fmt="casa")
 
@@ -29,7 +29,7 @@ def readvis(filename):
     vis.freq = vis.freq[argsort(vis.freq)][::-1]
 
     vis.u *= vis.freq.mean()
-    vis.u *= vis.freq.mean()
+    vis.v *= vis.freq.mean()
 
     return Visibilities(vis.u, vis.v, vis.freq, vis.real, vis.imag, \
             vis.weights, baseline=vis.baseline)

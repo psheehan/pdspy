@@ -3,7 +3,6 @@ from numpy import array,mat,sqrt,exp,sinc,zeros,transpose, \
 from .average import average
 from .grid import grid
 from .clean import clean
-from .freqcorrect import freqcorrect
 from ..imaging import Image
 from ..constants.physics import c
 from ..constants.math import pi
