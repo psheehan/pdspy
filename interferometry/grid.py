@@ -3,23 +3,27 @@ from .interferometry import Visibilities
 from .freqcorrect import freqcorrect
 
 def grid(data, gridsize=256, binsize=2000.0, channels=False, \
-        convolution="pillbox", mfs=False,channel=None):
+        convolution="pillbox", mfs=False, channel=None):
     
     if mfs:
         vis = freqcorrect(data)
         u = vis.u.copy()
         v = vis.v.copy()
+        freq = vis.freq.copy()
         real = vis.real.copy()
         imag = vis.imag.copy()
         weights = vis.weights.copy()
     else:
-        u = data.u.copy
-        v = data.v.copy
+        u = data.u.copy()
+        v = data.v.copy()
         if channel != None:
-            real = data.real[:,channel].reshape((data.real.shape[0],1))
-            imag = data.imag[:,channel].reshape((data.real.shape[0],1))
-            weights = data.weights[:,channel].reshape((data.real.shape[0],1))
+            freq = numpy.array([data.freq[channel]])
+            real = data.real[:,channel].copy().reshape((data.real.shape[0],1))
+            imag = data.imag[:,channel].copy().reshape((data.real.shape[0],1))
+            weights = data.weights[:,channel].copy(). \
+                    reshape((data.real.shape[0],1))
         else:
+            freq = data.freq.mean()
             real = data.real.copy()
             imag = data.imag.copy()
             weights = data.weights.copy()
@@ -32,11 +36,6 @@ def grid(data, gridsize=256, binsize=2000.0, channels=False, \
     weights /= weights.sum()
     
     # Average over the U-V plane by creating bins to average over.
-    
-    if channels == False:
-        nchannels = 1
-    else:
-        nchannels = real[0,:].size
     
     if gridsize%2 == 0:
         uu = numpy.linspace(-gridsize*binsize/2, (gridsize/2-1)*binsize, \
@@ -72,24 +71,21 @@ def grid(data, gridsize=256, binsize=2000.0, channels=False, \
     for k in range(u.size):
         for l in inc_range+j[k]:
             for m in inc_range+i[k]:
-                convolve = convolve_func(u[k]-new_u[l,m],v[k]- \
-                    new_v[l,m],binsize,binsize)
+                convolve = convolve_func(u[k]-new_u[l,m],v[k] - new_v[l,m], \
+                        binsize, binsize)
                 new_real[l,m] += (real[k,:]*weights[k,:]).sum()*convolve
                 new_imag[l,m] += (imag[k,:]*weights[k,:]).sum()*convolve
                 new_weights[l,m] += weights[k,:].sum()*convolve
     
     new_u = new_u.reshape(gridsize**2)
     new_v = new_v.reshape(gridsize**2)
-    new_real = new_real.reshape((gridsize**2,nchannels))
-    new_imag = new_imag.reshape((gridsize**2,nchannels))
-    new_weights = new_weights.reshape((gridsize**2,nchannels))
+    new_real = new_real.reshape((gridsize**2,1))
+    new_imag = new_imag.reshape((gridsize**2,1))
+    new_weights = new_weights.reshape((gridsize**2,1))
     
-    if channels == False:
-        freq = array([data.freq.mean()])
-    
-    return Visibilities(new_u,new_v,freq,new_real,new_imag,new_weights)
+    return Visibilities(new_u, new_v, freq, new_real, new_imag, new_weights)
 
-def exp_sinc(u,v,delta_u,delta_v):
+def exp_sinc(u, v, delta_u, delta_v):
     
     alpha1 = 1.55
     alpha2 = 2.52
