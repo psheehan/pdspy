@@ -1,7 +1,6 @@
 import numpy
 from ..constants.astronomy import arcsec
 from ..constants.physics import c
-from ..constants.math import py
 from .interferometry import Visibilities
 
 def model(u, v, params, return_type="complex", funct="gauss", freq=230):
@@ -28,9 +27,10 @@ def model(u, v, params, return_type="complex", funct="gauss", freq=230):
             nparams[i] = 6
     
     model = 1j*numpy.zeros(u.size)
-    index = 0
     for i in range(funct.size):
-        index += nparams[i]
+        index = 0
+        for j in range(i):
+            index += nparams[i]
         
         par = params.copy()
         par[index+0] *= arcsec
