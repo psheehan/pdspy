@@ -1,7 +1,7 @@
 import numpy
 from .interferometry import Visibilities
 
-def average(data,gridsize=256,binsize=None,radial=False):
+def average(data, gridsize=256, binsize=None, radial=False):
     
     u = data.u.copy()
     v = data.v.copy()

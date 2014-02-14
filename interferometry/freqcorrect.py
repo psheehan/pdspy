@@ -1,4 +1,4 @@
-from numpy import array, concatenate
+import numpy
 from .interferometry import Visibilities
 from ..constants.physics import c
 

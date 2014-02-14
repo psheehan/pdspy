@@ -35,10 +35,11 @@ def model_fit(data, funct='point', nsteps=1e3, niter=3):
         for i in range(x.size):
             for j in range(y.size):
                 if (funct[k] == 'point'):
-                    par = concatenate((params, numpy.array([x[i],y[j],flux0])))
+                    par = numpy.concatenate((params, numpy.array([x[i], \
+                            y[j], flux0])))
                 elif (funct[k] == 'gauss'):
-                    par = concatenate((params, numpy.array([x[i], y[j], 0.1, \
-                            0.1, 0.0, flux0])))
+                    par = numpy.concatenate((params, numpy.array([x[i], \
+                            y[j], 0.1, 0.1, 0.0, flux0])))
 
                 chisq[i,j] = calc_chisq(data, par, funct[0:k+1])
     
@@ -46,27 +47,28 @@ def model_fit(data, funct='point', nsteps=1e3, niter=3):
         ymin = y[numpy.where(chisq == chisq.min())[1][0]]
 
         if (funct[k] == 'point'):
-            params = concatenate((params, numpy.array([xmin, ymin, flux0])))
+            params = numpy.concatenate((params, numpy.array([xmin, \
+                    ymin, flux0])))
         elif (funct[k] == 'gauss'):
-            params = concatenate((params, numpy.array([xmin, ymin, 0.1, 0.1, \
-                    0.0, flux0])))
+            params = numpy.concatenate((params, numpy.array([xmin, ymin, \
+                    0.1, 0.1, 0.0, flux0])))
 
     # Next do a few iterations of MCMC to get the correct solution.
 
     x = data.u
     y = data.v
-    z = concatenate((data.real, data.imag))[:,0]
-    sigma_z = 1./numpy.sqrt(concatenate((data.weights,data.weights)))[:,0]
+    z = numpy.concatenate((data.real, data.imag))[:,0]
+    sigma_z = 1./numpy.sqrt(numpy.concatenate((data.weights,data.weights)))[:,0]
 
     args = {'return_type':'append', 'funct':funct}
 
     sigma = numpy.array([])
     for k in range(funct.size):
         if (funct[k] == 'point'):
-            sigma = concatenate((sigma, numpy.array([0.1, 0.1, fluxstd])))
+            sigma = numpy.concatenate((sigma, numpy.array([0.1, 0.1, fluxstd])))
         elif (funct[k] == 'gauss'):
-            sigma = concatenate((sigma, numpy.array([0.1, 0.1, 0.05, 0.05, \
-                    2*pi/10, fluxstd])))
+            sigma = numpy.concatenate((sigma, numpy.array([0.1, 0.1, 0.05, \
+                    0.05, 2*pi/10, fluxstd])))
 
     temp = {"limited":[False,False], "limits":[0.0,0.0]}
     limits = []

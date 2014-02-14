@@ -1,10 +1,10 @@
-from numpy import zeros,sqrt,array, mat, ones, zeros, arange, exp, cos, sin, \
+from numpy import zeros, sqrt, array, mat, ones, zeros, arange, exp, cos, sin, \
         ravel
 from scipy.signal import fftconvolve
 from scipy.optimize import leastsq
 from ..imaging import Image
 
-def clean(image,beam,gain=0.1,maxiter=1000,threshold=0.001,box=None):
+def clean(image, beam, gain=0.1, maxiter=1000, threshold=0.001, box=None):
     
     dirty = image.image[:,:,0]
     dirtybeam = beam.image[:,:,0]
@@ -13,9 +13,9 @@ def clean(image,beam,gain=0.1,maxiter=1000,threshold=0.001,box=None):
     wherezero = dirty == 0
     nonzero = dirty != 0
     
-    model = zeros(dirty.shape)
+    model = numpy.zeros(dirty.shape)
 
-    mask = zeros(dirty.shape)
+    mask = numpy.zeros(dirty.shape)
     if mask != None:
         mask[box[2]+nx/2:box[3]+nx/2,box[0]+ny/2:box[1]+ny/2]=1.
     else:
@@ -28,10 +28,10 @@ def clean(image,beam,gain=0.1,maxiter=1000,threshold=0.001,box=None):
         
         model[maxval] = model[maxval] + dirty[maxval]*gain
         
-        subtract = zeros(dirty.shape)
+        subtract = numpy.zeros(dirty.shape)
         subtract[maxval] = dirty[maxval]*gain
         
-        dirty = dirty - fftconvolve(subtract,dirtybeam,mode='same')
+        dirty = dirty - fftconvolve(subtract, dirtybeam, mode='same')
         dirty[wherezero] = 0.
         
         rms = dirty[nonzero].std()
@@ -40,9 +40,10 @@ def clean(image,beam,gain=0.1,maxiter=1000,threshold=0.001,box=None):
         
         n = n + 1
     
-    fitfunc = lambda p, x, y: exp(-(x*cos(p[2])-y*sin(p[2]))**2/(2*p[0]**2)- \
-            (x*sin(p[2])+y*cos(p[2]))**2/(2*p[1]**2))
-    errfunc = lambda p, x, y, z: ravel(fitfunc(p, x, y) - z)
+    fitfunc = lambda p, x, y: numpy.exp(-(x * numpy.cos(p[2]) - \
+            y * numpy.sin(p[2]))**2 / (2*p[0]**2) - (x * numpy.sin(p[2]) + \
+            y * numpy.cos(p[2]))**2 / (2*p[1]**2))
+    errfunc = lambda p, x, y, z: numpy.ravel(fitfunc(p, x, y) - z)
     p0 = [3.,3.,0.]
 
     x = array(mat(ones(ny)).T*(arange(nx)-nx/2))

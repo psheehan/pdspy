@@ -1,9 +1,9 @@
 from astropy.io.fits import open
-from numpy import concatenate, arange, mod, repeat
 from ..constants.physics import c
 from .interferometry import Visibilities
+import numpy
 
-def readuvfits(filename,fmt="miriad",fast=False):
+def readuvfits(filename, fmt="miriad", fast=False):
     
     data = open(filename)
     
@@ -20,32 +20,32 @@ def readuvfits(filename,fmt="miriad",fast=False):
         imag = (data[0].data.field("data"))[:,0,0,:,0,1]
         weights = (data[0].data.field("data"))[:,0,0,:,0,2]
         baselines = data[0].data.field(3)
-    ant2 = mod(baselines,256)
+    ant2 = numpy.mod(baselines,256)
     ant1 = (baselines-ant2)/256
-    baseline = repeat("  6.1-6.1",u.size)
+    baseline = numpy.repeat("  6.1-6.1",u.size)
     baseline[((ant1 < 7) & (ant2 >= 7)) ^ ((ant1 >= 7) & (ant2 < 7))] = \
             " 6.1-10.4"
     baseline[(ant1 < 7) & (ant2 < 7)] = "10.4-10.4"
     
-    u = concatenate((u,-u))
-    v = concatenate((v,-v))
-    real = concatenate((real,real))
-    imag = concatenate((imag,-imag))
-    weights = concatenate((weights,weights))
-    baseline = concatenate((baseline,baseline))
+    u = numpy.concatenate((u, -u))
+    v = numpy.concatenate((v, -v))
+    real = numpy.concatenate((real, real))
+    imag = numpy.concatenate((imag, -imag))
+    weights = numpy.concatenate((weights, weights))
+    baseline = numpy.concatenate((baseline, baseline))
     
     freq0 = header["CRVAL4"]
     delta_freq = header["CDELT4"]
     pix0 = header["CRPIX4"]
     nfreq = header["NAXIS4"]
-    freq = freq0 + (arange(nfreq)-pix0)*delta_freq
+    freq = freq0 + (numpy.arange(nfreq)-pix0)*delta_freq
     
     u *= freq.mean()
     v *= freq.mean()
     
     data.close()
     
-    uvdata = Visibilities(u,v,freq,real,imag,weights,baseline=baseline)
+    uvdata = Visibilities(u, v, freq, real, imag, weights, baseline=baseline)
     
     uvdata.set_header(header)
     
