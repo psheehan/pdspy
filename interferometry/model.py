@@ -4,30 +4,33 @@ from ..constants.physics import c
 from ..constants.math import py
 from .interferometry import Visibilities
 
-def model(u, v, params, return_type="complex", funct=["gauss"], \
-            nparams=None, freq=array([226999690470.0])):
+def model(u, v, params, return_type="complex", funct="gauss", freq=230):
     
-    params = numpy.array(params)
-    funct = numpy.array(funct)
-    
-    if nparams == None:
-        nparams = numpy.zeros(funct.size)
-    
+    if type(params) == list:
+        params = numpy.array(params)
+    elif type(params) == numpy.ndarray:
+        pass
+
+    if type(funct) == str:
+        funct = numpy.array([funct])
+    elif type(funct) == list:
+        funct = numpy.array(funct)
+    elif type(funct) == numpy.ndarray:
+        pass
+
+    nparams = numpy.zeros(funct.size)
     for i in range(funct.size):
-        if (funct[i] == "point") or (funct[i] == "gauss") or \
-                (funct[i] == "circle"):
-            if funct[i] == "point":
-                nparams[i] = 3
-            elif funct[i] == "gauss":
-                nparams[i] = 6
-            elif funct[i] == "circle":
-                nparams[i] = 6
+        if funct[i] == "point":
+            nparams[i] = 3
+        elif funct[i] == "gauss":
+            nparams[i] = 6
+        elif funct[i] == "circle":
+            nparams[i] = 6
     
-    model = numpy.zeros(u.size)+1j*numpy.zeros(u.size)
+    model = 1j*numpy.zeros(u.size)
+    index = 0
     for i in range(funct.size):
-        index = 0
-        for j in range(i):
-            index = index+nparams[j]
+        index += nparams[i]
         
         par = params.copy()
         par[index+0] *= arcsec
@@ -58,7 +61,7 @@ def model(u, v, params, return_type="complex", funct=["gauss"], \
     elif return_type == "amp":
         return numpy.sqrt(real**2 + imag**2)
     elif return_type == "data":
-        return Visibilities(u, v, numpy.array([freq[0]]), \
+        return Visibilities(u, v, numpy.array([freq*1.0e9]), \
                 real.reshape((real.size,1)), imag.reshape((imag.size,1)), \
                 numpy.ones((real.size,1)))
     elif return_type == "append":

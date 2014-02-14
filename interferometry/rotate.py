@@ -1,9 +1,10 @@
 from .interferometry import Visibilities
-from numpy import cos, sin
+import numpy
 
-def rotate(data,pa=0):
+def rotate(data, pa=0):
 
-    newu =  data.u*cos(pa) + data.v*sin(pa)
-    newv = -data.u*sin(pa) + data.v*cos(pa)
+    newu =  data.u * numpy.cos(pa) + data.v * numpy.sin(pa)
+    newv = -data.u * numpy.sin(pa) + data.v * numpy.cos(pa)
 
-    return Visibilities(newu,newv,data.freq,data.real,data.imag,data.weights)
+    return Visibilities(newu, newv, data.freq.copy(), data.real.copy(), \
+            data.imag.copy(), data.weights.copy())
