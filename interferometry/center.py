@@ -1,7 +1,7 @@
 from .average import average
 from .model import model
 from .interferometry import Visibilities
-from numpy
+import numpy
 
 def center(data, params):
     

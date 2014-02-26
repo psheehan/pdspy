@@ -23,7 +23,7 @@ def grid(data, gridsize=256, binsize=2000.0, channels=False, \
             weights = data.weights[:,channel].copy(). \
                     reshape((data.real.shape[0],1))
         else:
-            freq = data.freq.mean()
+            freq = numpy.array([data.freq.mean()])
             real = data.real.copy()
             imag = data.imag.copy()
             weights = data.weights.copy()
@@ -90,8 +90,10 @@ def exp_sinc(u, v, delta_u, delta_v):
     alpha1 = 1.55
     alpha2 = 2.52
     
-    return sinc(u/(alpha1*delta_u))*exp(-1*(u/(alpha2*delta_u))**2)* \
-           sinc(v/(alpha1*delta_u))*exp(-1*(v/(alpha2*delta_v))**2)
+    return numpy.sinc(u/(alpha1*delta_u))* \
+            numpy.exp(-1*(u/(alpha2*delta_u))**2)* \
+            numpy.sinc(v/(alpha1*delta_u))* \
+            numpy.exp(-1*(v/(alpha2*delta_v))**2)
 
 def ones_arr(u,v,delta_u,delta_v):
     

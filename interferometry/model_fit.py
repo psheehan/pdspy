@@ -72,16 +72,6 @@ def model_fit(data, funct='point', nsteps=1e3, niter=3):
 
     temp = {"limited":[False,False], "limits":[0.0,0.0]}
     limits = []
-    """
-    for i in range(params.size):
-        limits.append(temp.copy())
-        if ((i == 4) or (i == 10)):
-            limits[i]["limited"] = [True, True]
-            limits[i]["limits"] = [0.0, pi/2]
-        elif ((i == 2) or (i == 3) or (i == 8) or (i == 9)):
-            limits[i]["limited"] = [True, False]
-            limits[i]["limits"] = [0.0, 0.0]
-    """
     for i in range(funct.size):
         if funct[i] == 'point':
             limits.append(temp.copy())
