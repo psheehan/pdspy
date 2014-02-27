@@ -62,10 +62,10 @@ def grid(data, gridsize=256, binsize=2000.0, channels=False, \
     
     if convolution == "pillbox":
         convolve_func = ones_arr
-        ninclude = 1
+        ninclude = 3
     elif convolution == "expsinc":
         convolve_func = exp_sinc
-        ninclude = 7
+        ninclude = 9
     
     inc_range = numpy.linspace(-(ninclude-1)/2, (ninclude-1)/2, ninclude)
     for k in range(u.size):
@@ -82,19 +82,32 @@ def grid(data, gridsize=256, binsize=2000.0, channels=False, \
     new_real = new_real.reshape((gridsize**2,1))
     new_imag = new_imag.reshape((gridsize**2,1))
     new_weights = new_weights.reshape((gridsize**2,1))
-    
+
     return Visibilities(new_u, new_v, freq, new_real, new_imag, new_weights)
 
 def exp_sinc(u, v, delta_u, delta_v):
     
     alpha1 = 1.55
     alpha2 = 2.52
+    m = 6
     
-    return numpy.sinc(u/(alpha1*delta_u))* \
-            numpy.exp(-1*(u/(alpha2*delta_u))**2)* \
-            numpy.sinc(v/(alpha1*delta_u))* \
-            numpy.exp(-1*(v/(alpha2*delta_v))**2)
+    arr = numpy.sinc(u / (alpha1 * delta_u)) * \
+            numpy.exp(-1 * (u / (alpha2 * delta_u))**2)* \
+            numpy.sinc(v / (alpha1 * delta_v))* \
+            numpy.exp(-1 * (v / (alpha2 * delta_v))**2)
+
+    if (abs(u) >= m * delta_u / 2) or (abs(v) >= m * delta_v / 2):
+        arr = 0.
+
+    return arr
 
 def ones_arr(u,v,delta_u,delta_v):
     
-    return 1.0
+    m = 1
+
+    arr = 1.0
+
+    if (abs(u) >= m * delta_u / 2) or (abs(v) >= m * delta_v / 2):
+        arr = 0.
+
+    return arr
