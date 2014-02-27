@@ -35,7 +35,7 @@ def invert(data, imsize=256, pixel_size=0.25, convolution="pillbox"):
 
     im = fftshift(ifft2(ifftshift(comp))).real
     convolve = fftshift(ifft2(ifftshift(conv_func(u, v, binsize, \
-            binsize)))).real
+           binsize)))).real
 
     image = (im/convolve).reshape((imsize, imsize, 1))
 
