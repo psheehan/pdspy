@@ -16,10 +16,10 @@ def freqcorrect(data):
     for i in range(data.freq.size):
         new_u = numpy.concatenate((new_u, data.u * data.freq[i]/new_freq[0]))
         new_v = numpy.concatenate((new_v, data.v * data.freq[i]/new_freq[0]))
-        new_real = numpy.concatenate((new_real, data.real[:,i]))
-        new_imag = numpy.concatenate((new_imag, data.imag[:,i]))
-        new_weights = numpy.concatenate((new_weights, data.weights[:,i]))
-        new_baseline = numpy.concatenate((new_baseline, data.baseline))
+        new_real = numpy.concatenate((new_real, data.real[:,i].copy()))
+        new_imag = numpy.concatenate((new_imag, data.imag[:,i].copy()))
+        new_weights = numpy.concatenate((new_weights, data.weights[:,i].copy()))
+        new_baseline = numpy.concatenate((new_baseline, data.baseline.copy()))
 
     new_u = new_u.reshape((new_u.size,))
     new_v = new_v.reshape((new_v.size,))
