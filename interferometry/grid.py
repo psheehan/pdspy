@@ -2,8 +2,8 @@ import numpy
 from .interferometry import Visibilities
 from .freqcorrect import freqcorrect
 
-def grid(data, gridsize=256, binsize=2000.0, channels=False, \
-        convolution="pillbox", mfs=False, channel=None):
+def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
+        mfs=False, channel=None):
     
     if mfs:
         vis = freqcorrect(data)
