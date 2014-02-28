@@ -17,6 +17,7 @@ def invert(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False):
             
     u = gridded_data.u.reshape((imsize, imsize))
     v = gridded_data.v.reshape((imsize, imsize))
+    freq = gridded_data.freq.copy()
     real = gridded_data.real.reshape((imsize, imsize))
     imag = gridded_data.imag.reshape((imsize, imsize))
     weights = gridded_data.weights.reshape((imsize, imsize))
@@ -39,7 +40,7 @@ def invert(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False):
 
     image = (im/convolve).reshape((imsize, imsize, 1))
 
-    return Image(image, x=x, y=y)
+    return Image(image, x=x, y=y, freq=freq)
 
 def pillbox(u, v, delta_u, delta_v):
 
