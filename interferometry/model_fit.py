@@ -11,8 +11,8 @@ def model_fit(data, funct='point', nsteps=1e3, niter=3):
     elif type(funct) == numpy.ndarray:
         pass
 
-    flux0 = data.amp[data.uvdist < 30].mean() / funct.size
-    fluxstd = data.amp[data.uvdist < 30].std() / funct.size
+    flux0 = data.amp[data.uvdist < 30000.].mean() / funct.size
+    fluxstd = data.amp[data.uvdist < 30000.].std() / funct.size
 
     # First do a coarse grid search to find the location of the minimum.
 
@@ -27,10 +27,10 @@ def model_fit(data, funct='point', nsteps=1e3, niter=3):
         chisq = numpy.zeros((x.size, y.size))
 
         def calc_chisq(d, params, funct):
-            model = model(d.u, d.v, params, return_type='data', funct=funct)
+            m = model(d.u, d.v, params, return_type='data', funct=funct)
 
-            return ((d.real-model.real)**2*d.weights+(d.imag-model.imag)**2* \
-                    d.weights).sum()
+            return ((d.real - m.real)**2 * d.weights + \
+                    (d.imag - m.imag)**2 * d.weights).sum()
 
         for i in range(x.size):
             for j in range(y.size):
