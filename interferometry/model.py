@@ -30,7 +30,7 @@ def model(u, v, params, return_type="complex", funct="gauss", freq=230):
     for i in range(funct.size):
         index = 0
         for j in range(i):
-            index += nparams[i]
+            index += nparams[j]
         
         par = params.copy()
         par[index+0] *= arcsec
@@ -86,5 +86,6 @@ def gaussian_model(u, v, xcenter, ycenter, usigma, vsigma, theta, flux):
     urot = u * numpy.cos(theta) - v * numpy.sin(theta)
     vrot = u * numpy.sin(theta) + v * numpy.cos(theta)
     
-    return flux * numpy.exp(-2*pi**2 * (usigma**2 * urot**2 + \
-            vsigma**2 * vrot**2)) * numpy.exp(-2*pi * 1j*(u*xcenter+v*ycenter))
+    return flux * numpy.exp(-2*numpy.pi**2 * (usigma**2 * urot**2 + \
+            vsigma**2 * vrot**2)) * numpy.exp(-2*numpy.pi * \
+            1j*(u*xcenter+v*ycenter))
