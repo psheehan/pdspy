@@ -269,37 +269,38 @@ class Model:
 
         radmc3d.write.dustopac(dustopac)
 
-        gas = []
-        inpstyle = []
-        colpartners = []
-        for i in range(len(self.grid.gas)):
-            gas.append("{0:d}".format(i))
-            inpstyle.append("leiden")
-            colpartners.append([])
-            radmc3d.write.molecule(self.grid.gas[i], gas[i])
-            radmc3d.write.numberdens(self.grid.number_density[i], gas[i])
+        if len(self.grid.gas) > 0:
+            gas = []
+            inpstyle = []
+            colpartners = []
+            for i in range(len(self.grid.gas)):
+                gas.append("{0:d}".format(i))
+                inpstyle.append("leiden")
+                colpartners.append([])
+                radmc3d.write.molecule(self.grid.gas[i], gas[i])
+                radmc3d.write.numberdens(self.grid.number_density[i], gas[i])
 
-        radmc3d.write.line(gas, inpstyle, colpartners)
+            radmc3d.write.line(gas, inpstyle, colpartners)
 
-        number_density = numpy.array(self.grid.number_density)
-        velocity = numpy.array(self.grid.velocity)
-        vx = velocity[:,0,:,:,:]
-        vy = velocity[:,1,:,:,:]
-        vz = velocity[:,2,:,:,:]
-        velocity = numpy.zeros(self.grid.velocity[0].shape)
+            number_density = numpy.array(self.grid.number_density)
+            velocity = numpy.array(self.grid.velocity)
+            vx = velocity[:,0,:,:,:]
+            vy = velocity[:,1,:,:,:]
+            vz = velocity[:,2,:,:,:]
+            velocity = numpy.zeros(self.grid.velocity[0].shape)
 
-        nx, ny, nz = self.grid.number_density[0].shape
+            nx, ny, nz = self.grid.number_density[0].shape
 
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
-                    index = numpy.where(number_density[:,i,j,k] == \
-                            number_density[:,i,j,k].max())[0][0]
-                    velocity[0,i,j,k] = vx[index,i,j,k]
-                    velocity[1,i,j,k] = vy[index,i,j,k]
-                    velocity[2,i,j,k] = vz[index,i,j,k]
+            for i in range(nx):
+                for j in range(ny):
+                    for k in range(nz):
+                        index = numpy.where(number_density[:,i,j,k] == \
+                                number_density[:,i,j,k].max())[0][0]
+                        velocity[0,i,j,k] = vx[index,i,j,k]
+                        velocity[1,i,j,k] = vy[index,i,j,k]
+                        velocity[2,i,j,k] = vz[index,i,j,k]
 
-        radmc3d.write.gas_velocity(velocity)
+            radmc3d.write.gas_velocity(velocity)
 
     def read(self, filename=None, usefile=None):
         if (usefile == None):
