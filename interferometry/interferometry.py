@@ -6,6 +6,7 @@ import astropy
 
 lib = ctypes.cdll.LoadLibrary(os.path.dirname(__file__)+'/libinterferometry.so')
 lib.new_Visibilities.restype = ctypes.c_void_p
+lib.delete_Visibilities.restype = ctypes.c_void_p
 
 class Visibilities:
 

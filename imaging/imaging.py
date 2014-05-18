@@ -7,6 +7,7 @@ from ..constants.physics import c
 
 lib = ctypes.cdll.LoadLibrary(os.path.dirname(__file__)+'/libimaging.so')
 lib.new_Image.restype = ctypes.c_void_p
+lib.delete_Image.restype = ctypes.c_void_p
 
 class Image:
 
