@@ -5,10 +5,6 @@ import astropy
 import h5py
 from ..constants.physics import c
 
-lib = ctypes.cdll.LoadLibrary(os.path.dirname(__file__)+'/libimaging.so')
-lib.new_Image.restype = ctypes.c_void_p
-lib.delete_Image.restype = ctypes.c_void_p
-
 class Image:
 
     def __init__(self,image=None,x=None,y=None,header=None,wave=None, \
@@ -37,29 +33,34 @@ class Image:
             self.wave = wave
             self.freq = freq
 
+        self.lib = ctypes.cdll.LoadLibrary(os.path.dirname(__file__)+\
+                '/libimaging.so')
+        self.lib.new_Image.restype = ctypes.c_void_p
+        self.lib.delete_Image.argtypes = [ctypes.c_void_p]
+
         if (image != None):
-            self.obj = lib.new_Image( \
+            self.obj = self.lib.new_Image( \
                     image.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
                     ctypes.c_int(image.shape[1]), \
                     ctypes.c_int(image.shape[0]), \
                     ctypes.c_int(image.shape[2]))
 
         if (x != None) and (y != None):
-            lib.set_xy(ctypes.c_void_p(self.obj), \
+            self.lib.set_xy(ctypes.c_void_p(self.obj), \
                     x.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
                     y.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
 
         if (freq != None):
-            lib.set_freq(ctypes.c_void_p(self.obj), \
+            self.lib.set_freq(ctypes.c_void_p(self.obj), \
                     self.freq.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
                     self.wave.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
 
         if (unc != None):
-            lib.set_unc(ctypes.c_void_p(self.obj), \
+            self.lib.set_unc(ctypes.c_void_p(self.obj), \
                     unc.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
 
     def __del__(self):
-        lib.delete_Image(ctypes.c_void_p(self.obj))
+        self.lib.delete_Image(self.obj)
 
     def asFITS(self):
         hdulist = astropy.io.fits.HDUList([])

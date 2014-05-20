@@ -4,10 +4,6 @@ import h5py
 import os
 import astropy
 
-lib = ctypes.cdll.LoadLibrary(os.path.dirname(__file__)+'/libinterferometry.so')
-lib.new_Visibilities.restype = ctypes.c_void_p
-lib.delete_Visibilities.restype = ctypes.c_void_p
-
 class Visibilities:
 
     def __init__(self, u=None, v=None, freq=None, real=None, imag=None, \
@@ -29,7 +25,12 @@ class Visibilities:
         self.array_name = array_name
 
         if ((u != None) and (freq != None) and (real != None)):
-            self.obj = lib.new_Visibilities( \
+            self.lib = ctypes.cdll.LoadLibrary(os.path.dirname(__file__)+\
+                    '/libinterferometry.so')
+            self.lib.new_Visibilities.restype = ctypes.c_void_p
+            self.lib.delete_Visibilities.argtypes = [ctypes.c_void_p]
+
+            self.obj = self.lib.new_Visibilities( \
                     u.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
                     v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
                     freq.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
@@ -44,7 +45,7 @@ class Visibilities:
 
     def __del__(self):
         if hasattr(self, 'obj'):
-            lib.delete_Visibilities(ctypes.c_void_p(self.obj))
+            self.lib.delete_Visibilities(self.obj)
 
     def get_baselines(self, num):
         include = self.baseline == num
@@ -60,9 +61,9 @@ class Visibilities:
         hdulist = astropy.fits.HDUList([])
 
         nvis = self.u.size
-        hdu = astropy.fits.PrimaryHDU(numpy.concatenate((self.u.reshape((1,nvis)), \
-                self.v.reshape((1,nvis)),self.real.reshape((1,nvis)), \
-                self.imag.reshape((1,nvis)), \
+        hdu = astropy.fits.PrimaryHDU(numpy.concatenate((\
+                self.u.reshape((1,nvis)), self.v.reshape((1,nvis)), \
+                self.real.reshape((1,nvis)), self.imag.reshape((1,nvis)), \
                 self.weights.reshape((1,nvis))), axis=0))
 
         if self.header != None:
