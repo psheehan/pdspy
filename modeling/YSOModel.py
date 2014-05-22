@@ -5,7 +5,7 @@ from .Disk import Disk
 from .UlrichEnvelope import UlrichEnvelope
 from .Star import Star
 from ..constants.physics import h, c, G, m_p, k
-from ..constants.astronomy import AU, M_sun, kms
+from ..constants.astronomy import AU, M_sun, kms, R_sun
 from ..constants.math import pi
 
 class YSOModel(Model):
