@@ -155,6 +155,15 @@ class YSOModel(Model):
         I = h*nu/(4*pi)*A*n*Sigma*phi
 
         return I, v
+    
+    def make_hyperion_symmetric(self):
+        for i in range(len(self.grid.temperature)):
+            self.grid.temperature[i][:,0:ntheta/2,:] = \
+                    0.5 * (self.grid.temperature[i][:,0:ntheta/2,:] + \
+                    self.grid.temperature[i][:,ntheta/2:,:][:,::-1,:])
+            self.grid.temperature[i][:,ntheta/2:,:] =  \
+                    0.5 * (self.grid.temperature[i][:,0:ntheta/2,:] + \
+                    self.grid.temperature[i][:,ntheta/2:,:][:,::-1,:])[:,::-1,:]
 
     def convert_hyperion_to_radmc3d(self):
         self.grid.r = self.grid.r[1:]
