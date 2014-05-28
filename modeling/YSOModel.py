@@ -158,6 +158,8 @@ class YSOModel(Model):
     
     def make_hyperion_symmetric(self):
         for i in range(len(self.grid.temperature)):
+            ntheta = len(self.grid.theta)
+
             self.grid.temperature[i][:,0:ntheta/2,:] = \
                     0.5 * (self.grid.temperature[i][:,0:ntheta/2,:] + \
                     self.grid.temperature[i][:,ntheta/2:,:][:,::-1,:])
