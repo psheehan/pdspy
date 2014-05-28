@@ -159,13 +159,12 @@ class YSOModel(Model):
     def make_hyperion_symmetric(self):
         for i in range(len(self.grid.temperature)):
             ntheta = len(self.grid.theta)
+            upper = self.grid.temperature[i][:,0:ntheta/2,:]
+            lower = self.grid.temperature[i][:,ntheta/2:,:][:,::-1,:]
+            average = 0.5 * (upper + lower)
 
-            self.grid.temperature[i][:,0:ntheta/2,:] = \
-                    0.5 * (self.grid.temperature[i][:,0:ntheta/2,:] + \
-                    self.grid.temperature[i][:,ntheta/2:,:][:,::-1,:])
-            self.grid.temperature[i][:,ntheta/2:,:] =  \
-                    0.5 * (self.grid.temperature[i][:,0:ntheta/2,:] + \
-                    self.grid.temperature[i][:,ntheta/2:,:][:,::-1,:])[:,::-1,:]
+            self.grid.temperature[i][:,0:ntheta/2,:] = average
+            self.grid.temperature[i][:,ntheta/2:,:] =  average[:,::-1,:]
 
     def convert_hyperion_to_radmc3d(self):
         self.grid.r = self.grid.r[1:]
