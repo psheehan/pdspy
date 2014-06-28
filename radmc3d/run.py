@@ -1,6 +1,6 @@
 from os import system
 
-def thermal(noscat=None, nphot_therm=None, nphot_scat=None, 
+def thermal(noscat=None, nphot_therm=None, nphot_scat=None, setthreads=1, \
         inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None):
 
     command="radmc3d mctherm "
@@ -9,6 +9,8 @@ def thermal(noscat=None, nphot_therm=None, nphot_scat=None,
         command += "noscat "
     if (nphot_therm != None):
         command += "nphot_therm {0:d} ".format(nphot_therm)
+    if (setthreads != 1):
+        command += "setthreads {0:d} ".format(setthreads)
     if (inclfreefree == True):
         command += "inclfreefree "
     if (nofreefree == True):

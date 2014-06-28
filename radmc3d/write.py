@@ -14,7 +14,8 @@ def control(incl_dust=None, incl_lines=None, incl_freefree=None, \
         lines_partition_temp1=None, lines_show_pictograms=None, \
         tgas_eq_tdust=None, subbox_nx=None, subbox_ny=None, subbox_nz=None, \
         subbox_x0=None, subbox_x1=None, subbox_y0=None, subbox_y1=None, \
-        subbox_z0=None, subbox_z1=None, modified_random_walk=None):
+        subbox_z0=None, subbox_z1=None, modified_random_walk=None, \
+        setthreads=1):
 
     f = open("radmc3d.inp","w")
 
@@ -120,6 +121,8 @@ def control(incl_dust=None, incl_lines=None, incl_freefree=None, \
         f.write("subbox_z1 = {0:d}\n".format(subbox_z1))
     if (modified_random_walk != None):
         f.write("modified_random_walk = {0:d}\n".format(modified_random_walk))
+    if (setthreads != None):
+        f.write("setthreads = {0:d}\n".format(setthreads))
 
     f.close()
 
