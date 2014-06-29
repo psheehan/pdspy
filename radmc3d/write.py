@@ -121,7 +121,7 @@ def control(incl_dust=None, incl_lines=None, incl_freefree=None, \
         f.write("subbox_z1 = {0:d}\n".format(subbox_z1))
     if (modified_random_walk != None):
         f.write("modified_random_walk = {0:d}\n".format(modified_random_walk))
-    if (setthreads != None):
+    if (setthreads != 1):
         f.write("setthreads = {0:d}\n".format(setthreads))
 
     f.close()
