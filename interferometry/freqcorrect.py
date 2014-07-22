@@ -2,9 +2,12 @@ import numpy
 from .interferometry import Visibilities
 from ..constants.physics import c
 
-def freqcorrect(data):
+def freqcorrect(data, new_freq=None):
 
-    new_freq = numpy.array([data.freq.mean()])
+    if new_freq != None:
+        new_freq = numpy.array([new_freq])
+    else:
+        new_freq = numpy.array([data.freq.mean()])
 
     new_u = numpy.array([])
     new_v = numpy.array([])
@@ -34,7 +37,7 @@ def freqcorrect(data):
     new_real = new_real[good,:]
     new_imag = new_imag[good,:]
     new_weights = new_weights[good,:]
-    new_baseline = new_baseline[good,:]
+    new_baseline = new_baseline[good]
 
     return Visibilities(new_u, new_v, new_freq, new_real, new_imag, \
             new_weights, baseline=new_baseline)
