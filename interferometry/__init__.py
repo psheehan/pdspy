@@ -4,6 +4,7 @@ from .readvis import readvis
 from .average import average
 from .center import center
 from .clean import clean
+from .concatenate import concatenate
 from .freqcorrect import freqcorrect
 from .grid import grid
 from .invert import invert
