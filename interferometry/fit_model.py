@@ -2,7 +2,7 @@ import numpy
 from .model import model
 from ..mcmc import mcmc2d
 
-def model_fit(data, funct='point', nsteps=1e3, niter=3):
+def fit_model(data, funct='point', nsteps=1e3, niter=3):
 
     if type(funct) == str:
         funct = numpy.array([funct])
