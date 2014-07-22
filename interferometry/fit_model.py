@@ -68,7 +68,7 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
             sigma = numpy.concatenate((sigma, numpy.array([0.1, 0.1, fluxstd])))
         elif (funct[k] == 'gauss'):
             sigma = numpy.concatenate((sigma, numpy.array([0.1, 0.1, 0.05, \
-                    0.05, 2*pi/10, fluxstd])))
+                    0.05, 2*numpy.pi/10, fluxstd])))
 
     temp = {"limited":[False,False], "limits":[0.0,0.0]}
     limits = []
