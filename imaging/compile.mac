@@ -1,4 +1,0 @@
-g++ -c -fopenmp -O3 -fPIC imaging.cc -o imaging.o
-g++ -g -fopenmp -shared -Wl,-dylib_install_name,libimaging.so -o libimaging.so imaging.o
-
-rm imaging.o

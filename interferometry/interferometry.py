@@ -1,7 +1,5 @@
-import ctypes
 import numpy
 import h5py
-import os
 import astropy
 
 class Visibilities:
@@ -23,29 +21,6 @@ class Visibilities:
 
         self.baseline = baseline
         self.array_name = array_name
-
-        if ((u != None) and (freq != None) and (real != None)):
-            self.lib = ctypes.cdll.LoadLibrary(os.path.dirname(__file__)+\
-                    '/libinterferometry.so')
-            self.lib.new_Visibilities.restype = ctypes.c_void_p
-            self.lib.delete_Visibilities.argtypes = [ctypes.c_void_p]
-
-            self.obj = self.lib.new_Visibilities( \
-                    u.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-                    v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-                    freq.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-                    real.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-                    imag.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-                    weights.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-                    self.uvdist.ctypes.data_as(ctypes.POINTER(\
-                        ctypes.c_double)), \
-                    self.amp.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-                    self.phase.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),\
-                    ctypes.c_int(u.size), ctypes.c_int(freq.size))
-
-    def __del__(self):
-        if hasattr(self, 'obj'):
-            self.lib.delete_Visibilities(self.obj)
 
     def get_baselines(self, num):
         include = self.baseline == num

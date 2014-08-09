@@ -1,4 +1,0 @@
-g++ -c -fopenmp -O3 -fPIC interferometry.cc -o interferometry.o
-g++ -g -fopenmp -shared -Wl,-dylib_install_name,libinterferometry.so -o libinterferometry.so interferometry.o
-
-rm interferometry.o

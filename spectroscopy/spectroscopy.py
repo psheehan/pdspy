@@ -1,6 +1,4 @@
-import ctypes
 import numpy
-import os
 import astropy
 import h5py
 
@@ -15,20 +13,6 @@ class Spectrum:
                 self.unc = unc
             else:
                 self.unc = unc
-
-            self.lib = ctypes.cdll.LoadLibrary(os.path.dirname(__file__)+\
-                    '/libspectroscopy.so')
-            self.lib.new_Spectrum.restype = ctypes.c_void_p
-            self.lib.delete_Spectrum.argtypes = [ctypes.c_void_p]
-
-            self.obj = self.lib.new_Spectrum( \
-                    wave.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-                    flux.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-                    unc.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-                    ctypes.c_int(wave.size))
-
-    def __del__(self):
-        self.lib.delete_Spectrum(self.obj)
 
     def asFITS(self):
         hdulist = astropy.io.fits.HDUList([])
