@@ -42,6 +42,8 @@ typedef struct {
     Visibilities *V;
 } VisibilitiesObject;
 
+/* Function to correctly deallocate the VisibilitiesObject class. */
+
 static void VisibilitiesObject_dealloc(VisibilitiesObject *self) {
     Py_XDECREF(self->u);
     Py_XDECREF(self->v);
@@ -56,6 +58,8 @@ static void VisibilitiesObject_dealloc(VisibilitiesObject *self) {
     Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
+/* Function to create a new instance of the VisibilitiesObject class. */
+
 static PyObject *VisibilitiesObject_new(PyTypeObject *type, 
         PyObject *args, PyObject *kwds) {
     VisibilitiesObject *self;
@@ -64,6 +68,8 @@ static PyObject *VisibilitiesObject_new(PyTypeObject *type,
 
     return (PyObject *)self;
 }
+
+/* Function to initialize the VisibilitiesObject class correctly. */
 
 static int VisibilitiesObject_init(VisibilitiesObject *self, 
         PyObject *args, PyObject *kwds) {
@@ -85,56 +91,56 @@ static int VisibilitiesObject_init(VisibilitiesObject *self,
     self->V->nfreq = dims[1];
 
     if (u) {
-        self->u = u;
         Py_INCREF(u);
+        self->u = u;
         self->V->u = (double *)PyArray_DATA(u);
     }
     if (v) {
-        self->v = v;
         Py_INCREF(v);
+        self->v = v;
         self->V->v = (double *)PyArray_DATA(v);
     }
     if (freq) {
-        self->freq = freq;
         Py_INCREF(freq);
+        self->freq = freq;
         self->V->freq = (double *)PyArray_DATA(freq);
     }
     if (real) {
-        self->real = real;
         Py_INCREF(real);
+        self->real = real;
         if (PyArray_AsCArray((PyObject **)&real, (void **)&self->V->real,
                 dims, 2, descr) < 0)
             return NULL;
     }
     if (imag) {
-        self->imag = imag;
         Py_INCREF(imag);
+        self->imag = imag;
         if (PyArray_AsCArray((PyObject **)&imag, (void **)&self->V->imag,
                 dims, 2, descr) < 0)
             return NULL;
     }
     if (weights) {
-        self->weights = weights;
         Py_INCREF(weights);
+        self->weights = weights;
         if (PyArray_AsCArray((PyObject **)&weights, (void **)&self->V->weights,
                 dims, 2, descr) < 0)
             return NULL;
     }
     if (uvdist) {
-        self->uvdist = uvdist;
         Py_INCREF(uvdist);
+        self->uvdist = uvdist;
         self->V->uvdist = (double *)PyArray_DATA(uvdist);
     }
     if (amp) {
-        self->amp = amp;
         Py_INCREF(amp);
+        self->amp = amp;
         if (PyArray_AsCArray((PyObject **)&amp, (void **)&self->V->amp,
                 dims, 2, descr) < 0)
             return NULL;
     }
     if (phase) {
-        self->phase = phase;
         Py_INCREF(phase);
+        self->phase = phase;
         if (PyArray_AsCArray((PyObject **)&phase, (void **)&self->V->phase,
                 dims, 2, descr) < 0)
             return NULL;
@@ -144,27 +150,287 @@ static int VisibilitiesObject_init(VisibilitiesObject *self,
 }
 
 static PyMemberDef VisibilitiesObject_members[] = {
-    {"u", T_OBJECT_EX, offsetof(VisibilitiesObject, u), 0, "Visibilities.u"},
-    {"v", T_OBJECT_EX, offsetof(VisibilitiesObject, v), 0, "Visibilities.v"},
-    {"freq", T_OBJECT_EX, offsetof(VisibilitiesObject, freq), 0, 
-        "Visibilities.freq"},
-    {"real", T_OBJECT_EX, offsetof(VisibilitiesObject, real), 0, 
-        "Visibilities.real"},
-    {"imag", T_OBJECT_EX, offsetof(VisibilitiesObject, imag), 0, 
-        "Visibilities.imag"},
-    {"weights", T_OBJECT_EX, offsetof(VisibilitiesObject, weights), 0, 
-        "Visibilities.weights"},
-    {"uvdist", T_OBJECT_EX, offsetof(VisibilitiesObject, uvdist), 0, 
-        "Visibilities.uvdist"},
-    {"amp", T_OBJECT_EX, offsetof(VisibilitiesObject, amp), 0, 
-        "Visibilities.amp"},
-    {"phase", T_OBJECT_EX, offsetof(VisibilitiesObject, phase), 0, 
-        "Visibilities.phase"},
     {NULL}
 };
 
+/* Below we define a set of getter and setter functions for a whole bunch of the
+ * variables so that we can ensure that when their value is changed in Python,
+ * the corresponding value in the Visibilities C++ class is also changed. */
+
+/* Functions to get and set the value of u. */
+
+static PyArrayObject *VisibilitiesObject_getu(VisibilitiesObject *self, 
+        void *closure) {
+    Py_INCREF(self->u);
+    return self->u;
+}
+
+static int VisibilitiesObject_setu(VisibilitiesObject *self, 
+        PyArrayObject *value, void *closure) {
+    if (value == NULL) {
+        PyErr_SetString(PyExc_TypeError, "Cannot delete the u attribute");
+        return -1;
+    }
+
+    self->V->u = (double *)PyArray_DATA(value);
+
+    Py_XDECREF(self->u);
+    Py_INCREF(value);
+    self->u = value;
+
+    return 0;
+}
+
+/* Functions to get and set the value of v. */
+
+static PyArrayObject *VisibilitiesObject_getv(VisibilitiesObject *self, 
+        void *closure) {
+    Py_INCREF(self->v);
+    return self->v;
+}
+
+static int VisibilitiesObject_setv(VisibilitiesObject *self, 
+        PyArrayObject *value, void *closure) {
+    if (value == NULL) {
+        PyErr_SetString(PyExc_TypeError, "Cannot delete the v attribute");
+        return -1;
+    }
+
+    self->V->v = (double *)PyArray_DATA(value);
+
+    Py_XDECREF(self->v);
+    Py_INCREF(value);
+    self->v = value;
+
+    return 0;
+}
+
+/* Functions to get and set the value of freq. */
+
+static PyArrayObject *VisibilitiesObject_getfreq(VisibilitiesObject *self, 
+        void *closure) {
+    Py_INCREF(self->freq);
+    return self->freq;
+}
+
+static int VisibilitiesObject_setfreq(VisibilitiesObject *self, 
+        PyArrayObject *value, void *closure) {
+    if (value == NULL) {
+        PyErr_SetString(PyExc_TypeError, "Cannot delete the freq attribute");
+        return -1;
+    }
+
+    self->V->freq = (double *)PyArray_DATA(value);
+
+    Py_XDECREF(self->freq);
+    Py_INCREF(value);
+    self->freq = value;
+
+    return 0;
+}
+
+/* Functions to get and set the value of real. */
+
+static PyArrayObject *VisibilitiesObject_getreal(VisibilitiesObject *self, 
+        void *closure) {
+    Py_INCREF(self->real);
+    return self->real;
+}
+
+static int VisibilitiesObject_setreal(VisibilitiesObject *self, 
+        PyArrayObject *value, void *closure) {
+    if (value == NULL) {
+        PyErr_SetString(PyExc_TypeError, "Cannot delete the real attribute");
+        return -1;
+    }
+
+    PyArray_Descr *descr = PyArray_DescrFromType(NPY_DOUBLE);
+    npy_intp *dims = PyArray_SHAPE(value);
+    if (PyArray_AsCArray((PyObject **)&value, (void **)&self->V->real, 
+            dims, 2, descr) < 0)
+        return NULL;
+
+    Py_XDECREF(self->real);
+    Py_INCREF(value);
+    self->real = value;
+
+    return 0;
+}
+
+/* Functions to get and set the value of imag. */
+
+static PyArrayObject *VisibilitiesObject_getimag(VisibilitiesObject *self, 
+        void *closure) {
+    Py_INCREF(self->imag);
+    return self->imag;
+}
+
+static int VisibilitiesObject_setimag(VisibilitiesObject *self, 
+        PyArrayObject *value, void *closure) {
+    if (value == NULL) {
+        PyErr_SetString(PyExc_TypeError, "Cannot delete the imag attribute");
+        return -1;
+    }
+
+    PyArray_Descr *descr = PyArray_DescrFromType(NPY_DOUBLE);
+    npy_intp *dims = PyArray_SHAPE(value);
+    if (PyArray_AsCArray((PyObject **)&value, (void **)&self->V->imag, 
+            dims, 2, descr) < 0)
+        return NULL;
+
+    Py_XDECREF(self->imag);
+    Py_INCREF(value);
+    self->imag = value;
+
+    return 0;
+}
+
+/* Functions to get and set the value of weights. */
+
+static PyArrayObject *VisibilitiesObject_getweights(VisibilitiesObject *self, 
+        void *closure) {
+    Py_INCREF(self->weights);
+    return self->weights;
+}
+
+static int VisibilitiesObject_setweights(VisibilitiesObject *self, 
+        PyArrayObject *value, void *closure) {
+    if (value == NULL) {
+        PyErr_SetString(PyExc_TypeError, "Cannot delete the weights attribute");
+        return -1;
+    }
+
+    PyArray_Descr *descr = PyArray_DescrFromType(NPY_DOUBLE);
+    npy_intp *dims = PyArray_SHAPE(value);
+    if (PyArray_AsCArray((PyObject **)&value, (void **)&self->V->weights, 
+            dims, 2, descr) < 0)
+        return NULL;
+
+    Py_XDECREF(self->weights);
+    Py_INCREF(value);
+    self->weights = value;
+
+    return 0;
+}
+
+/* Functions to get and set the value of uvdist. */
+
+static PyArrayObject *VisibilitiesObject_getuvdist(VisibilitiesObject *self, 
+        void *closure) {
+    Py_INCREF(self->uvdist);
+    return self->uvdist;
+}
+
+static int VisibilitiesObject_setuvdist(VisibilitiesObject *self, 
+        PyArrayObject *value, void *closure) {
+    if (value == NULL) {
+        PyErr_SetString(PyExc_TypeError, "Cannot delete the uvdist attribute");
+        return -1;
+    }
+
+    self->V->uvdist = (double *)PyArray_DATA(value);
+
+    Py_XDECREF(self->uvdist);
+    Py_INCREF(value);
+    self->uvdist = value;
+
+    return 0;
+}
+
+/* Functions to get and set the value of amp. */
+
+static PyArrayObject *VisibilitiesObject_getamp(VisibilitiesObject *self, 
+        void *closure) {
+    Py_INCREF(self->amp);
+    return self->amp;
+}
+
+static int VisibilitiesObject_setamp(VisibilitiesObject *self, 
+        PyArrayObject *value, void *closure) {
+    if (value == NULL) {
+        PyErr_SetString(PyExc_TypeError, "Cannot delete the amp attribute");
+        return -1;
+    }
+
+    PyArray_Descr *descr = PyArray_DescrFromType(NPY_DOUBLE);
+    npy_intp *dims = PyArray_SHAPE(value);
+    if (PyArray_AsCArray((PyObject **)&value, (void **)&self->V->amp, 
+            dims, 2, descr) < 0)
+        return NULL;
+
+    Py_XDECREF(self->amp);
+    Py_INCREF(value);
+    self->amp = value;
+
+    return 0;
+}
+
+/* Functions to get and set the value of phase. */
+
+static PyArrayObject *VisibilitiesObject_getphase(VisibilitiesObject *self, 
+        void *closure) {
+    Py_INCREF(self->phase);
+    return self->phase;
+}
+
+static int VisibilitiesObject_setphase(VisibilitiesObject *self, 
+        PyArrayObject *value, void *closure) {
+    if (value == NULL) {
+        PyErr_SetString(PyExc_TypeError, "Cannot delete the phase attribute");
+        return -1;
+    }
+
+    PyArray_Descr *descr = PyArray_DescrFromType(NPY_DOUBLE);
+    npy_intp *dims = PyArray_SHAPE(value);
+    if (PyArray_AsCArray((PyObject **)&value, (void **)&self->V->phase, 
+            dims, 2, descr) < 0)
+        return NULL;
+
+    Py_XDECREF(self->phase);
+    Py_INCREF(value);
+    self->phase = value;
+
+    return 0;
+}
+
+/* And an array which passes those functions to VisibilitiesObject */
+
+static PyGetSetDef VisibilitiesObject_getseters[] = {
+    {"u", (getter)VisibilitiesObject_getu, 
+        (setter)VisibilitiesObject_setu, "u part of the visibilities",
+        NULL},
+    {"v", (getter)VisibilitiesObject_getv, 
+        (setter)VisibilitiesObject_setv, "v part of the visibilities",
+        NULL},
+    {"freq", (getter)VisibilitiesObject_getfreq, 
+        (setter)VisibilitiesObject_setfreq, "freq part of the visibilities",
+        NULL},
+    {"real", (getter)VisibilitiesObject_getreal, 
+        (setter)VisibilitiesObject_setreal, "real part of the visibilities",
+        NULL},
+    {"imag", (getter)VisibilitiesObject_getimag, 
+        (setter)VisibilitiesObject_setimag, "imag part of the visibilities",
+        NULL},
+    {"weights", (getter)VisibilitiesObject_getweights, 
+        (setter)VisibilitiesObject_setweights, 
+        "weights part of the visibilities", NULL},
+    {"uvdist", (getter)VisibilitiesObject_getuvdist, 
+        (setter)VisibilitiesObject_setuvdist, "uvdist part of the visibilities",
+        NULL},
+    {"amp", (getter)VisibilitiesObject_getamp, 
+        (setter)VisibilitiesObject_setamp, "amp part of the visibilities",
+        NULL},
+    {"phase", (getter)VisibilitiesObject_getphase, 
+        (setter)VisibilitiesObject_setphase, "phase part of the visibilities",
+        NULL},
+    {NULL}
+};
+
+/* Below we define any methods that the VisibilitiesObject class should
+ * have and be accessible from Python. */
+
 static PyObject *VisibilitiesObject_test(VisibilitiesObject *self) {
-    printf("%f", self->V->u[2]);
+    printf("%f", self->V->real[1][1]);
 
     return Py_BuildValue("");
 }
@@ -174,6 +440,10 @@ static PyMethodDef VisibilitiesObject_methods[] = {
         "A test function for the VisibilitiesObject class."},
     {NULL}
 };
+
+/* Below we create the VisibilitiesObjectType, which makes all of the functions
+ * defined above actually part of the VisibilitiesObject class and therefore
+ * usable from Python. */
 
 static PyTypeObject VisibilitiesObjectType = {
     PyVarObject_HEAD_INIT(NULL,0)
@@ -205,7 +475,7 @@ static PyTypeObject VisibilitiesObjectType = {
     0,
     VisibilitiesObject_methods,
     VisibilitiesObject_members,
-    0,
+    VisibilitiesObject_getseters,
     0,
     0,
     0,
