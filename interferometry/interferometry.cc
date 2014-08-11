@@ -73,77 +73,59 @@ static PyObject *VisibilitiesObject_new(PyTypeObject *type,
 
 static int VisibilitiesObject_init(VisibilitiesObject *self, 
         PyObject *args, PyObject *kwds) {
-    static char *kwlist[] = {"u","v","freq","real","imag","weights","uvdist",
-        "amp","phase",NULL};
+    static char *kwlist[] = {"u","v","freq","real","imag","weights",NULL};
 
     PyArrayObject *u=NULL, *v=NULL, *freq=NULL, *real=NULL, *imag=NULL, 
-            *weights=NULL, *uvdist=NULL, *amp=NULL, *phase=NULL;
+            *weights=NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOOOOOOOO", kwlist, 
-            &u, &v, &freq, &real, &imag, &weights, &uvdist, &amp, &phase))
+            &u, &v, &freq, &real, &imag, &weights))
         return -1;
 
     self->V = new Visibilities();
-    PyArray_Descr *descr = PyArray_DescrFromType(NPY_DOUBLE);
-    npy_intp *dims = PyArray_SHAPE(real);
 
-    self->V->nuv = dims[0];
-    self->V->nfreq = dims[1];
+    if (u && v && freq && real && imag && weights) {
+        npy_intp *dims = PyArray_SHAPE(real);
+        self->V->nuv = dims[0];
+        self->V->nfreq = dims[1];
 
-    if (u) {
         Py_INCREF(u);
-        self->u = u;
-        self->V->u = (double *)PyArray_DATA(u);
-    }
-    if (v) {
         Py_INCREF(v);
-        self->v = v;
-        self->V->v = (double *)PyArray_DATA(v);
-    }
-    if (freq) {
         Py_INCREF(freq);
-        self->freq = freq;
-        self->V->freq = (double *)PyArray_DATA(freq);
-    }
-    if (real) {
         Py_INCREF(real);
+        Py_INCREF(imag);
+        Py_INCREF(weights);
+
+        self->u = u;
+        self->v = v;
+        self->freq = freq;
         self->real = real;
+        self->imag = imag;
+        self->weights = weights;
+
+        self->V->u = (double *)PyArray_DATA(u);
+        self->V->v = (double *)PyArray_DATA(v);
+        self->V->freq = (double *)PyArray_DATA(freq);
+
+        PyArray_Descr *descr = PyArray_DescrFromType(NPY_DOUBLE);
         if (PyArray_AsCArray((PyObject **)&real, (void **)&self->V->real,
                 dims, 2, descr) < 0)
             return NULL;
-    }
-    if (imag) {
-        Py_INCREF(imag);
-        self->imag = imag;
         if (PyArray_AsCArray((PyObject **)&imag, (void **)&self->V->imag,
                 dims, 2, descr) < 0)
             return NULL;
-    }
-    if (weights) {
-        Py_INCREF(weights);
-        self->weights = weights;
         if (PyArray_AsCArray((PyObject **)&weights, (void **)&self->V->weights,
                 dims, 2, descr) < 0)
             return NULL;
-    }
-    if (uvdist) {
-        Py_INCREF(uvdist);
-        self->uvdist = uvdist;
-        self->V->uvdist = (double *)PyArray_DATA(uvdist);
-    }
-    if (amp) {
-        Py_INCREF(amp);
-        self->amp = amp;
-        if (PyArray_AsCArray((PyObject **)&amp, (void **)&self->V->amp,
-                dims, 2, descr) < 0)
-            return NULL;
-    }
-    if (phase) {
-        Py_INCREF(phase);
-        self->phase = phase;
-        if (PyArray_AsCArray((PyObject **)&phase, (void **)&self->V->phase,
-                dims, 2, descr) < 0)
-            return NULL;
+        
+        // Set up the uvdist array.
+
+        self->V->uvdist = new double[self->V->nuv];
+        for (int i=0; i<self->V->nuv; i++)
+            self->V->uvdist[i] = sqrt(self->V->u[i]*self->V->u[i] + 
+                    self->V->v[i]*self->V->v[i]);
+        PyArrayObject *uvdist = (PyArrayObject *)PyArray_SimpleNewFromData(1, 
+                dims, NPY_DOUBLE, self->V->uvdist);
     }
 
     return 0;
