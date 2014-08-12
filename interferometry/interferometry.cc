@@ -110,13 +110,13 @@ static int VisibilitiesObject_init(VisibilitiesObject *self,
         PyArray_Descr *descr = PyArray_DescrFromType(NPY_DOUBLE);
         if (PyArray_AsCArray((PyObject **)&real, (void **)&self->V->real,
                 dims, 2, descr) < 0)
-            return NULL;
+            return -1;
         if (PyArray_AsCArray((PyObject **)&imag, (void **)&self->V->imag,
                 dims, 2, descr) < 0)
-            return NULL;
+            return -1;
         if (PyArray_AsCArray((PyObject **)&weights, (void **)&self->V->weights,
                 dims, 2, descr) < 0)
-            return NULL;
+            return -1;
         
         // Set up the uvdist array.
 
@@ -126,6 +126,36 @@ static int VisibilitiesObject_init(VisibilitiesObject *self,
                     self->V->v[i]*self->V->v[i]);
         PyArrayObject *uvdist = (PyArrayObject *)PyArray_SimpleNewFromData(1, 
                 dims, NPY_DOUBLE, self->V->uvdist);
+        Py_INCREF(uvdist);
+        self->uvdist = uvdist;
+
+        // Set up the amp and phase arrays.
+        
+        PyArrayObject *amp = (PyArrayObject *)PyArray_SimpleNew(2, dims,
+                NPY_DOUBLE);
+        Py_INCREF(amp);
+        self->amp = amp;
+        if (PyArray_AsCArray((PyObject **)&amp, (void **)&self->V->amp,
+                dims, 2, descr) < 0)
+            return -1;
+
+        PyArrayObject *phase = (PyArrayObject *)PyArray_SimpleNew(2, dims,
+                NPY_DOUBLE);
+        Py_INCREF(phase);
+        self->phase = phase;
+        if (PyArray_AsCArray((PyObject **)&phase, (void **)&self->V->phase,
+                dims, 2, descr) < 0)
+            return -1;
+
+        for (int i=0; i<self->V->nuv; i++) {
+            for (int j=0; j<self->V->nfreq; j++) {
+                self->V->amp[i][j] = sqrt(
+                        self->V->real[i][j]*self->V->real[i][j] * 
+                        self->V->imag[i][j]*self->V->imag[i][j]);
+                self->V->phase[i][j] = atan2(self->V->imag[i][j], 
+                        self->V->real[i][j]);
+            }
+        }
     }
 
     return 0;
@@ -230,7 +260,7 @@ static int VisibilitiesObject_setreal(VisibilitiesObject *self,
     npy_intp *dims = PyArray_SHAPE(value);
     if (PyArray_AsCArray((PyObject **)&value, (void **)&self->V->real, 
             dims, 2, descr) < 0)
-        return NULL;
+        return -1;
 
     Py_XDECREF(self->real);
     Py_INCREF(value);
@@ -258,7 +288,7 @@ static int VisibilitiesObject_setimag(VisibilitiesObject *self,
     npy_intp *dims = PyArray_SHAPE(value);
     if (PyArray_AsCArray((PyObject **)&value, (void **)&self->V->imag, 
             dims, 2, descr) < 0)
-        return NULL;
+        return -1;
 
     Py_XDECREF(self->imag);
     Py_INCREF(value);
@@ -286,7 +316,7 @@ static int VisibilitiesObject_setweights(VisibilitiesObject *self,
     npy_intp *dims = PyArray_SHAPE(value);
     if (PyArray_AsCArray((PyObject **)&value, (void **)&self->V->weights, 
             dims, 2, descr) < 0)
-        return NULL;
+        return -1;
 
     Py_XDECREF(self->weights);
     Py_INCREF(value);
@@ -338,7 +368,7 @@ static int VisibilitiesObject_setamp(VisibilitiesObject *self,
     npy_intp *dims = PyArray_SHAPE(value);
     if (PyArray_AsCArray((PyObject **)&value, (void **)&self->V->amp, 
             dims, 2, descr) < 0)
-        return NULL;
+        return -1;
 
     Py_XDECREF(self->amp);
     Py_INCREF(value);
@@ -366,7 +396,7 @@ static int VisibilitiesObject_setphase(VisibilitiesObject *self,
     npy_intp *dims = PyArray_SHAPE(value);
     if (PyArray_AsCArray((PyObject **)&value, (void **)&self->V->phase, 
             dims, 2, descr) < 0)
-        return NULL;
+        return -1;
 
     Py_XDECREF(self->phase);
     Py_INCREF(value);
