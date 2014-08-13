@@ -1,4 +1,0 @@
-python3 setup.py build_ext --inplace
-
-mv pdspy/interferometry/libinterferometry.cpython-34m.so .
-rm -r build libinterferometry.c pdspy
