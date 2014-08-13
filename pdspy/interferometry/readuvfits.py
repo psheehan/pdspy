@@ -8,17 +8,17 @@ def readuvfits(filename, fmt="miriad", fast=False):
     data = open(filename)
     
     header = data[0].header
-    u = data[0].data.field(0)
-    v = data[0].data.field(1)
+    u = data[0].data.field(0).astype(numpy.float64)
+    v = data[0].data.field(1).astype(numpy.float64)
     if fmt == "casa":
-        real = (data[0].data.field("data"))[:,0,0,0,:,0,0]
-        imag = (data[0].data.field("data"))[:,0,0,0,:,0,1]
-        weights = (data[0].data.field("data"))[:,0,0,0,:,0,2]
+        real = (data[0].data.field("data"))[:,0,0,0,:,0,0].astype(numpy.float64)
+        imag = (data[0].data.field("data"))[:,0,0,0,:,0,1].astype(numpy.float64)
+        weights = (data[0].data.field("data"))[:,0,0,0,:,0,2].astype(numpy.float64)
         baselines = data[0].data.field(5)
     elif fmt == "miriad":
-        real = (data[0].data.field("data"))[:,0,0,:,0,0]
-        imag = (data[0].data.field("data"))[:,0,0,:,0,1]
-        weights = (data[0].data.field("data"))[:,0,0,:,0,2]
+        real = (data[0].data.field("data"))[:,0,0,:,0,0].astype(numpy.float64)
+        imag = (data[0].data.field("data"))[:,0,0,:,0,1].astype(numpy.float64)
+        weights = (data[0].data.field("data"))[:,0,0,:,0,2].astype(numpy.float64)
         baselines = data[0].data.field(3)
     ant2 = numpy.mod(baselines,256)
     ant1 = (baselines-ant2)/256
