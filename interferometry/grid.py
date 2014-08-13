@@ -1,5 +1,5 @@
 import numpy
-from .interferometry import Visibilities
+from .libinterferometry import Visibilities
 from .freqcorrect import freqcorrect
 
 def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \

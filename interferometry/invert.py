@@ -1,5 +1,6 @@
 import numpy
-from .average import average
+#from .average import average
+from .libinterferometry import average
 from .grid import grid
 from .clean import clean
 from ..imaging import Image

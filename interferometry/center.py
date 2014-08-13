@@ -1,6 +1,7 @@
-from .average import average
+#from .average import average
+from .libinterferometry import average
 from .model import model
-from .interferometry import Visibilities
+from .libinterferometry import Visibilities
 import numpy
 
 def center(data, params):

@@ -1,5 +1,5 @@
 from .readuvfits import readuvfits
-from .interferometry import Visibilities
+from .libinterferometry import Visibilities
 from glob import glob
 import numpy
 

@@ -1,4 +1,4 @@
-from .interferometry import Visibilities
+from .libinterferometry import Visibilities
 import numpy
 
 def concatenate(visibilities):

@@ -1,6 +1,6 @@
 from astropy.io.fits import open
 from ..constants.physics import c
-from .interferometry import Visibilities
+from .libinterferometry import Visibilities
 import numpy
 
 def readuvfits(filename, fmt="miriad", fast=False):

@@ -1,5 +1,5 @@
 import numpy
-from .interferometry import Visibilities
+from .libinterferometry import Visibilities
 from ..constants.physics import c
 
 def freqcorrect(data, new_freq=None):
