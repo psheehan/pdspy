@@ -1,5 +1,5 @@
 import numpy
-from ..interferometry.interferometry import Visibilities
+from ..interferometry import Visibilities
 from ..constants.astronomy import pc, arcsec
 from scipy.fftpack import fft2, fftshift, fftfreq, ifftshift
 
