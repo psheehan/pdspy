@@ -188,7 +188,8 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
     cdef numpy.ndarray[double, ndim=2] real, imag, weights, new_u, new_v, \
             new_real, new_imag, new_weights
     cdef numpy.ndarray[unsigned int, ndim=1] i, j
-    cdef unsigned int k, l, m, n
+    cdef unsigned int k, l, m, n, ninclude_min, ninclude_max, lmin, lmax, \
+            mmin, mmax
 
     if mfs:
         vis = data#vis = freqcorrect(data)
@@ -218,8 +219,7 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
     # Set the weights equal to 0 when the real and imaginary parts are both 0
     weights[(real==0) & (imag==0)] = 0.0
     
-    if imaging:
-        weights /= weights.sum()
+    weights /= weights.sum()
     
     # Average over the U-V plane by creating bins to average over.
     
@@ -258,10 +258,16 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
     cdef double convolve
     cdef numpy.ndarray[int, ndim=1] inc_range = numpy.linspace(-(ninclude-1)/2,\
             (ninclude-1)/2, ninclude).astype(numpy.int32)
+    ninclude_min = -numpy.uint32((ninclude-1)*0.5)
+    ninclude_max = numpy.uint32((ninclude-1)*0.5)
 
     for k in range(nuv):
-        for l in inc_range+j[k]:
-            for m in inc_range+i[k]:
+        lmin = max(0, j[k]+ninclude_min)
+        lmax = min(j[k]+ninclude_max, gridsize-1)
+        mmin = max(0, i[k]+ninclude_min)
+        mmax = min(i[k]+ninclude_max, gridsize-1)
+        for l in range(lmin, lmax):
+            for m in range(mmin, mmax):
                 convolve = convolve_func(u[k]-new_u[l,m], \
                         v[k] - new_v[l,m], binsize, binsize)
                 for n in range(nfreq):
