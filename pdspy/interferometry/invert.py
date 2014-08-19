@@ -1,14 +1,9 @@
 import numpy
-#from .average import average
-from .libinterferometry import average
-from .grid import grid
+from .libinterferometry import grid
 from .clean import clean
 from ..imaging import Image
-from ..constants.physics import c
-from ..constants.math import pi
 from ..constants.astronomy import arcsec
 from scipy.fftpack import ifft2, fftshift, ifftshift, fftfreq
-from scipy.special import jn
 
 def invert(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False):
     
