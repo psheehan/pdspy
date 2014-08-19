@@ -68,7 +68,7 @@ def image(filename=None,ext=None):
     if stokes:
         image = empty((ny,nx,4,nf))
     else:
-        image = empty((nx,ny,nf))
+        image = empty((ny,nx,nf))
 
     for i in range(nf):
         for j in range(ny):
