@@ -18,10 +18,10 @@ def imtovis(image):
     uu = fftshift(fftfreq(image.x.size, (image.x[1] - image.x[0]) * arcsec))
     vv = fftshift(fftfreq(image.y.size, (image.y[1] - image.y[0]) * arcsec))
     
-    u, v = numpy.meshgrid(uu, vv, indexing='ij')
+    u, v = numpy.meshgrid(uu, vv)
     u = u.reshape((image.x.size*image.y.size,))
     v = v.reshape((image.y.size*image.y.size,))
 
     freq = image.freq
 
-    return Visibilities(u,v,freq,real,imag,weights)
+    return Visibilities(u, v, freq, real, imag, weights)
