@@ -9,7 +9,7 @@ def invert(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False):
     
     binsize = 1.0 / (pixel_size * imsize * arcsec)
     gridded_data = grid(data, gridsize=imsize, binsize=binsize, \
-            convolution=convolution, mfs=mfs)
+            convolution=convolution, mfs=mfs, imaging=True)
             
     u = gridded_data.u.reshape((imsize, imsize))
     v = gridded_data.v.reshape((imsize, imsize))

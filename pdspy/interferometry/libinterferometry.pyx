@@ -218,7 +218,8 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
     # Set the weights equal to 0 when the real and imaginary parts are both 0
     weights[(real==0) & (imag==0)] = 0.0
     
-    weights /= weights.sum()
+    if imaging:
+        weights /= weights.sum()
     
     # Average over the U-V plane by creating bins to average over.
     
@@ -274,6 +275,11 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
                     new_imag[l,m] += imag[k,n]*weights[k,n]*convolve
                     new_weights[l,m] += weights[k,n]*convolve
     
+    if not imaging:
+        good = new_weights > 0
+        new_real[good] = new_real[good] / new_weights[good]
+        new_imag[good] = new_imag[good] / new_weights[good]
+
     new_real = new_real.reshape((gridsize**2,1))
     new_imag = new_imag.reshape((gridsize**2,1))
     new_weights = new_weights.reshape((gridsize**2,1))
