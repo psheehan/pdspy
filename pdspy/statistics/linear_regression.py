@@ -7,7 +7,7 @@ def linear_regression(_x, _y, sigma_y=None):
 
     A = numpy.concatenate((x, numpy.ones(x.shape)), axis=1)
 
-    if sigma_y != None:
+    if type(sigma_y) != type(None):
         C = numpy.diag(sigma_y**2)
     else:
         C = numpy.diag(numpy.ones(_y.shape))

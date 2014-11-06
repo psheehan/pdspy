@@ -17,8 +17,11 @@ cdef class VisibilitiesObject:
             numpy.ndarray[double, ndim=2] weights=None, \
             baseline=None, array_name="CARMA"):
 
-        if ((u != None) and (v != None) and (freq != None) and (real != None) \
-                and (imag != None) and (weights != None)):
+        if ((type(u) != type(None)) and (type(v) != type(None)) \
+                and (type(freq) != type(None)) \
+                and (type(real) != type(None)) \
+                and (type(imag) != type(None)) \
+                and (type(weights) != type(None))):
             self.u = u
             self.v = v
             self.uvdist = numpy.sqrt(u**2 + v**2)
@@ -56,7 +59,7 @@ class Visibilities(VisibilitiesObject):
                 self.real.reshape((1,nvis)), self.imag.reshape((1,nvis)), \
                 self.weights.reshape((1,nvis))), axis=0))
 
-        if self.header != None:
+        if type(self.header) != type(None):
             hdu.header = self.header
 
         hdulist.append(hdu)

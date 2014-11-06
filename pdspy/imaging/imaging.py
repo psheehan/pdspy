@@ -8,26 +8,26 @@ class Image:
     def __init__(self,image=None,x=None,y=None,header=None,wave=None, \
             freq=None,unc=None,velocity=None):
 
-        if (image != None):
+        if (type(image) != type(None)):
             self.image = image
 
-        if (x != None):
+        if (type(x) != type(None)):
             self.x = x
             self.y = y
-        if (header != None):
+        if (type(header) != type(None)):
             self.header = header
-        if (unc != None):
+        if (type(unc) != type(None)):
             self.unc = unc
-        if (velocity != None):
+        if (type(velocity) != type(None)):
             self.velocity = velocity
 
-        if (wave == None) and (freq != None):
+        if (type(wave) == type(None)) and (type(freq) != type(None)):
             self.freq = freq
             self.wave = c / freq
-        elif (wave != None) and (freq == None):
+        elif (type(wave) != type(None)) and (type(freq) == type(None)):
             self.wave = wave
             self.freq = c / wave
-        elif (wave != None) and (freq != None):
+        elif (type(wave) != type(None)) and (type(freq) != type(None)):
             self.wave = wave
             self.freq = freq
 

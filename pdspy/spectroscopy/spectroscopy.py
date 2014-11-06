@@ -5,10 +5,10 @@ import h5py
 class Spectrum:
 
     def __init__(self, wave=None, flux=None, unc=None):
-        if (wave != None):
+        if (type(wave) != type(None)):
             self.wave = wave
             self.flux = flux
-            if unc == None:
+            if type(unc) == type(None):
                 unc = numpy.zeros(wave.size)
                 self.unc = unc
             else:

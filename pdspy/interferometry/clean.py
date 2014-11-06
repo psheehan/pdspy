@@ -16,7 +16,7 @@ def clean(image, beam, gain=0.1, maxiter=1000, threshold=0.001, box=None):
     model = numpy.zeros(dirty.shape)
 
     mask = numpy.zeros(dirty.shape)
-    if mask != None:
+    if type(mask) != type(None):
         mask[box[2]+nx/2:box[3]+nx/2,box[0]+ny/2:box[1]+ny/2]=1.
     else:
         mask += 1.
