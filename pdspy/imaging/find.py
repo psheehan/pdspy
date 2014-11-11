@@ -5,7 +5,7 @@ import scipy.ndimage.morphology
 import scipy.optimize
 import matplotlib.pyplot as plt
 
-def find(image, threshold=5):
+def find(image, threshold=5, include_radius=20):
 
     # Find potential sources in the image.
 
@@ -51,13 +51,36 @@ def find(image, threshold=5):
         params = numpy.array([xc, yc, 1.0, 1.0, 0.0, image.image[yc,xc]])
         sigma_params = numpy.array([3.0, 3.0, 0.2, 0.2, numpy.pi/10, 1.0])
 
+        # Find any sources within a provided radius and include them in the 
+        # fit.
+
+        nsources = 1
+
+        for coords2 in potential_sources:
+            if image.image[coords2[0], coords2[1]] < threshold * \
+                    image.unc[coords2[0], coords2[1]]:
+                detected_peaks[coords2[0], coords2[1]] = 0.
+                continue
+
+            d = numpy.sqrt( (coords[0] - coords2[0])**2 + \
+                    (coords[1] - coords2[1])**2 )
+
+            if (d < include_radius) and (d > 0):
+                xc, yc = coords2[1], coords2[0]
+                params = numpy.hstack([params, numpy.array([xc, yc, 1.0, 1.0, \
+                        0.0, image.image[yc,xc]])])
+                sigma_params = numpy.hstack([sigma_params, numpy.array([3.0, \
+                        3.0, 0.2, 0.2, numpy.pi/10, 1.0])])
+
+                nsources += 1
+
         # Try a least squares fit.
 
-        func = lambda p, x, y, z, sigma: \
-                ((z - gaussian2d(x, y, p)) / sigma).reshape((z.size,))
+        func = lambda p, n, x, y, z, sigma: \
+                ((z - gaussian2d(x, y, p, n)) / sigma).reshape((z.size,))
 
         p, cov, infodict, mesg, ier = scipy.optimize.leastsq(func, params, \
-                args=(x, y, z, sigma_z), full_output=True)
+                args=(nsources, x, y, z, sigma_z), full_output=True)
 
         # Fix the least squares result for phi because it seems to like to go
         # crazy.
@@ -69,28 +92,30 @@ def find(image, threshold=5):
         if (type(cov) == type(None)):
             sigma_p = p
         else:
-            sigma_p = numpy.sqrt(numpy.diag((func(p, x, y, z, \
+            sigma_p = numpy.sqrt(numpy.diag((func(p, nsources, x, y, z, \
                     sigma_z)**2).sum()/(y.size - p.size) * cov))
 
         # Now do a few iterations of MCMC to really get the parameters.
 
         limits = [{"limited":[False,False], "limits":[0.0,0.0]} \
-                for i in range(6)]
+                for i in range(6*nsources)]
 
-        limits[4] = {"limited":[True,True], "limits":[p[4]-numpy.pi/4, \
-                p[4]+numpy.pi/4]}
+        for i in range(nsources):
+            limits[i*6+4] = {"limited":[True,True], "limits":[p[i*6+4]- \
+                    numpy.pi/5, p[i*6+4]+numpy.pi/5]}
 
         accepted_params = mcmc.mcmc2d(x, y, z, sigma_z, p, sigma_p, \
-                gaussian2d, args={}, nsteps=1e5, limits=limits)
+                gaussian2d, args={'n':nsources}, nsteps=nsources*1e5, \
+                limits=limits)
 
         p = accepted_params.mean(axis=0)
         sigma_p = accepted_params.std(axis=0)
 
         # Add the newly found source to the list of sources.
 
-        new_source = numpy.empty((2*p.size,), dtype=p.dtype)
-        new_source[0::2] = p
-        new_source[1::2] = sigma_p
+        new_source = numpy.empty((12,), dtype=p.dtype)
+        new_source[0::2] = p[0:6]
+        new_source[1::2] = sigma_p[0:6]
 
         sources.append(tuple(new_source))
 
@@ -112,23 +137,31 @@ def find(image, threshold=5):
                 vmin=z.min(), vmax=z.max())
         ax[0,1].imshow(sigma_z, origin="lower", interpolation="nearest", \
                 vmin=z.min(), vmax=z.max())
-        ax[1,0].imshow(gaussian2d(x, y, p), origin="lower", \
+        ax[1,0].imshow(gaussian2d(x, y, p, nsources), origin="lower", \
                 interpolation="nearest", vmin=z.min(), vmax=z.max())
-        ax[1,1].imshow(z - gaussian2d(x, y, p), origin="lower", \
+        ax[1,1].imshow(z - gaussian2d(x, y, p, nsources), origin="lower", \
                 interpolation="nearest", vmin=z.min(), vmax=z.max())
 
         plt.show()
 
-    sources = numpy.core.records.fromrecords(sources, names="x,x_unc,y,y_unc,"+\
-            'sigma_x,sigma_x_unc,sigma_y,sigma_y_unc,pa,pa_unc,f,f_unc')
+    if len(sources) > 0:
+        sources = numpy.core.records.fromrecords(sources, names="x,x_unc,y,"+\
+                "y_unc,sigma_x,sigma_x_unc,sigma_y,sigma_y_unc,pa,pa_unc,f,"+\
+                'f_unc')
 
     return sources
 
-def gaussian2d(x, y, params):
+def gaussian2d(x, y, params, n=1):
 
-    x0, y0, sigmax, sigmay, pa, f0 = tuple(params)
+    model = numpy.zeros(x.shape)
 
-    xp=(x-x0)*numpy.cos(pa)-(y-y0)*numpy.sin(pa)
-    yp=(x-x0)*numpy.sin(pa)+(y-y0)*numpy.cos(pa)
+    for i in range(n):
+        x0, y0, sigmax, sigmay, pa, f0 = tuple(params[i*6:i*6+6])
 
-    return f0*numpy.exp(-1*xp**2/(2*sigmax**2))*numpy.exp(-1*yp**2/(2*sigmay**2))
+        xp=(x-x0)*numpy.cos(pa)-(y-y0)*numpy.sin(pa)
+        yp=(x-x0)*numpy.sin(pa)+(y-y0)*numpy.cos(pa)
+
+        model += f0*numpy.exp(-1*xp**2/(2*sigmax**2))* \
+                numpy.exp(-1*yp**2/(2*sigmay**2))
+    
+    return model
