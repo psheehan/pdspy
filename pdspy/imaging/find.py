@@ -162,6 +162,8 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
             fig.savefig(output_plots+"/source_{0:d}.pdf".format(len(sources)))
 
+            plt.close(fig)
+
     if len(sources) > 0:
         sources = numpy.core.records.fromrecords(sources, names="x,x_unc,y,"+\
                 "y_unc,sigma_x,sigma_x_unc,sigma_y,sigma_y_unc,pa,pa_unc,f,"+\
