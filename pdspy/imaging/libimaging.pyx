@@ -126,7 +126,7 @@ class Image(ImageObject):
 
         #if hasattr(self, "unc"):
         if (type(self.unc) != type(None)):
-            unc_dset = f.create_dataset("uncertainty", self.unc.shape, \
+            unc_dset = f.create_dataset("unc", self.unc.shape, \
                     dtype='f')
             unc_dset[...] = self.unc
 
