@@ -1,6 +1,6 @@
 from astropy.io.fits import open
 from numpy import array,arange,zeros,concatenate,mat,ones
-from .imaging import Image
+from .libimaging import Image
 
 def readimfits(filename):
     

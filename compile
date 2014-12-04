@@ -1,3 +1,4 @@
 python3 setup.py build_ext --inplace
 
 rm -r build pdspy/interferometry/libinterferometry.c
+rm -r build pdspy/imaging/libimaging.c

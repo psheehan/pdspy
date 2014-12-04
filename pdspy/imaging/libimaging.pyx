@@ -1,0 +1,134 @@
+import numpy
+cimport numpy
+import astropy
+import h5py
+from ..constants.physics import c
+
+cdef class ImageObject:
+    cdef public numpy.ndarray image, x, y, unc, velocity, freq, wave
+
+    def __init__(self, numpy.ndarray[double, ndim=3] image=None, \
+            numpy.ndarray[double, ndim=2] x=None, \
+            numpy.ndarray[double, ndim=2] y=None, \
+            numpy.ndarray[double, ndim=1] wave=None, \
+            numpy.ndarray[double, ndim=1] freq=None, \
+            numpy.ndarray[double, ndim=3] unc=None, \
+            numpy.ndarray[double, ndim=1] velocity=None, \
+            header=None):
+
+        if (type(image) != type(None)):
+            self.image = image
+
+        if (type(x) != type(None)):
+            self.x = x
+            self.y = y
+        if (type(header) != type(None)):
+            self.header = header
+        if (type(unc) != type(None)):
+            self.unc = unc
+        if (type(velocity) != type(None)):
+            self.velocity = velocity
+
+        if (type(wave) == type(None)) and (type(freq) != type(None)):
+            self.freq = freq
+            self.wave = c / freq
+        elif (type(wave) != type(None)) and (type(freq) == type(None)):
+            self.wave = wave
+            self.freq = c / wave
+        elif (type(wave) != type(None)) and (type(freq) != type(None)):
+            self.wave = wave
+            self.freq = freq
+
+class Image(ImageObject):
+
+    def asFITS(self):
+        hdulist = astropy.io.fits.HDUList([])
+        for i in range(self.image[0,0,:].size):
+            hdu = astropy.io.fits.PrimaryHDU(self.image[:,:,i])
+
+            if hasattr(self, "header"):
+                hdu.header = self.header[i]
+
+            hdulist.append(hdu)
+
+        return hdulist
+
+    def set_uncertainty_from_image(self, image):
+        cdef unsigned int ny, nx, nfreq
+        cdef unsigned int xmin, xmax, ymin, ymax
+        cdef unsigned int i, j
+        cdef numpy.ndarray[double, ndim=3] unc
+
+        ny, nx, nfreq = self.image.shape
+
+        unc = numpy.empty(self.image.shape)
+        for i in range(100):
+            for j in range(100):
+                xmin = max(0,<int>j-128)
+                xmax = min(<int>j+128,nx)
+                ymin = max(0,<int>i-128)
+                ymax = min(<int>i+128,ny)
+
+                unc[i,j,0] = numpy.std(image.image[ymin:ymax,xmin:xmax,0])
+
+        self.unc = unc
+
+    def read(self, filename=None, usefile=None):
+        if (usefile == None):
+            f = h5py.File(filename, "r")
+        else:
+            f = usefile
+
+        if ('x' in f):
+            x = f['x'].value.astype(numpy.double)
+            y = f['y'].value.astype(numpy.double)
+        else:
+            x = None
+            y = None
+
+        if ('freq' in f):
+            freq = f['freq'].value.astype(numpy.double)
+        else:
+            freq = None
+
+        image = f['image'].value.astype(numpy.double)
+
+        if ('unc' in f):
+            unc = f['unc'].value.astype(numpy.double)
+        else:
+            unc = None
+
+        self.__init__(image, x=x, y=y, unc=unc, freq=freq)
+
+        if (usefile == None):
+            f.close()
+
+    def write(self, filename=None, usefile=None):
+        if (usefile == None):
+            f = h5py.File(filename, "w")
+        else:
+            f = usefile
+
+        #if hasattr(self, "x"):
+        if (type(self.x) != type(None)):
+            x_dset = f.create_dataset("x", self.x.shape, dtype='f')
+            x_dset[...] = self.x
+            y_dset = f.create_dataset("y", self.y.shape, dtype='f')
+            y_dset[...] = self.y
+
+        #if hasattr(self, "freq"):
+        if (type(self.freq) != type(None)):
+            freq_dset = f.create_dataset("freq", self.freq.shape, dtype='f')
+            freq_dset[...] = self.freq
+
+        image_dset = f.create_dataset("image", self.image.shape, dtype='f')
+        image_dset[...] = self.image
+
+        #if hasattr(self, "unc"):
+        if (type(self.unc) != type(None)):
+            unc_dset = f.create_dataset("uncertainty", self.unc.shape, \
+                    dtype='f')
+            unc_dset[...] = self.unc
+
+        if (usefile == None):
+            f.close()
