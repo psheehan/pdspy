@@ -4,17 +4,26 @@ import scipy.ndimage.filters
 import scipy.ndimage.morphology
 import scipy.optimize
 import matplotlib.pyplot as plt
+import os
 
-def find(image, threshold=5, include_radius=20):
+def find(image, threshold=5, include_radius=20, window_size=40, \
+        output_plots=None):
+
+    # If plots of the fits have been requested, make the directory if it 
+    # doesn't already exist.
+
+    if output_plots != None:
+        os.system("rm -r "+output_plots)
+        os.mkdir(output_plots)
 
     # Find potential sources in the image.
 
     neighborhood = scipy.ndimage.morphology.generate_binary_structure(2,2)
 
-    local_max = scipy.ndimage.filters.maximum_filter(image.image, \
-            footprint=neighborhood) == image.image
+    local_max = scipy.ndimage.filters.maximum_filter(image.image[:,:,0], \
+            footprint=neighborhood) == image.image[:,:,0]
 
-    background = (image.image == 0)
+    background = (image.image[:,:,0] == 0)
 
     eroded_background = scipy.ndimage.morphology.binary_erosion(background, \
             structure=neighborhood, border_value=1)
@@ -31,24 +40,28 @@ def find(image, threshold=5, include_radius=20):
     for coords in potential_sources:
         # Check whether the potential source meets the detection threshold.
 
-        if image.image[coords[0], coords[1]] < threshold * \
-                image.unc[coords[0], coords[1]]:
+        if image.image[coords[0], coords[1], 0] < threshold * \
+                image.unc[coords[0], coords[1], 0]:
             detected_peaks[coords[0], coords[1]] = 0.
             continue
 
         # Set up the parameter guesses for fitting.
 
-        xmin, xmax = max(0,coords[1]-20), min(coords[1]+20,image.image.shape[1])
-        ymin, ymax = max(0,coords[0]-20), min(coords[0]+20,image.image.shape[1])
+        half_window = window_size / 2
+
+        xmin = max(0,coords[1]-half_window)
+        xmax = min(coords[1]+half_window,image.image.shape[1])
+        ymin = max(0,coords[0]-half_window)
+        ymax = min(coords[0]+half_window,image.image.shape[1])
 
         x, y = numpy.meshgrid(numpy.linspace(xmin, xmax-1, xmax - xmin), \
                 numpy.linspace(ymin, ymax-1, ymax - ymin))
 
-        z = image.image[ymin:ymax,xmin:xmax]
-        sigma_z = image.unc[ymin:ymax,xmin:xmax]
+        z = image.image[ymin:ymax,xmin:xmax,0]
+        sigma_z = image.unc[ymin:ymax,xmin:xmax,0]
 
         xc, yc = coords[1], coords[0]
-        params = numpy.array([xc, yc, 1.0, 1.0, 0.0, image.image[yc,xc]])
+        params = numpy.array([xc, yc, 1.0, 1.0, 0.0, image.image[yc,xc,0]])
         sigma_params = numpy.array([3.0, 3.0, 0.2, 0.2, numpy.pi/10, 1.0])
 
         # Find any sources within a provided radius and include them in the 
@@ -57,8 +70,8 @@ def find(image, threshold=5, include_radius=20):
         nsources = 1
 
         for coords2 in potential_sources:
-            if image.image[coords2[0], coords2[1]] < threshold * \
-                    image.unc[coords2[0], coords2[1]]:
+            if image.image[coords2[0], coords2[1], 0] < threshold * \
+                    image.unc[coords2[0], coords2[1], 0]:
                 detected_peaks[coords2[0], coords2[1]] = 0.
                 continue
 
@@ -68,7 +81,7 @@ def find(image, threshold=5, include_radius=20):
             if (d < include_radius) and (d > 0):
                 xc, yc = coords2[1], coords2[0]
                 params = numpy.hstack([params, numpy.array([xc, yc, 1.0, 1.0, \
-                        0.0, image.image[yc,xc]])])
+                        0.0, image.image[yc,xc,0]])])
                 sigma_params = numpy.hstack([sigma_params, numpy.array([3.0, \
                         3.0, 0.2, 0.2, numpy.pi/10, 1.0])])
 
@@ -97,6 +110,7 @@ def find(image, threshold=5, include_radius=20):
 
         # Now do a few iterations of MCMC to really get the parameters.
 
+        """
         limits = [{"limited":[False,False], "limits":[0.0,0.0]} \
                 for i in range(6*nsources)]
 
@@ -110,6 +124,7 @@ def find(image, threshold=5, include_radius=20):
 
         p = accepted_params.mean(axis=0)
         sigma_p = accepted_params.std(axis=0)
+        """
 
         # Add the newly found source to the list of sources.
 
@@ -121,6 +136,7 @@ def find(image, threshold=5, include_radius=20):
 
         # Plot the histograms of the MCMC fit to make sure they look good.
 
+        """
         fig, ax = plt.subplots(nrows=2, ncols=3)
 
         for i in range(2):
@@ -128,21 +144,23 @@ def find(image, threshold=5, include_radius=20):
                 ax[i,j].hist(accepted_params[:,3*i+j], bins=20)
 
         plt.show()
+        """
 
         # Plot the image slice.
 
-        fig, ax = plt.subplots(nrows=2, ncols=2)
+        if output_plots != None:
+            fig, ax = plt.subplots(nrows=2, ncols=2)
 
-        ax[0,0].imshow(z, origin="lower", interpolation="nearest", \
-                vmin=z.min(), vmax=z.max())
-        ax[0,1].imshow(sigma_z, origin="lower", interpolation="nearest", \
-                vmin=z.min(), vmax=z.max())
-        ax[1,0].imshow(gaussian2d(x, y, p, nsources), origin="lower", \
-                interpolation="nearest", vmin=z.min(), vmax=z.max())
-        ax[1,1].imshow(z - gaussian2d(x, y, p, nsources), origin="lower", \
-                interpolation="nearest", vmin=z.min(), vmax=z.max())
+            ax[0,0].imshow(z, origin="lower", interpolation="nearest", \
+                    vmin=z.min(), vmax=z.max())
+            ax[0,1].imshow(sigma_z, origin="lower", interpolation="nearest", \
+                    vmin=z.min(), vmax=z.max())
+            ax[1,0].imshow(gaussian2d(x, y, p, nsources), origin="lower", \
+                    interpolation="nearest", vmin=z.min(), vmax=z.max())
+            ax[1,1].imshow(z - gaussian2d(x, y, p, nsources), origin="lower", \
+                    interpolation="nearest", vmin=z.min(), vmax=z.max())
 
-        plt.show()
+            fig.savefig(output_plots+"/source_{0:d}.pdf".format(len(sources)))
 
     if len(sources) > 0:
         sources = numpy.core.records.fromrecords(sources, names="x,x_unc,y,"+\
