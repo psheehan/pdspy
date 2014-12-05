@@ -151,12 +151,16 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         if output_plots != None:
             fig, ax = plt.subplots(nrows=2, ncols=2)
 
+            ax[0,0].set_title("Data")
             ax[0,0].imshow(z, origin="lower", interpolation="nearest", \
                     vmin=z.min(), vmax=z.max())
+            ax[0,1].set_title("Uncertainty")
             ax[0,1].imshow(sigma_z, origin="lower", interpolation="nearest", \
                     vmin=z.min(), vmax=z.max())
+            ax[1,0].set_title("Model")
             ax[1,0].imshow(gaussian2d(x, y, p, nsources), origin="lower", \
                     interpolation="nearest", vmin=z.min(), vmax=z.max())
+            ax[1,1].set_title("Data-Model")
             ax[1,1].imshow(z - gaussian2d(x, y, p, nsources), origin="lower", \
                     interpolation="nearest", vmin=z.min(), vmax=z.max())
 
