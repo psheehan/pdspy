@@ -62,14 +62,14 @@ class Image(ImageObject):
         ny, nx, nfreq = self.image.shape
 
         unc = numpy.empty(self.image.shape)
-        for i in range(100):
-            for j in range(100):
+        for i in range(ny):
+            for j in range(nx):
                 xmin = max(0,<int>j-128)
                 xmax = min(<int>j+128,nx)
                 ymin = max(0,<int>i-128)
                 ymax = min(<int>i+128,ny)
 
-                unc[i,j,0] = numpy.std(image.image[ymin:ymax,xmin:xmax,0])
+                unc[i,j,0] = numpy.nanstd(image.image[ymin:ymax,xmin:xmax,0])
 
         self.unc = unc
 
