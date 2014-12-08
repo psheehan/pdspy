@@ -1,59 +1,51 @@
-from astropy.io.fits import open
-from numpy import array,arange,zeros,concatenate,mat,ones
 from .libimaging import Image
+import astropy.io.fits as fits
+import astropy.wcs as wcs
+import numpy
 
 def readimfits(filename):
     
-    f = open(filename)
-    data = array(f)
+    # Open the fits file.
 
-    if array(data[0].data.shape).size == 4:
-        nx = data[0].data.shape[3]
-        ny = data[0].data.shape[2]
-        nspec = data[0].data.shape[1]
-        nz = 1 #data.size
-    else:
-        nx = data[0].data.shape[1]
-        ny = data[0].data.shape[0]
-        nspec = 1
-        nz = data.size
+    data = fits.open(filename)
+
+    # Figure out the dimensions of each axis and create an array to put the data
+    # into, and put the data into that array.
+
+    npol, nfreq, ny, nx = data[0].data.shape
     
-    if nspec != 1:
-        image = zeros(nx*ny*nspec*nz).reshape(ny,nx,nspec)
-    else:
-        image = zeros(nx*ny*nspec*nz).reshape(ny,nx,nz)
+    image = numpy.zeros((ny,nx,nfreq,npol))
 
-    header = []
+    for i in range(npol):
+        for j in range(nfreq):
+            image[:,:,j,i] = data[0].data[i,j,:,:].reshape(ny,nx)
 
-    freq = zeros(data.size)
+    # Read in the x and y coordinate information, including the WCS info if it
+    # is available.
 
-    for i in arange(max(nspec,nz)):
-        if nspec != 1:
-            image[:,:,i] = data[0].data[0,i,:,:].reshape(ny,nx)
-        else:
-            image[:,:,i] = data[i].data.reshape(ny,nx)
+    header = data[0].header
 
-        #freq[i] = data[i].header["RESTFREQ"]
+    w = wcs.WCS(header)
 
-        if (nspec != 1) & (i == 0):
-            header.append(data[0].header)
-        elif (nspec != 1) & (i > 0):
-            header = header
-        else:
-            header.append(data[i].header)
+    #x, y = numpy.meshgrid(numpy.linspace(0,nx-1,nx), numpy.linspace(0,ny-1,ny))
+    x, y = None, None
 
-    x = array(mat(ones(ny)).T * arange(nx))
-    y = array(mat(arange(ny)).T * ones(nx))
-
-    if nspec != 1:
+    if header["CTYPE3"] == "VELOCITY":
         v0 = data[0].header["CRVAL3"]
         dv = data[0].header["CDELT3"]
         n0 = data[0].header["CRPIX3"]
+        velocity = (numpy.arange(nfreq)-(n0-1))*dv/1000.+v0/1000.
 
-        velocity = (arange(nspec)-(n0-1))*dv/1000.+v0/1000.
-    else:
+        freq = None
+    elif header["CTYPE3"] == "FREQ":
+        nu0 = data[0].header["CRVAL3"]
+        dnu = data[0].header["CDELT3"]
+        n0 = data[0].header["CRPIX3"]
+        freq = (numpy.arange(nfreq)-(n0-1))*dnu + nu0
+
         velocity = None
 
-    f.close()
+    data.close()
  
-    return Image(image,x=x,y=y,header=header,velocity=velocity)#,RA=RA,Dec=Dec)
+    return Image(image, x=x, y=y, header=header, wcs=w, velocity=velocity, \
+            freq=freq)

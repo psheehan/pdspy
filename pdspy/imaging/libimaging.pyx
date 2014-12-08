@@ -7,14 +7,14 @@ from ..constants.physics import c
 cdef class ImageObject:
     cdef public numpy.ndarray image, x, y, unc, velocity, freq, wave
 
-    def __init__(self, numpy.ndarray[double, ndim=3] image=None, \
+    def __init__(self, numpy.ndarray[double, ndim=4] image=None, \
             numpy.ndarray[double, ndim=2] x=None, \
             numpy.ndarray[double, ndim=2] y=None, \
             numpy.ndarray[double, ndim=1] wave=None, \
             numpy.ndarray[double, ndim=1] freq=None, \
-            numpy.ndarray[double, ndim=3] unc=None, \
+            numpy.ndarray[double, ndim=4] unc=None, \
             numpy.ndarray[double, ndim=1] velocity=None, \
-            header=None):
+            header=None, wcs = None):
 
         if (type(image) != type(None)):
             self.image = image
@@ -24,6 +24,8 @@ cdef class ImageObject:
             self.y = y
         if (type(header) != type(None)):
             self.header = header
+        if (type(wcs) != type(None)):
+            self.wcs = wcs
         if (type(unc) != type(None)):
             self.unc = unc
         if (type(velocity) != type(None)):
@@ -43,7 +45,7 @@ class Image(ImageObject):
 
     def asFITS(self):
         hdulist = astropy.io.fits.HDUList([])
-        for i in range(self.image[0,0,:].size):
+        for i in range(self.image[0,0,:,0].size):
             hdu = astropy.io.fits.PrimaryHDU(self.image[:,:,i])
 
             if hasattr(self, "header"):
@@ -54,12 +56,12 @@ class Image(ImageObject):
         return hdulist
 
     def set_uncertainty_from_image(self, image):
-        cdef unsigned int ny, nx, nfreq
+        cdef unsigned int ny, nx, nfreq, npol
         cdef unsigned int xmin, xmax, ymin, ymax
         cdef unsigned int i, j
         cdef numpy.ndarray[double, ndim=3] unc
 
-        ny, nx, nfreq = self.image.shape
+        ny, nx, nfreq, npol = self.image.shape
 
         unc = numpy.empty(self.image.shape)
         for i in range(ny):
@@ -69,7 +71,7 @@ class Image(ImageObject):
                 ymin = max(0,<int>i-128)
                 ymax = min(<int>i+128,ny)
 
-                unc[i,j,0] = numpy.nanstd(image.image[ymin:ymax,xmin:xmax,0])
+                unc[i,j,0,0] = numpy.nanstd(image.image[ymin:ymax,xmin:xmax,0,0])
 
         self.unc = unc
 
@@ -98,7 +100,10 @@ class Image(ImageObject):
         else:
             unc = None
 
-        self.__init__(image, x=x, y=y, unc=unc, freq=freq)
+        if ('wcs' in f.attrs):
+            wcs = astropy.wcs.WCS(f.attrs['wcs'])
+
+        self.__init__(image, x=x, y=y, unc=unc, freq=freq, wcs=wcs)
 
         if (usefile == None):
             f.close()
@@ -129,6 +134,9 @@ class Image(ImageObject):
             unc_dset = f.create_dataset("unc", self.unc.shape, \
                     dtype='f')
             unc_dset[...] = self.unc
+
+        if (type(self.wcs) != type(None)):
+            f.attrs['wcs'] = self.wcs.to_header_string()
 
         if (usefile == None):
             f.close()

@@ -20,10 +20,10 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
     neighborhood = scipy.ndimage.morphology.generate_binary_structure(2,2)
 
-    local_max = scipy.ndimage.filters.maximum_filter(image.image[:,:,0], \
-            footprint=neighborhood) == image.image[:,:,0]
+    local_max = scipy.ndimage.filters.maximum_filter(image.image[:,:,0,0], \
+            footprint=neighborhood) == image.image[:,:,0,0]
 
-    background = (image.image[:,:,0] == 0)
+    background = (image.image[:,:,0,0] == 0)
 
     eroded_background = scipy.ndimage.morphology.binary_erosion(background, \
             structure=neighborhood, border_value=1)
@@ -40,8 +40,8 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
     for coords in potential_sources:
         # Check whether the potential source meets the detection threshold.
 
-        if image.image[coords[0], coords[1], 0] < threshold * \
-                image.unc[coords[0], coords[1], 0]:
+        if image.image[coords[0], coords[1], 0, 0] < threshold * \
+                image.unc[coords[0], coords[1], 0, 0]:
             detected_peaks[coords[0], coords[1]] = 0.
             continue
 
@@ -57,11 +57,11 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         x, y = numpy.meshgrid(numpy.linspace(xmin, xmax-1, xmax - xmin), \
                 numpy.linspace(ymin, ymax-1, ymax - ymin))
 
-        z = image.image[ymin:ymax,xmin:xmax,0]
-        sigma_z = image.unc[ymin:ymax,xmin:xmax,0]
+        z = image.image[ymin:ymax,xmin:xmax,0,0]
+        sigma_z = image.unc[ymin:ymax,xmin:xmax,0,0]
 
         xc, yc = coords[1], coords[0]
-        params = numpy.array([xc, yc, 1.0, 1.0, 0.0, image.image[yc,xc,0]])
+        params = numpy.array([xc, yc, 1.0, 1.0, 0.0, image.image[yc,xc,0,0]])
         sigma_params = numpy.array([3.0, 3.0, 0.2, 0.2, numpy.pi/10, 1.0])
 
         # Find any sources within a provided radius and include them in the 
@@ -70,8 +70,8 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         nsources = 1
 
         for coords2 in potential_sources:
-            if image.image[coords2[0], coords2[1], 0] < threshold * \
-                    image.unc[coords2[0], coords2[1], 0]:
+            if image.image[coords2[0], coords2[1], 0, 0] < threshold * \
+                    image.unc[coords2[0], coords2[1], 0, 0]:
                 detected_peaks[coords2[0], coords2[1]] = 0.
                 continue
 
@@ -81,7 +81,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
             if (d < include_radius) and (d > 0):
                 xc, yc = coords2[1], coords2[0]
                 params = numpy.hstack([params, numpy.array([xc, yc, 1.0, 1.0, \
-                        0.0, image.image[yc,xc,0]])])
+                        0.0, image.image[yc,xc,0,0]])])
                 sigma_params = numpy.hstack([sigma_params, numpy.array([3.0, \
                         3.0, 0.2, 0.2, numpy.pi/10, 1.0])])
 
