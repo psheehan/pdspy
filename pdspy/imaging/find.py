@@ -5,6 +5,7 @@ import scipy.ndimage.morphology
 import scipy.optimize
 import matplotlib.pyplot as plt
 import os
+import astropy
 
 def find(image, threshold=5, include_radius=20, window_size=40, \
         output_plots=None):
@@ -132,7 +133,8 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         new_source[0::2] = p[0:6]
         new_source[1::2] = sigma_p[0:6]
 
-        sources.append(tuple(new_source))
+        #sources.append(tuple(new_source))
+        sources.append(new_source)
 
         # Plot the histograms of the MCMC fit to make sure they look good.
 
@@ -169,9 +171,9 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
             plt.close(fig)
 
     if len(sources) > 0:
-        sources = numpy.core.records.fromrecords(sources, names="x,x_unc,y,"+\
-                "y_unc,sigma_x,sigma_x_unc,sigma_y,sigma_y_unc,pa,pa_unc,f,"+\
-                'f_unc')
+        sources = astropy.table.Table(numpy.array(sources), names=("x", \
+                "x_unc","y","y_unc","sigma_x","sigma_x_unc","sigma_y", \
+                "sigma_y_unc","pa", "pa_unc","f",'f_unc'))
 
     return sources
 
