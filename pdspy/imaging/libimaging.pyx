@@ -59,7 +59,7 @@ class Image(ImageObject):
         cdef unsigned int ny, nx, nfreq, npol
         cdef unsigned int xmin, xmax, ymin, ymax
         cdef unsigned int i, j
-        cdef numpy.ndarray[double, ndim=3] unc
+        cdef numpy.ndarray[double, ndim=4] unc
 
         ny, nx, nfreq, npol = self.image.shape
 
