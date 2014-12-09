@@ -1,3 +1,4 @@
+from ..constants.astronomy import arcsec
 import pdspy.mcmc as mcmc
 import numpy
 import scipy.ndimage.filters
@@ -6,6 +7,7 @@ import scipy.optimize
 import matplotlib.pyplot as plt
 import os
 import astropy
+import astropy.coordinates
 
 def find(image, threshold=5, include_radius=20, window_size=40, \
         output_plots=None):
@@ -170,10 +172,42 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
             plt.close(fig)
 
+        if len(sources) == 5:
+            break
+
     if len(sources) > 0:
         sources = astropy.table.Table(numpy.array(sources), names=("x", \
                 "x_unc","y","y_unc","sigma_x","sigma_x_unc","sigma_y", \
                 "sigma_y_unc","pa", "pa_unc","f",'f_unc'))
+
+    if hasattr(image, "wcs"):
+        ra, dec = image.wcs.wcs_pix2world(sources["x"][0], sources["y"][0], 1)
+
+        temp = astropy.coordinates.SkyCoord(ra, dec, unit='deg')
+
+        sources['ra'] = temp.ra.to_string(unit=astropy.units.hour)
+        sources['dec'] = temp.dec.to_string()
+
+        sources['ra_unc'] = abs(image.wcs.wcs.cdelt[0]) * sources['x_unc'] / \
+                (180. / numpy.pi) / arcsec
+        sources['dec_unc'] = abs(image.wcs.wcs.cdelt[1]) * sources['y_unc'] / \
+                (180. / numpy.pi) / arcsec
+
+        sources['FWHM_x'] = 2.35482 * abs(image.wcs.wcs.cdelt[0]) * \
+                sources['sigma_x'] / (180. / numpy.pi) / arcsec
+        sources['FWHM_y'] = 2.35482 * abs(image.wcs.wcs.cdelt[1]) * \
+                sources['sigma_y'] / (180. / numpy.pi) / arcsec
+        sources['FWHM_x_unc'] = 2.35482 * abs(image.wcs.wcs.cdelt[0]) * \
+                sources['sigma_x_unc'] / (180. / numpy.pi) / arcsec
+        sources['FWHM_y_unc'] = 2.35482 * abs(image.wcs.wcs.cdelt[1]) * \
+                sources['sigma_y_unc'] / (180. / numpy.pi) / arcsec
+
+        sources['flux'] = sources['f'] * sources['sigma_x'] * \
+                sources['sigma_y'] * 2 * numpy.pi
+        sources['flux_unc'] = 2*numpy.pi * numpy.sqrt( \
+                (sources['f_unc']*sources['sigma_x']*sources['sigma_y'])**2+\
+                (sources['f']*sources['sigma_x_unc']*sources['sigma_y'])**2+\
+                (sources['f']*sources['sigma_x'] * sources['sigma_y_unc'])**2)
 
     return sources
 
