@@ -26,6 +26,8 @@ def readimfits(filename):
     header = data[0].header
 
     w = wcs.WCS(header)
+    w.dropaxis(3)
+    w.dropaxis(2)
 
     #x, y = numpy.meshgrid(numpy.linspace(0,nx-1,nx), numpy.linspace(0,ny-1,ny))
     x, y = None, None
