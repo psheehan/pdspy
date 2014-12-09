@@ -172,9 +172,6 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
             plt.close(fig)
 
-        if len(sources) == 5:
-            break
-
     if len(sources) > 0:
         sources = astropy.table.Table(numpy.array(sources), names=("x", \
                 "x_unc","y","y_unc","sigma_x","sigma_x_unc","sigma_y", \
