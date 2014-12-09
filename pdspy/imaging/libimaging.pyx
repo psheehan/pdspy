@@ -102,8 +102,16 @@ class Image(ImageObject):
 
         if ('wcs' in f.attrs):
             wcs = astropy.wcs.WCS(f.attrs['wcs'])
+        else:
+            wcs = None
 
-        self.__init__(image, x=x, y=y, unc=unc, freq=freq, wcs=wcs)
+        if ('header' in f.attrs):
+            header = astropy.io.fits.Header().fromstring(f.attrs['header'])
+        else:
+            header = None
+
+        self.__init__(image, x=x, y=y, unc=unc, freq=freq, wcs=wcs, \
+                header=header)
 
         if (usefile == None):
             f.close()
@@ -137,6 +145,9 @@ class Image(ImageObject):
 
         if (type(self.wcs) != type(None)):
             f.attrs['wcs'] = self.wcs.to_header_string()
+
+        if (type(self.header) != type(None)):
+            f.attrs['header'] = self.header.tostring()
 
         if (usefile == None):
             f.close()
