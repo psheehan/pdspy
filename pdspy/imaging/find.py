@@ -178,7 +178,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
                 "sigma_y_unc","pa", "pa_unc","f",'f_unc'))
 
     if hasattr(image, "wcs"):
-        ra, dec = image.wcs.wcs_pix2world(sources["x"][0], sources["y"][0], 1)
+        ra, dec = image.wcs.wcs_pix2world(sources["x"], sources["y"], 1)
 
         temp = astropy.coordinates.SkyCoord(ra, dec, unit='deg')
 
