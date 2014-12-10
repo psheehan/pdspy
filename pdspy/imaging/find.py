@@ -206,6 +206,14 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
                 (sources['f']*sources['sigma_x_unc']*sources['sigma_y'])**2+\
                 (sources['f']*sources['sigma_x'] * sources['sigma_y_unc'])**2)
 
+        if "BMAJ" in image.header:
+            beam_per_pixel = abs(image.wcs.wcs.cdelt.prod()) / \
+                    (numpy.pi*image.header['BMAJ']*image.header['BMIN']/ \
+                    (4*numpy.log(2)))
+
+            sources['flux'] *= beam_per_pixel
+            sources['flux_unc'] *= beam_per_pixel
+
     return sources
 
 def gaussian2d(x, y, params, n=1):
