@@ -59,6 +59,7 @@ class Image(ImageObject):
         cdef unsigned int ny, nx, nfreq, npol
         cdef unsigned int xmin, xmax, ymin, ymax
         cdef unsigned int i, j
+        cdef numpy.ndarray[double, ndim=2] subimage
         cdef numpy.ndarray[double, ndim=4] unc
 
         ny, nx, nfreq, npol = self.image.shape
@@ -71,7 +72,12 @@ class Image(ImageObject):
                 ymin = max(0,<int>i-128)
                 ymax = min(<int>i+128,ny)
 
-                unc[i,j,0,0] = numpy.nanstd(image.image[ymin:ymax,xmin:xmax,0,0])
+                subimage = image.image[ymin:ymax,xmin:xmax,0,0]
+
+                if (numpy.isnan(subimage).prod() == True):
+                    unc[i,j,0,0] = subimage[0,0]
+                else:
+                    unc[i,j,0,0] = numpy.nanstd(subimage)
 
         self.unc = unc
 
