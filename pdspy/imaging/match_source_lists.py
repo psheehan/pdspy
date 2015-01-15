@@ -15,8 +15,6 @@ def match_source_lists(list1, list2, tol=0.3, table_names=['1', '2']):
     ddec = (coord1.ra - coord2[idx].ra).arcsec
 
     d = (dra**2 + ddec**2)**0.5
-    unc = (list1["ra_unc"]**2 + list1["dec_unc"]**2 + \
-            list2["ra_unc"][idx]**2 + list2["dec_unc"][idx]**2)**0.5
 
     list1["id"] = numpy.arange(len(list1)) + len(list2)
     list2["id"] = numpy.arange(len(list2))
