@@ -52,15 +52,15 @@ def match_source_lists(*lists, tol=0.3, table_names=['1', '2']):
                 if name in joined_list.colnames:
                     joined_list.rename_column(name, name+"_"+names[1])
 
-            joined_list.rename_column("ra_","ra")
-            joined_list.rename_column("dec_","dec")
-
             joined_list["ra"] = numpy.where(\
-                    joined_list["ra"].mask, joined_list["ra_"+names[1]], \
-                    joined_list["ra"])
+                    joined_list["ra_"].mask, joined_list["ra_"+names[1]], \
+                    joined_list["ra_"])
             joined_list["dec"] = numpy.where(\
-                    joined_list["dec"].mask, joined_list["dec_"+names[1]], \
-                    joined_list["dec"])
+                    joined_list["dec_"].mask, joined_list["dec_"+names[1]], \
+                    joined_list["dec_"])
+
+            del joined_list["ra_"]
+            del joined_list["dec_"]
 
     del joined_list["ra"]
     del joined_list["dec"]
