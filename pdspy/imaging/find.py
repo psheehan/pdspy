@@ -10,7 +10,7 @@ import astropy
 import astropy.coordinates
 
 def find(image, threshold=5, include_radius=20, window_size=40, \
-        output_plots=None, same_object=5):
+        output_plots=None):
 
     # If plots of the fits have been requested, make the directory if it 
     # doesn't already exist.
@@ -45,11 +45,9 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
     potential_sources = numpy.column_stack(numpy.nonzero(detected_peaks))
 
-    # Search for potential sources that are so close together that they are 
-    # probably the same source.
+    # Search for potential sources that are probably the same source.
 
     good = numpy.repeat(True, len(potential_sources))
-
     for i in range(len(potential_sources)):
         for j in range(len(potential_sources)):
             if (j != i) and good[i] and good[j]:
@@ -59,14 +57,23 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
                 d = numpy.sqrt( (coords[0] - coords2[0])**2 + \
                         (coords[1] - coords2[1])**2 )
 
-                if (d < same_object):
-                    if image.image[coords[0], coords[1]] > \
-                            image.image[coords2[0], coords2[1]]:
-                        detected_peaks[coords2[0], coords2[1]] = 0.
-                        good[j] = False
-                    else:
-                        detected_peaks[coords[0], coords[1]] = 0.
-                        good[i] = False
+                if (d < include_radius) and (d > 0):
+                    inbetween = bresenham_line(coords[0],coords[1],coords2[0], \
+                            coords2[1])
+
+                    for k, coords3 in enumerate(inbetween):
+                        if image.image[coords3[0],coords3[1], 0, 0] < 2.0 * \
+                                image.unc[coords3[0], coords3[1], 0 ,0]:
+                            break
+
+                        if k == len(inbetween)-1:
+                            if image.image[coords[0], coords[1]] > \
+                                    image.image[coords2[0], coords2[1]]:
+                                detected_peaks[coords2[0], coords2[1]] = 0.
+                                good[j] = False
+                            else:
+                                detected_peaks[coords[0], coords[1]] = 0.
+                                good[i] = False
 
     potential_sources = numpy.column_stack(numpy.nonzero(detected_peaks))
 
@@ -139,44 +146,13 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
             sigma_p = numpy.sqrt(numpy.diag((func(p, nsources, x, y, z, \
                     sigma_z)**2).sum()/(y.size - p.size) * cov))
 
-        # Now do a few iterations of MCMC to really get the parameters.
-
-        """
-        limits = [{"limited":[False,False], "limits":[0.0,0.0]} \
-                for i in range(6*nsources)]
-
-        for i in range(nsources):
-            limits[i*6+4] = {"limited":[True,True], "limits":[p[i*6+4]- \
-                    numpy.pi/5, p[i*6+4]+numpy.pi/5]}
-
-        accepted_params = mcmc.mcmc2d(x, y, z, sigma_z, p, sigma_p, \
-                gaussian2d, args={'n':nsources}, nsteps=nsources*1e5, \
-                limits=limits)
-
-        p = accepted_params.mean(axis=0)
-        sigma_p = accepted_params.std(axis=0)
-        """
-
         # Add the newly found source to the list of sources.
 
         new_source = numpy.empty((12,), dtype=p.dtype)
         new_source[0::2] = p[0:6]
         new_source[1::2] = sigma_p[0:6]
 
-        #sources.append(tuple(new_source))
         sources.append(new_source)
-
-        # Plot the histograms of the MCMC fit to make sure they look good.
-
-        """
-        fig, ax = plt.subplots(nrows=2, ncols=3)
-
-        for i in range(2):
-            for j in range(3):
-                ax[i,j].hist(accepted_params[:,3*i+j], bins=20)
-
-        plt.show()
-        """
 
         # Plot the image slice.
 
@@ -196,7 +172,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
             ax[1,1].imshow(z - gaussian2d(x, y, p, nsources), origin="lower", \
                     interpolation="nearest", vmin=z.min(), vmax=z.max())
 
-            fig.savefig(output_plots+"/source_{0:d}.pdf".format(len(sources)))
+            fig.savefig(output_plots+"/source_{0:d}.pdf".format(len(sources)-1))
 
             plt.close(fig)
 
@@ -258,3 +234,30 @@ def gaussian2d(x, y, params, n=1):
                 numpy.exp(-1*yp**2/(2*sigmay**2))
     
     return model
+
+def bresenham_line(x,y,x2,y2):
+    """Brensenham line algorithm"""
+    steep = 0
+    coords = []
+    dx = abs(x2 - x)
+    if (x2 - x) > 0: sx = 1
+    else: sx = -1
+    dy = abs(y2 - y)
+    if (y2 - y) > 0: sy = 1
+    else: sy = -1
+    if dy > dx:
+        steep = 1
+        x,y = y,x
+        dx,dy = dy,dx
+        sx,sy = sy,sx
+    d = (2 * dy) - dx
+    for i in range(0,dx):
+        if steep: coords.append((y,x))
+        else: coords.append((x,y))
+        while d >= 0:
+            y = y + sy
+            d = d - (2 * dx)
+        x = x + sx
+        d = d + (2 * dy)
+    coords.append((x2,y2))
+    return coords
