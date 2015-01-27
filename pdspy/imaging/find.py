@@ -10,7 +10,7 @@ import astropy
 import astropy.coordinates
 
 def find(image, threshold=5, include_radius=20, window_size=40, \
-        output_plots=None):
+        source_list=None, output_plots=None):
 
     # If plots of the fits have been requested, make the directory if it 
     # doesn't already exist.
@@ -19,14 +19,47 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         os.system("rm -r "+output_plots)
         os.mkdir(output_plots)
 
+    # Create a base image to look for peaks in.
+
+    if type(source_list) != type(None):
+        coords = astropy.coordinates.SkyCoord(source_list["ra"].tolist(), \
+                source_list["dec"].tolist(), 'icrs')
+
+        pixcoords = image.wcs.wcs_world2pix(coords.ra.degree, \
+                coords.dec.degree, 1)
+
+        arcsec_in_pixels = arcsec / (abs(image.wcs.wcs.cdelt[0]) * numpy.pi/180)
+
+        x, y = numpy.meshgrid(numpy.arange(image.image.shape[1]), \
+                numpy.arange(image.image.shape[0]))
+
+        mask = numpy.zeros((image.image.shape[0], image.image.shape[1]), \
+                dtype=bool)
+
+        for pixcoord in zip(pixcoords[0], pixcoords[1]):
+            print(pixcoord)
+            mask[numpy.sqrt( (pixcoord[1] - x)**2 + \
+                    (pixcoord[0] -y)**2 ) < 0.5*arcsec_in_pixels] = True
+
+        base_image = numpy.where(mask, image.image[:,:,0,0], 0.0)
+
+        print(base_image.min(), base_image.max())
+
+        #plt.imshow(mask[6000:7000,6000:7000], origin="lower", \
+        #        interpolation="none", vmin=0.0)
+        #plt.show()
+        return
+    else:
+        base_image = image.image[:,:,0,0]
+
     # Find potential sources in the image.
 
     neighborhood = scipy.ndimage.morphology.generate_binary_structure(2,2)
 
-    local_max = scipy.ndimage.filters.maximum_filter(image.image[:,:,0,0], \
-            footprint=neighborhood) == image.image[:,:,0,0]
+    local_max = scipy.ndimage.filters.maximum_filter(base_image, \
+            footprint=neighborhood) == base_image
 
-    background = (image.image[:,:,0,0] == 0)
+    background = (base_image == 0)
 
     eroded_background = scipy.ndimage.morphology.binary_erosion(background, \
             structure=neighborhood, border_value=1)
@@ -45,7 +78,8 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
     potential_sources = numpy.column_stack(numpy.nonzero(detected_peaks))
 
-    # Search for potential sources that are probably the same source.
+    # Search for potential sources that are probably the same source and
+    # make sure we're only finding it once.
 
     good = numpy.repeat(True, len(potential_sources))
     for i in range(len(potential_sources)):
