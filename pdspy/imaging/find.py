@@ -10,7 +10,7 @@ import astropy
 import astropy.coordinates
 
 def find(image, threshold=5, include_radius=20, window_size=40, \
-        output_plots=None):
+        output_plots=None, same_object=5):
 
     # If plots of the fits have been requested, make the directory if it 
     # doesn't already exist.
@@ -35,19 +35,47 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
     potential_sources = numpy.column_stack(numpy.nonzero(detected_peaks))
 
-    # For each of the potential sources see if the detection is significant
-    # at a provided level, and if so, fit it with a Gaussian function.
+    # First, throw away any potential source that does not meet the
+    # threshold cut requirement.
+
+    for coords in potential_sources:
+        if image.image[coords[0], coords[1], 0, 0] < threshold * \
+                image.unc[coords[0], coords[1], 0, 0]:
+            detected_peaks[coords[0], coords[1]] = 0.
+
+    potential_sources = numpy.column_stack(numpy.nonzero(detected_peaks))
+
+    # Search for potential sources that are so close together that they are 
+    # probably the same source.
+
+    good = numpy.repeat(True, len(potential_sources))
+
+    for i in range(len(potential_sources)):
+        for j in range(len(potential_sources)):
+            if (j != i) and good[i] and good[j]:
+                coords = potential_sources[i]
+                coords2 = potential_sources[j]
+
+                d = numpy.sqrt( (coords[0] - coords2[0])**2 + \
+                        (coords[1] - coords2[1])**2 )
+
+                if (d < same_object):
+                    if image.image[coords[0], coords[1]] > \
+                            image.image[coords2[0], coords2[1]]:
+                        detected_peaks[coords2[0], coords2[1]] = 0.
+                        good[j] = False
+                    else:
+                        detected_peaks[coords[0], coords[1]] = 0.
+                        good[i] = False
+
+    potential_sources = numpy.column_stack(numpy.nonzero(detected_peaks))
+
+    # Now we have a good list of detected sources. Fit all of them with a
+    # Gaussian to measure positions and fluxes.
 
     sources = []
 
     for coords in potential_sources:
-        # Check whether the potential source meets the detection threshold.
-
-        if image.image[coords[0], coords[1], 0, 0] < threshold * \
-                image.unc[coords[0], coords[1], 0, 0]:
-            detected_peaks[coords[0], coords[1]] = 0.
-            continue
-
         # Set up the parameter guesses for fitting.
 
         half_window = window_size / 2
@@ -73,10 +101,10 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         nsources = 1
 
         for coords2 in potential_sources:
-            if image.image[coords2[0], coords2[1], 0, 0] < threshold * \
-                    image.unc[coords2[0], coords2[1], 0, 0]:
-                detected_peaks[coords2[0], coords2[1]] = 0.
-                continue
+            #if image.image[coords2[0], coords2[1], 0, 0] < threshold * \
+            #        image.unc[coords2[0], coords2[1], 0, 0]:
+            #    detected_peaks[coords2[0], coords2[1]] = 0.
+            #    continue
 
             d = numpy.sqrt( (coords[0] - coords2[0])**2 + \
                     (coords[1] - coords2[1])**2 )
