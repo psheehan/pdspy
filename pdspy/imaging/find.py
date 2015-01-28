@@ -40,7 +40,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
             mask[numpy.sqrt( (pixcoord[0] - x)**2 + \
                     (pixcoord[1] -y)**2 ) < 0.5*arcsec_in_pixels] = True
 
-        base_image = numpy.where(mask, image.image[:,:,0,0], 0.0)
+        base_image = numpy.where(mask, image.image[:,:,0,0], numpy.nan)
     else:
         base_image = image.image[:,:,0,0]
 
