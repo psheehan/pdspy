@@ -26,7 +26,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
                 source_list["dec"].tolist(), 'icrs')
 
         pixcoords = image.wcs.wcs_world2pix(coords.ra.degree, \
-                coords.dec.degree, 1)
+                coords.dec.degree, 1, ra_dec_order=True)
 
         arcsec_in_pixels = arcsec / (abs(image.wcs.wcs.cdelt[0]) * numpy.pi/180)
 
@@ -37,18 +37,10 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
                 dtype=bool)
 
         for pixcoord in zip(pixcoords[0], pixcoords[1]):
-            print(pixcoord)
-            mask[numpy.sqrt( (pixcoord[1] - x)**2 + \
-                    (pixcoord[0] -y)**2 ) < 0.5*arcsec_in_pixels] = True
+            mask[numpy.sqrt( (pixcoord[0] - x)**2 + \
+                    (pixcoord[1] -y)**2 ) < 0.5*arcsec_in_pixels] = True
 
         base_image = numpy.where(mask, image.image[:,:,0,0], 0.0)
-
-        print(base_image.min(), base_image.max())
-
-        #plt.imshow(mask[6000:7000,6000:7000], origin="lower", \
-        #        interpolation="none", vmin=0.0)
-        #plt.show()
-        return
     else:
         base_image = image.image[:,:,0,0]
 
