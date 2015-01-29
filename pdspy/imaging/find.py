@@ -10,7 +10,7 @@ import astropy
 import astropy.coordinates
 
 def find(image, threshold=5, include_radius=20, window_size=40, \
-        source_list=None, output_plots=None):
+        source_list=None, list_search_radius=1.0, output_plots=None):
 
     # If plots of the fits have been requested, make the directory if it 
     # doesn't already exist.
@@ -38,7 +38,8 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
         for pixcoord in zip(pixcoords[0], pixcoords[1]):
             mask[numpy.sqrt( (pixcoord[0] - x)**2 + \
-                    (pixcoord[1] -y)**2 ) < 0.5*arcsec_in_pixels] = True
+                    (pixcoord[1] -y)**2 ) < 0.5*list_search_radius*\
+                    arcsec_in_pixels] = True
 
         base_image = numpy.where(mask, image.image[:,:,0,0], numpy.nan)
     else:
