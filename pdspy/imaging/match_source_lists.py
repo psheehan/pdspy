@@ -17,15 +17,17 @@ def match_source_lists(*lists, tol=0.3, table_names=['1', '2']):
                 list2["dec"].tolist(), 'icrs')
 
         idx, d2d, d3d = astropy.coordinates.match_coordinates_sky(coord1,coord2)
+        print(idx[d2d.arcsec < tol])
 
         dra = (coord1.ra - coord2[idx].ra).arcsec
         ddec = (coord1.ra - coord2[idx].ra).arcsec
 
         d = (dra**2 + ddec**2)**0.5
+        print(idx[d < tol])
 
         list1["id"] = numpy.arange(len(list1)) + len(list2)
         list2["id"] = numpy.arange(len(list2))
-        list1["id"][d < tol] = idx[d < tol]
+        list1["id"][d2d.arcsec < tol] = idx[d2d.arcsec < tol]
 
         if i == 0:
             names = table_names[0:2]
