@@ -18,6 +18,13 @@ def match_source_lists(*lists, tol=0.3, table_names=['1', '2']):
 
         idx, d2d, d3d = astropy.coordinates.match_coordinates_sky(coord1,coord2)
 
+        ids, counts = numpy.unique(idx[d2d.arcsec < tol], return_counts=True)
+        for j in range(len(ids)):
+            if counts[j] > 1:
+                min_d2d = min(d2d[idx == ids[j]].arcsec)
+                d2d[(d2d.arcsec != min_d2d) & (idx == ids[j])] = \
+                        astropy.coordinates.Angle("0d00m{0:f}s".format(2*tol))
+
         list1["id"] = numpy.arange(len(list1)) + len(list2)
         list2["id"] = numpy.arange(len(list2))
         list1["id"][d2d.arcsec < tol] = idx[d2d.arcsec < tol]
