@@ -8,8 +8,8 @@ cdef class ImageObject:
     cdef public numpy.ndarray image, x, y, unc, velocity, freq, wave
 
     def __init__(self, numpy.ndarray[double, ndim=4] image=None, \
-            numpy.ndarray[double, ndim=2] x=None, \
-            numpy.ndarray[double, ndim=2] y=None, \
+            numpy.ndarray[double, ndim=1] x=None, \
+            numpy.ndarray[double, ndim=1] y=None, \
             numpy.ndarray[double, ndim=1] wave=None, \
             numpy.ndarray[double, ndim=1] freq=None, \
             numpy.ndarray[double, ndim=4] unc=None, \
