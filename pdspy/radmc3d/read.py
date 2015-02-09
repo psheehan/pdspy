@@ -66,17 +66,17 @@ def image(filename=None,ext=None):
     f.readline()
 
     if stokes:
-        image = empty((ny,nx,4,nf))
+        image = empty((ny,nx,nf,4))
     else:
-        image = empty((ny,nx,nf))
+        image = empty((ny,nx,nf,1))
 
     for i in range(nf):
         for j in range(ny):
             for k in range(nx):
                 if stokes:
-                    image[j,k,:,i] = array(f.readline().split(), dtype=float)
+                    image[j,k,i,:] = array(f.readline().split(), dtype=float)
                 else:
-                    image[j,k,i] = float(f.readline())
+                    image[j,k,i,0] = float(f.readline())
 
                 if (j == ny-1) and (k == nx-1):
                     f.readline()
@@ -86,7 +86,7 @@ def image(filename=None,ext=None):
     # Compute the flux in this image as seen at 1 pc.
 
     if stokes:
-        flux = image[:,:,0,:].sum(axis=0).sum(axis=0)
+        flux = image[:,:,:,0].sum(axis=0).sum(axis=0)
     else:
         flux = image.sum(axis=0).sum(axis=0)
 
