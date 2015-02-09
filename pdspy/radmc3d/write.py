@@ -284,9 +284,9 @@ def dustopac(opacity):
 
 def dustkappa(species, lam, kabs, ksca=None, g=None):
 
-    if (ksca != None) and (g != None):
+    if (type(ksca) != type(None)) and (type(g) != type(None)):
         iformat = 3
-    elif (ksca != None) and (g == None):
+    elif (type(ksca) != type(None)) and (type(g) == type(None)):
         iformat = 2
     else:
         iformat = 1
