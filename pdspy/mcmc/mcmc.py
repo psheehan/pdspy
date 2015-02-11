@@ -3,7 +3,7 @@ from numpy.random import uniform
 from .change_params import change_params
 from .ml import ml
 
-def mcmc(x, y, sigma_y, params, sigma_params, model, args=None, \
+def mcmc(x, y, sigma_y, params, sigma_params, model, args={}, \
            nsteps=1e5, change_param=None, limits=None):
 
     MLold, chisq_old = ml(x, y, sigma_y, params, model, args=args, \

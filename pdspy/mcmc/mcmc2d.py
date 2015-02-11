@@ -3,7 +3,7 @@ from numpy.random import uniform
 from .change_params import change_params
 from .ml2d import ml2d
 
-def mcmc2d(x, y, z, sigma_z, params, sigma_params, model, args=None, \
+def mcmc2d(x, y, z, sigma_z, params, sigma_params, model, args={}, \
            nsteps=1e5, change_param=None, limits=None):
 
     MLold, chisq_old = ml2d(x, y, z, sigma_z, params, model, args=args, \
