@@ -5,7 +5,8 @@ def ml(x, y, sigma_y, params, model, args=None, limits=None):
     mlarr = 1./sqrt(2*pi*sigma_y**2)*\
                 exp(-(y-model(x,params,**args))**2/(2*sigma_y**2)) 
 
-    ml = (mlarr**(1./(y.size-params.size))).prod()
+    #ml = (mlarr**(1./(y.size-params.size))).prod()
+    ml = 1.
     chisq = ((y-model(x,params,**args))**2/sigma_y**2).sum()
 
     if (limits != None):
