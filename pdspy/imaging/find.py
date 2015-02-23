@@ -10,7 +10,8 @@ import astropy
 import astropy.coordinates
 
 def find(image, threshold=5, include_radius=20, window_size=40, \
-        source_list=None, list_search_radius=1.0, output_plots=None):
+        source_list=None, list_search_radius=1.0, beam=[1.0,1.0,0.0], \
+        output_plots=None):
 
     # If plots of the fits have been requested, make the directory if it 
     # doesn't already exist.
@@ -126,8 +127,10 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         sigma_z = image.unc[ymin:ymax,xmin:xmax,0,0]
 
         xc, yc = coords[1], coords[0]
-        params = numpy.array([xc, yc, 1.0, 1.0, 0.0, image.image[yc,xc,0,0]])
-        sigma_params = numpy.array([3.0, 3.0, 0.2, 0.2, numpy.pi/10, 1.0])
+        params = numpy.array([xc, yc, beam[0], beam[1], beam[2], \
+                image.image[yc,xc,0,0]])
+        sigma_params = numpy.array([1.0, 1.0, 0.2*beam[0], 0.2*beam[1], \
+                numpy.pi/10, 1.0])
 
         # Find any sources within a provided radius and include them in the 
         # fit.
@@ -135,20 +138,15 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         nsources = 1
 
         for coords2 in potential_sources:
-            #if image.image[coords2[0], coords2[1], 0, 0] < threshold * \
-            #        image.unc[coords2[0], coords2[1], 0, 0]:
-            #    detected_peaks[coords2[0], coords2[1]] = 0.
-            #    continue
-
             d = numpy.sqrt( (coords[0] - coords2[0])**2 + \
                     (coords[1] - coords2[1])**2 )
 
             if (d < include_radius) and (d > 0):
                 xc, yc = coords2[1], coords2[0]
-                params = numpy.hstack([params, numpy.array([xc, yc, 1.0, 1.0, \
-                        0.0, image.image[yc,xc,0,0]])])
-                sigma_params = numpy.hstack([sigma_params, numpy.array([3.0, \
-                        3.0, 0.2, 0.2, numpy.pi/10, 1.0])])
+                params = numpy.hstack([params, numpy.array([xc, yc, beam[0], \
+                        beam[1], beam[2], image.image[yc,xc,0,0]])])
+                sigma_params = numpy.hstack([sigma_params, numpy.array([1.0, \
+                        1.0, 0.2*beam[0], 0.2*beam[1], numpy.pi/10, 1.0])])
 
                 nsources += 1
 
