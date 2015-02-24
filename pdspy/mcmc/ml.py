@@ -9,7 +9,7 @@ def ml(x, y, sigma_y, params, model, args=None, limits=None):
     ml = 1.
     chisq = ((y-model(x,params,**args))**2/sigma_y**2).sum()
 
-    if (limits != None):
+    if (type(limits) != type(None)):
         for i in range(params.size):
             if ((limits[i]["limited"][0] == True) and \
                     (params[i] < limits[i]["limits"][0])):
