@@ -173,13 +173,23 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
         # Add the newly found source to the list of sources.
 
-        new_source = numpy.empty((12,), dtype=p.dtype)
-        new_source[0::2] = p[0:6]
-        new_source[1::2] = sigma_p[0:6]
+        new_source = numpy.empty((14,), dtype=p.dtype)
+        new_source[0:12][0::2] = p[0:6]
+        new_source[0:12][1::2] = sigma_p[0:6]
+
+        new_source[12] = z[numpy.logical_and(z / sigma_z > 2.0, \
+                numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) < 10.0)].sum()
+        new_source[13] = numpy.sqrt(sigma_z[numpy.logical_and(z/sigma_z > 2.0, \
+                numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) < 10.0)]**2).\
+                sum()
 
         sources.append(new_source)
 
         # Plot the image slice.
+
+        #z[numpy.logical_or(z / sigma_z < 2.0, \
+        #        numpy.sqrt((coords[1] - x)**2 + (coords[0] - y)**2) > 10.0)] = 0
+        #z [numpy.sqrt((coords[1] - x)**2 + (coords[0] - y)**2) > 10.0] = 0.0
 
         if output_plots != None:
             fig, ax = plt.subplots(nrows=2, ncols=2)
@@ -204,7 +214,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
     if len(sources) > 0:
         sources = astropy.table.Table(numpy.array(sources), names=("x", \
                 "x_unc","y","y_unc","sigma_x","sigma_x_unc","sigma_y", \
-                "sigma_y_unc","pa", "pa_unc","f",'f_unc'))
+                "sigma_y_unc","pa", "pa_unc","f",'f_unc',"Flux","Flux_unc"))
 
     if hasattr(image, "wcs"):
         ra, dec = image.wcs.wcs_pix2world(sources["x"], sources["y"], 1)
@@ -242,6 +252,8 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
             sources['flux'] *= beam_per_pixel
             sources['flux_unc'] *= beam_per_pixel
+            sources['Flux'] *= beam_per_pixel
+            sources['Flux_unc'] *= beam_per_pixel
 
     return sources
 
