@@ -173,13 +173,15 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
         # Add the newly found source to the list of sources.
 
-        new_source = numpy.empty((14,), dtype=p.dtype)
+        new_source = numpy.empty((16,), dtype=p.dtype)
         new_source[0:12][0::2] = p[0:6]
         new_source[0:12][1::2] = sigma_p[0:6]
 
-        new_source[12] = z[numpy.logical_and(z / sigma_z > 2.0, \
+        new_source[12] = image.image[coords[0], coords[1], 0, 0]
+        new_source[13] = image.unc[coords[0], coords[1], 0, 0]
+        new_source[14] = z[numpy.logical_and(z / sigma_z > 2.0, \
                 numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) < 10.0)].sum()
-        new_source[13] = numpy.sqrt(sigma_z[numpy.logical_and(z/sigma_z > 2.0, \
+        new_source[15] = numpy.sqrt(sigma_z[numpy.logical_and(z/sigma_z > 2.0, \
                 numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) < 10.0)]**2).\
                 sum()
 
@@ -214,7 +216,8 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
     if len(sources) > 0:
         sources = astropy.table.Table(numpy.array(sources), names=("x", \
                 "x_unc","y","y_unc","sigma_x","sigma_x_unc","sigma_y", \
-                "sigma_y_unc","pa", "pa_unc","f",'f_unc',"Flux","Flux_unc"))
+                "sigma_y_unc","pa", "pa_unc","f",'f_unc',"Peak_Flux", \
+                "Peak_Flux_unc","Flux","Flux_unc"))
 
     if hasattr(image, "wcs"):
         ra, dec = image.wcs.wcs_pix2world(sources["x"], sources["y"], 1)
