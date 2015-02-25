@@ -5,12 +5,12 @@ import astropy.coordinates
 def update_catalog(catalog, *lists, tol=0.3, column_names=['1']):
 
     coord_catalog = astropy.coordinates.SkyCoord(catalog["ra"].tolist(), \
-            catalog["dec"].tolist(), 'icrs')
+            catalog["dec"].tolist(), frame='icrs')
     catalog["id"] = numpy.arange(len(catalog))
 
     for i, list1 in enumerate(lists):
         coord1 = astropy.coordinates.SkyCoord(list1["ra"].tolist(), \
-                list1['dec'].tolist(), 'icrs')
+                list1['dec'].tolist(), frame='icrs')
 
         idx, d2d, d3d = astropy.coordinates.match_coordinates_sky(coord1, \
                 coord_catalog)

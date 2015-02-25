@@ -24,7 +24,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
     if type(source_list) != type(None):
         coords = astropy.coordinates.SkyCoord(source_list["ra"].tolist(), \
-                source_list["dec"].tolist(), 'icrs')
+                source_list["dec"].tolist(), frame='icrs')
 
         pixcoords = image.wcs.wcs_world2pix(coords.ra.degree, \
                 coords.dec.degree, 1, ra_dec_order=True)

@@ -12,9 +12,9 @@ def match_source_lists(*lists, tol=0.3, table_names=['1', '2']):
         list2 = lists[i+1]
 
         coord1 = astropy.coordinates.SkyCoord(list1["ra"].tolist(), \
-                list1['dec'].tolist(), 'icrs')
+                list1['dec'].tolist(), frame='icrs')
         coord2 = astropy.coordinates.SkyCoord(list2["ra"].tolist(), \
-                list2["dec"].tolist(), 'icrs')
+                list2["dec"].tolist(), frame='icrs')
 
         idx, d2d, d3d = astropy.coordinates.match_coordinates_sky(coord1,coord2)
 
