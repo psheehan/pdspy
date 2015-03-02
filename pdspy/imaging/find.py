@@ -171,7 +171,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         # Calculate the uncertainties on the parameters.
 
         if (type(cov) == type(None)):
-            sigma_p = p
+            continue
         else:
             sigma_p = numpy.sqrt(numpy.diag((func(p, nsources, x, y, z, \
                     sigma_z)**2).sum()/(y.size - p.size) * cov))
