@@ -4,6 +4,7 @@ import numpy
 import scipy.ndimage.filters
 import scipy.ndimage.morphology
 import scipy.optimize
+import scipy.signal
 import matplotlib.pyplot as plt
 import os
 import astropy
@@ -11,7 +12,7 @@ import astropy.coordinates
 
 def find(image, threshold=5, include_radius=20, window_size=40, \
         source_list=None, list_search_radius=1.0, beam=[1.0,1.0,0.0], \
-        aperture=10, output_plots=None):
+        aperture=10, convolve_beam=False, output_plots=None):
 
     # If plots of the fits have been requested, make the directory if it 
     # doesn't already exist.
@@ -130,10 +131,14 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
                 2.355
 
         xc, yc = coords[1], coords[0]
-        params = numpy.array([xc, yc, beam[0]*beam_to_sigma, \
-                beam[1]*beam_to_sigma, beam[2], image.image[yc,xc,0,0]])
-        sigma_params = numpy.array([1.0, 1.0, 0.2*beam[0]*beam_to_sigma, \
-                0.2*beam[1]*beam_to_sigma, numpy.pi/10, 1.0])
+        if convolve_beam:
+            params = numpy.array([xc, yc, 0.5, 0.5, 0.0,image.image[yc,xc,0,0]])
+            sigma_params = numpy.array([1.0, 1.0, 0.1, 0.1, numpy.pi/10, 1.0])
+        else:
+            params = numpy.array([xc, yc, beam[0]*beam_to_sigma, \
+                    beam[1]*beam_to_sigma, beam[2], image.image[yc,xc,0,0]])
+            sigma_params = numpy.array([1.0, 1.0, 0.2*beam[0]*beam_to_sigma, \
+                    0.2*beam[1]*beam_to_sigma, numpy.pi/10, 1.0])
 
         # Find any sources within a provided radius and include them in the 
         # fit.
@@ -146,22 +151,39 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
             if (d < include_radius) and (d > 0):
                 xc, yc = coords2[1], coords2[0]
-                params = numpy.hstack([params, numpy.array([xc, yc, \
-                        beam[0]*beam_to_sigma, beam[1]*beam_to_sigma, beam[2], \
-                        image.image[yc,xc,0,0]])])
-                sigma_params = numpy.hstack([sigma_params, numpy.array([1.0, \
-                        1.0, 0.2*beam[0]*beam_to_sigma, \
-                        0.2*beam[1]*beam_to_sigma, numpy.pi/10, 1.0])])
+                if convolve_beam:
+                    params = numpy.hstack([params, numpy.array([xc, yc, \
+                            0.5, 0.5, 0.0, image.image[yc,xc,0,0]])])
+                    sigma_params = numpy.hstack([sigma_params, numpy.array([\
+                            1.0, 1.0, 0.1, 0.1, numpy.pi/10, 1.0])])
+                else:
+                    params = numpy.hstack([params, numpy.array([xc, yc, \
+                            beam[0]*beam_to_sigma, beam[1]*beam_to_sigma, \
+                            beam[2], image.image[yc,xc,0,0]])])
+                    sigma_params = numpy.hstack([sigma_params, numpy.array([\
+                            1.0, 1.0, 0.2*beam[0]*beam_to_sigma, \
+                            0.2*beam[1]*beam_to_sigma, numpy.pi/10, 1.0])])
 
                 nsources += 1
 
         # Try a least squares fit.
 
-        func = lambda p, n, x, y, z, sigma: \
-                ((z - gaussian2d(x, y, p, n)) / sigma).reshape((z.size,))
+        new_beam = [beam[0]*beam_to_sigma, beam[1]*beam_to_sigma, beam[2]]
 
-        p, cov, infodict, mesg, ier = scipy.optimize.leastsq(func, params, \
-                args=(nsources, x, y, z, sigma_z), full_output=True)
+        if convolve_beam:
+            func = lambda p, n, x, y, z, sigma, beam: \
+                    ((z - gaussian2d(x, y, p, n, beam)) / sigma).reshape(\
+                    (z.size,))
+
+            p, cov, infodict, mesg, ier = scipy.optimize.leastsq(func, params, \
+                    args=(nsources, x, y, z, sigma_z, new_beam), \
+                    full_output=True)
+        else:
+            func = lambda p, n, x, y, z, sigma: \
+                    ((z - gaussian2d(x, y, p, n)) / sigma).reshape((z.size,))
+
+            p, cov, infodict, mesg, ier = scipy.optimize.leastsq(func, params, \
+                    args=(nsources, x, y, z, sigma_z), full_output=True)
 
         # Fix the least squares result for phi because it seems to like to go
         # crazy.
@@ -173,8 +195,12 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         if (type(cov) == type(None)):
             continue
         else:
-            sigma_p = numpy.sqrt(numpy.diag((func(p, nsources, x, y, z, \
-                    sigma_z)**2).sum()/(y.size - p.size) * cov))
+            if convolve_beam:
+                sigma_p = numpy.sqrt(numpy.diag((func(p, nsources, x, y, z, \
+                        sigma_z, beam)**2).sum()/(y.size - p.size) * cov))
+            else:
+                sigma_p = numpy.sqrt(numpy.diag((func(p, nsources, x, y, z, \
+                        sigma_z)**2).sum()/(y.size - p.size) * cov))
 
         # Add the newly found source to the list of sources.
 
@@ -210,11 +236,22 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
             ax[0,1].imshow(sigma_z, origin="lower", interpolation="nearest", \
                     vmin=z.min(), vmax=z.max())
             ax[1,0].set_title("Model")
-            ax[1,0].imshow(gaussian2d(x, y, p, nsources), origin="lower", \
-                    interpolation="nearest", vmin=z.min(), vmax=z.max())
-            ax[1,1].set_title("Data-Model")
-            ax[1,1].imshow(z - gaussian2d(x, y, p, nsources), origin="lower", \
-                    interpolation="nearest", vmin=z.min(), vmax=z.max())
+
+            if convolve_beam:
+                ax[1,0].imshow(gaussian2d(x, y, p, nsources, new_beam), \
+                        origin="lower", interpolation="nearest", vmin=z.min(), \
+                        vmax=z.max())
+                ax[1,1].set_title("Data-Model")
+                ax[1,1].imshow(z - gaussian2d(x, y, p, nsources, new_beam), \
+                        origin="lower", interpolation="nearest", vmin=z.min(), \
+                        vmax=z.max())
+            else:
+                ax[1,0].imshow(gaussian2d(x, y, p, nsources), origin="lower", \
+                        interpolation="nearest", vmin=z.min(), vmax=z.max())
+                ax[1,1].set_title("Data-Model")
+                ax[1,1].imshow(z - gaussian2d(x, y, p, nsources), \
+                        origin="lower", interpolation="nearest", vmin=z.min(), \
+                        vmax=z.max())
 
             fig.savefig(output_plots+"/source_{0:d}.pdf".format(len(sources)-1))
 
@@ -267,19 +304,32 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
     return sources
 
-def gaussian2d(x, y, params, n=1):
+def gaussian2d(x, y, params, n=1, beam=None):
 
     model = numpy.zeros(x.shape)
 
     for i in range(n):
         x0, y0, sigmax, sigmay, pa, f0 = tuple(params[i*6:i*6+6])
 
-        xp=(x-x0)*numpy.cos(pa)-(y-y0)*numpy.sin(pa)
-        yp=(x-x0)*numpy.sin(pa)+(y-y0)*numpy.cos(pa)
+        xp=(x-x0)*numpy.sin(pa)-(y-y0)*numpy.cos(pa)
+        yp=(x-x0)*numpy.cos(pa)+(y-y0)*numpy.sin(pa)
 
         model += f0*numpy.exp(-1*xp**2/(2*sigmax**2))* \
                 numpy.exp(-1*yp**2/(2*sigmay**2))
+
+    if beam != None:
+        x0, y0 = params[0], params[1]
+        sigmax, sigmay, pa = tuple(beam)
     
+        xp=(x-x0)*numpy.sin(pa)-(y-y0)*numpy.cos(pa)
+        yp=(x-x0)*numpy.cos(pa)+(y-y0)*numpy.sin(pa)
+
+        beam_image = 1./(2*numpy.pi*sigmax*sigmay)* \
+                numpy.exp(-1*xp**2/(2*sigmax**2))*\
+                numpy.exp(-1*yp**2/(2*sigmay**2))
+
+        model = scipy.signal.fftconvolve(model, beam_image, mode='same')
+
     return model
 
 def bresenham_line(x,y,x2,y2):
