@@ -55,22 +55,25 @@ class Image(ImageObject):
 
         return hdulist
 
-    def set_uncertainty_from_image(self, image):
+    def set_uncertainty_from_image(self, image, box=128):
         cdef unsigned int ny, nx, nfreq, npol
         cdef unsigned int xmin, xmax, ymin, ymax
         cdef unsigned int i, j
+        cdef unsigned int halfbox
         cdef numpy.ndarray[double, ndim=2] subimage
         cdef numpy.ndarray[double, ndim=4] unc
 
         ny, nx, nfreq, npol = self.image.shape
 
+        halfbox = box / 2
+
         unc = numpy.empty(self.image.shape)
         for i in range(ny):
             for j in range(nx):
-                xmin = max(0,<int>j-128)
-                xmax = min(<int>j+128,nx)
-                ymin = max(0,<int>i-128)
-                ymax = min(<int>i+128,ny)
+                xmin = max(0,<int>j-halfbox)
+                xmax = min(<int>j+halfbox,nx)
+                ymin = max(0,<int>i-halfbox)
+                ymax = min(<int>i+halfbox,ny)
 
                 subimage = image.image[ymin:ymax,xmin:xmax,0,0]
 
