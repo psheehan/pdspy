@@ -70,10 +70,10 @@ class Image(ImageObject):
         unc = numpy.empty(self.image.shape)
         for i in range(ny):
             for j in range(nx):
-                xmin = max(0,<int>j-halfbox)
-                xmax = min(<int>j+halfbox,nx)
-                ymin = max(0,<int>i-halfbox)
-                ymax = min(<int>i+halfbox,ny)
+                xmin = max(0,<int>j-128)
+                xmax = min(<int>j+128,nx)
+                ymin = max(0,<int>i-128)
+                ymax = min(<int>i+128,ny)
 
                 subimage = image.image[ymin:ymax,xmin:xmax,0,0]
 
@@ -152,10 +152,10 @@ class Image(ImageObject):
                     dtype='f')
             unc_dset[...] = self.unc
 
-        if (type(self.wcs) != type(None)):
+        if hasattr(self, "wcs") and ((type(self.wcs) != type(None))):
             f.attrs['wcs'] = self.wcs.to_header_string()
 
-        if (type(self.header) != type(None)):
+        if hasattr(self, "header") and (type(self.header) != type(None)):
             f.attrs['header'] = self.header.tostring()
 
         if (usefile == None):
