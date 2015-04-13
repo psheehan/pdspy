@@ -46,7 +46,8 @@ class Image(ImageObject):
     def asFITS(self):
         hdulist = astropy.io.fits.HDUList([])
         for i in range(self.image[0,0,:,0].size):
-            hdu = astropy.io.fits.PrimaryHDU(self.image[:,:,i])
+            hdu = astropy.io.fits.PrimaryHDU(self.image[:,:,i,0].astype(\
+                    numpy.float32))
 
             if hasattr(self, "header"):
                 hdu.header = self.header[i]
