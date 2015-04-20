@@ -9,3 +9,4 @@ Jy = 1.0e-23                # erg s^-1 cm^-2 Hz^-1
 arcsec = 4.84813681e-6      # radians
 kms = 1e5
 M_jupiter = 1.89813e30
+M_earth = 5.97219e27
