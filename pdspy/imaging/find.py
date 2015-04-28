@@ -177,25 +177,27 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
             sigma_p = numpy.sqrt(numpy.diag((func(p, nsources, x, y, z, \
                     sigma_z)**2).sum()/(y.size - p.size) * cov))
 
-        # Add the newly found source to the list of sources.
-
         new_source = numpy.empty((16,), dtype=p.dtype)
         new_source[0:12][0::2] = p[0:6]
         new_source[0:12][1::2] = sigma_p[0:6]
+
+        # Do some aperture photometry for the source.
 
         if nsources > 1:
             new_z = z.copy() - gaussian2d(x, y, p[6:], nsources-1)
         else:
             new_z = z.copy()
 
+        new_z[numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) > aperture] = 0.0
+
         new_source[12] = image.image[coords[0], coords[1], 0, 0]
         new_source[13] = image.unc[coords[0], coords[1], 0, 0]
-        new_source[14] = new_z[numpy.logical_and(new_z / sigma_z > 2.0, \
-                numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) < aperture)].\
-                sum()
-        new_source[15] = numpy.sqrt(sigma_z[numpy.logical_and(new_z/sigma_z > 2.0, \
-                numpy.sqrt((coords[1]-x)**2+(coords[0]-y)**2) < aperture)]**2).\
-                sum()
+        new_source[14] = new_z[numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) \
+                < aperture].sum()
+        new_source[15] = numpy.sqrt(sigma_z[numpy.sqrt((coords[1]-x)**2+ \
+                (coords[0]-y)**2) < aperture]**2).sum()
+
+        # Add the newly found source to the list of sources.
 
         sources.append(new_source)
 
@@ -205,7 +207,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
             fig, ax = plt.subplots(nrows=2, ncols=2)
 
             ax[0,0].set_title("Data")
-            ax[0,0].imshow(z, origin="lower", interpolation="nearest", \
+            ax[0,0].imshow(new_z, origin="lower", interpolation="nearest", \
                     vmin=z.min(), vmax=z.max())
             ax[0,1].set_title("Uncertainty")
             ax[0,1].imshow(sigma_z, origin="lower", interpolation="nearest", \
