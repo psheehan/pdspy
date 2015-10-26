@@ -11,7 +11,7 @@ def imtovis(image):
     imag = numpy.empty((image.x.size*image.y.size,image.freq.size))
     weights = numpy.ones(real.shape)
     for i in range(image.freq.size):
-        vis = fftshift(fft2(ifftshift(image.image[:,:,i])))
+        vis = fftshift(fft2(ifftshift(image.image[:,:,i,0])))
         real[:,i] = vis.real.reshape((image.x.size*image.y.size,))
         imag[:,i] = vis.imag.reshape((image.x.size*image.y.size,))
 
