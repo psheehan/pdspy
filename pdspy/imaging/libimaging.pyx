@@ -71,10 +71,10 @@ class Image(ImageObject):
         unc = numpy.empty(self.image.shape)
         for i in range(ny):
             for j in range(nx):
-                xmin = max(0,<int>j-128)
-                xmax = min(<int>j+128,nx)
-                ymin = max(0,<int>i-128)
-                ymax = min(<int>i+128,ny)
+                xmin = max(0,<int>j-64)
+                xmax = min(<int>j+64,nx)
+                ymin = max(0,<int>i-64)
+                ymax = min(<int>i+64,ny)
 
                 subimage = image.image[ymin:ymax,xmin:xmax,0,0]
 
