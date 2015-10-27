@@ -20,8 +20,7 @@ cdef class VisibilitiesObject:
         if ((type(u) != type(None)) and (type(v) != type(None)) \
                 and (type(freq) != type(None)) \
                 and (type(real) != type(None)) \
-                and (type(imag) != type(None)) \
-                and (type(weights) != type(None))):
+                and (type(imag) != type(None))):
             self.u = u
             self.v = v
             self.uvdist = numpy.sqrt(u**2 + v**2)
@@ -30,9 +29,13 @@ cdef class VisibilitiesObject:
 
             self.real = real
             self.imag = imag
-            self.weights = weights
             self.amp = numpy.sqrt(real**2 + imag**2)
             self.phase = numpy.arctan2(imag, real)
+
+            if type(weights) != type(None):
+                self.weights = weights
+            else:
+                self.weights = numpy.ones((self.real.shape[0],self.real.shape[1]))
 
         self.baseline = baseline
         self.array_name = array_name
@@ -77,7 +80,11 @@ class Visibilities(VisibilitiesObject):
         freq = f['freq'].value.astype(numpy.double)
         real = f['real'].value.astype(numpy.double)
         imag = f['imag'].value.astype(numpy.double)
-        weights = f['weights'].value.astype(numpy.double)
+
+        if hasattr(f, 'weights'):
+            weights = f['weights'].value.astype(numpy.double)
+        else:
+            weights = numpy.ones(real.shape)
 
         self.__init__(u, v, freq, real, imag, weights)
 
@@ -100,9 +107,11 @@ class Visibilities(VisibilitiesObject):
         real_dset[...] = self.real
         imag_dset = f.create_dataset("imag", self.imag.shape, dtype='f')
         imag_dset[...] = self.imag
-        weights_dset = f.create_dataset("weights", self.weights.shape, \
-                dtype='f')
-        weights_dset[...] = self.weights
+
+        if numpy.product(self.weights == numpy.ones(self.real.shape)) == 0:
+            weights_dset = f.create_dataset("weights", self.weights.shape, \
+                    dtype='f')
+            weights_dset[...] = self.weights
 
         if (usefile == None):
             f.close()
