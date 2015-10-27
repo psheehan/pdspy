@@ -150,11 +150,15 @@ class Model:
         image = image / Jy * ((x[1] - x[0]) / (dpc * pc)) * \
                 ((y[1] - y[0]) / (dpc * pc))
         if iline != None:
-            x = x / (dpc * pc) / arcsec
-            y = y / (dpc * pc) / arcsec
+            #x = x / (dpc * pc) / arcsec
+            #y = y / (dpc * pc) / arcsec
+            x = x * pixelsize / (x[1] - x[0])
+            y = y * pixelsize / (y[1] - y[0])
         else:
-            x = (x - x[int(npix/2)]) / (dpc * pc) / arcsec
-            y = (y - y[int(npix/2)]) / (dpc * pc) / arcsec
+            #x = (x - x[int(npix/2)]) / (dpc * pc) / arcsec
+            #y = (y - y[int(npix/2)]) / (dpc * pc) / arcsec
+            x = (x - x[int(npix/2)]) * pixelsize / (x[1] - x[0])
+            y = (y - y[int(npix/2)]) * pixelsize / (y[1] - y[0])
 
         self.images[name] = Image(image, x=x, y=y, wave=lam*1.0e-4)
 
@@ -214,8 +218,10 @@ class Model:
 
         image = image / Jy * ((x[1] - x[0]) / (dpc * pc)) * \
                 ((y[1] - y[0]) / (dpc * pc))
-        x = x / (dpc * pc) / arcsec
-        y = y / (dpc * pc) / arcsec
+        #x = x / (dpc * pc) / arcsec
+        #y = y / (dpc * pc) / arcsec
+        x = x * pixelsize / (x[1] - x[0])
+        y = y * pixelsize / (y[1] - y[0])
 
         im = Image(image, x=x, y=y, wave=lam*1.0e-4)
 
