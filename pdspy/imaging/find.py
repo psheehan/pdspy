@@ -188,14 +188,18 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         else:
             new_z = z.copy()
 
-        new_z[numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) > aperture] = 0.0
+        sky = numpy.median(new_z[numpy.logical_and(\
+                numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) > aperture, \
+                numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) <= 2*aperture)])
 
-        new_source[12] = image.image[coords[0], coords[1], 0, 0]
+        new_source[12] = image.image[coords[0], coords[1], 0, 0] - sky
         new_source[13] = image.unc[coords[0], coords[1], 0, 0]
-        new_source[14] = new_z[numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) \
-                < aperture].sum()
+        new_source[14] = (new_z[numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2)\
+                < aperture] - sky).sum()
         new_source[15] = numpy.sqrt(sigma_z[numpy.sqrt((coords[1]-x)**2+ \
                 (coords[0]-y)**2) < aperture]**2).sum()
+
+        new_z[numpy.sqrt((coords[1]-x)**2+(coords[0]-y)**2) > 2*aperture] = 0.0
 
         # Add the newly found source to the list of sources.
 
