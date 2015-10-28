@@ -17,16 +17,15 @@ cdef class VisibilitiesObject:
             numpy.ndarray[double, ndim=2] weights=None, \
             baseline=None, array_name="CARMA"):
 
-        if ((type(u) != type(None)) and (type(v) != type(None)) \
-                and (type(freq) != type(None)) \
-                and (type(real) != type(None)) \
-                and (type(imag) != type(None))):
+        if (type(u) != type(None)) and (type(v) != type(None)):
             self.u = u
             self.v = v
             self.uvdist = numpy.sqrt(u**2 + v**2)
 
+        if (type(freq) != type(None)):
             self.freq = freq
 
+        if (type(real) != type(None)) and (type(imag) != type(None)):
             self.real = real
             self.imag = imag
             self.amp = numpy.sqrt(real**2 + imag**2)
@@ -75,16 +74,21 @@ class Visibilities(VisibilitiesObject):
         else:
             f = usefile
 
-        u = f['u'].value.astype(numpy.double)
-        v = f['v'].value.astype(numpy.double)
-        freq = f['freq'].value.astype(numpy.double)
-        real = f['real'].value.astype(numpy.double)
-        imag = f['imag'].value.astype(numpy.double)
+        u, v, freq, real, imag, weights = None, None, None, None, None, None
 
-        if hasattr(f, 'weights'):
-            weights = f['weights'].value.astype(numpy.double)
-        else:
-            weights = numpy.ones(real.shape)
+        if ('u' in f) and ('v' in f):
+            u = f['u'].value.astype(numpy.double)
+            v = f['v'].value.astype(numpy.double)
+        if ('freq' in f):
+            freq = f['freq'].value.astype(numpy.double)
+        if ('real' in f) and ('imag' in f):
+            real = f['real'].value.astype(numpy.double)
+            imag = f['imag'].value.astype(numpy.double)
+
+            if ('weights' in f):
+                weights = f['weights'].value.astype(numpy.double)
+            else:
+                weights = numpy.ones(real.shape)
 
         self.__init__(u, v, freq, real, imag, weights)
 
@@ -97,21 +101,25 @@ class Visibilities(VisibilitiesObject):
         else:
             f = usefile
 
-        u_dset = f.create_dataset("u", self.u.shape, dtype='f')
-        u_dset[...] = self.u
-        v_dset = f.create_dataset("v", self.v.shape, dtype='f')
-        v_dset[...] = self.v
-        freq_dset = f.create_dataset("freq", self.freq.shape, dtype='f')
-        freq_dset[...] = self.freq
-        real_dset = f.create_dataset("real", self.real.shape, dtype='f')
-        real_dset[...] = self.real
-        imag_dset = f.create_dataset("imag", self.imag.shape, dtype='f')
-        imag_dset[...] = self.imag
+        if (type(self.u) != type(None)) and (type(self.v) != type(None)):
+            u_dset = f.create_dataset("u", self.u.shape, dtype='float64')
+            u_dset[...] = self.u
+            v_dset = f.create_dataset("v", self.v.shape, dtype='float64')
+            v_dset[...] = self.v
+        if (type(self.freq) != type(None)):
+            freq_dset = f.create_dataset("freq", self.freq.shape, dtype='float64')
+            freq_dset[...] = self.freq
+        if (type(self.real) != type(None)) and (type(self.imag) != type(None)):
+            real_dset = f.create_dataset("real", self.real.shape, dtype='float64')
+            real_dset[...] = self.real
+            imag_dset = f.create_dataset("imag", self.imag.shape, dtype='float64')
+            imag_dset[...] = self.imag
 
-        if numpy.product(self.weights == numpy.ones(self.real.shape)) == 0:
-            weights_dset = f.create_dataset("weights", self.weights.shape, \
-                    dtype='f')
-            weights_dset[...] = self.weights
+            if type(self.weights) != type(None):
+                if numpy.product(self.weights == numpy.ones(self.real.shape)) == 0:
+                    weights_dset = f.create_dataset("weights", self.weights.shape, \
+                            dtype='float64')
+                    weights_dset[...] = self.weights
 
         if (usefile == None):
             f.close()
