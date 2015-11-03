@@ -12,7 +12,7 @@ import astropy.coordinates
 
 def find(image, threshold=5, include_radius=20, window_size=40, \
         source_list=None, list_search_radius=1.0, beam=[1.0,1.0,0.0], \
-        aperture=10, output_plots=None):
+        aperture=10, output_plots=None, known_sources=None):
 
     # If plots of the fits have been requested, make the directory if it 
     # doesn't already exist.
@@ -156,6 +156,25 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
                 nsources += 1
 
+        if known_sources != None:
+            for source in known_sources:
+                coords2 = [source["y"], source["x"]]
+
+                d = numpy.sqrt( (coords[0] - coords2[0])**2 + \
+                        (coords[1] - coords2[1])**2 )
+
+                if (d < include_radius) and (d > 0):
+                    xc, yc = coords2[1], coords2[0]
+                    #params = numpy.hstack([params, numpy.array([xc, yc, \
+                    #        beam[0]*beam_to_sigma, beam[1]*beam_to_sigma, \
+                    #        beam[2], image.image[yc,xc,0,0]])])
+                    params = numpy.hstack([params, numpy.array([xc, yc, \
+                            source["sigma_x"], source["sigma_y"], \
+                            source["pa"], source["f"]])])
+                    sigma_params = numpy.hstack([sigma_params, numpy.array([\
+                            0.5, 0.5, 0.2*beam[0]*beam_to_sigma, \
+                            0.2*beam[1]*beam_to_sigma, numpy.pi/10, 1.0])])
+
         # Try a least squares fit.
 
         func = lambda p, n, x, y, z, sigma: \
@@ -211,7 +230,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
             fig, ax = plt.subplots(nrows=2, ncols=2)
 
             ax[0,0].set_title("Data")
-            ax[0,0].imshow(new_z, origin="lower", interpolation="nearest", \
+            ax[0,0].imshow(z, origin="lower", interpolation="nearest", \
                     vmin=z.min(), vmax=z.max())
             ax[0,1].set_title("Uncertainty")
             ax[0,1].imshow(sigma_z, origin="lower", interpolation="nearest", \
