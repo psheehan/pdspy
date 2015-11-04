@@ -12,7 +12,7 @@ import astropy.coordinates
 
 def find(image, threshold=5, include_radius=20, window_size=40, \
         source_list=None, list_search_radius=1.0, beam=[1.0,1.0,0.0], \
-        aperture=10, output_plots=None, known_sources=None):
+        aperture=None, output_plots=None, known_sources=None):
 
     # If plots of the fits have been requested, make the directory if it 
     # doesn't already exist.
@@ -207,18 +207,21 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         else:
             new_z = z.copy()
 
+        if aperture == None:
+            aperture = 3 * numpy.sqrt(new_source[4]*new_source[6])
+
         sky = numpy.median(new_z[numpy.logical_and(\
                 numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) > aperture, \
                 numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) <= 2*aperture)])
 
         new_source[12] = image.image[coords[0], coords[1], 0, 0] - sky
         new_source[13] = image.unc[coords[0], coords[1], 0, 0]
-        new_source[14] = (new_z[numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2)\
-                < aperture] - sky).sum()
-        new_source[15] = numpy.sqrt(sigma_z[numpy.sqrt((coords[1]-x)**2+ \
-                (coords[0]-y)**2) < aperture]**2).sum()
+        new_source[14] = (new_z[numpy.sqrt((new_source[0]-x)**2 + \
+                (new_source[2]-y)**2) < aperture] - sky).sum()
+        new_source[15] = numpy.sqrt(sigma_z[numpy.sqrt((new_source[0]-x)**2+ \
+                (new_source[2]-y)**2) < aperture]**2).sum()
 
-        new_z[numpy.sqrt((coords[1]-x)**2+(coords[0]-y)**2) > 2*aperture] = 0.0
+        new_z[numpy.sqrt((coords[1]-x)**2+(coords[0]-y)**2) > 4*aperture] = 0.0
 
         # Add the newly found source to the list of sources.
 
@@ -243,6 +246,15 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
             ax[1,1].imshow(z - gaussian2d(x, y, p, nsources), \
                     origin="lower", interpolation="nearest", vmin=z.min(), \
                     vmax=z.max())
+
+            circle1 = plt.Circle((new_source[0] - coords[1] + half_window, \
+                    new_source[2] - coords[0] + half_window), aperture, \
+                    edgecolor='r', facecolor="none")
+            ax[0,0].add_artist(circle1)
+            circle2 = plt.Circle((new_source[0] - coords[1] + half_window, \
+                    new_source[2] - coords[0] + half_window), \
+                    4*aperture, edgecolor='r', facecolor="none")
+            ax[0,0].add_artist(circle2)
 
             fig.savefig(output_plots+"/source_{0:d}.pdf".format(len(sources)-1))
 
