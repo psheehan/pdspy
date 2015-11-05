@@ -12,7 +12,8 @@ import astropy.coordinates
 
 def find(image, threshold=5, include_radius=20, window_size=40, \
         source_list=None, list_search_radius=1.0, beam=[1.0,1.0,0.0], \
-        aperture=None, output_plots=None, known_sources=None):
+        user_aperture=False, aperture=10, output_plots=None, \
+        known_sources=None):
 
     # If plots of the fits have been requested, make the directory if it 
     # doesn't already exist.
@@ -207,7 +208,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         else:
             new_z = z.copy()
 
-        if aperture == None:
+        if not user_aperture:
             aperture = 3 * numpy.sqrt(new_source[4]*new_source[6])
 
         sky = numpy.median(new_z[numpy.logical_and(\
