@@ -22,33 +22,9 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         os.system("rm -r "+output_plots)
         os.mkdir(output_plots)
 
-    # Create a base image to look for peaks in.
-
-    if type(source_list) != type(None):
-        coords = astropy.coordinates.SkyCoord(source_list["ra"].tolist(), \
-                source_list["dec"].tolist(), frame='icrs')
-
-        pixcoords = image.wcs.wcs_world2pix(coords.ra.degree, \
-                coords.dec.degree, 1, ra_dec_order=True)
-
-        arcsec_in_pixels = arcsec / (abs(image.wcs.wcs.cdelt[0]) * numpy.pi/180)
-
-        x, y = numpy.meshgrid(numpy.arange(image.image.shape[1]), \
-                numpy.arange(image.image.shape[0]))
-
-        mask = numpy.zeros((image.image.shape[0], image.image.shape[1]), \
-                dtype=bool)
-
-        for pixcoord in zip(pixcoords[0], pixcoords[1]):
-            mask[numpy.sqrt( (pixcoord[0] - x)**2 + \
-                    (pixcoord[1] -y)**2 ) < 0.5*list_search_radius*\
-                    arcsec_in_pixels] = True
-
-        base_image = numpy.where(mask, image.image[:,:,0,0], numpy.nan)
-    else:
-        base_image = image.image[:,:,0,0]
-
     # Find potential sources in the image.
+
+    base_image = image.image[:,:,0,0]
 
     neighborhood = scipy.ndimage.morphology.generate_binary_structure(2,2)
 
@@ -73,6 +49,30 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
             detected_peaks[coords[0], coords[1]] = 0.
 
     potential_sources = numpy.column_stack(numpy.nonzero(detected_peaks))
+
+    # Next, if a source list was provided for searching purposes, throw away
+    # any objects not within the requisite radius from a listed source.
+
+    if type(source_list) != type(None):
+        coords = astropy.coordinates.SkyCoord(source_list["ra"].tolist(), \
+                source_list["dec"].tolist(), frame='icrs')
+
+        pixcoords = image.wcs.wcs_world2pix(coords.ra.degree, \
+                coords.dec.degree, 1, ra_dec_order=True)
+
+        arcsec_in_pixels = arcsec / (abs(image.wcs.wcs.cdelt[0]) * numpy.pi/180)
+
+        for peak_coords in potential_sources:
+            for count, pixcoord in enumerate(zip(pixcoords[0], pixcoords[1])):
+                if (numpy.sqrt((pixcoord[0] - peak_coords[1])**2 + \
+                               (pixcoord[1] - peak_coords[0])**2) <\
+                               0.5 * list_search_radius * arcsec_in_pixels):
+                    detected_peaks[peak_coords[0], peak_coords[1]] = 1.
+                    break
+                elif (count == len(pixcoords[0])-1):
+                    detected_peaks[peak_coords[0], peak_coords[1]] = 0.
+
+        potential_sources = numpy.column_stack(numpy.nonzero(detected_peaks))
 
     # Search for potential sources that are probably the same source and
     # make sure we're only finding it once.
@@ -189,6 +189,11 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
         p[4] = numpy.fmod(numpy.fmod(p[4], numpy.pi)+numpy.pi, numpy.pi)
 
+        # Take the absolute values of sigma_x and sigma_y in case they 
+        # managed to go negative.
+
+        p[2:4] = abs(p[2:4])
+
         # Calculate the uncertainties on the parameters.
 
         if (type(cov) == type(None)):
@@ -213,7 +218,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
         sky = numpy.median(new_z[numpy.logical_and(\
                 numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) > aperture, \
-                numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) <= 2*aperture)])
+                numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) <= 4*aperture)])
 
         new_source[12] = image.image[coords[0], coords[1], 0, 0] - sky
         new_source[13] = image.unc[coords[0], coords[1], 0, 0]
