@@ -157,7 +157,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
                 nsources += 1
 
-        if known_sources != None:
+        if type(known_sources) != type(None):
             for source in known_sources:
                 coords2 = [source["y"], source["x"]]
 
@@ -166,9 +166,6 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
                 if (d < include_radius) and (d > 0):
                     xc, yc = coords2[1], coords2[0]
-                    #params = numpy.hstack([params, numpy.array([xc, yc, \
-                    #        beam[0]*beam_to_sigma, beam[1]*beam_to_sigma, \
-                    #        beam[2], image.image[yc,xc,0,0]])])
                     params = numpy.hstack([params, numpy.array([xc, yc, \
                             source["sigma_x"], source["sigma_y"], \
                             source["pa"], source["f"]])])
