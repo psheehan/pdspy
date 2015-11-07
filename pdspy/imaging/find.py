@@ -11,9 +11,9 @@ import astropy
 import astropy.coordinates
 
 def find(image, threshold=5, include_radius=20, window_size=40, \
-        source_list=None, list_search_radius=1.0, beam=[1.0,1.0,0.0], \
-        user_aperture=False, aperture=10, output_plots=None, \
-        known_sources=None):
+        source_list=None, list_search_radius=1.0, list_threshold=5, \
+        beam=[1.0,1.0,0.0], user_aperture=False, aperture=10, \
+        output_plots=None, known_sources=None):
 
     # If plots of the fits have been requested, make the directory if it 
     # doesn't already exist.
@@ -39,6 +39,18 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
     detected_peaks = local_max - eroded_background
 
     potential_sources = numpy.column_stack(numpy.nonzero(detected_peaks))
+    
+    # If we are providing a source list, the threshold should be lower than
+    # for a blind search. Throw away for good any sources that don't meet
+    # this threshold.
+
+    if type(source_list) != type(None):
+        for coords in potential_sources:
+            if image.image[coords[0], coords[1], 0, 0] < list_threshold * \
+                    image.unc[coords[0], coords[1], 0, 0]:
+                detected_peaks[coords[0], coords[1]] = 0.
+
+        potential_sources = numpy.column_stack(numpy.nonzero(detected_peaks))
 
     # First, throw away any potential source that does not meet the
     # threshold cut requirement.
@@ -47,8 +59,6 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         if image.image[coords[0], coords[1], 0, 0] < threshold * \
                 image.unc[coords[0], coords[1], 0, 0]:
             detected_peaks[coords[0], coords[1]] = 0.
-
-    potential_sources = numpy.column_stack(numpy.nonzero(detected_peaks))
 
     # Next, if a source list was provided for searching purposes, throw away
     # any objects not within the requisite radius from a listed source.
@@ -67,12 +77,16 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
                 if (numpy.sqrt((pixcoord[0] - peak_coords[1])**2 + \
                                (pixcoord[1] - peak_coords[0])**2) <\
                                0.5 * list_search_radius * arcsec_in_pixels):
-                    detected_peaks[peak_coords[0], peak_coords[1]] = 1.
-                    break
-                elif (count == len(pixcoords[0])-1):
-                    detected_peaks[peak_coords[0], peak_coords[1]] = 0.
+                    #detected_peaks[peak_coords[0], peak_coords[1]] = 1.
+                    if image.image[peak_coords[0], peak_coords[1], 0, 0] > \
+                            list_threshold * image.unc[peak_coords[0], \
+                            peak_coords[1], 0, 0]:
+                        detected_peaks[peak_coords[0], peak_coords[1]] = 1.
+                        break
+                #elif (count == len(pixcoords[0])-1):
+                #    detected_peaks[peak_coords[0], peak_coords[1]] = 0.
 
-        potential_sources = numpy.column_stack(numpy.nonzero(detected_peaks))
+    potential_sources = numpy.column_stack(numpy.nonzero(detected_peaks))
 
     # Search for potential sources that are probably the same source and
     # make sure we're only finding it once.
@@ -157,6 +171,9 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
                 nsources += 1
 
+        # If a list of previously known sources is provided, make sure you 
+        # remove them from the image.
+
         if type(known_sources) != type(None):
             for source in known_sources:
                 coords2 = [source["y"], source["x"]]
@@ -213,9 +230,13 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         if not user_aperture:
             aperture = 3 * numpy.sqrt(new_source[4]*new_source[6])
 
-        sky = numpy.median(new_z[numpy.logical_and(\
-                numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) > aperture, \
-                numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) <= 4*aperture)])
+        try:
+            sky = numpy.median(new_z[numpy.logical_and(\
+                    numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) > aperture, \
+                    numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) <= 4*aperture)])
+        except IndexError:
+            sky = -1.0e-5
+            print("Error in source: ", len(sources))
 
         new_source[12] = image.image[coords[0], coords[1], 0, 0] - sky
         new_source[13] = image.unc[coords[0], coords[1], 0, 0]
@@ -223,8 +244,6 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
                 (new_source[2]-y)**2) < aperture] - sky).sum()
         new_source[15] = numpy.sqrt(sigma_z[numpy.sqrt((new_source[0]-x)**2+ \
                 (new_source[2]-y)**2) < aperture]**2).sum()
-
-        new_z[numpy.sqrt((coords[1]-x)**2+(coords[0]-y)**2) > 4*aperture] = 0.0
 
         # Add the newly found source to the list of sources.
 
