@@ -12,8 +12,8 @@ import astropy.coordinates
 
 def find(image, threshold=5, include_radius=20, window_size=40, \
         source_list=None, list_search_radius=1.0, list_threshold=5, \
-        beam=[1.0,1.0,0.0], user_aperture=False, aperture=10, \
-        output_plots=None, known_sources=None):
+        beam=[1.0,1.0,0.0], user_aperture=False, aperture=15, \
+        fit_aperture=15, output_plots=None):
 
     # If plots of the fits have been requested, make the directory if it 
     # doesn't already exist.
@@ -148,55 +148,34 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         xc, yc = coords[1], coords[0]
         params = numpy.array([xc, yc, beam[0]*beam_to_sigma, \
                 beam[1]*beam_to_sigma, beam[2], image.image[yc,xc,0,0]])
-        sigma_params = numpy.array([1.0, 1.0, 0.2*beam[0]*beam_to_sigma, \
-                0.2*beam[1]*beam_to_sigma, numpy.pi/10, 1.0])
-
-        # Find any sources within a provided radius and include them in the 
-        # fit.
-
-        nsources = 1
-
-        for coords2 in potential_sources:
-            d = numpy.sqrt( (coords[0] - coords2[0])**2 + \
-                    (coords[1] - coords2[1])**2 )
-
-            if (d < include_radius) and (d > 0):
-                xc, yc = coords2[1], coords2[0]
-                params = numpy.hstack([params, numpy.array([xc, yc, \
-                        beam[0]*beam_to_sigma, beam[1]*beam_to_sigma, \
-                        beam[2], image.image[yc,xc,0,0]])])
-                sigma_params = numpy.hstack([sigma_params, numpy.array([\
-                        1.0, 1.0, 0.2*beam[0]*beam_to_sigma, \
-                        0.2*beam[1]*beam_to_sigma, numpy.pi/10, 1.0])])
-
-                nsources += 1
-
-        # If a list of previously known sources is provided, make sure you 
-        # remove them from the image.
-
-        if type(known_sources) != type(None):
-            for source in known_sources:
-                coords2 = [source["y"], source["x"]]
-
-                d = numpy.sqrt( (coords[0] - coords2[0])**2 + \
-                        (coords[1] - coords2[1])**2 )
-
-                if (d < include_radius) and (d > 0):
-                    xc, yc = coords2[1], coords2[0]
-                    params = numpy.hstack([params, numpy.array([xc, yc, \
-                            source["sigma_x"], source["sigma_y"], \
-                            source["pa"], source["f"]])])
-                    sigma_params = numpy.hstack([sigma_params, numpy.array([\
-                            0.5, 0.5, 0.2*beam[0]*beam_to_sigma, \
-                            0.2*beam[1]*beam_to_sigma, numpy.pi/10, 1.0])])
 
         # Try a least squares fit.
 
         func = lambda p, n, x, y, z, sigma: \
                 ((z - gaussian2d(x, y, p, n)) / sigma).reshape((z.size,))
 
-        p, cov, infodict, mesg, ier = scipy.optimize.leastsq(func, params, \
-                args=(nsources, x, y, z, sigma_z), full_output=True)
+        # Only fit to pixels in a certain aperture around the source. This is 
+        # because otherwise the fitting routine has a habit of finding other 
+        # peaks or negative dips when fitting faint sources.
+
+        for i in range(1):
+            z2 = numpy.zeros(z.shape)
+            sigma_z2 = numpy.zeros(z.shape) + 1.0e20
+
+            if i > 0:
+                params[0:6] = p[0:6]
+                ap = 3 * numpy.sqrt(abs(params[2]*params[3]))
+            else:
+                ap = fit_aperture
+
+            z2[numpy.sqrt((x - params[0])**2 + (y - params[1])**2) < ap] = \
+                    z[numpy.sqrt((x - params[0])**2 + (y - params[1])**2) < ap]
+            sigma_z2[numpy.sqrt((x - params[0])**2 + (y - params[1])**2) < ap]=\
+                    sigma_z[numpy.sqrt((x - params[0])**2 + (y - params[1])**2)\
+                    < ap]
+
+            p, cov, infodict, mesg, ier = scipy.optimize.leastsq(func, \
+                    params, args=(1, x, y, z2, sigma_z2), full_output=True)
 
         # Fix the least squares result for phi because it seems to like to go
         # crazy.
@@ -213,12 +192,53 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         if (type(cov) == type(None)):
             continue
         else:
-            sigma_p = numpy.sqrt(numpy.diag((func(p, nsources, x, y, z, \
-                    sigma_z)**2).sum()/(y.size - p.size) * cov))
+            sigma_p = numpy.sqrt(numpy.diag((func(p, 1, x, y, z2, \
+                    sigma_z2)**2).sum()/(y.size - p.size) * cov))
 
         new_source = numpy.empty((16,), dtype=p.dtype)
         new_source[0:12][0::2] = p[0:6]
         new_source[0:12][1::2] = sigma_p[0:6]
+
+        # Before doing aperture photometry, find any sources within a provided 
+        # radius and fit them so they can be subtracted out of the sky
+        # subtraction window.
+
+        nsources = 1
+
+        """
+        for coords2 in potential_sources:
+            d = numpy.sqrt( (coords[0] - coords2[0])**2 + \
+                    (coords[1] - coords2[1])**2 )
+
+            if (d < include_radius) and (d > 0):
+                xc, yc = coords2[1], coords2[0]
+                params = numpy.array([xc, yc, beam[0]*beam_to_sigma, \
+                        beam[1]*beam_to_sigma, beam[2], image.image[yc,xc,0,0]])
+
+                for i in range(3):
+                    z2 = numpy.zeros(z.shape)
+                    sigma_z2 = numpy.zeros(z.shape) + 1.0e20
+
+                    if i > 0:
+                        params[0:6] = new_p[0:6]
+                        ap = 3 * numpy.sqrt(abs(params[2]*params[3]))
+                    else:
+                        ap = fit_aperture
+
+                    z2[numpy.sqrt((x - params[0])**2 + (y - params[1])**2) < \
+                            ap] = z[numpy.sqrt((x - params[0])**2 + \
+                            (y - params[1])**2) < ap]
+                    sigma_z2[numpy.sqrt((x - params[0])**2 + \
+                            (y - params[1])**2) < ap] = sigma_z[numpy.sqrt( \
+                            (x - params[0])**2 + (y - params[1])**2) < ap]
+
+                    new_p, cov, infodict, mesg, ier = \
+                            scipy.optimize.leastsq(func, params, args=(1, x, y,\
+                            z2, sigma_z2), full_output=True)
+
+                p = numpy.hstack([p, new_p])
+                nsources += 1
+        """
 
         # Do some aperture photometry for the source.
 
@@ -255,7 +275,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
             fig, ax = plt.subplots(nrows=2, ncols=2)
 
             ax[0,0].set_title("Data")
-            ax[0,0].imshow(z, origin="lower", interpolation="nearest", \
+            ax[0,0].imshow(z2, origin="lower", interpolation="nearest", \
                     vmin=z.min(), vmax=z.max())
             ax[0,1].set_title("Uncertainty")
             ax[0,1].imshow(sigma_z, origin="lower", interpolation="nearest", \
