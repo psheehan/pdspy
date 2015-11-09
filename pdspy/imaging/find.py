@@ -13,7 +13,8 @@ import astropy.coordinates
 def find(image, threshold=5, include_radius=20, window_size=40, \
         source_list=None, list_search_radius=1.0, list_threshold=5, \
         beam=[1.0,1.0,0.0], user_aperture=False, aperture=15, \
-        fit_aperture=15, output_plots=None):
+        fit_aperture=15, include_flux_unc=False, flux_unc=0.1, \
+        output_plots=None):
 
     # If plots of the fits have been requested, make the directory if it 
     # doesn't already exist.
@@ -248,9 +249,13 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         if not user_aperture:
             aperture = 3 * numpy.sqrt(new_source[4]*new_source[6])
 
-        sky = numpy.median(new_z[numpy.logical_and(\
-                numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) > aperture, \
-                numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) <= 4*aperture)])
+        try:
+            sky = numpy.median(new_z[numpy.logical_and(\
+                    numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) > aperture, \
+                    numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) <= 4*aperture)])
+        except IndexError:
+            sky = -1.0e-5
+            print("Error in source:", len(sources))
 
         new_source[12] = image.image[coords[0], coords[1], 0, 0] - sky
         new_source[13] = image.unc[coords[0], coords[1], 0, 0]
@@ -340,6 +345,12 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
             sources['flux_unc'] *= beam_per_pixel
             sources['Flux'] *= beam_per_pixel
             sources['Flux_unc'] *= beam_per_pixel
+
+        if include_flux_unc:
+            sources['flux_unc'] = numpy.sqrt(sources['flux_unc']**2 + \
+                    (flux_unc * sources['flux'])**2)
+            sources['Flux_unc'] = numpy.sqrt(sources['Flux_unc']**2 + \
+                    (flux_unc * sources['Flux'])**2)
 
     return sources
 
