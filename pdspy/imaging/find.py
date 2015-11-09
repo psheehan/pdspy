@@ -158,7 +158,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         # because otherwise the fitting routine has a habit of finding other 
         # peaks or negative dips when fitting faint sources.
 
-        for i in range(1):
+        for i in range(3):
             z2 = numpy.zeros(z.shape)
             sigma_z2 = numpy.zeros(z.shape) + 1.0e20
 
@@ -205,7 +205,6 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
         nsources = 1
 
-        """
         for coords2 in potential_sources:
             d = numpy.sqrt( (coords[0] - coords2[0])**2 + \
                     (coords[1] - coords2[1])**2 )
@@ -238,7 +237,6 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
                 p = numpy.hstack([p, new_p])
                 nsources += 1
-        """
 
         # Do some aperture photometry for the source.
 
@@ -250,13 +248,9 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         if not user_aperture:
             aperture = 3 * numpy.sqrt(new_source[4]*new_source[6])
 
-        try:
-            sky = numpy.median(new_z[numpy.logical_and(\
-                    numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) > aperture, \
-                    numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) <= 4*aperture)])
-        except IndexError:
-            sky = -1.0e-5
-            print("Error in source: ", len(sources))
+        sky = numpy.median(new_z[numpy.logical_and(\
+                numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) > aperture, \
+                numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) <= 4*aperture)])
 
         new_source[12] = image.image[coords[0], coords[1], 0, 0] - sky
         new_source[13] = image.unc[coords[0], coords[1], 0, 0]
@@ -275,7 +269,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
             fig, ax = plt.subplots(nrows=2, ncols=2)
 
             ax[0,0].set_title("Data")
-            ax[0,0].imshow(z2, origin="lower", interpolation="nearest", \
+            ax[0,0].imshow(z, origin="lower", interpolation="nearest", \
                     vmin=z.min(), vmax=z.max())
             ax[0,1].set_title("Uncertainty")
             ax[0,1].imshow(sigma_z, origin="lower", interpolation="nearest", \
