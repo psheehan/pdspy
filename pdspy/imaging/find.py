@@ -261,8 +261,10 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         new_source[13] = image.unc[coords[0], coords[1], 0, 0]
         new_source[14] = (new_z[numpy.sqrt((new_source[0]-x)**2 + \
                 (new_source[2]-y)**2) < aperture] - sky).sum()
-        new_source[15] = numpy.sqrt(sigma_z[numpy.sqrt((new_source[0]-x)**2+ \
-                (new_source[2]-y)**2) < aperture]**2).sum()
+        #new_source[15] = numpy.sqrt(sigma_z[numpy.sqrt((new_source[0]-x)**2+ \
+        #        (new_source[2]-y)**2) < aperture]**2).sum()
+        new_source[15] = numpy.sqrt((sigma_z[numpy.sqrt((new_source[0]-x)**2+ \
+                (new_source[2]-y)**2) < aperture]**2).sum())
 
         # Add the newly found source to the list of sources.
 
