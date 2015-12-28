@@ -155,6 +155,27 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         func = lambda p, n, x, y, z, sigma: \
                 ((z - gaussian2d(x, y, p, n)) / sigma).reshape((z.size,))
 
+        # Try to automatically determine the aperture.
+
+        z3 = z.copy()
+        z3[z/sigma_z < 2.] = 0.0
+
+        for i in range(z.shape[0]):
+            for j in range(z.shape[1]):
+                if z3[i,j] != 0.:
+                    inbetween = bresenham_line(int(half_window), \
+                            int(half_window),i,j)
+
+                    for k, coords3 in enumerate(inbetween):
+                        if z3[coords3[0],coords3[1]] < 2.0 * \
+                                sigma_z[coords3[0], coords3[1]]:
+                            z3[i,j] = 0.0
+
+        params, cov, infodict, mesg, ier = scipy.optimize.leastsq(func, \
+                params, args=(1, x, y, z3, sigma_z), full_output=True)
+
+        fit_aperture = 3 * numpy.sqrt(abs(params[2]*params[3]))
+
         # Only fit to pixels in a certain aperture around the source. This is 
         # because otherwise the fitting routine has a habit of finding other 
         # peaks or negative dips when fitting faint sources.
@@ -228,6 +249,8 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
             sigma_p = numpy.sqrt(numpy.diag((func(p, 1, x, y, z2, \
                     sigma_z2)**2).sum()/(y.size - p.size) * cov))
 
+        # Create a new source to add.
+
         new_source = numpy.empty((16,), dtype=p.dtype)
         new_source[0:12][0::2] = p[0:6]
         #new_source[0:12][1::2] = sigma_p[0:6]
@@ -248,6 +271,28 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
                 xc, yc = coords2[1], coords2[0]
                 params = numpy.array([xc, yc, beam[0]*beam_to_sigma, \
                         beam[1]*beam_to_sigma, beam[2], image.image[yc,xc,0,0]])
+
+                # Try to automatically determine the aperture.
+
+                z3 = z.copy()
+                z3[z/sigma_z < 2.] = 0.0
+
+                for i in range(z.shape[0]):
+                    for j in range(z.shape[1]):
+                        if z3[i,j] != 0.:
+                            inbetween = bresenham_line(coords2[0]-coords[0]+ \
+                                    int(half_window), coords2[1]-coords[1]+ \
+                                    int(half_window),i,j)
+
+                            for k, coords3 in enumerate(inbetween):
+                                if z3[coords3[0],coords3[1]] < 2.0 * \
+                                        sigma_z[coords3[0], coords3[1]]:
+                                    z3[i,j] = 0.0
+
+                params, cov, infodict, mesg, ier = scipy.optimize.leastsq(func,\
+                        params, args=(1, x, y, z3, sigma_z), full_output=True)
+
+                fit_aperture = 3 * numpy.sqrt(abs(params[2]*params[3]))
 
                 for i in range(3):
                     z2 = numpy.zeros(z.shape)
