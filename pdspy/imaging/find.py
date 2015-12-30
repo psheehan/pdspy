@@ -180,7 +180,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         # because otherwise the fitting routine has a habit of finding other 
         # peaks or negative dips when fitting faint sources.
 
-        for i in range(3):
+        for i in range(1):
             z2 = numpy.zeros(z.shape)
             sigma_z2 = numpy.zeros(z.shape) + 1.0e20
 
@@ -294,7 +294,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
                 fit_aperture = 3 * numpy.sqrt(abs(params[2]*params[3]))
 
-                for i in range(3):
+                for i in range(1):
                     z2 = numpy.zeros(z.shape)
                     sigma_z2 = numpy.zeros(z.shape) + 1.0e20
 
