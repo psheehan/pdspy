@@ -1,5 +1,5 @@
 from ..constants.astronomy import arcsec
-import pdspy.mcmc as mcmc
+from ..table import Table
 import numpy
 import scipy.ndimage.filters
 import scipy.ndimage.morphology
@@ -383,7 +383,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
             plt.close(fig)
 
     if len(sources) > 0:
-        sources = astropy.table.Table(numpy.array(sources), names=("x", \
+        sources = Table(numpy.array(sources), names=("x", \
                 "x_unc","y","y_unc","sigma_x","sigma_x_unc","sigma_y", \
                 "sigma_y_unc","pa", "pa_unc","f",'f_unc',"Peak_Flux", \
                 "Peak_Flux_unc","Flux","Flux_unc"))
