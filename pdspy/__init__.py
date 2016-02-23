@@ -10,3 +10,4 @@ from . import plotting
 from . import radmc3d
 from . import spectroscopy
 from . import statistics
+from . import table
