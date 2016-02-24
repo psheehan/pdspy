@@ -1,8 +1,17 @@
+from .column import MaskedColumn
 import astropy.table
+import astropy.utils
 import h5py
 import os
 
 class Table(astropy.table.Table):
+
+    def __init__(self, *args, **kwargs):
+        super(Table, self).__init__(*args, **kwargs)
+
+        self.MaskedColumn = MaskedColumn
+        if self._masked:
+            self._column_class = MaskedColumn
 
     @staticmethod
     def read_hdf5(*args, **kwargs):
