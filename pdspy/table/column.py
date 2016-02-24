@@ -8,5 +8,5 @@ class MaskedColumn(astropy.table.MaskedColumn):
         try:
             if x.mask:
                 return '--'
-        except AttributeError:
+        except:
             return x
