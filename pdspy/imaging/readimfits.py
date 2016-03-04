@@ -1,6 +1,8 @@
 from .libimaging import Image
+from astropy.utils.exceptions import AstropyWarning
 import astropy.io.fits as fits
 import astropy.wcs as wcs
+import warnings
 import numpy
 
 def readimfits(filename):
@@ -25,9 +27,14 @@ def readimfits(filename):
 
     header = data[0].header
 
-    w = wcs.WCS(header)
-    w = w.dropaxis(3)
-    w = w.dropaxis(2)
+    # Turn off the WCS warnings that come from the PCX_Y values because they
+    # are annoying...
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', category=AstropyWarning)
+
+        w = wcs.WCS(header)
+        w = w.dropaxis(3)
+        w = w.dropaxis(2)
 
     #x, y = numpy.meshgrid(numpy.linspace(0,nx-1,nx), numpy.linspace(0,ny-1,ny))
     x, y = None, None
