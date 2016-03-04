@@ -1,4 +1,5 @@
 import numpy
+import scipy.special
 from ..constants.astronomy import arcsec
 from ..constants.physics import c
 from .libinterferometry import Visibilities
@@ -25,6 +26,8 @@ def model(u, v, params, return_type="complex", funct="gauss", freq=230):
             nparams[i] = 6
         elif funct[i] == "circle":
             nparams[i] = 6
+        elif funct[i] == "circle":
+            nparams[i] = 7
     
     model = 1j*numpy.zeros(u.size)
     for i in range(funct.size):
@@ -35,9 +38,10 @@ def model(u, v, params, return_type="complex", funct="gauss", freq=230):
         par = params.copy()
         par[index+0] *= arcsec
         par[index+1] *= arcsec
-        if (funct[i] == "gauss") ^ (funct[i] == "circle"):
+        if (funct[i] == "gauss") or (funct[i] == "circle") or \
+                (funct[i] == "ring"):
             par[index+2] *= arcsec
-            if funct[i] == "gauss":
+            if (funct[i] == "gauss") or (funct[i] == "ring"):
                 par[index+3] *= arcsec
         
         if funct[i] == "point":
@@ -48,6 +52,10 @@ def model(u, v, params, return_type="complex", funct="gauss", freq=230):
         elif funct[i] == "circle":
             model += circle_model(u, v, par[index+0], par[index+1], \
                 par[index+2], par[index+3], par[index+4], par[index+5])
+        elif funct[i] == "ring":
+            model += ring_model(u, v, par[index+0], par[index+1], \
+                par[index+2], par[index+3], par[index+4], par[index+5], \
+                par[index+6])
     
     real = model.real
     imag = model.imag
@@ -75,11 +83,27 @@ def circle_model(u, v, xcenter, ycenter, radius, incline, theta, flux):
     
     urot = u * numpy.cos(theta) - v * numpy.sin(theta)
     vrot = u * numpy.sin(theta) + v * numpy.cos(theta)
-    
-    return flux * BeselJ(2*pi * radius* numpy.sqrt(urot**2 + vrot**2 * \
-            numpy.cos(incline)**2),1) / (pi * radius * numpy.sqrt(urot**2 + \
-            vrot**2 * numpy.cos(incline)**2)) * numpy.exp(-2*pi * (0 + \
+
+    numpy.seterr(invalid="ignore")
+
+    vis = flux * scipy.special.j1(2*numpy.pi * radius * \
+            numpy.sqrt(urot**2+vrot**2*numpy.cos(incline)**2)) / \
+            (numpy.pi * radius * numpy.sqrt(urot**2+vrot**2*\
+            numpy.cos(incline)**2)) * numpy.exp(-2*numpy.pi * (0 + \
             1j*(u*xcenter+v*ycenter)))
+
+    numpy.seterr(invalid="warn")
+
+    vis[urot**2+vrot**2*numpy.cos(incline)**2 == 0] = 1.0
+
+    return vis
+
+def ring_model(u, v, xcenter, ycenter, inradius, outradius, incline, theta, \
+        flux):
+
+    return circle_model(u, v, xcenter, ycenter, outradius, incline, theta, \
+            flux) - circle_model(u, v, xcenter, ycenter, inradius, incline, \
+            theta, flux)
 
 def gaussian_model(u, v, xcenter, ycenter, usigma, vsigma, theta, flux):
     

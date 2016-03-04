@@ -40,6 +40,12 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
                 elif (funct[k] == 'gauss'):
                     par = numpy.concatenate((params, numpy.array([x[i], \
                             y[j], 0.1, 0.1, 0.0, flux0])))
+                elif (funct[k] == 'circle'):
+                    par = numpy.concatenate((params, numpy.array([x[i], \
+                            y[j], 0.1, 0.0, 0.0, flux0])))
+                elif (funct[k] == 'ring'):
+                    par = numpy.concatenate((params, numpy.array([x[i], \
+                            y[j], 0.1, 0.2, 0.0, 0.0, flux0])))
 
                 chisq[i,j] = calc_chisq(data, par, funct[0:k+1])
     
@@ -52,6 +58,12 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
         elif (funct[k] == 'gauss'):
             params = numpy.concatenate((params, numpy.array([xmin, ymin, \
                     0.1, 0.1, 0.0, flux0])))
+        elif (funct[k] == 'circle'):
+            params = numpy.concatenate((params, numpy.array([xmin, ymin, \
+                    0.1, 0.0, 0.0, flux0])))
+        elif (funct[k] == 'ring'):
+            params = numpy.concatenate((params, numpy.array([xmin, ymin, \
+                    0.1, 0.2, 0.0, 0.0, flux0])))
 
     # Next do a few iterations of MCMC to get the correct solution.
 
@@ -69,6 +81,12 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
         elif (funct[k] == 'gauss'):
             sigma = numpy.concatenate((sigma, numpy.array([0.1, 0.1, 0.05, \
                     0.05, 2*numpy.pi/10, fluxstd])))
+        elif (funct[k] == 'circle'):
+            sigma = numpy.concatenate((sigma, numpy.array([0.1, 0.1, 0.05, \
+                    2*numpy.pi/10, 2*numpy.pi/10, fluxstd])))
+        elif (funct[k] == 'ring'):
+            sigma = numpy.concatenate((sigma, numpy.array([0.1, 0.1, 0.05, \
+                    0.05, 2*numpy.pi/10, 2*numpy.pi/10, fluxstd])))
 
     temp = {"limited":[False,False], "limits":[0.0,0.0]}
     limits = []
@@ -82,6 +100,21 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
             limits.append(temp.copy())
             limits.append({"limited":[True,False], "limits":[0.0,0.0]})
             limits.append({"limited":[True,False], "limits":[0.0,0.0]})
+            limits.append({"limited":[True,True], "limits":[0.0,numpy.pi/2]})
+            limits.append({"limited":[True,False], "limits":[0.0,0.0]})
+        elif funct[i] == 'circle':
+            limits.append(temp.copy())
+            limits.append(temp.copy())
+            limits.append({"limited":[True,False], "limits":[0.0,0.0]})
+            limits.append({"limited":[True,True], "limits":[0.0,numpy.pi/2]})
+            limits.append({"limited":[True,True], "limits":[0.0,numpy.pi/2]})
+            limits.append({"limited":[True,False], "limits":[0.0,0.0]})
+        elif funct[i] == 'ring':
+            limits.append(temp.copy())
+            limits.append(temp.copy())
+            limits.append({"limited":[True,False], "limits":[0.0,0.0]})
+            limits.append({"limited":[True,False], "limits":[0.0,0.0]})
+            limits.append({"limited":[True,True], "limits":[0.0,numpy.pi/2]})
             limits.append({"limited":[True,True], "limits":[0.0,numpy.pi/2]})
             limits.append({"limited":[True,False], "limits":[0.0,0.0]})
     limits = numpy.array(limits)
