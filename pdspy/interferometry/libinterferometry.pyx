@@ -124,7 +124,7 @@ class Visibilities(VisibilitiesObject):
         if (usefile == None):
             f.close()
 
-def average(data, gridsize=256, binsize=None, radial=False):
+def average(data, gridsize=256, binsize=None, radial=False, log=False):
 
     cdef numpy.ndarray[double, ndim=2] new_real, new_imag, new_weights
     cdef numpy.ndarray[unsigned int, ndim=1] i, j
@@ -145,7 +145,11 @@ def average(data, gridsize=256, binsize=None, radial=False):
     # Average over the U-V plane by creating bins to average over.
     
     if radial:
-        new_u = numpy.linspace(binsize/2,(gridsize-0.5)*binsize,gridsize)
+        if log:
+            new_u = numpy.logspace(numpy.log10(binsize/2), \
+                    numpy.log10((gridsize-0.5)*binsize),gridsize)
+        else:
+            new_u = numpy.linspace(binsize/2,(gridsize-0.5)*binsize,gridsize)
         new_u = new_u.reshape((1,gridsize))
         new_v = numpy.zeros((1,gridsize))
         new_real = numpy.zeros((1,gridsize))
