@@ -26,7 +26,7 @@ def model(u, v, params, return_type="complex", funct="gauss", freq=230):
             nparams[i] = 6
         elif funct[i] == "circle":
             nparams[i] = 6
-        elif funct[i] == "circle":
+        elif funct[i] == "ring":
             nparams[i] = 7
     
     model = 1j*numpy.zeros(u.size)
@@ -94,7 +94,7 @@ def circle_model(u, v, xcenter, ycenter, radius, incline, theta, flux):
 
     numpy.seterr(invalid="warn")
 
-    vis[urot**2+vrot**2*numpy.cos(incline)**2 == 0] = 1.0
+    vis[urot**2+vrot**2*numpy.cos(incline)**2 == 0] = flux
 
     return vis
 
