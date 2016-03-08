@@ -41,7 +41,8 @@ def model(u, v, params, return_type="complex", funct="gauss", freq=230):
         if (funct[i] == "gauss") or (funct[i] == "circle") or \
                 (funct[i] == "ring"):
             par[index+2] *= arcsec
-            if (funct[i] == "gauss") or (funct[i] == "ring"):
+            #if (funct[i] == "gauss") or (funct[i] == "ring"):
+            if (funct[i] == "gauss"):
                 par[index+3] *= arcsec
         
         if funct[i] == "point":
@@ -98,12 +99,29 @@ def circle_model(u, v, xcenter, ycenter, radius, incline, theta, flux):
 
     return vis
 
-def ring_model(u, v, xcenter, ycenter, inradius, outradius, incline, theta, \
+def ring_model(u, v, xcenter, ycenter, inradius, width, incline, theta, \
         flux):
 
-    return circle_model(u, v, xcenter, ycenter, outradius, incline, theta, \
-            flux) - circle_model(u, v, xcenter, ycenter, inradius, incline, \
-            theta, flux)
+    urot = u * numpy.cos(theta) - v * numpy.sin(theta)
+    vrot = u * numpy.sin(theta) + v * numpy.cos(theta)
+
+    numpy.seterr(invalid="ignore")
+
+    vis = flux * \
+            ((1+width)*scipy.special.j1(2*numpy.pi * (1+width)*inradius * \
+            numpy.sqrt(urot**2+vrot**2*numpy.cos(incline)**2)) - \
+            scipy.special.j1(2*numpy.pi * inradius * \
+            numpy.sqrt(urot**2+vrot**2*numpy.cos(incline)**2))) * \
+            1 / (numpy.pi * inradius * numpy.sqrt(urot**2+vrot**2*\
+            numpy.cos(incline)**2) * (2*width + width**2)) * \
+            numpy.exp(-2*numpy.pi * (0 + \
+            1j*(u*xcenter+v*ycenter)))
+
+    numpy.seterr(invalid="warn")
+
+    vis[urot**2+vrot**2*numpy.cos(incline)**2 == 0] = flux
+    
+    return vis
 
 def gaussian_model(u, v, xcenter, ycenter, usigma, vsigma, theta, flux):
     
