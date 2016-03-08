@@ -41,7 +41,6 @@ def model(u, v, params, return_type="complex", funct="gauss", freq=230):
         if (funct[i] == "gauss") or (funct[i] == "circle") or \
                 (funct[i] == "ring"):
             par[index+2] *= arcsec
-            #if (funct[i] == "gauss") or (funct[i] == "ring"):
             if (funct[i] == "gauss"):
                 par[index+3] *= arcsec
         
