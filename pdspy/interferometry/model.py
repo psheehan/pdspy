@@ -41,7 +41,8 @@ def model(u, v, params, return_type="complex", funct="gauss", freq=230):
         if (funct[i] == "gauss") or (funct[i] == "circle") or \
                 (funct[i] == "ring"):
             par[index+2] *= arcsec
-            if (funct[i] == "gauss"):
+            #if (funct[i] == "gauss"):
+            if (funct[i] == "gauss") or (funct[i] == "ring"):
                 par[index+3] *= arcsec
         
         if funct[i] == "point":
@@ -98,9 +99,10 @@ def circle_model(u, v, xcenter, ycenter, radius, incline, theta, flux):
 
     return vis
 
-def ring_model(u, v, xcenter, ycenter, inradius, width, incline, theta, \
+def ring_model(u, v, xcenter, ycenter, inradius, outradius, incline, theta, \
         flux):
 
+    """
     urot = u * numpy.cos(theta) - v * numpy.sin(theta)
     vrot = u * numpy.sin(theta) + v * numpy.cos(theta)
 
@@ -121,6 +123,14 @@ def ring_model(u, v, xcenter, ycenter, inradius, width, incline, theta, \
     vis[urot**2+vrot**2*numpy.cos(incline)**2 == 0] = flux
     
     return vis
+    """
+
+    #outradius = (1 + width) * inradius
+    A = (inradius/outradius)**2
+
+    return flux * (circle_model(u, v, xcenter, ycenter, outradius, incline, \
+            theta, 1) - A*circle_model(u, v, xcenter, ycenter, inradius, \
+            incline, theta, 1)) / (1 - A)
 
 def gaussian_model(u, v, xcenter, ycenter, usigma, vsigma, theta, flux):
     

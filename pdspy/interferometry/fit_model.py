@@ -45,7 +45,7 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
                             y[j], 0.1, 0.0, 0.0, flux0])))
                 elif (funct[k] == 'ring'):
                     par = numpy.concatenate((params, numpy.array([x[i], \
-                            y[j], 0.1, 1.0, 0.0, 0.0, flux0])))
+                            y[j], 0.1, 0.2, 0.0, 0.0, flux0])))
 
                 chisq[i,j] = calc_chisq(data, par, funct[0:k+1])
     
@@ -63,7 +63,7 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
                     0.1, 0.0, 0.0, flux0])))
         elif (funct[k] == 'ring'):
             params = numpy.concatenate((params, numpy.array([xmin, ymin, \
-                    0.1, 1.0, 0.0, 0.0, flux0])))
+                    0.1, 0.2, 0.0, 0.0, flux0])))
 
     # Next do a few iterations of MCMC to get the correct solution.
 
@@ -86,7 +86,7 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
                     2*numpy.pi/10, 2*numpy.pi/10, fluxstd])))
         elif (funct[k] == 'ring'):
             sigma = numpy.concatenate((sigma, numpy.array([0.1, 0.1, 0.05, \
-                    0.1, 2*numpy.pi/10, 2*numpy.pi/10, fluxstd])))
+                    0.05, 2*numpy.pi/10, 2*numpy.pi/10, fluxstd])))
 
     temp = {"limited":[False,False], "limits":[0.0,0.0]}
     limits = []
