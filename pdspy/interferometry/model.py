@@ -102,30 +102,9 @@ def circle_model(u, v, xcenter, ycenter, radius, incline, theta, flux):
 def ring_model(u, v, xcenter, ycenter, inradius, outradius, incline, theta, \
         flux):
 
-    """
-    urot = u * numpy.cos(theta) - v * numpy.sin(theta)
-    vrot = u * numpy.sin(theta) + v * numpy.cos(theta)
+    if inradius > outradius:
+        return u*numpy.inf
 
-    numpy.seterr(invalid="ignore")
-
-    vis = flux * \
-            ((1+width)*scipy.special.j1(2*numpy.pi * (1+width)*inradius * \
-            numpy.sqrt(urot**2+vrot**2*numpy.cos(incline)**2)) - \
-            scipy.special.j1(2*numpy.pi * inradius * \
-            numpy.sqrt(urot**2+vrot**2*numpy.cos(incline)**2))) * \
-            1 / (numpy.pi * inradius * numpy.sqrt(urot**2+vrot**2*\
-            numpy.cos(incline)**2) * (2*width + width**2)) * \
-            numpy.exp(-2*numpy.pi * (0 + \
-            1j*(u*xcenter+v*ycenter)))
-
-    numpy.seterr(invalid="warn")
-
-    vis[urot**2+vrot**2*numpy.cos(incline)**2 == 0] = flux
-    
-    return vis
-    """
-
-    #outradius = (1 + width) * inradius
     A = (inradius/outradius)**2
 
     return flux * (circle_model(u, v, xcenter, ycenter, outradius, incline, \
