@@ -10,7 +10,7 @@ def concatenate(visibilities):
             real = vis.real.copy()
             imag = vis.imag.copy()
             amp = vis.amp.copy()
-            weights = vis.amp.copy()
+            weights = vis.weights.copy()
             freq = vis.freq.copy()
             baseline = vis.baseline.copy()
         else:
