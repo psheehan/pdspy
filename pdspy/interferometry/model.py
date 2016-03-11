@@ -103,7 +103,7 @@ def ring_model(u, v, xcenter, ycenter, inradius, outradius, incline, theta, \
         flux):
 
     if inradius > outradius:
-        return u*numpy.inf
+        return numpy.repeat(numpy.inf, u.size)
 
     A = (inradius/outradius)**2
 
