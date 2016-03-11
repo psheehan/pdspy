@@ -205,7 +205,8 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False):
     return Visibilities(new_u,new_v,freq,new_real,new_imag,new_weights)
 
 def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
-        mfs=False, channel=None, imaging=False):
+        mfs=False, channel=None, imaging=False, weighting="natural", \
+        robust=2):
     
     cdef numpy.ndarray[double, ndim=1] u, v, freq
     cdef numpy.ndarray[double, ndim=2] real, imag, weights, new_u, new_v, \
@@ -242,9 +243,15 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
     # Set the weights equal to 0 when the real and imaginary parts are both 0
     weights[(real==0) & (imag==0)] = 0.0
     
+    if weighting == "uniform":
+        weights[weights != 0] = 1.0
+    elif weighting == "robust":
+        print("not yet working!!!")
+        break
+
     if imaging:
         weights /= weights.sum()
-    
+
     # Average over the U-V plane by creating bins to average over.
     
     if gridsize%2 == 0:
@@ -278,17 +285,23 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
         ninclude = 9
 
     cdef int nuv = u.size
-    cdef int nfreq = freq.size
+    cdef int nfreq = data.freq.size
     cdef double convolve
     cdef numpy.ndarray[int, ndim=1] inc_range = numpy.linspace(-(ninclude-1)/2,\
             (ninclude-1)/2, ninclude).astype(numpy.int32)
-    ninclude_min = -numpy.uint32((ninclude-1)*0.5)
+    ninclude_min = numpy.uint32((ninclude-1)*0.5)
     ninclude_max = numpy.uint32((ninclude-1)*0.5)
 
     for k in range(nuv):
-        lmin = max(0, j[k]+ninclude_min)
+        if ninclude_min > j[k]:
+            lmin = 0
+        else:
+            lmin = j[k] - ninclude_min
         lmax = min(j[k]+ninclude_max, gridsize-1)
-        mmin = max(0, i[k]+ninclude_min)
+        if ninclude_min > i[k]:
+            mmin = 0
+        else:
+            mmin = i[k] - ninclude_min
         mmax = min(i[k]+ninclude_max, gridsize-1)
         for l in range(lmin, lmax):
             for m in range(mmin, mmax):

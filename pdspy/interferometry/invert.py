@@ -5,11 +5,13 @@ from ..imaging import Image
 from ..constants.astronomy import arcsec
 from scipy.fftpack import ifft2, fftshift, ifftshift, fftfreq
 
-def invert(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False):
+def invert(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
+        weighting="uniform", robust=2):
     
     binsize = 1.0 / (pixel_size * imsize * arcsec)
     gridded_data = grid(data, gridsize=imsize, binsize=binsize, \
-            convolution=convolution, mfs=mfs, imaging=True)
+            convolution=convolution, mfs=mfs, imaging=True, \
+            weighting=weighting, robust=robust)
             
     u = gridded_data.u.reshape((imsize, imsize))
     v = gridded_data.v.reshape((imsize, imsize))
