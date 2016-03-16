@@ -1,4 +1,5 @@
 import numpy
+from . import center
 from .libinterferometry import grid
 from .clean import clean
 from ..imaging import Image
@@ -6,12 +7,15 @@ from ..constants.astronomy import arcsec
 from scipy.fftpack import ifft2, fftshift, ifftshift, fftfreq
 
 def invert(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
-        weighting="uniform", robust=2):
+        weighting="natural", robust=2, centering=None):
     
     binsize = 1.0 / (pixel_size * imsize * arcsec)
     gridded_data = grid(data, gridsize=imsize, binsize=binsize, \
             convolution=convolution, mfs=mfs, imaging=True, \
             weighting=weighting, robust=robust)
+
+    if centering != None:
+        gridded_data = center(gridded_data, centering)
             
     u = gridded_data.u.reshape((imsize, imsize))
     v = gridded_data.v.reshape((imsize, imsize))
@@ -36,7 +40,7 @@ def invert(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
     convolve = fftshift(ifft2(ifftshift(conv_func(u, v, binsize, \
            binsize)))).real
 
-    image = (im/convolve).reshape((imsize, imsize, 1, 1))
+    image = (im/convolve).reshape((imsize, imsize, 1, 1))[:,::-1,:,:]
 
     return Image(image, x=x, y=y, freq=freq)
 

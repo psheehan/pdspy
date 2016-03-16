@@ -124,18 +124,33 @@ class Visibilities(VisibilitiesObject):
         if (usefile == None):
             f.close()
 
-def average(data, gridsize=256, binsize=None, radial=False, log=False):
+def average(data, gridsize=256, binsize=None, radial=False, log=False, \
+        weighting="natural", robust=0.5, mfs=False):
 
     cdef numpy.ndarray[double, ndim=2] new_real, new_imag, new_weights
     cdef numpy.ndarray[unsigned int, ndim=1] i, j
     cdef unsigned int k, l
     
-    cdef numpy.ndarray[double, ndim=1] u = data.u.copy()
-    cdef numpy.ndarray[double, ndim=1] v = data.v.copy()
-    cdef numpy.ndarray[double, ndim=1] uvdist = data.uvdist.copy()
-    cdef numpy.ndarray[double, ndim=2] real = data.real.copy()
-    cdef numpy.ndarray[double, ndim=2] imag = data.imag.copy()
-    cdef numpy.ndarray[double, ndim=2] weights = data.weights.copy()
+    cdef numpy.ndarray[double, ndim=1] u, v, freq, uvdist
+    cdef numpy.ndarray[double, ndim=2] real, imag, weights
+    
+    if mfs:
+        vis = freqcorrect(data)
+        u = vis.u.copy()
+        v = vis.v.copy()
+        uvdist = vis.uvdist.copy()
+        freq = vis.freq.copy()
+        real = vis.real.copy()
+        imag = vis.imag.copy()
+        weights = vis.weights.copy()
+    else:
+        u = data.u.copy()
+        v = data.v.copy()
+        uvdist = data.uvdist.copy()
+        freq = numpy.array([data.freq.mean()])
+        real = data.real.copy()
+        imag = data.imag.copy()
+        weights = data.weights.copy()
     
     # Set the weights equal to 0 when the point is flagged (i.e. weight < 0)
     weights = numpy.where(weights < 0,0.0,weights)
@@ -187,9 +202,29 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False):
 
     for k in range(nuv):
         for l in range(nfreq):
-            new_real[j[k],i[k]] += real[k,l]*weights[k,l]
-            new_imag[j[k],i[k]] += imag[k,l]*weights[k,l]
             new_weights[j[k],i[k]] += weights[k,l]
+
+    if weighting == "robust":
+        f = numpy.sqrt((5 * 10**(-robust))**2 / ((new_weights**2).sum()/weights.sum()))
+    
+    for k in range(nuv):
+        for l in range(nfreq):
+            #new_real[j[k],i[k]] += real[k,l]*weights[k,l]
+            #new_imag[j[k],i[k]] += imag[k,l]*weights[k,l]
+            #new_weights[j[k],i[k]] += weights[k,l]
+            if weighting == "natural":
+                new_real[j[k],i[k]] += real[k,l]*weights[k,l]
+                new_imag[j[k],i[k]] += imag[k,l]*weights[k,l]
+            elif weighting == "uniform":
+                new_real[j[k],i[k]] += real[k,l]*weights[k,l]/\
+                        new_weights[j[k],i[k]]
+                new_imag[j[k],i[k]] += imag[k,l]*weights[k,l]/\
+                        new_weights[j[k],i[k]]
+            elif weighting == "robust":
+                new_real[j[k],i[k]] += real[k,l]*weights[k,l]/\
+                        (1+new_weights[j[k],i[k]]*f**2)
+                new_imag[j[k],i[k]] += imag[k,l]*weights[k,l]/\
+                        (1+new_weights[j[k],i[k]]*f**2)
     
     good_data = new_weights != 0.0
     new_u = new_u[good_data]
@@ -243,15 +278,6 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
     # Set the weights equal to 0 when the real and imaginary parts are both 0
     weights[(real==0) & (imag==0)] = 0.0
     
-    if weighting == "uniform":
-        weights[weights != 0] = 1.0
-    elif weighting == "robust":
-        print("not yet working!!!")
-        break
-
-    if imaging:
-        weights /= weights.sum()
-
     # Average over the U-V plane by creating bins to average over.
     
     if gridsize%2 == 0:
@@ -285,12 +311,20 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
         ninclude = 9
 
     cdef int nuv = u.size
-    cdef int nfreq = data.freq.size
+    cdef int nfreq
     cdef double convolve
+
+    if mfs:
+        nfreq = 1
+    else:
+        nfreq = data.freq.size
+
     cdef numpy.ndarray[int, ndim=1] inc_range = numpy.linspace(-(ninclude-1)/2,\
             (ninclude-1)/2, ninclude).astype(numpy.int32)
     ninclude_min = numpy.uint32((ninclude-1)*0.5)
     ninclude_max = numpy.uint32((ninclude-1)*0.5)
+
+    # First calculate all the weighting stuff for natural/uniform/robust
 
     for k in range(nuv):
         if ninclude_min > j[k]:
@@ -308,9 +342,47 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
                 convolve = convolve_func(u[k]-new_u[l,m], \
                         v[k] - new_v[l,m], binsize, binsize)
                 for n in range(nfreq):
-                    new_real[l,m] += real[k,n]*weights[k,n]*convolve
-                    new_imag[l,m] += imag[k,n]*weights[k,n]*convolve
                     new_weights[l,m] += weights[k,n]*convolve
+
+    # Now actually go through and calculate the new visibilities.
+
+    if weighting == "robust":
+        f = numpy.sqrt((5 * 10**(-robust))**2 / ((new_weights**2).sum()/weights.sum()))
+    
+    for k in range(nuv):
+        if ninclude_min > j[k]:
+            lmin = 0
+        else:
+            lmin = j[k] - ninclude_min
+        lmax = min(j[k]+ninclude_max, gridsize-1)
+        if ninclude_min > i[k]:
+            mmin = 0
+        else:
+            mmin = i[k] - ninclude_min
+        mmax = min(i[k]+ninclude_max, gridsize-1)
+        for l in range(lmin, lmax):
+            for m in range(mmin, mmax):
+                convolve = convolve_func(u[k]-new_u[l,m], \
+                        v[k] - new_v[l,m], binsize, binsize)
+                if new_weights[l,m] == 0:
+                    continue
+                for n in range(nfreq):
+                    if weighting == "natural":
+                        new_real[l,m] += real[k,n]*weights[k,n]*convolve
+                        new_imag[l,m] += imag[k,n]*weights[k,n]*convolve
+                        #new_weights[l,m] += weights[k,n]*convolve
+                    elif weighting == "uniform":
+                        new_real[l,m] += real[k,n]*weights[k,n]/\
+                                new_weights[l,m]*convolve
+                        new_imag[l,m] += imag[k,n]*weights[k,n]/\
+                                new_weights[l,m]*convolve
+                        #new_weights[l,m] += weights[k,n]*convolve
+                    elif weighting == "robust":
+                        new_real[l,m] += real[k,n]*weights[k,n]/\
+                                (1+new_weights[l,m]*f**2)*convolve
+                        new_imag[l,m] += imag[k,n]*weights[k,n]/\
+                                (1+new_weights[l,m]*f**2)*convolve
+                        #new_weights[l,m] += weights[k,n]*convolve
     
     if not imaging:
         good = new_weights > 0
@@ -351,42 +423,36 @@ cdef double ones(double u, double v, double delta_u, double delta_v):
 
     return arr
 
-def freqcorrect(data, new_freq=None):
+def freqcorrect(data, freq=None):
+    cdef numpy.ndarray[double, ndim=1] new_u, new_v, new_freq
+    cdef numpy.ndarray[double, ndim=2] new_real, new_imag, new_weights
 
-    if new_freq != None:
-        new_freq = numpy.array([new_freq])
+    if freq != None:
+        new_freq = numpy.array([freq])
     else:
         new_freq = numpy.array([data.freq.mean()])
 
-    new_u = numpy.array([])
-    new_v = numpy.array([])
-    new_real = numpy.array([])
-    new_imag = numpy.array([])
-    new_weights = numpy.array([])
-    new_baseline = numpy.array([])
+    new_u = numpy.empty((data.real.size,))
+    new_v = numpy.empty((data.real.size,))
+    new_real = numpy.empty((data.real.size, 1))
+    new_imag = numpy.empty((data.real.size, 1))
+    new_weights = numpy.empty((data.real.size, 1))
 
-    for i in range(data.freq.size):
-        new_u = numpy.concatenate((new_u, data.u * data.freq[i]/new_freq[0]))
-        new_v = numpy.concatenate((new_v, data.v * data.freq[i]/new_freq[0]))
-        new_real = numpy.concatenate((new_real, data.real[:,i].copy()))
-        new_imag = numpy.concatenate((new_imag, data.imag[:,i].copy()))
-        new_weights = numpy.concatenate((new_weights, data.weights[:,i].copy()))
-        new_baseline = numpy.concatenate((new_baseline, data.baseline.copy()))
+    cdef int nuv = data.u.size
+    cdef int nfreq = data.freq.size
+    cdef unsigned int i, j, index
+    cdef double inv_freq = 1./new_freq[0]
+    cdef numpy.ndarray[double, ndim=1] scale = data.freq * inv_freq
 
-    new_u = new_u.reshape((new_u.size,))
-    new_v = new_v.reshape((new_v.size,))
-    new_real = new_real.reshape((new_real.size,1))
-    new_imag = new_imag.reshape((new_imag.size,1))
-    new_weights = new_weights.reshape((new_weights.size,1))
-    new_baseline = new_baseline.reshape((new_baseline.size,))
+    for i in range(nuv):
+        for j in range(nfreq):
+            index = j + i*nfreq
+            new_u[index] = data.u[i] * scale[j]
+            new_v[index] = data.v[i] * scale[j]
 
-    good = new_weights[:,0] > 0.0
-    new_u = new_u[good]
-    new_v = new_v[good]
-    new_real = new_real[good,:]
-    new_imag = new_imag[good,:]
-    new_weights = new_weights[good,:]
-    new_baseline = new_baseline[good]
+    new_real = data.real.reshape((data.real.size,1))
+    new_imag = data.imag.reshape((data.imag.size,1))
+    new_weights = data.weights.reshape((data.weights.size,1))
 
     return Visibilities(new_u, new_v, new_freq, new_real, new_imag, \
-            new_weights, baseline=new_baseline)
+            new_weights)
