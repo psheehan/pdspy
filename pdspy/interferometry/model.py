@@ -66,7 +66,7 @@ def model(u, v, params, return_type="complex", funct="gauss", freq=230):
     elif return_type == "imag":
         return imag
     elif return_type == "complex":
-        return real + 1j*imag
+        return (real + 1j*imag).reshape((real.size,1))
     elif return_type == "amp":
         return numpy.sqrt(real**2 + imag**2)
     elif return_type == "data":
