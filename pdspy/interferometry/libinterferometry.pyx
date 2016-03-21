@@ -2,6 +2,7 @@ import numpy
 cimport numpy
 import h5py
 import astropy
+cimport cython
 
 cdef class VisibilitiesObject:
     cdef public numpy.ndarray u, v, freq, real, imag, weights, \
@@ -125,7 +126,7 @@ class Visibilities(VisibilitiesObject):
             f.close()
 
 def average(data, gridsize=256, binsize=None, radial=False, log=False, \
-        weighting="natural", robust=0.5, mfs=False):
+        mfs=False):
 
     cdef numpy.ndarray[double, ndim=2] new_real, new_imag, new_weights
     cdef numpy.ndarray[unsigned int, ndim=1] i, j
@@ -202,29 +203,9 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
 
     for k in range(nuv):
         for l in range(nfreq):
+            new_real[j[k],i[k]] += real[k,l]*weights[k,l]
+            new_imag[j[k],i[k]] += imag[k,l]*weights[k,l]
             new_weights[j[k],i[k]] += weights[k,l]
-
-    if weighting == "robust":
-        f = numpy.sqrt((5 * 10**(-robust))**2 / ((new_weights**2).sum()/weights.sum()))
-    
-    for k in range(nuv):
-        for l in range(nfreq):
-            #new_real[j[k],i[k]] += real[k,l]*weights[k,l]
-            #new_imag[j[k],i[k]] += imag[k,l]*weights[k,l]
-            #new_weights[j[k],i[k]] += weights[k,l]
-            if weighting == "natural":
-                new_real[j[k],i[k]] += real[k,l]*weights[k,l]
-                new_imag[j[k],i[k]] += imag[k,l]*weights[k,l]
-            elif weighting == "uniform":
-                new_real[j[k],i[k]] += real[k,l]*weights[k,l]/\
-                        new_weights[j[k],i[k]]
-                new_imag[j[k],i[k]] += imag[k,l]*weights[k,l]/\
-                        new_weights[j[k],i[k]]
-            elif weighting == "robust":
-                new_real[j[k],i[k]] += real[k,l]*weights[k,l]/\
-                        (1+new_weights[j[k],i[k]]*f**2)
-                new_imag[j[k],i[k]] += imag[k,l]*weights[k,l]/\
-                        (1+new_weights[j[k],i[k]]*f**2)
     
     good_data = new_weights != 0.0
     new_u = new_u[good_data]
@@ -239,6 +220,7 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
     
     return Visibilities(new_u,new_v,freq,new_real,new_imag,new_weights)
 
+@cython.boundscheck(False)
 def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
         mfs=False, channel=None, imaging=False, weighting="natural", \
         robust=2):
@@ -248,7 +230,7 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
             new_real, new_imag, new_weights
     cdef numpy.ndarray[unsigned int, ndim=1] i, j
     cdef unsigned int k, l, m, n, ninclude_min, ninclude_max, lmin, lmax, \
-            mmin, mmax
+            mmin, mmax, ll, mm, ninclude
 
     if mfs:
         vis = freqcorrect(data)
@@ -308,82 +290,74 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
         ninclude = 3
     elif convolution == "expsinc":
         convolve_func = exp_sinc
-        ninclude = 9
+        ninclude = 7
 
+    cdef double convolve
+    cdef double inv_binsize = 1. / binsize
     cdef int nuv = u.size
     cdef int nfreq
-    cdef double convolve
 
     if mfs:
         nfreq = 1
     else:
         nfreq = data.freq.size
 
-    cdef numpy.ndarray[int, ndim=1] inc_range = numpy.linspace(-(ninclude-1)/2,\
-            (ninclude-1)/2, ninclude).astype(numpy.int32)
     ninclude_min = numpy.uint32((ninclude-1)*0.5)
     ninclude_max = numpy.uint32((ninclude-1)*0.5)
 
-    # First calculate all the weighting stuff for natural/uniform/robust
-
-    for k in range(nuv):
-        if ninclude_min > j[k]:
-            lmin = 0
-        else:
-            lmin = j[k] - ninclude_min
-        lmax = min(j[k]+ninclude_max, gridsize-1)
-        if ninclude_min > i[k]:
-            mmin = 0
-        else:
-            mmin = i[k] - ninclude_min
-        mmax = min(i[k]+ninclude_max, gridsize-1)
-        for l in range(lmin, lmax):
-            for m in range(mmin, mmax):
-                convolve = convolve_func(u[k]-new_u[l,m], \
-                        v[k] - new_v[l,m], binsize, binsize)
-                for n in range(nfreq):
-                    new_weights[l,m] += weights[k,n]*convolve
-
     # Now actually go through and calculate the new visibilities.
 
-    if weighting == "robust":
-        f = numpy.sqrt((5 * 10**(-robust))**2 / ((new_weights**2).sum()/weights.sum()))
-    
     for k in range(nuv):
         if ninclude_min > j[k]:
             lmin = 0
         else:
             lmin = j[k] - ninclude_min
-        lmax = min(j[k]+ninclude_max, gridsize-1)
+        lmax = int_min(j[k]+ninclude_max+1, gridsize)
+
         if ninclude_min > i[k]:
             mmin = 0
         else:
             mmin = i[k] - ninclude_min
-        mmax = min(i[k]+ninclude_max, gridsize-1)
+        mmax = int_min(i[k]+ninclude_max+1, gridsize)
+
         for l in range(lmin, lmax):
             for m in range(mmin, mmax):
-                convolve = convolve_func(u[k]-new_u[l,m], \
-                        v[k] - new_v[l,m], binsize, binsize)
+
+                convolve = convolve_func( (u[k]-new_u[l,m])*inv_binsize, \
+                        (v[k] - new_v[l,m]) * inv_binsize)
+
+                if k == 1:
+                    print(l, m, (u[k]-new_u[l,m])*inv_binsize, \
+                            (v[k] - new_v[l,m])*inv_binsize, convolve)
+
+                for n in range(nfreq):
+                    new_real[l,m] += real[k,n]*weights[k,n]*convolve
+                    new_imag[l,m] += imag[k,n]*weights[k,n]*convolve
+                    new_weights[l,m] += weights[k,n]*convolve
+
+    # If we have a special weighting scheme, fix the sums..
+
+    if weighting == "uniform":
+        for l in range(gridsize):
+            for m in range(gridsize):
                 if new_weights[l,m] == 0:
                     continue
-                for n in range(nfreq):
-                    if weighting == "natural":
-                        new_real[l,m] += real[k,n]*weights[k,n]*convolve
-                        new_imag[l,m] += imag[k,n]*weights[k,n]*convolve
-                        #new_weights[l,m] += weights[k,n]*convolve
-                    elif weighting == "uniform":
-                        new_real[l,m] += real[k,n]*weights[k,n]/\
-                                new_weights[l,m]*convolve
-                        new_imag[l,m] += imag[k,n]*weights[k,n]/\
-                                new_weights[l,m]*convolve
-                        #new_weights[l,m] += weights[k,n]*convolve
-                    elif weighting == "robust":
-                        new_real[l,m] += real[k,n]*weights[k,n]/\
-                                (1+new_weights[l,m]*f**2)*convolve
-                        new_imag[l,m] += imag[k,n]*weights[k,n]/\
-                                (1+new_weights[l,m]*f**2)*convolve
-                        #new_weights[l,m] += weights[k,n]*convolve
-    
+
+                new_real[l,m] /= new_weights[l,m]
+                new_imag[l,m] /= new_weights[l,m]
+
+    elif weighting == "robust":
+        f = numpy.sqrt((5 * 10**(-robust))**2 / \
+                ((new_weights**2).sum()/weights.sum()))
+
+        for l in range(gridsize):
+            for m in range(gridsize):
+                if new_weights[l,m] == 0:
+                    continue
+
+                new_real[l,m] /= (1+new_weights[l,m]*f**2)
+                new_imag[l,m] /= (1+new_weights[l,m]*f**2)
+
     if not imaging:
         good = new_weights > 0
         new_real[good] = new_real[good] / new_weights[good]
@@ -396,33 +370,80 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
     return Visibilities(new_u.reshape(gridsize**2), new_v.reshape(gridsize**2),\
             freq, new_real, new_imag, new_weights)
 
-cdef double exp_sinc(double u, double v, double delta_u, double delta_v):
+cdef inline int int_max(int a, int b): return a if a >= b else b
+cdef inline int int_min(int a, int b): return a if a <= b else b
+cdef inline double int_abs(double a): return -a if a < 0 else a
+
+def test(x):
+    return expsinc(x)
+
+cdef unsigned int find_in_arr(double val, numpy.ndarray[double, ndim=1] arr, \
+        unsigned int n):
+
+    cdef unsigned int lmin = 0
+    cdef unsigned int lmax = n-1
+    cdef int not_found = 1
+    cdef unsigned int l, ltest
+
+    while not_found:
+        ltest = <unsigned int>(lmax-lmin)/2+lmin
+
+        if ((val >= arr[ltest]) and (val <= arr[ltest+1])):
+            l = ltest
+            not_found = 0
+        else:
+            if (val < arr[ltest]):
+                lmax = ltest
+            else:
+                lmin = ltest
+
+    return l
+
+cdef numpy.ndarray x_arr = numpy.linspace(-10,10,301)
+cdef numpy.ndarray xx_arr = (x_arr[0:-1] + x_arr[1:])/2
+
+cdef numpy.ndarray expsinc_arr = numpy.exp(-(xx_arr/2.52)**2) * \
+        numpy.sinc(xx_arr/1.55)
+
+cdef double expsinc(double a):
+
+    cdef unsigned int i = find_in_arr(a, x_arr, 301)
+
+    return expsinc_arr[i]
+
+cdef double exp_sinc(double u, double v):
     
-    cdef double alpha1 = 1.55
-    cdef double alpha2 = 2.52
+    cdef double inv_alpha1 = 1. / 1.55
+    #cdef double inv_alpha1 = 0.6451612903225806
+    cdef double inv_alpha2 = 1. / 2.52
+    #cdef double inv_alpha2 = 0.3968253968253968
     cdef int m = 6
     
-    cdef double arr = numpy.sinc(u / (alpha1 * delta_u)) * \
-            numpy.exp(-1 * (u / (alpha2 * delta_u))**2)* \
-            numpy.sinc(v / (alpha1 * delta_v))* \
-            numpy.exp(-1 * (v / (alpha2 * delta_v))**2)
+    if (int_abs(u) >= m * 0.5) or (int_abs(v) >= m * 0.5):
+        return 0.
 
-    if (abs(u) >= m * delta_u / 2) or (abs(v) >= m * delta_v / 2):
-        arr = 0.
+    cdef double arr = numpy.sinc(u * inv_alpha1) * \
+            numpy.sinc(v * inv_alpha1)* \
+            numpy.exp(-1 * (u * inv_alpha2)**2) * \
+            numpy.exp(-1 * (v * inv_alpha2)**2)
+    """
+    cdef double arr = expsinc(u) * expsinc(v)
+    """
 
     return arr
 
-cdef double ones(double u, double v, double delta_u, double delta_v):
+cdef double ones(double u, double v):
     
     cdef int m = 1
 
-    cdef double arr = 1.0
+    if (int_abs(u) >= m * 0.5) or (int_abs(v) >= m * 0.5):
+        return 0.
 
-    if (abs(u) >= m * delta_u / 2) or (abs(v) >= m * delta_v / 2):
-        arr = 0.
+    cdef double arr = 1.0
 
     return arr
 
+@cython.boundscheck(False)
 def freqcorrect(data, freq=None):
     cdef numpy.ndarray[double, ndim=1] new_u, new_v, new_freq
     cdef numpy.ndarray[double, ndim=2] new_real, new_imag, new_weights
@@ -446,9 +467,9 @@ def freqcorrect(data, freq=None):
 
     for i in range(nuv):
         for j in range(nfreq):
-            index = j + i*nfreq
-            new_u[index] = data.u[i] * scale[j]
-            new_v[index] = data.v[i] * scale[j]
+            index = <unsigned int>(j + i*nfreq)
+            new_u[index] = data.u[<unsigned int>i] * scale[<unsigned int>j]
+            new_v[index] = data.v[<unsigned int>i] * scale[<unsigned int>j]
 
     new_real = data.real.reshape((data.real.size,1))
     new_imag = data.imag.reshape((data.imag.size,1))
