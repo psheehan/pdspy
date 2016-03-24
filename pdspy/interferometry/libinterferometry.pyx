@@ -312,6 +312,7 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
             lmin = 0
         else:
             lmin = j[k] - ninclude_min
+
         lmax = int_min(j[k]+ninclude_max+1, gridsize)
 
         if ninclude_min > i[k]:
@@ -320,15 +321,22 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
             mmin = i[k] - ninclude_min
         mmax = int_min(i[k]+ninclude_max+1, gridsize)
 
+        """
+        if k == 1:
+            print(new_u[j[k],i[k]-1], new_u[j[k],i[k]], new_u[j[k],i[k]+1], u[k])
+        """
+
         for l in range(lmin, lmax):
             for m in range(mmin, mmax):
 
                 convolve = convolve_func( (u[k]-new_u[l,m])*inv_binsize, \
                         (v[k] - new_v[l,m]) * inv_binsize)
 
+                """
                 if k == 1:
                     print(l, m, (u[k]-new_u[l,m])*inv_binsize, \
                             (v[k] - new_v[l,m])*inv_binsize, convolve)
+                """
 
                 for n in range(nfreq):
                     new_real[l,m] += real[k,n]*weights[k,n]*convolve
@@ -422,13 +430,13 @@ cdef double exp_sinc(double u, double v):
     if (int_abs(u) >= m * 0.5) or (int_abs(v) >= m * 0.5):
         return 0.
 
+    """
     cdef double arr = numpy.sinc(u * inv_alpha1) * \
             numpy.sinc(v * inv_alpha1)* \
             numpy.exp(-1 * (u * inv_alpha2)**2) * \
             numpy.exp(-1 * (v * inv_alpha2)**2)
     """
     cdef double arr = expsinc(u) * expsinc(v)
-    """
 
     return arr
 
