@@ -11,8 +11,10 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
     elif type(funct) == numpy.ndarray:
         pass
 
-    flux0 = data.amp[data.uvdist < 30000.].mean() / funct.size
-    fluxstd = data.amp[data.uvdist < 30000.].std() / funct.size
+    min_baselines = 0.25 * (data.uvdist.max() - data.uvdist.min()) + data.uvdist.min()
+
+    flux0 = data.amp[data.uvdist < min_baselines].mean() / funct.size
+    fluxstd = data.amp[data.uvdist < min_baselines].std() / funct.size
 
     # First do a coarse grid search to find the location of the minimum.
 
