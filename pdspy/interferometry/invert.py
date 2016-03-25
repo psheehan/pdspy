@@ -14,7 +14,7 @@ def invert(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
             convolution=convolution, mfs=mfs, imaging=True, \
             weighting=weighting, robust=robust)
 
-    if centering != None:
+    if type(centering) != type(None):
         gridded_data = center(gridded_data, centering)
             
     u = gridded_data.u.reshape((imsize, imsize))
