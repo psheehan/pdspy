@@ -126,7 +126,7 @@ class Visibilities(VisibilitiesObject):
             f.close()
 
 def average(data, gridsize=256, binsize=None, radial=False, log=False, \
-        logmin=None, logmax=None):
+        logmin=None, logmax=None, mfs=False):
 
     cdef numpy.ndarray[double, ndim=2] new_real, new_imag, new_weights
     cdef numpy.ndarray[unsigned int, ndim=1] i, j
@@ -135,13 +135,23 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
     cdef numpy.ndarray[double, ndim=1] u, v, freq, uvdist
     cdef numpy.ndarray[double, ndim=2] real, imag, weights
     
-    u = data.u.copy()
-    v = data.v.copy()
-    uvdist = data.uvdist.copy()
-    freq = numpy.array([data.freq.mean()])
-    real = data.real.copy()
-    imag = data.imag.copy()
-    weights = data.weights.copy()
+    if mfs:
+        vis = freqcorrect(data)
+        u = vis.u.copy()
+        v = vis.v.copy()
+        uvdist = vis.uvdist.copy()
+        freq = vis.freq.copy()
+        real = vis.real.copy()
+        imag = vis.imag.copy()
+        weights = vis.weights.copy()
+    else:
+        u = data.u.copy()
+        v = data.v.copy()
+        uvdist = data.uvdist.copy()
+        freq = numpy.array([data.freq.mean()])
+        real = data.real.copy()
+        imag = data.imag.copy()
+        weights = data.weights.copy()
     
     # Set the weights equal to 0 when the point is flagged (i.e. weight < 0)
     weights = numpy.where(weights < 0,0.0,weights)
