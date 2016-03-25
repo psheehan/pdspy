@@ -134,7 +134,7 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
     
     cdef numpy.ndarray[double, ndim=1] u, v, freq, uvdist
     cdef numpy.ndarray[double, ndim=2] real, imag, weights
-    
+
     if mfs:
         vis = freqcorrect(data)
         u = vis.u.copy()

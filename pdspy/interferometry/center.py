@@ -1,5 +1,3 @@
-#from .average import average
-from .libinterferometry import average
 from .model import model
 from .libinterferometry import Visibilities
 import numpy
