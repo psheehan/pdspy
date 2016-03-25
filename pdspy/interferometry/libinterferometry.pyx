@@ -126,7 +126,7 @@ class Visibilities(VisibilitiesObject):
             f.close()
 
 def average(data, gridsize=256, binsize=None, radial=False, log=False, \
-        mfs=False):
+        logmin=None, logmax=None):
 
     cdef numpy.ndarray[double, ndim=2] new_real, new_imag, new_weights
     cdef numpy.ndarray[unsigned int, ndim=1] i, j
@@ -135,35 +135,34 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
     cdef numpy.ndarray[double, ndim=1] u, v, freq, uvdist
     cdef numpy.ndarray[double, ndim=2] real, imag, weights
     
-    if mfs:
-        vis = freqcorrect(data)
-        u = vis.u.copy()
-        v = vis.v.copy()
-        uvdist = vis.uvdist.copy()
-        freq = vis.freq.copy()
-        real = vis.real.copy()
-        imag = vis.imag.copy()
-        weights = vis.weights.copy()
-    else:
-        u = data.u.copy()
-        v = data.v.copy()
-        uvdist = data.uvdist.copy()
-        freq = numpy.array([data.freq.mean()])
-        real = data.real.copy()
-        imag = data.imag.copy()
-        weights = data.weights.copy()
+    u = data.u.copy()
+    v = data.v.copy()
+    uvdist = data.uvdist.copy()
+    freq = numpy.array([data.freq.mean()])
+    real = data.real.copy()
+    imag = data.imag.copy()
+    weights = data.weights.copy()
     
     # Set the weights equal to 0 when the point is flagged (i.e. weight < 0)
     weights = numpy.where(weights < 0,0.0,weights)
     # Set the weights equal to 0 when the real and imaginary parts are both 0
     weights[(real == 0) & (imag == 0)] = 0.0
     
+    good_data = uvdist != 0.0
+    u = u[good_data]
+    v = v[good_data]
+    uvdist = uvdist[good_data]
+    real = real[good_data,:]
+    imag = imag[good_data,:]
+    weights = weights[good_data,:]
+    
     # Average over the U-V plane by creating bins to average over.
     
     if radial:
         if log:
-            new_u = numpy.logspace(numpy.log10(binsize/2), \
-                    numpy.log10((gridsize-0.5)*binsize),gridsize)
+            temp = numpy.linspace(numpy.log10(logmin), numpy.log10(logmax), \
+                    gridsize+1)
+            new_u = 10**((temp[1:] + temp[0:-1])/2)
         else:
             new_u = numpy.linspace(binsize/2,(gridsize-0.5)*binsize,gridsize)
         new_u = new_u.reshape((1,gridsize))
@@ -172,8 +171,14 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
         new_imag = numpy.zeros((1,gridsize))
         new_weights = numpy.zeros((1,gridsize))
 
-        i = numpy.round(uvdist/binsize).astype(numpy.uint32)
-        j = numpy.zeros(uvdist.size).astype(numpy.uint32)
+        if log:
+            dtemp = temp[1] - temp[0]
+            i = numpy.round((numpy.log10(uvdist)- numpy.log10(logmin))/dtemp - \
+                    0.5).astype(numpy.uint32)
+            j = numpy.zeros(uvdist.size).astype(numpy.uint32)
+        else:
+            i = numpy.round(uvdist/binsize).astype(numpy.uint32)
+            j = numpy.zeros(uvdist.size).astype(numpy.uint32)
     else:
         if gridsize%2 == 0:
             uu = numpy.linspace(-gridsize*binsize/2, (gridsize/2-1)*binsize, \
