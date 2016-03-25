@@ -214,7 +214,12 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
             j = numpy.round(v/binsize+(gridsize-1)/2.).astype(numpy.uint32)
     
     cdef int nuv = u.size
-    cdef int nfreq = data.freq.size
+    cdef int nfreq
+
+    if mfs:
+        nfreq = 1
+    else:
+        nfreq = data.freq.size
 
     for k in range(nuv):
         for l in range(nfreq):
