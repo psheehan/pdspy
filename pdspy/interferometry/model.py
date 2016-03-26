@@ -112,6 +112,9 @@ def ring_model(u, v, xcenter, ycenter, inradius, outradius, incline, theta, \
             incline, theta, 1)) / (1 - A)
 
 def gaussian_model(u, v, xcenter, ycenter, usigma, vsigma, theta, flux):
+
+    if vsigma > usigma:
+        return numpy.repeat(numpy.inf, u.size)
     
     urot = u * numpy.cos(theta) - v * numpy.sin(theta)
     vrot = u * numpy.sin(theta) + v * numpy.cos(theta)
