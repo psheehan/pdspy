@@ -43,16 +43,27 @@ cdef class ImageObject:
 
 class Image(ImageObject):
 
-    def asFITS(self):
+    def asFITS(self, channel=None):
         hdulist = astropy.io.fits.HDUList([])
-        for i in range(self.image[0,0,:,0].size):
-            hdu = astropy.io.fits.PrimaryHDU(self.image[:,:,i,0].astype(\
+
+        if channel != None:
+            hdu = astropy.io.fits.PrimaryHDU(self.image[:,:,channel,0].astype(\
                     numpy.float32))
 
             if hasattr(self, "header"):
-                hdu.header = self.header[i]
+                hdu.header = self.header[channel]
 
             hdulist.append(hdu)
+
+        else:
+            for i in range(self.image[0,0,:,0].size):
+                hdu = astropy.io.fits.PrimaryHDU(self.image[:,:,i,0].astype(\
+                        numpy.float32))
+
+                if hasattr(self, "header"):
+                    hdu.header = self.header[i]
+
+                hdulist.append(hdu)
 
         return hdulist
 
