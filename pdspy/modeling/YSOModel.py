@@ -40,9 +40,10 @@ class YSOModel(Model):
         self.grid.set_spherical_grid(r, theta, phi)
 
     def add_disk(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, h0=0.1, \
-            plh=58./45., dust=None, gas=None, abundance=None):
+            plh=58./45., dust=None, gas=None, abundance=None, t0=None, \
+            plt=None):
         self.disk = Disk(mass=mass, rmin=rmin, rmax=rmax, plrho=plrho, h0=h0, \
-                plh=plh, dust=dust)
+                plh=plh, dust=dust, t0=t0, plt=plt)
 
         if (dust != None):
             self.grid.add_density(self.disk.density(self.grid.r, \
@@ -66,6 +67,10 @@ class YSOModel(Model):
                 self.grid.add_velocity(self.disk.velocity(self.grid.r, \
                         self.grid.theta, self.grid.phi, \
                         mstar=self.grid.stars[0].mass))
+
+        if t0 != None:
+            self.grid.add_temperature(self.disk.temperature(self.grid.r, \
+                    self.grid.theta, self.grid.phi))
 
     def add_ulrich_envelope(self, mass=1.0e-3, rmin=0.1, rmax=1000, rcent=300, \
             cavpl=1.0, cavrfact=0.2, dust=None, gas=None, abundance=None, \
@@ -133,7 +138,7 @@ class YSOModel(Model):
 
         Sigma = self.disk.surface_density(rpp)
 
-        T = self.disk.temperature(rpp, T_0=T0, p=plT)
+        T = self.disk.temperature_1d(rpp, T_0=T0, p=plT)
 
         a_tot = numpy.sqrt(2*k*T/m_mol)
         print(a_tot.min(), a_tot.max())

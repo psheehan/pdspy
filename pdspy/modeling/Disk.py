@@ -8,13 +8,15 @@ from ..gas import Gas
 
 class Disk:
     def __init__(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, h0=0.1, \
-            plh=58./45., dust=None):
+            plh=58./45., t0=None, plt=None, dust=None):
         self.mass = mass
         self.rmin = rmin
         self.rmax = rmax
         self.plrho = plrho
         self.h0 = h0
         self.plh = plh
+        self.t0 = t0
+        self.plt = plt
         if (dust != None):
             self.dust = dust
         self.gas = []
@@ -53,6 +55,29 @@ class Disk:
         
         return rho
 
+    def temperature(self, r, theta, phi):
+        ##### Disk Parameters
+        
+        rin = self.rmin * AU
+        rout = self.rmax * AU
+        t0 = self.t0
+        plt = self.plt
+
+        ##### Set up the coordinates
+
+        rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+
+        rr = rt*numpy.sin(tt)
+        zz = rt*numpy.cos(tt)
+
+        ##### Make the dust density model for a protoplanetary disk.
+        
+        t = t0 * (rt / rin)**(-plt)
+
+        t[(rr >= rout) ^ (rr <= rin)] = 0e0
+        
+        return t
+
     def number_density(self, r, theta, phi, gas=0):
         rho = self.density(r, theta, phi)
 
@@ -79,7 +104,7 @@ class Disk:
 
         return Sigma
 
-    def temperature(self, r, T_0=100., p=1):
+    def temperature_1d(self, r, T_0=100., p=1):
         rin = self.rmin * AU
         rout = self.rmax * AU
         mass = self.mass * M_sun
