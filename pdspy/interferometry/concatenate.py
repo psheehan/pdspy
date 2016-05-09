@@ -12,7 +12,11 @@ def concatenate(visibilities):
             amp = vis.amp.copy()
             weights = vis.weights.copy()
             freq = vis.freq.copy()
-            baseline = vis.baseline.copy()
+            if type(vis.baseline) != type(None):
+                baseline = vis.baseline.copy()
+                incl_baselines = True
+            else:
+                incl_baselines = False
         else:
             u = numpy.concatenate((u, vis.u.copy()))
             v = numpy.concatenate((v, vis.v.copy()))
@@ -20,6 +24,13 @@ def concatenate(visibilities):
             imag = numpy.concatenate((imag, vis.imag.copy()))
             amp = numpy.concatenate((amp, vis.amp.copy()))
             weights = numpy.concatenate((weights, vis.weights.copy()))
-            baseline = numpy.concatenate((baseline, vis.baseline.copy()))
+            if incl_baselines:
+                if type(vis.baseline) != type(None):
+                    baseline = numpy.concatenate((baseline,vis.baseline.copy()))
+                else:
+                    incl_baselines = False
 
-    return Visibilities(u, v, freq, real, imag, weights, baseline=baseline)
+    if incl_baselines:
+        return Visibilities(u, v, freq, real, imag, weights, baseline=baseline)
+    else:
+        return Visibilities(u, v, freq, real, imag, weights)
