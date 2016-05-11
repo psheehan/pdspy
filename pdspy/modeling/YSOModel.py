@@ -5,8 +5,10 @@ from .Disk import Disk
 from .UlrichEnvelope import UlrichEnvelope
 from .Star import Star
 from ..constants.physics import h, c, G, m_p, k
-from ..constants.astronomy import AU, M_sun, kms, R_sun
+from ..constants.astronomy import AU, M_sun, kms, R_sun, Jy, pc
 from ..constants.math import pi
+from ..misc import B_nu
+from ..imaging import Image, imtovis
 
 class YSOModel(Model):
 
@@ -109,6 +111,56 @@ class YSOModel(Model):
                         self.grid.theta, self.grid.phi, \
                         mstar=self.grid.stars[0].mass))
 
+    def run_simple_dust_image(self, name=None, i=0., pa=0., npix=256, dx=1., \
+            nu=230., T0=1000., plT=0.5, kappa=2.0, dpc=140):
+        # Set up the image plane.
+
+        if npix%2 == 0:
+            xx = numpy.linspace(-npix/2*dx*dpc, (npix/2-1)*dx*dpc, npix)
+            yy = numpy.linspace(-npix/2*dx*dpc, (npix/2-1)*dx*dpc, npix)
+        else:
+            xx = numpy.linspace(-(npix-1)/2*dx*dpc, (npix-1)/2*dx*dpc, npix)
+            yy = numpy.linspace(-(npix-1)/2*dx*dpc, (npix-1)/2*dx*dpc, npix)
+
+        x, y = numpy.meshgrid(xx, yy)
+
+        # Calculate physical coordinates from image plane coordinates.
+
+        xpp = -x*numpy.cos(pa) - y*numpy.sin(pa)
+        ypp = (-x*numpy.sin(pa) + y*numpy.cos(pa))/numpy.cos(i)
+        rpp = numpy.sqrt(xpp**2 + ypp**2)
+        phipp = numpy.arctan2(ypp, xpp) + pi/2
+
+        # Calculate physical quantities.
+
+        Sigma = self.disk.surface_density(rpp)
+
+        T = self.disk.temperature_1d(rpp, T_0=T0, p=plT)
+
+        B = B_nu(nu*1e9, T)
+
+        # Now do the actual calculation.
+
+        I = B * kappa * Sigma
+
+        # Adjust the scale of I to be in the appropriate units.
+
+        I = I / Jy * ((xx[1] - xx[0]) * AU / (dpc * pc)) * \
+                ((yy[1] - yy[0]) * AU / (dpc * pc))
+
+        self.images[name] =  Image(I.reshape((npix,npix,1,1)), x=xx/dpc, \
+                y=yy/dpc, freq=numpy.array([nu])*1.0e9)
+
+    def run_simple_dust_visibilities(self, name=None, i=0., pa=0., npix=256, \
+            dx=1., nu=230., T0=1000., plT=0.5, kappa=2.0, dpc=140):
+
+        self.run_simple_dust_image(name="temp", i=i, pa=pa, npix=npix, \
+                dx=dx, nu=nu, T0=T0, plT=plT, kappa=kappa, dpc=dpc)
+
+        self.visibilities[name] = imtovis(self.images["temp"])
+
+        self.images.pop("temp")
+    
     def run_simple_gas_image(self, i=0., pa=0., npix=256, dx=1., species=0, \
             trans=0, vstart=-10, dv=0.5, nv=40, n=0.5, T0=10000., plT=1, \
             v_z=0.):

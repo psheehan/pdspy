@@ -102,6 +102,8 @@ class Disk:
 
         Sigma[(r >= rout/AU) ^ (r <= rin/AU)] = 0e0
 
+        Sigma[r == 0] = Sigma0 * (rin/AU)**(-plrho+plh)
+
         return Sigma
 
     def temperature_1d(self, r, T_0=100., p=1):
@@ -115,6 +117,8 @@ class Disk:
         T = T_0 * r**(-p)
 
         T[(r >= rout/AU) ^ (r <= rin/AU)] = 0.0
+
+        T[r == 0] = T_0 * (rin/AU)**(-p)
 
         return T
 
