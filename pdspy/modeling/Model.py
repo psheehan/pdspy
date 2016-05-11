@@ -96,10 +96,10 @@ class Model:
 
         os.system("rm temp.rtin temp.rtout")
 
-    def run_thermal_radmc3d(self, nphot=1e6, **keywords):
+    def run_thermal_radmc3d(self, nphot=1e6, verbose=True, **keywords):
         self.write_radmc3d(nphot_therm=nphot, **keywords)
 
-        radmc3d.run.thermal()
+        radmc3d.run.thermal(verbose=verbose)
 
         self.grid.temperature = radmc3d.read.dust_temperature()
         for i in range(len(self.grid.temperature)):
@@ -122,7 +122,7 @@ class Model:
     def run_image_radmc3d(self, name=None, nphot=1e6, npix=256, pixelsize=1.0, \
             lam="1300", imolspec=None, iline=None,  widthkms=None, \
             linenlam=None, doppcatch=False, incl=0, pa=0, phi=0, dpc=1, \
-            **keywords):
+            verbose=True, **keywords):
         self.write_radmc3d(nphot_scat=nphot, **keywords)
 
         if npix%2 == 0:
@@ -138,12 +138,12 @@ class Model:
             radmc3d.run.image(npix=npix, sizeau=sizeau, lam=lam, \
                     imolspec=imolspec, iline=iline, widthkms=widthkms, \
                     linenlam=linenlam, doppcatch=doppcatch, incl=incl, \
-                    posang=pa, phi=phi)
+                    posang=pa, phi=phi, verbose=verbose)
         else:
             radmc3d.run.image(npix=npix, zoomau=zoomau, lam=lam, \
                     imolspec=imolspec, iline=iline, widthkms=widthkms, \
                     linenlam=linenlam, doppcatch=doppcatch, incl=incl, \
-                    posang=pa, phi=phi)
+                    posang=pa, phi=phi, verbose=verbose)
 
         image, x, y, lam = radmc3d.read.image()
 
@@ -174,10 +174,11 @@ class Model:
         return
 
     def run_sed_radmc3d(self, name=None, nphot=1e6, incl=0, pa=0, \
-            phi=0, dpc=1, **keywords):
+            phi=0, dpc=1, verbose=True, **keywords):
         self.write_radmc3d(nphot_spec=nphot, **keywords)
 
-        radmc3d.run.sed(incl=incl, posang=pa, phi=phi, noline=True)
+        radmc3d.run.sed(incl=incl, posang=pa, phi=phi, noline=True, \
+                verbose=verbose)
 
         flux, lam = radmc3d.read.spectrum()
 
@@ -200,7 +201,7 @@ class Model:
     def run_visibilities_radmc3d(self, name=None, nphot=1e6, npix=256, \
             pixelsize=1.0, lam="1300", imolspec=None, iline=None,  \
             widthkms=None, linenlam=None, doppcatch=False, incl=0, pa=0, \
-            phi=0, dpc=1, **keywords):
+            phi=0, dpc=1, verbose=True, **keywords):
         self.write_radmc3d(nphot_scat=nphot, **keywords)
 
         if npix%2 == 0:
@@ -212,7 +213,8 @@ class Model:
 
         radmc3d.run.image(npix=npix, zoomau=zoomau, lam=lam, imolspec=imolspec,\
                 iline=iline, widthkms=widthkms, linenlam=linenlam, \
-                doppcatch=doppcatch, incl=incl, posang=pa, phi=phi)
+                doppcatch=doppcatch, incl=incl, posang=pa, phi=phi, \
+                verbose=verbose)
 
         image, x, y, lam = radmc3d.read.image()
 

@@ -1,7 +1,8 @@
 from os import system
 
 def thermal(noscat=None, nphot_therm=None, nphot_scat=None, setthreads=1, \
-        inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None):
+        inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None, \
+        verbose=True):
 
     command="radmc3d mctherm "
 
@@ -20,6 +21,9 @@ def thermal(noscat=None, nphot_therm=None, nphot_scat=None, setthreads=1, \
     if (nogascont == True):
         command += "nogascont "
 
+    if not verbose:
+        command += " > radmc3d.out"
+
     system(command)
 
 def sed(nrrefine=None, fluxcons=None, norefine=None, nofluxcons=None, \
@@ -28,7 +32,8 @@ def sed(nrrefine=None, fluxcons=None, norefine=None, nofluxcons=None, \
         phi=None, posang=None, circ=None, apert=None, useapert=None, \
         noapert=None, nphot_scat=None, inclstar=None, nostar=None, \
         inclline=None, noline=None, incldust=None, nodust=None, \
-        inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None):
+        inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None, \
+        verbose=True):
 
     command="radmc3d sed "
 
@@ -99,6 +104,9 @@ def sed(nrrefine=None, fluxcons=None, norefine=None, nofluxcons=None, \
     if (nogascont == True):
         command += "nogascont "
 
+    if not verbose:
+        command += " > radmc3d.out"
+
     system(command)
 
 def image(lam=None, npix=None, npixx=None, npixy=None, nrrefine=None, \
@@ -112,7 +120,7 @@ def image(lam=None, npix=None, npixx=None, npixy=None, nrrefine=None, \
         inclline=None, noline=None, incldust=None, nodust=None, \
         inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None, \
         widthkms=None, linenlam=None, iline=None, imolspec=None, \
-        doppcatch=None):
+        doppcatch=None, verbose=True):
 
     command="radmc3d image "
 
@@ -218,6 +226,9 @@ def image(lam=None, npix=None, npixx=None, npixy=None, nrrefine=None, \
         command += "inclgascont "
     if (nogascont == True):
         command += "nogascont "
+
+    if not verbose:
+        command += " > radmc3d.out"
 
     system(command)
 
