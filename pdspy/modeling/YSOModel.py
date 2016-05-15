@@ -112,7 +112,12 @@ class YSOModel(Model):
                         mstar=self.grid.stars[0].mass))
 
     def run_simple_dust_image(self, name=None, i=0., pa=0., npix=256, dx=1., \
-            nu=230., T0=1000., plT=0.5, kappa=2.0, dpc=140):
+            nu=230., T0=1000., plT=0.5, kappa=2.0, dpc=140, flux=1e-3):
+        # Convert inclination and position angle to radians.
+
+        i *= numpy.pi / 180.
+        pa *= numpy.pi / 180.
+
         # Set up the image plane.
 
         if npix%2 == 0:
@@ -126,8 +131,8 @@ class YSOModel(Model):
 
         # Calculate physical coordinates from image plane coordinates.
 
-        xpp = -x*numpy.cos(pa) - y*numpy.sin(pa)
-        ypp = (-x*numpy.sin(pa) + y*numpy.cos(pa))/numpy.cos(i)
+        xpp = x*numpy.cos(pa) - y*numpy.sin(pa)
+        ypp = (x*numpy.sin(pa) + y*numpy.cos(pa))/numpy.cos(i)
         rpp = numpy.sqrt(xpp**2 + ypp**2)
         phipp = numpy.arctan2(ypp, xpp) + pi/2
 
@@ -148,14 +153,17 @@ class YSOModel(Model):
         I = I / Jy * ((xx[1] - xx[0]) * AU / (dpc * pc)) * \
                 ((yy[1] - yy[0]) * AU / (dpc * pc))
 
+        I = I * flux / I.sum()
+
         self.images[name] =  Image(I.reshape((npix,npix,1,1)), x=xx/dpc, \
                 y=yy/dpc, freq=numpy.array([nu])*1.0e9)
 
     def run_simple_dust_visibilities(self, name=None, i=0., pa=0., npix=256, \
-            dx=1., nu=230., T0=1000., plT=0.5, kappa=2.0, dpc=140):
+            dx=1., nu=230., T0=1000., plT=0.5, kappa=2.0, dpc=140, flux=1.0e-3):
 
         self.run_simple_dust_image(name="temp", i=i, pa=pa, npix=npix, \
-                dx=dx, nu=nu, T0=T0, plT=plT, kappa=kappa, dpc=dpc)
+                dx=dx, nu=nu, T0=T0, plT=plT, kappa=kappa, dpc=dpc, \
+                flux=flux)
 
         self.visibilities[name] = imtovis(self.images["temp"])
 
