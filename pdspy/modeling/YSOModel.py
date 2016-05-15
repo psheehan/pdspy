@@ -2,6 +2,7 @@ import numpy
 import h5py
 from .Model import Model
 from .Disk import Disk
+from .PringleDisk import PringleDisk
 from .UlrichEnvelope import UlrichEnvelope
 from .Star import Star
 from ..constants.physics import h, c, G, m_p, k
@@ -46,6 +47,39 @@ class YSOModel(Model):
             plt=None):
         self.disk = Disk(mass=mass, rmin=rmin, rmax=rmax, plrho=plrho, h0=h0, \
                 plh=plh, dust=dust, t0=t0, plt=plt)
+
+        if (dust != None):
+            self.grid.add_density(self.disk.density(self.grid.r, \
+                    self.grid.theta, self.grid.phi),dust)
+
+        if (gas != None):
+            if (type(gas) == list):
+                for i in range(len(gas)):
+                    self.disk.add_gas(gas[i], abundance[i])
+                    self.grid.add_number_density(self.disk.number_density( \
+                            self.grid.r, self.grid.theta, self.grid.phi, \
+                            gas=i), gas[i])
+                    self.grid.add_velocity(self.disk.velocity(self.grid.r, \
+                            self.grid.theta, self.grid.phi, \
+                            mstar=self.grid.stars[0].mass))
+            else:
+                self.disk.add_gas(gas, abundance)
+                self.grid.add_number_density(self.disk.number_density( \
+                        self.grid.r, self.grid.theta, self.grid.phi, \
+                        gas=0), gas)
+                self.grid.add_velocity(self.disk.velocity(self.grid.r, \
+                        self.grid.theta, self.grid.phi, \
+                        mstar=self.grid.stars[0].mass))
+
+        if t0 != None:
+            self.grid.add_temperature(self.disk.temperature(self.grid.r, \
+                    self.grid.theta, self.grid.phi))
+
+    def add_pringle_disk(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, \
+            h0=0.1, plh=58./45., dust=None, gas=None, abundance=None, t0=None, \
+            plt=None):
+        self.disk = PringleDisk(mass=mass, rmin=rmin, rmax=rmax, plrho=plrho, \
+                h0=h0, plh=plh, dust=dust, t0=t0, plt=plt)
 
         if (dust != None):
             self.grid.add_density(self.disk.density(self.grid.r, \
