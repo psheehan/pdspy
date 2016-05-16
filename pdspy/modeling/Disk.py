@@ -8,7 +8,8 @@ from ..gas import Gas
 
 class Disk:
     def __init__(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, h0=0.1, \
-            plh=58./45., t0=None, plt=None, dust=None):
+            plh=58./45., t0=None, plt=None, dust=None, gap_rin=[], gap_rout=[],\
+            gap_delta=[]):
         self.mass = mass
         self.rmin = rmin
         self.rmax = rmax
@@ -17,6 +18,9 @@ class Disk:
         self.plh = plh
         self.t0 = t0
         self.plt = plt
+        self.gap_rin = gap_rin
+        self.gap_rout = gap_rout
+        self.gap_delta = gap_delta
         if (dust != None):
             self.dust = dust
         self.gas = []
@@ -52,6 +56,12 @@ class Disk:
         rho1 = numpy.exp(-0.5*(zz / hr)**2)
         rho = rho0 * rho1
         rho[(rr >= rout) ^ (rr <= rin)] = 0e0
+
+        ##### Add any gaps to the disk.
+
+        for i in range(len(self.gap_rin)):
+            rho[(rr >= self.gap_rin[i]) & (rr <= self.gap_rout[i])] *= \
+                    self.gap_delta[i]
         
         return rho
 
@@ -104,21 +114,23 @@ class Disk:
 
         Sigma[r == 0] = Sigma0 * (rin/AU)**(-plrho+plh)
 
+        for i in range(len(self.gap_rin)):
+            Sigma[(r >= self.gap_rin[i]) & (r <= self.gap_rout[i])] *= \
+                    self.gap_delta[i]
+        
         return Sigma
 
-    def temperature_1d(self, r, T_0=100., p=1):
+    def temperature_1d(self, r):
         rin = self.rmin * AU
         rout = self.rmax * AU
-        mass = self.mass * M_sun
-        h = self.h0 * AU
-        plrho = self.plrho
-        plh = self.plh
+        t0 = self.t0
+        plt = self.plt
 
-        T = T_0 * r**(-p)
+        T = t0 * r**(-plt)
 
         T[(r >= rout/AU) ^ (r <= rin/AU)] = 0.0
 
-        T[r == 0] = T_0 * (rin/AU)**(-p)
+        T[r == 0] = t0 * (rin/AU)**(-plt)
 
         return T
 

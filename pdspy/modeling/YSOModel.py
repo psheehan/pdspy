@@ -44,9 +44,10 @@ class YSOModel(Model):
 
     def add_disk(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, h0=0.1, \
             plh=58./45., dust=None, gas=None, abundance=None, t0=None, \
-            plt=None):
+            plt=None, gap_rin=[], gap_rout=[], gap_delta=[]):
         self.disk = Disk(mass=mass, rmin=rmin, rmax=rmax, plrho=plrho, h0=h0, \
-                plh=plh, dust=dust, t0=t0, plt=plt)
+                plh=plh, dust=dust, t0=t0, plt=plt, gap_rin=gap_rin, \
+                gap_rout=gap_rout, gap_delta=gap_delta)
 
         if (dust != None):
             self.grid.add_density(self.disk.density(self.grid.r, \
@@ -77,9 +78,10 @@ class YSOModel(Model):
 
     def add_pringle_disk(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, \
             h0=0.1, plh=58./45., dust=None, gas=None, abundance=None, t0=None, \
-            plt=None):
+            plt=None, gap_rin=[], gap_rout=[], gap_delta=[]):
         self.disk = PringleDisk(mass=mass, rmin=rmin, rmax=rmax, plrho=plrho, \
-                h0=h0, plh=plh, dust=dust, t0=t0, plt=plt)
+                h0=h0, plh=plh, dust=dust, t0=t0, plt=plt, gap_rin=gap_rin, \
+                gap_rout=gap_rout, gap_delta=gap_delta)
 
         if (dust != None):
             self.grid.add_density(self.disk.density(self.grid.r, \
@@ -146,7 +148,7 @@ class YSOModel(Model):
                         mstar=self.grid.stars[0].mass))
 
     def run_simple_dust_image(self, name=None, i=0., pa=0., npix=256, dx=1., \
-            nu=230., T0=1000., plT=0.5, kappa=2.0, dpc=140, flux=1e-3):
+            nu=230., kappa=2.0, dpc=140, flux=1e-3):
         # Convert inclination and position angle to radians.
 
         i *= numpy.pi / 180.
@@ -174,7 +176,7 @@ class YSOModel(Model):
 
         Sigma = self.disk.surface_density(rpp)
 
-        T = self.disk.temperature_1d(rpp, T_0=T0, p=plT)
+        T = self.disk.temperature_1d(rpp)
 
         B = B_nu(nu*1e9, T)
 
@@ -193,11 +195,10 @@ class YSOModel(Model):
                 y=yy/dpc, freq=numpy.array([nu])*1.0e9)
 
     def run_simple_dust_visibilities(self, name=None, i=0., pa=0., npix=256, \
-            dx=1., nu=230., T0=1000., plT=0.5, kappa=2.0, dpc=140, flux=1.0e-3):
+            dx=1., nu=230., kappa=2.0, dpc=140, flux=1.0e-3):
 
         self.run_simple_dust_image(name="temp", i=i, pa=pa, npix=npix, \
-                dx=dx, nu=nu, T0=T0, plT=plT, kappa=kappa, dpc=dpc, \
-                flux=flux)
+                dx=dx, nu=nu, kappa=kappa, dpc=dpc, flux=flux)
 
         self.visibilities[name] = imtovis(self.images["temp"])
 
