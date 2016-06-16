@@ -132,7 +132,7 @@ class PringleDisk(Disk):
 
         T[r <= rin/AU] = 0.0
 
-        T[r == 0] = t0 * (rin/AU)**(-p)
+        T[r == 0] = t0 * (rin/AU)**(-plt)
 
         return T
 
