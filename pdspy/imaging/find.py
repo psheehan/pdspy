@@ -208,7 +208,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
                 image.header["BPA"]*numpy.pi/180.]
 
         for i in range(100):
-            randomDelta = interferometer_noise(z.shape[0], s_res, bm)
+            randomDelta = interferometer_noise(z.shape, s_res, bm)
             randomdataZ = z + randomDelta
             randomdataSigma_Z = sigma_z.copy()
 
@@ -435,14 +435,13 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
     return sources
 
-def interferometer_noise(size, sigma, beam):
+def interferometer_noise(shape, sigma, beam):
 
-    test = numpy.random.normal(0.0, sigma, size**2).reshape( \
-            (size,size))
+    test = numpy.random.normal(0.0, sigma, shape[0]*shape[1]).reshape(shape)
 
-    x, y = numpy.meshgrid(numpy.arange(size),numpy.arange(size))
+    x, y = numpy.meshgrid(numpy.arange(shape[1]),numpy.arange(shape[0]))
 
-    gaus = gaussian2d(x, y, [size/2, size/2, beam[0], beam[1], \
+    gaus = gaussian2d(x, y, [shape[1]/2, shape[0]/2, beam[0], beam[1], \
             beam[2], 1])
 
     new_test = scipy.signal.fftconvolve(test, gaus, mode='same')
