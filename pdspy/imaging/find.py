@@ -140,8 +140,8 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         x, y = numpy.meshgrid(numpy.linspace(xmin, xmax-1, xmax - xmin), \
                 numpy.linspace(ymin, ymax-1, ymax - ymin))
 
-        z = image.image[ymin:ymax,xmin:xmax,0,0]
-        sigma_z = image.unc[ymin:ymax,xmin:xmax,0,0]
+        z = image.image[int(ymin):int(ymax),int(xmin):int(xmax),0,0]
+        sigma_z = image.unc[int(ymin):int(ymax),int(xmin):int(xmax),0,0]
 
         beam_to_sigma = arcsec / (abs(image.wcs.wcs.cdelt[0]) * numpy.pi/180) /\
                 2.355
