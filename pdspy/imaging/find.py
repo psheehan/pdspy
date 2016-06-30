@@ -14,7 +14,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         source_list=None, list_search_radius=1.0, list_threshold=5, \
         beam=[1.0,1.0,0.0], user_aperture=False, aperture=15, \
         fit_aperture=15, include_flux_unc=False, flux_unc=0.1, \
-        output_plots=None):
+        bootstrap_unc=True, output_plots=None):
 
     # If plots of the fits have been requested, make the directory if it 
     # doesn't already exist.
@@ -201,35 +201,36 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
         # Now calculate the uncertainty on the parameters using bootstrapping.
 
-        s_res = sigma_z.mean()
-        ps = []
-        bm = [image.header["BMAJ"]/abs(image.wcs.wcs.cdelt[0])/2.355,\
-                image.header["BMIN"]/abs(image.wcs.wcs.cdelt[0])/2.355,\
-                image.header["BPA"]*numpy.pi/180.]
+        if bootstrap_unc:
+            s_res = sigma_z.mean()
+            ps = []
+            bm = [image.header["BMAJ"]/abs(image.wcs.wcs.cdelt[0])/2.355,\
+                    image.header["BMIN"]/abs(image.wcs.wcs.cdelt[0])/2.355,\
+                    image.header["BPA"]*numpy.pi/180.]
 
-        for i in range(100):
-            randomDelta = interferometer_noise(z.shape, s_res, bm)
-            randomdataZ = z + randomDelta
-            randomdataSigma_Z = sigma_z.copy()
+            for i in range(100):
+                randomDelta = interferometer_noise(z.shape, s_res, bm)
+                randomdataZ = z + randomDelta
+                randomdataSigma_Z = sigma_z.copy()
 
-            randomdataZ[numpy.sqrt((x - params[0])**2 + (y - params[1])**2) >= \
-                    ap] = 0.
-            randomdataSigma_Z[numpy.sqrt((x - params[0])**2 + \
-                    (y - params[1])**2) >= ap] = 1.0e20
+                randomdataZ[numpy.sqrt((x-params[0])**2 + (y-params[1])**2) >= \
+                        ap] = 0.
+                randomdataSigma_Z[numpy.sqrt((x - params[0])**2 + \
+                        (y - params[1])**2) >= ap] = 1.0e20
 
-            randomfit, randomcov = scipy.optimize.leastsq(func, params, \
-                    args=(1, x, y, randomdataZ, randomdataSigma_Z), \
-                    full_output=False)
+                randomfit, randomcov = scipy.optimize.leastsq(func, params, \
+                        args=(1, x, y, randomdataZ, randomdataSigma_Z), \
+                        full_output=False)
 
-            ps.append(randomfit)
+                ps.append(randomfit)
 
-        ps = numpy.array(ps)
+            ps = numpy.array(ps)
 
-        pfit_bootstrap = numpy.mean(ps,0)
-        perr_bootstrap = numpy.std(ps,0)
+            pfit_bootstrap = numpy.mean(ps,0)
+            perr_bootstrap = numpy.std(ps,0)
 
-        pfit_bootstrap[4] = numpy.fmod(numpy.fmod(pfit_bootstrap[4], numpy.pi)+\
-                numpy.pi, numpy.pi)
+            pfit_bootstrap[4] = numpy.fmod(numpy.fmod(pfit_bootstrap[4], \
+                    numpy.pi)+numpy.pi, numpy.pi)
 
         # Fix the least squares result for phi because it seems to like to go
         # crazy.
@@ -253,9 +254,11 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
         new_source = numpy.empty((16,), dtype=p.dtype)
         new_source[0:12][0::2] = p[0:6]
-        #new_source[0:12][1::2] = sigma_p[0:6]
+        if bootstrap_unc:
+            new_source[0:12][1::2] = perr_bootstrap[0:6]
+        else:
+            new_source[0:12][1::2] = sigma_p[0:6]
         #new_source[0:12][0::2] = pfit_bootstrap[0:6]
-        new_source[0:12][1::2] = perr_bootstrap[0:6]
 
         # Before doing aperture photometry, find any sources within a provided 
         # radius and fit them so they can be subtracted out of the sky
