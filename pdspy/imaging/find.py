@@ -160,11 +160,13 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         z3 = z.copy()
         z3[z/sigma_z < 2.] = 0.0
 
+        xm, ym = x[0, int(x.shape[1]/2)], y[int(y.shape[0]/2), 0]
+
         for i in range(z.shape[0]):
             for j in range(z.shape[1]):
                 if z3[i,j] != 0.:
-                    inbetween = bresenham_line(int(half_window), \
-                            int(half_window),i,j)
+                    inbetween = bresenham_line(int(coords[0]-ym+z.shape[0]/2), \
+                            int(coords[1] - xm + z.shape[1]/2),i,j)
 
                     for k, coords3 in enumerate(inbetween):
                         if z3[coords3[0],coords3[1]] < 2.0 * \
@@ -283,9 +285,9 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
                 for i in range(z.shape[0]):
                     for j in range(z.shape[1]):
                         if z3[i,j] != 0.:
-                            inbetween = bresenham_line(coords2[0]-coords[0]+ \
-                                    int(half_window), coords2[1]-coords[1]+ \
-                                    int(half_window),i,j)
+                            inbetween = bresenham_line(int(coords2[0] - ym + \
+                                    z.shape[0]/2), int(coords2[1] - xm + \
+                                    z.shape[1]/2), i, j)
 
                             for k, coords3 in enumerate(inbetween):
                                 if z3[coords3[0],coords3[1]] < 2.0 * \
