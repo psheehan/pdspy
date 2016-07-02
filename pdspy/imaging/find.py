@@ -150,117 +150,23 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         params = numpy.array([xc, yc, beam[0]*beam_to_sigma, \
                 beam[1]*beam_to_sigma, beam[2], image.image[yc,xc,0,0]])
 
-        # Try a least squares fit.
+        bm = [image.header["BMAJ"]/abs(image.wcs.wcs.cdelt[0])/2.355,\
+                image.header["BMIN"]/abs(image.wcs.wcs.cdelt[0])/2.355,\
+                image.header["BPA"]*numpy.pi/180.]
 
-        func = lambda p, n, x, y, z, sigma: \
-                ((z - gaussian2d(x, y, p, n)) / sigma).reshape((z.size,))
+        # Fit the source with a Gaussian.
 
-        # Try to automatically determine the aperture.
-
-        z3 = z.copy()
-        z3[z/sigma_z < 2.] = 0.0
-
-        xm, ym = x[0, int(x.shape[1]/2)], y[int(y.shape[0]/2), 0]
-
-        for i in range(z.shape[0]):
-            for j in range(z.shape[1]):
-                if z3[i,j] != 0.:
-                    inbetween = bresenham_line(int(coords[0]-ym+z.shape[0]/2), \
-                            int(coords[1] - xm + z.shape[1]/2),i,j)
-
-                    for k, coords3 in enumerate(inbetween):
-                        if z3[coords3[0],coords3[1]] < 2.0 * \
-                                sigma_z[coords3[0], coords3[1]]:
-                            z3[i,j] = 0.0
-
-        params, cov, infodict, mesg, ier = scipy.optimize.leastsq(func, \
-                params, args=(1, x, y, z3, sigma_z), full_output=True)
-
-        fit_aperture = 3 * numpy.sqrt(abs(params[2]*params[3]))
-
-        # Only fit to pixels in a certain aperture around the source. This is 
-        # because otherwise the fitting routine has a habit of finding other 
-        # peaks or negative dips when fitting faint sources.
-
-        for i in range(1):
-            z2 = numpy.zeros(z.shape)
-            sigma_z2 = numpy.zeros(z.shape) + 1.0e20
-
-            if i > 0:
-                params[0:6] = p[0:6]
-                ap = 3 * numpy.sqrt(abs(params[2]*params[3]))
-            else:
-                ap = fit_aperture
-
-            z2[numpy.sqrt((x - params[0])**2 + (y - params[1])**2) < ap] = \
-                    z[numpy.sqrt((x - params[0])**2 + (y - params[1])**2) < ap]
-            sigma_z2[numpy.sqrt((x - params[0])**2 + (y - params[1])**2) < ap]=\
-                    sigma_z[numpy.sqrt((x - params[0])**2 + (y - params[1])**2)\
-                    < ap]
-
-            p, cov, infodict, mesg, ier = scipy.optimize.leastsq(func, \
-                    params, args=(1, x, y, z2, sigma_z2), full_output=True)
-
-        # Now calculate the uncertainty on the parameters using bootstrapping.
-
-        if bootstrap_unc:
-            s_res = sigma_z.mean()
-            ps = []
-            bm = [image.header["BMAJ"]/abs(image.wcs.wcs.cdelt[0])/2.355,\
-                    image.header["BMIN"]/abs(image.wcs.wcs.cdelt[0])/2.355,\
-                    image.header["BPA"]*numpy.pi/180.]
-
-            for i in range(100):
-                randomDelta = interferometer_noise(z.shape, s_res, bm)
-                randomdataZ = z + randomDelta
-                randomdataSigma_Z = sigma_z.copy()
-
-                randomdataZ[numpy.sqrt((x-params[0])**2 + (y-params[1])**2) >= \
-                        ap] = 0.
-                randomdataSigma_Z[numpy.sqrt((x - params[0])**2 + \
-                        (y - params[1])**2) >= ap] = 1.0e20
-
-                randomfit, randomcov = scipy.optimize.leastsq(func, params, \
-                        args=(1, x, y, randomdataZ, randomdataSigma_Z), \
-                        full_output=False)
-
-                ps.append(randomfit)
-
-            ps = numpy.array(ps)
-
-            pfit_bootstrap = numpy.mean(ps,0)
-            perr_bootstrap = numpy.std(ps,0)
-
-            pfit_bootstrap[4] = numpy.fmod(numpy.fmod(pfit_bootstrap[4], \
-                    numpy.pi)+numpy.pi, numpy.pi)
-
-        # Fix the least squares result for phi because it seems to like to go
-        # crazy.
-
-        p[4] = numpy.fmod(numpy.fmod(p[4], numpy.pi)+numpy.pi, numpy.pi)
-
-        # Take the absolute values of sigma_x and sigma_y in case they 
-        # managed to go negative.
-
-        p[2:4] = abs(p[2:4])
-
-        # Calculate the uncertainties on the parameters.
-
-        if (type(cov) == type(None)):
+        try:
+            p, sigma_p = fit_source(coords, x, y, z, sigma_z, params, \
+                    bootstrap_unc=bootstrap_unc, beam=bm)
+        except ValueError:
             continue
-        else:
-            sigma_p = numpy.sqrt(numpy.diag((func(p, 1, x, y, z2, \
-                    sigma_z2)**2).sum()/(y.size - p.size) * cov))
 
         # Create a new source to add.
 
         new_source = numpy.empty((16,), dtype=p.dtype)
         new_source[0:12][0::2] = p[0:6]
-        if bootstrap_unc:
-            new_source[0:12][1::2] = perr_bootstrap[0:6]
-        else:
-            new_source[0:12][1::2] = sigma_p[0:6]
-        #new_source[0:12][0::2] = pfit_bootstrap[0:6]
+        new_source[0:12][1::2] = sigma_p[0:6]
 
         # Before doing aperture photometry, find any sources within a provided 
         # radius and fit them so they can be subtracted out of the sky
@@ -277,48 +183,11 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
                 params = numpy.array([xc, yc, beam[0]*beam_to_sigma, \
                         beam[1]*beam_to_sigma, beam[2], image.image[yc,xc,0,0]])
 
-                # Try to automatically determine the aperture.
-
-                z3 = z.copy()
-                z3[z/sigma_z < 2.] = 0.0
-
-                for i in range(z.shape[0]):
-                    for j in range(z.shape[1]):
-                        if z3[i,j] != 0.:
-                            inbetween = bresenham_line(int(coords2[0] - ym + \
-                                    z.shape[0]/2), int(coords2[1] - xm + \
-                                    z.shape[1]/2), i, j)
-
-                            for k, coords3 in enumerate(inbetween):
-                                if z3[coords3[0],coords3[1]] < 2.0 * \
-                                        sigma_z[coords3[0], coords3[1]]:
-                                    z3[i,j] = 0.0
-
-                params, cov, infodict, mesg, ier = scipy.optimize.leastsq(func,\
-                        params, args=(1, x, y, z3, sigma_z), full_output=True)
-
-                fit_aperture = 3 * numpy.sqrt(abs(params[2]*params[3]))
-
-                for i in range(1):
-                    z2 = numpy.zeros(z.shape)
-                    sigma_z2 = numpy.zeros(z.shape) + 1.0e20
-
-                    if i > 0:
-                        params[0:6] = new_p[0:6]
-                        ap = 3 * numpy.sqrt(abs(params[2]*params[3]))
-                    else:
-                        ap = fit_aperture
-
-                    z2[numpy.sqrt((x - params[0])**2 + (y - params[1])**2) < \
-                            ap] = z[numpy.sqrt((x - params[0])**2 + \
-                            (y - params[1])**2) < ap]
-                    sigma_z2[numpy.sqrt((x - params[0])**2 + \
-                            (y - params[1])**2) < ap] = sigma_z[numpy.sqrt( \
-                            (x - params[0])**2 + (y - params[1])**2) < ap]
-
-                    new_p, cov, infodict, mesg, ier = \
-                            scipy.optimize.leastsq(func, params, args=(1, x, y,\
-                            z2, sigma_z2), full_output=True)
+                try:
+                    new_p, sigma_new_p = fit_source(coords2, x, y, z, sigma_z, \
+                            params, bootstrap_unc=False)
+                except ValueError:
+                    continue
 
                 p = numpy.hstack([p, new_p])
                 nsources += 1
@@ -335,8 +204,9 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
 
         try:
             sky = numpy.median(new_z[numpy.logical_and(\
-                    numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) > aperture, \
-                    numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) <= 4*aperture)])
+                    numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) > aperture,\
+                    numpy.sqrt((coords[1]-x)**2 + (coords[0]-y)**2) <= \
+                    4*aperture)])
         except IndexError:
             sky = -1.0e-5
             print("Error in source:", len(sources))
@@ -345,8 +215,6 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         new_source[13] = image.unc[coords[0], coords[1], 0, 0]
         new_source[14] = (new_z[numpy.sqrt((new_source[0]-x)**2 + \
                 (new_source[2]-y)**2) < aperture] - sky).sum()
-        #new_source[15] = numpy.sqrt(sigma_z[numpy.sqrt((new_source[0]-x)**2+ \
-        #        (new_source[2]-y)**2) < aperture]**2).sum()
         new_source[15] = numpy.sqrt((sigma_z[numpy.sqrt((new_source[0]-x)**2+ \
                 (new_source[2]-y)**2) < aperture]**2).sum())
 
@@ -439,6 +307,112 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
                     (flux_unc * sources['Flux'])**2)
 
     return sources
+
+def fit_source(coords, x, y, z, sigma_z, params, bootstrap_unc=True, \
+        beam=None):
+    # Try a least squares fit.
+
+    func = lambda p, n, x, y, z, sigma: \
+            ((z - gaussian2d(x, y, p, n)) / sigma).reshape((z.size,))
+
+    # Try to automatically determine the aperture.
+
+    z3 = z.copy()
+    z3[z/sigma_z < 2.] = 0.0
+
+    xm, ym = x[0, int(x.shape[1]/2)], y[int(y.shape[0]/2), 0]
+
+    for i in range(z.shape[0]):
+        for j in range(z.shape[1]):
+            if z3[i,j] != 0.:
+                inbetween = bresenham_line(int(coords[0]-ym+z.shape[0]/2), \
+                        int(coords[1] - xm + z.shape[1]/2),i,j)
+
+                for k, coords3 in enumerate(inbetween):
+                    if z3[coords3[0],coords3[1]] < 2.0 * \
+                            sigma_z[coords3[0], coords3[1]]:
+                        z3[i,j] = 0.0
+
+    params, cov, infodict, mesg, ier = scipy.optimize.leastsq(func, \
+            params, args=(1, x, y, z3, sigma_z), full_output=True)
+
+    fit_aperture = 3 * numpy.sqrt(abs(params[2]*params[3]))
+
+    # Only fit to pixels in a certain aperture around the source. This is 
+    # because otherwise the fitting routine has a habit of finding other 
+    # peaks or negative dips when fitting faint sources.
+
+    for i in range(1):
+        z2 = numpy.zeros(z.shape)
+        sigma_z2 = numpy.zeros(z.shape) + 1.0e20
+
+        if i > 0:
+            params[0:6] = p[0:6]
+            ap = 3 * numpy.sqrt(abs(params[2]*params[3]))
+        else:
+            ap = fit_aperture
+
+        z2[numpy.sqrt((x - params[0])**2 + (y - params[1])**2) < ap] = \
+                z[numpy.sqrt((x - params[0])**2 + (y - params[1])**2) < ap]
+        sigma_z2[numpy.sqrt((x - params[0])**2 + (y - params[1])**2) < ap]=\
+                sigma_z[numpy.sqrt((x - params[0])**2 + (y - params[1])**2)\
+                < ap]
+
+        p, cov, infodict, mesg, ier = scipy.optimize.leastsq(func, \
+                params, args=(1, x, y, z2, sigma_z2), full_output=True)
+
+    if (type(cov) == type(None)):
+        raise ValueError('The fit failed')
+
+    # Fix the least squares result for phi because it seems to like to go
+    # crazy.
+
+    p[4] = numpy.fmod(numpy.fmod(p[4], numpy.pi)+numpy.pi, numpy.pi)
+
+    # Take the absolute values of sigma_x and sigma_y in case they 
+    # managed to go negative.
+
+    p[2:4] = abs(p[2:4])
+
+    # Now calculate the uncertainty on the parameters using bootstrapping.
+
+    if bootstrap_unc:
+        s_res = sigma_z.mean()
+        ps = []
+
+        for i in range(100):
+            randomDelta = interferometer_noise(z.shape, s_res, beam)
+            randomdataZ = z + randomDelta
+            randomdataSigma_Z = sigma_z.copy()
+
+            randomdataZ[numpy.sqrt((x-params[0])**2 + (y-params[1])**2) >= \
+                    ap] = 0.
+            randomdataSigma_Z[numpy.sqrt((x - params[0])**2 + \
+                    (y - params[1])**2) >= ap] = 1.0e20
+
+            randomfit, randomcov = scipy.optimize.leastsq(func, params, \
+                    args=(1, x, y, randomdataZ, randomdataSigma_Z), \
+                    full_output=False)
+
+            ps.append(randomfit)
+
+        ps = numpy.array(ps)
+
+        pfit_bootstrap = numpy.mean(ps,0)
+        perr_bootstrap = numpy.std(ps,0)
+
+        pfit_bootstrap[4] = numpy.fmod(numpy.fmod(pfit_bootstrap[4], \
+                numpy.pi)+numpy.pi, numpy.pi)
+
+        return p, perr_bootstrap
+
+    # Calculate the uncertainties on the parameters.
+
+    else:
+        sigma_p = numpy.sqrt(numpy.diag((func(p, 1, x, y, z2, \
+                sigma_z2)**2).sum()/(y.size - p.size) * cov))
+
+        return p, sigma_p
 
 def interferometer_noise(shape, sigma, beam):
 
