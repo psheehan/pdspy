@@ -66,6 +66,7 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
     y = data.v
     z = numpy.concatenate((data.real, data.imag))[:,0]
     zerr = 1./numpy.sqrt(numpy.concatenate((data.weights,data.weights)))[:,0]
+    print(xmin[0], ymin[0])
 
     # Define a likelihood function.
 
@@ -123,7 +124,7 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
                 pos = []
                 for i in range(nwalkers):
                     pos.append([numpy.random.normal(xmin[0],0.1,1)[0], \
-                            numpy.random.normal(xmin[0],0.1,1)[0], \
+                            numpy.random.normal(ymin[0],0.1,1)[0], \
                             numpy.random.uniform(0.0001,1.0,1)[0]])
             elif funct[0] == 'gauss':
                 ndim, nwalkers = 6, 250
@@ -133,7 +134,7 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
                     sigma_x = numpy.random.uniform(0.01,10.0,1)[0]
 
                     pos.append([numpy.random.normal(xmin[0],1.0e-4,1)[0], \
-                            numpy.random.normal(xmin[0],1.0e-4,1)[0], \
+                            numpy.random.normal(ymin[0],1.0e-4,1)[0], \
                             sigma_x, \
                             numpy.random.uniform(0.01,sigma_x,1)[0], \
                             numpy.random.uniform(pa0-pa_range,\
@@ -145,7 +146,7 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
                 pos = []
                 for i in range(nwalkers):
                     pos.append([numpy.random.normal(xmin[0],1.0e-4,1)[0], \
-                            numpy.random.normal(xmin[0],1.0e-4,1)[0], \
+                            numpy.random.normal(ymin[0],1.0e-4,1)[0], \
                             numpy.random.uniform(0.01,10.0,1)[0], \
                             numpy.random.uniform(0,numpy.pi/2,1)[0], \
                             numpy.random.uniform(pa0-pa_range,\
@@ -159,7 +160,7 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
                     r_min = numpy.random.uniform(0.01,1.0,1)[0]
 
                     pos.append([numpy.random.normal(xmin[0],0.1,1)[0], \
-                            numpy.random.normal(xmin[0],0.1,1)[0], \
+                            numpy.random.normal(ymin[0],0.1,1)[0], \
                             r_min, \
                             numpy.random.uniform(r_min,1.0,1)[0], \
                             numpy.random.uniform(0,numpy.pi/2,1)[0], \
@@ -181,6 +182,7 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
 
         # Make a plot of the steps.
 
+        """
         for i in range(ndim):
             fig, ax = plt.subplots(nrows=1, ncols=1)
 
@@ -190,6 +192,7 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
             plt.show()
 
             plt.close(fig)
+        """
 
         # Because of the bimodality of p.a. we need to fix where the p.a. 
         # window is centered on.
