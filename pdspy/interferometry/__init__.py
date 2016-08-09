@@ -1,4 +1,4 @@
-from .libinterferometry import Visibilities, average, grid, freqcorrect
+from .libinterferometry import Visibilities, average, grid, freqcorrect, chisq
 from .readuvfits import readuvfits
 from .readvis import readvis
 from .center import center

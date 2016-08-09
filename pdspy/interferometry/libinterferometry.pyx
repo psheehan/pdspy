@@ -509,3 +509,23 @@ def freqcorrect(data, freq=None):
 
     return Visibilities(new_u, new_v, new_freq, new_real, new_imag, \
             new_weights)
+
+@cython.boundscheck(False)
+def chisq(data, model):
+    cdef numpy.ndarray[double, ndim=2] data_real = data.real
+    cdef numpy.ndarray[double, ndim=2] data_imag = data.imag
+    cdef numpy.ndarray[double, ndim=2] data_weights = data.weights
+    cdef numpy.ndarray[double, ndim=2] model_real = model.real
+    cdef numpy.ndarray[double, ndim=2] model_imag = model.imag
+    cdef int nuv = data.u.size
+    cdef double chisq = 0.
+    cdef unsigned int i
+
+    for i in range(nuv):
+        chisq += ((data_real[<unsigned int>i,0] - \
+                model_real[<unsigned int>i,0])**2 + \
+                (data_imag[<unsigned int>i,0] - \
+                model_imag[<unsigned int>i,0])**2) * \
+                data_weights[<unsigned int>i,0]
+
+    return chisq
