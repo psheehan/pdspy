@@ -112,7 +112,8 @@ class Disk:
 
         Sigma[(r >= rout/AU) ^ (r <= rin/AU)] = 0e0
 
-        Sigma[r == 0] = Sigma0 * (rin/AU)**(-plrho+plh)
+        dr = r[r > 0].min()
+        Sigma[r == 0] = Sigma0 * (0.7*dr)**(-plrho+plh)
 
         for i in range(len(self.gap_rin)):
             Sigma[(r >= self.gap_rin[i]) & (r <= self.gap_rout[i])] *= \
@@ -130,7 +131,8 @@ class Disk:
 
         T[(r >= rout/AU) ^ (r <= rin/AU)] = 0.0
 
-        T[r == 0] = t0 * (rin/AU)**(-plt)
+        dr = r[r > 0].min()
+        T[r == 0] = t0 * (0.7*dr)**(-plt)
 
         return T
 
