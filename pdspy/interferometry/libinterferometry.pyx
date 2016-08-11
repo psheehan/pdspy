@@ -517,7 +517,7 @@ def chisq(data, model):
     cdef numpy.ndarray[double, ndim=2] data_weights = data.weights
     cdef numpy.ndarray[double, ndim=2] model_real = model.real
     cdef numpy.ndarray[double, ndim=2] model_imag = model.imag
-    cdef int nuv = data.u.size
+    cdef int nuv = data.real.size
     cdef double chisq = 0.
     cdef unsigned int i
 
