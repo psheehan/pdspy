@@ -510,22 +510,27 @@ def freqcorrect(data, freq=None):
     return Visibilities(new_u, new_v, new_freq, new_real, new_imag, \
             new_weights)
 
-@cython.boundscheck(False)
 def chisq(data, model):
-    cdef numpy.ndarray[double, ndim=2] data_real = data.real
-    cdef numpy.ndarray[double, ndim=2] data_imag = data.imag
-    cdef numpy.ndarray[double, ndim=2] data_weights = data.weights
-    cdef numpy.ndarray[double, ndim=2] model_real = model.real
-    cdef numpy.ndarray[double, ndim=2] model_imag = model.imag
-    cdef int nuv = data.real.size
-    cdef double chisq = 0.
+    chi_squared = chisq_calc(data.real, data.imag, data.weights, model.real, \
+            model.imag, data.real.size)
+
+    return chi_squared
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+cdef float chisq_calc(numpy.ndarray[double, ndim=2] data_real, \
+        numpy.ndarray[double, ndim=2] data_imag, \
+        numpy.ndarray[double, ndim=2] data_weights, \
+        numpy.ndarray[double, ndim=2] model_real, \
+        numpy.ndarray[double, ndim=2] model_imag, int nuv):
+    cdef double chisq = 0
+    cdef double diff1, diff2
     cdef unsigned int i
 
     for i in range(nuv):
-        chisq += ((data_real[<unsigned int>i,0] - \
-                model_real[<unsigned int>i,0])**2 + \
-                (data_imag[<unsigned int>i,0] - \
-                model_imag[<unsigned int>i,0])**2) * \
-                data_weights[<unsigned int>i,0]
+        diff1 = data_real[<unsigned int>i,0] - model_real[<unsigned int>i,0]
+        diff2 = data_imag[<unsigned int>i,0] - model_imag[<unsigned int>i,0]
+        chisq += (diff1*diff1 + diff2*diff2) * data_weights[<unsigned int>i,0]
 
     return chisq
