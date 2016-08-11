@@ -114,7 +114,7 @@ class PringleDisk(Disk):
         Sigma = Sigma0 * (rr/rout)**(-gamma) * numpy.exp(-(rr/rout)**(2-gamma))
 
         dr = rr[r > 0].min()
-        Sigma[r == 0] = Sigma0 * (0.7*dr)**(-plrho+plh) * \
+        Sigma[r == 0] = Sigma0 * (0.7*dr/rout)**(-gamma) * \
                 numpy.exp(-(0.7*dr/rout)**(2-gamma))
 
         for i in range(len(self.gap_rin)):
