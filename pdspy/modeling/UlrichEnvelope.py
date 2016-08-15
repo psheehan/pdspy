@@ -10,13 +10,15 @@ from ..gas import Gas
 class UlrichEnvelope:
 
     def __init__(self, mass=1.0e-3, rmin=0.1, rmax=1000, rcent=30, cavpl=1.0, \
-            cavrfact=0.2, dust=None):
+            cavrfact=0.2, t0=None, tpl=None, dust=None):
         self.mass = mass
         self.rmin = rmin
         self.rmax= rmax
         self.rcent = rcent
         self.cavpl = cavpl
         self.cavrfact = cavrfact
+        self.t0 = t0
+        self.tpl = tpl
         if (dust != None):
             self.dust = dust
         self.gas = []
@@ -94,6 +96,29 @@ class UlrichEnvelope:
         #numpy.seterr(all='warn')
 
         return rho
+
+    def temperature(self, r, theta, phi):
+        ##### Disk Parameters
+        
+        rin = self.rmin * AU
+        rout = self.rmax * AU
+        t0 = self.t0
+        tpl = self.tpl
+
+        ##### Set up the coordinates
+
+        rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+
+        rr = rt*numpy.sin(tt)
+        zz = rt*numpy.cos(tt)
+
+        ##### Make the dust density model for a protoplanetary disk.
+        
+        t = t0 * (rt / rin)**(-tpl)
+
+        t[(rr >= rout) ^ (rr <= rin)] = 0e0
+        
+        return t
 
     def number_density(self, r, theta, phi, gas=0):
         rho = self.density(r, theta, phi)

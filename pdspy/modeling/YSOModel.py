@@ -111,18 +111,20 @@ class YSOModel(Model):
                     self.grid.theta, self.grid.phi))
 
     def add_ulrich_envelope(self, mass=1.0e-3, rmin=0.1, rmax=1000, rcent=300, \
-            cavpl=1.0, cavrfact=0.2, dust=None, gas=None, abundance=None, \
-            rcent_ne_rdisk=False):
+            cavpl=1.0, cavrfact=0.2, t0=None, tpl=None, dust=None, gas=None, \
+            abundance=None, rcent_ne_rdisk=False):
         if rcent_ne_rdisk:
             self.envelope = UlrichEnvelope(mass=mass, rmin=rmin, rmax=rmax, \
-                    rcent=rcent, cavpl=cavpl, cavrfact=cavrfact, dust=dust)
+                    rcent=rcent, cavpl=cavpl, cavrfact=cavrfact, t0=t0, \
+                    tpl=tpl, dust=dust)
         elif hasattr(self, 'disk'):
             self.envelope = UlrichEnvelope(mass=mass, rmin=rmin, rmax=rmax, \
                     rcent=self.disk.rmax, cavpl=cavpl, cavrfact=cavrfact, \
-                    dust=dust)
+                    t0=t0, tpl=tpl, dust=dust)
         else:
             self.envelope = UlrichEnvelope(mass=mass, rmin=rmin, rmax=rmax, \
-                    rcent=rcent, cavpl=cavpl, cavrfact=cavrfact, dust=dust)
+                    rcent=rcent, cavpl=cavpl, cavrfact=cavrfact, t0=t0, \
+                    tpl=tpl, dust=dust)
 
         if (dust != None):
             self.grid.add_density(self.envelope.density(self.grid.r, \
@@ -146,6 +148,10 @@ class YSOModel(Model):
                 self.grid.add_velocity(self.envelope.velocity(self.grid.r, \
                         self.grid.theta, self.grid.phi, \
                         mstar=self.grid.stars[0].mass))
+
+        if t0 != None:
+            self.grid.add_temperature(self.envelope.temperature(self.grid.r, \
+                    self.grid.theta, self.grid.phi))
 
     def run_simple_dust_image(self, name=None, i=0., pa=0., npix=256, dx=1., \
             nu=230., kappa=2.0, dpc=140, flux=1e-3):
