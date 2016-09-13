@@ -82,7 +82,7 @@ def sed(nrrefine=None, fluxcons=None, norefine=None, nofluxcons=None, \
     if (noapert == True):
         command += "noapert "
     if (nphot_scat != None):
-        command += "nphot_scat {0:i} ".format(nphot_scat)
+        command += "nphot_scat {0:d} ".format(nphot_scat)
     if (inclstar == True):
         command += "inclstar "
     if (nostar == True):
