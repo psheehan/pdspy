@@ -10,7 +10,8 @@ from .Disk import Disk
 class PringleDisk(Disk):
     def __init__(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, h0=0.1, \
             plh=58./45., t0=None, plt=None, dust=None, gap_rin=[], gap_rout=[],\
-            gap_delta=[]):
+            gap_delta=[], tmid0=None, tatm0=None, zq0=None, pltgas=None, \
+            delta=None):
         self.mass = mass
         self.rmin = rmin
         self.rmax = rmax
@@ -24,8 +25,16 @@ class PringleDisk(Disk):
         self.gap_delta = gap_delta
         if (dust != None):
             self.dust = dust
+
+        # The gas parameter lists.
+
         self.gas = []
         self.abundance = []
+        self.tmid0 = tmid0
+        self.tatm0 = tatm0
+        self.zq0 = zq0
+        self.pltgas = pltgas
+        self.delta = delta
 
     def add_gas(self, gas, abundance):
         self.gas.append(gas)
@@ -99,6 +108,38 @@ class PringleDisk(Disk):
 
         return n
 
+    def gas_temperature(self, r, theta, phi):
+        ##### Disk Parameters
+        
+        rin = self.rmin * AU
+        rout = self.rmax * AU
+        pltgas = self.pltgas
+        tmid0 = self.tmid0
+        tatm0 = self.tatm0
+        zq0 = self.zq0
+        delta = self.delta
+
+        ##### Set up the coordinates
+
+        rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+
+        rr = rt*numpy.sin(tt)
+        zz = rt*numpy.cos(tt)
+
+        ##### Make the dust density model for a protoplanetary disk.
+        
+        zq = zq0 * (rt / rin)**1.3
+
+        tmid = tmid0 * (rt / rin)**(-pltgas)
+        tatm = tatm0 * (rt / rin)**(-pltgas)
+
+        t = numpy.zeros(tatm.shape)
+        t[z >= zq] = tatm[z >= zq]
+        t[z < zq] = tatm[z < zq] + (tmid[z < zq] - tatm[z < zq]) * \
+                (numpy.cos(numpy.pi * z[z < zq] / (2*zq[z < zq])))**2*delta
+        
+        return t
+
     def surface_density(self, r):
         rr = r * AU
         rin = self.rmin * AU
@@ -163,6 +204,17 @@ class PringleDisk(Disk):
         self.h0 = f['h0'].value
         self.plh = f['plh'].value
 
+        if 't0' in f:
+            self.t0 = f['t0'].value
+            self.plt = f['plt'].value
+
+        if 'tmid0' in f:
+            self.tmid0 = f['tmid0'].value
+            self.tatm0 = f['tatm0'].value
+            self.zq0 = f['zq0'].value
+            self.pltgas = f['pltgas'].value
+            self.delta = f['delta'].value
+
         if ('Dust' in f):
             self.dust = Dust()
             self.dust.set_properties_from_file(usefile=f['Dust'])
@@ -187,6 +239,15 @@ class PringleDisk(Disk):
         f['plrho'] = self.plrho
         f['h0'] = self.h0
         f['plh'] = self.plh
+
+        f['t0'] = self.t0
+        f['plt'] = self.plt
+
+        f['tmid0'] = self.tmid0
+        f['tatm0'] = self.tatm0
+        f['zq0'] = self.zq0
+        f['pltgas'] = self.pltgas
+        f['delta'] = self.delta
 
         if hasattr(self, 'dust'):
             dust = f.create_group("Dust")

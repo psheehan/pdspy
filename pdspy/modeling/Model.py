@@ -310,6 +310,8 @@ class Model:
 
             radmc3d.write.gas_velocity(velocity)
 
+            radmc3d.write.gas_temperature(self.grid.gas_temperature[0])
+
     def read(self, filename=None, usefile=None):
         if (usefile == None):
             f = h5py.File(filename, "r")

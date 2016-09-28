@@ -43,10 +43,12 @@ class YSOModel(Model):
         self.grid.set_spherical_grid(r, theta, phi)
 
     def add_disk(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, h0=0.1, \
-            plh=58./45., dust=None, gas=None, abundance=None, t0=None, \
-            plt=None, gap_rin=[], gap_rout=[], gap_delta=[]):
+            plh=58./45., dust=None,  t0=None, plt=None, gas=None, \
+            abundance=None, tmid0=None, tatm0=None, zq0=None, pltgas=None, \
+            delta=None, gap_rin=[], gap_rout=[], gap_delta=[]):
         self.disk = Disk(mass=mass, rmin=rmin, rmax=rmax, plrho=plrho, h0=h0, \
-                plh=plh, dust=dust, t0=t0, plt=plt, gap_rin=gap_rin, \
+                plh=plh, dust=dust, t0=t0, plt=plt, tmid0=tmid0, tatm0=tatm0, \
+                zq0=zq0, pltgas=pltgas, delta=delta, gap_rin=gap_rin, \
                 gap_rout=gap_rout, gap_delta=gap_delta)
 
         if (dust != None):
@@ -57,12 +59,12 @@ class YSOModel(Model):
             if (type(gas) == list):
                 for i in range(len(gas)):
                     self.disk.add_gas(gas[i], abundance[i])
-                    self.grid.add_number_density(self.disk.number_density( \
+                    self.grid.add_number_density(self.disk.number_density(\
                             self.grid.r, self.grid.theta, self.grid.phi, \
                             gas=i), gas[i])
-                    self.grid.add_velocity(self.disk.velocity(self.grid.r, \
-                            self.grid.theta, self.grid.phi, \
-                            mstar=self.grid.stars[0].mass))
+                self.grid.add_velocity(self.disk.velocity(self.grid.r, \
+                        self.grid.theta, self.grid.phi, \
+                        mstar=self.grid.stars[0].mass))
             else:
                 self.disk.add_gas(gas, abundance)
                 self.grid.add_number_density(self.disk.number_density( \
@@ -75,13 +77,18 @@ class YSOModel(Model):
         if t0 != None:
             self.grid.add_temperature(self.disk.temperature(self.grid.r, \
                     self.grid.theta, self.grid.phi))
+        if tmid0 != None:
+            self.grid.add_gas_temperature(self.disk.gas_temperature( \
+                    self.grid.r, self.grid.theta, self.grid.phi))
 
     def add_pringle_disk(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, \
-            h0=0.1, plh=58./45., dust=None, gas=None, abundance=None, t0=None, \
-            plt=None, gap_rin=[], gap_rout=[], gap_delta=[]):
+            h0=0.1, plh=58./45., dust=None,  t0=None, plt=None, gas=None, \
+            abundance=None, tmid0=None, tatm0=None, zq0=None, pltgas=None, \
+            delta=None, gap_rin=[], gap_rout=[], gap_delta=[]):
         self.disk = PringleDisk(mass=mass, rmin=rmin, rmax=rmax, plrho=plrho, \
-                h0=h0, plh=plh, dust=dust, t0=t0, plt=plt, gap_rin=gap_rin, \
-                gap_rout=gap_rout, gap_delta=gap_delta)
+                h0=h0, plh=plh, dust=dust, t0=t0, plt=plt, tmid0=tmid0, \
+                tatm0=tatm0, zq0=zq0, pltgas=pltgas, delta=delta, \
+                gap_rin=gap_rin, gap_rout=gap_rout, gap_delta=gap_delta)
 
         if (dust != None):
             self.grid.add_density(self.disk.density(self.grid.r, \
@@ -94,9 +101,9 @@ class YSOModel(Model):
                     self.grid.add_number_density(self.disk.number_density( \
                             self.grid.r, self.grid.theta, self.grid.phi, \
                             gas=i), gas[i])
-                    self.grid.add_velocity(self.disk.velocity(self.grid.r, \
-                            self.grid.theta, self.grid.phi, \
-                            mstar=self.grid.stars[0].mass))
+                self.grid.add_velocity(self.disk.velocity(self.grid.r, \
+                        self.grid.theta, self.grid.phi, \
+                        mstar=self.grid.stars[0].mass))
             else:
                 self.disk.add_gas(gas, abundance)
                 self.grid.add_number_density(self.disk.number_density( \
@@ -109,10 +116,13 @@ class YSOModel(Model):
         if t0 != None:
             self.grid.add_temperature(self.disk.temperature(self.grid.r, \
                     self.grid.theta, self.grid.phi))
+        if tmid0 != None:
+            self.grid.add_gas_temperature(self.disk.gas_temperature( \
+                    self.grid.r, self.grid.theta, self.grid.phi))
 
     def add_ulrich_envelope(self, mass=1.0e-3, rmin=0.1, rmax=1000, rcent=300, \
             cavpl=1.0, cavrfact=0.2, t0=None, tpl=None, dust=None, gas=None, \
-            abundance=None, rcent_ne_rdisk=False):
+            abundance=None, tmid0=None, rcent_ne_rdisk=False):
         if rcent_ne_rdisk:
             self.envelope = UlrichEnvelope(mass=mass, rmin=rmin, rmax=rmax, \
                     rcent=rcent, cavpl=cavpl, cavrfact=cavrfact, t0=t0, \
@@ -137,9 +147,9 @@ class YSOModel(Model):
                     self.grid.add_number_density(self.envelope.number_density( \
                             self.grid.r, self.grid.theta, self.grid.phi, \
                             gas=i), gas[i])
-                    self.grid.add_velocity(self.envelope.velocity(self.grid.r, \
-                            self.grid.theta, self.grid.phi, \
-                            mstar=self.grid.stars[0].mass))
+                self.grid.add_velocity(self.envelope.velocity(self.grid.r, \
+                        self.grid.theta, self.grid.phi, \
+                        mstar=self.grid.stars[0].mass))
             else:
                 self.envelope.add_gas(gas, abundance)
                 self.grid.add_number_density(self.envelope.number_density( \
@@ -152,6 +162,9 @@ class YSOModel(Model):
         if t0 != None:
             self.grid.add_temperature(self.envelope.temperature(self.grid.r, \
                     self.grid.theta, self.grid.phi))
+        if tmid0 != None:
+            self.grid.add_gas_temperature(self.envelope.gas_temperature( \
+                    self.grid.r, self.grid.theta, self.grid.phi))
 
     def run_simple_dust_image(self, name=None, i=0., pa=0., npix=256, dx=1., \
             nu=230., kappa=2.0, dpc=140, flux=1e-3):
