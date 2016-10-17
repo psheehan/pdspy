@@ -397,6 +397,24 @@ def numberdens(n, species, gridstyle="normal"):
 
     f.close()
 
+def gas_temperature(T, gridstyle="normal"):
+
+    if (gridstyle == "normal"):
+        nx, ny, nz = T.shape
+        ncells = nx*ny*nz
+
+    f = open("gas_temperature.inp","w")
+    f.write("1\n")
+    f.write("{0:d}\n".format(ncells))
+
+    if (gridstyle == "normal"):
+        for iz in range(nz):
+            for iy in range(ny):
+                for ix in range(nx):
+                    f.write("{0:e}\n".format(T[ix,iy,iz]))
+
+    f.close()
+
 def gas_velocity(v, gridstyle="normal"):
 
     if (gridstyle == "normal"):

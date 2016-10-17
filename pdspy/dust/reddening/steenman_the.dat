@@ -1,0 +1,20 @@
+# steenman_the.dat
+#
+# Josh Eisner
+# April 2, 2003
+#
+# Hold Extinction Coefficients from Steenman & The 1991, Ap&SS,184,9S
+#
+# Filter	Wvlngth(um)	A_lambda/A_v
+JohnU		0.36		1.65
+JohnB		0.44		1.33
+JohnV		0.55		1.00
+CousR		0.64		0.82
+JohnR		0.70		0.72
+CousI		0.79		0.60
+JohnI		0.90		0.48
+J		1.25		0.26
+H		1.65		0.15
+K		2.20		0.08
+L		3.60		0.03
+M		4.80		0.02

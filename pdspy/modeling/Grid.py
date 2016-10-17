@@ -12,6 +12,7 @@ class Grid:
         self.temperature = []
         self.stars = []
         self.number_density = []
+        self.gas_temperature = []
         self.gas = []
         self.velocity = []
 
@@ -28,6 +29,9 @@ class Grid:
     def add_number_density(self, number_density, gas):
         self.number_density.append(number_density)
         self.gas.append(gas)
+
+    def add_gas_temperature(self, gas_temperature):
+        self.gas_temperature.append(gas_temperature)
 
     def add_velocity(self, velocity):
         self.velocity.append(velocity)
@@ -114,6 +118,11 @@ class Grid:
         for name in number_density:
             self.number_density.append(number_density[name].value)
 
+        if 'GasTemperature' in f:
+            gas_temperature = f['GasTemperature']
+            for name in gas_temperature:
+                self.gas_temperature.append(gas_temperature[name].value)
+
         gas = f['Gas']
         for name in gas:
             g = Gas()
@@ -178,6 +187,14 @@ class Grid:
                     "NumberDensity{0:d}".format(i), \
                     self.number_density[i].shape, dtype='f'))
             number_density_dsets[i][...] = self.number_density[i]
+
+        gas_temperature = f.create_group("GasTemperature")
+        gas_temperature_dsets = []
+        for i in range(len(self.gas_temperature)):
+            gas_temperature_dsets.append(gas_temperature.create_dataset( \
+                    "GasTemperature{0:d}".format(i), \
+                    self.gas_temperature[i].shape, dtype='f'))
+            gas_temperature_dsets[i][...] = self.gas_temperature[i]
 
         gas = f.create_group("Gas")
         gas_groups = []
