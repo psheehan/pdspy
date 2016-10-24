@@ -69,7 +69,7 @@ class Disk:
         ##### Add any gaps to the disk.
 
         for i in range(len(self.gap_rin)):
-            rho[(rr >= self.gap_rin[i]) & (rr <= self.gap_rout[i])] *= \
+            rho[(rr >= self.gap_rin[i]*AU) & (rr <= self.gap_rout[i]*AU)] *= \
                     self.gap_delta[i]
         
         return rho
