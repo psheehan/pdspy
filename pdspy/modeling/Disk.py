@@ -217,10 +217,11 @@ class Disk:
             self.dust = Dust()
             self.dust.set_properties_from_file(usefile=f['Dust'])
 
-        for name in f['Gas']:
-            self.gas.append(Gas())
-            self.abundance.append(f['Gas'][name]['Abundance'].value)
-            self.gas[-1].set_properties_from_file(usefile=f['Gas'][name])
+        if ('Gas' in f):
+            for name in f['Gas']:
+                self.gas.append(Gas())
+                self.abundance.append(f['Gas'][name]['Abundance'].value)
+                self.gas[-1].set_properties_from_file(usefile=f['Gas'][name])
 
         if (usefile == None):
             f.close()
@@ -238,14 +239,16 @@ class Disk:
         f['h0'] = self.h0
         f['plh'] = self.plh
 
-        f['t0'] = self.t0
-        f['plt'] = self.plt
+        if self.t0 != None:
+            f['t0'] = self.t0
+            f['plt'] = self.plt
 
-        f['tmid0'] = self.tmid0
-        f['tatm0'] = self.tatm0
-        f['zq0'] = self.zq0
-        f['pltgas'] = self.pltgas
-        f['delta'] = self.delta
+        if self.tmid0 != None:
+            f['tmid0'] = self.tmid0
+            f['tatm0'] = self.tatm0
+            f['zq0'] = self.zq0
+            f['pltgas'] = self.pltgas
+            f['delta'] = self.delta
 
         if hasattr(self, 'dust'):
             dust = f.create_group("Dust")
