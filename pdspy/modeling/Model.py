@@ -75,7 +75,7 @@ class Model:
 
         m.write("temp.rtin")
 
-        m.run("temp.rtout", mpi=mpi, n_processes=nprocesses)
+        m.run("temp.rtout", mpi=mpi, n_processes=nprocesses, overwrite=True)
 
         n = ModelOutput("temp.rtout")
 
