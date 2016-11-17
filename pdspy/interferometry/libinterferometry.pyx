@@ -69,6 +69,13 @@ class Visibilities(VisibilitiesObject):
 
         return hdulist
 
+    def __reduce__(self):
+        return (self.rebuild, (self.u, self.v, self.freq, self.real, self.imag,\
+                self.weights))
+
+    def rebuild(u, v, freq, real, imag, weights):
+        return Visibilities(u, v, freq, real, imag, weights)
+
     def read(self, filename=None, usefile=None):
         if (usefile == None):
             f = h5py.File(filename, "r")
