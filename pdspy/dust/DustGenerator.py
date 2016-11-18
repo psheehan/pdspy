@@ -8,7 +8,7 @@ class DustGenerator:
         if type(dust) == str:
             self.read(dust)
         else:
-            self.amax = numpy.logspace(-4.,0.,50)
+            self.amax = numpy.logspace(-4.,1.,50)
             self.lam = dust.lam
 
             self.kabs = []
