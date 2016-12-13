@@ -3,6 +3,7 @@ import h5py
 from .Model import Model
 from .Disk import Disk
 from .PringleDisk import PringleDisk
+from .Envelope import Envelope
 from .UlrichEnvelope import UlrichEnvelope
 from .Star import Star
 from ..constants.physics import h, c, G, m_p, k
@@ -118,6 +119,43 @@ class YSOModel(Model):
                     self.grid.theta, self.grid.phi))
         if tmid0 != None:
             self.grid.add_gas_temperature(self.disk.gas_temperature( \
+                    self.grid.r, self.grid.theta, self.grid.phi))
+
+    def add_envelope(self, mass=1.0e-3, rmin=0.1, rmax=1000, pl=1.5, \
+            cavpl=1.0, cavrfact=0.2, t0=None, tpl=None, dust=None, gas=None, \
+            abundance=None, tmid0=None):
+        self.envelope = Envelope(mass=mass, rmin=rmin, rmax=rmax, \
+                pl=pl, cavpl=cavpl, cavrfact=cavrfact, t0=t0, tpl=tpl, \
+                dust=dust)
+
+        if (dust != None):
+            self.grid.add_density(self.envelope.density(self.grid.r, \
+                    self.grid.theta, self.grid.phi),dust)
+
+        if (gas != None):
+            if (type(gas) == list):
+                for i in range(len(gas)):
+                    self.envelope.add_gas(gas[i], abundance[i])
+                    self.grid.add_number_density(self.envelope.number_density( \
+                            self.grid.r, self.grid.theta, self.grid.phi, \
+                            gas=i), gas[i])
+                self.grid.add_velocity(self.envelope.velocity(self.grid.r, \
+                        self.grid.theta, self.grid.phi, \
+                        mstar=self.grid.stars[0].mass))
+            else:
+                self.envelope.add_gas(gas, abundance)
+                self.grid.add_number_density(self.envelope.number_density( \
+                        self.grid.r, self.grid.theta, self.grid.phi, gas=0), \
+                        gas)
+                self.grid.add_velocity(self.envelope.velocity(self.grid.r, \
+                        self.grid.theta, self.grid.phi, \
+                        mstar=self.grid.stars[0].mass))
+
+        if t0 != None:
+            self.grid.add_temperature(self.envelope.temperature(self.grid.r, \
+                    self.grid.theta, self.grid.phi))
+        if tmid0 != None:
+            self.grid.add_gas_temperature(self.envelope.gas_temperature( \
                     self.grid.r, self.grid.theta, self.grid.phi))
 
     def add_ulrich_envelope(self, mass=1.0e-3, rmin=0.1, rmax=1000, rcent=300, \
