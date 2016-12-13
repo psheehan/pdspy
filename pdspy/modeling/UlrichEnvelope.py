@@ -50,6 +50,9 @@ class UlrichEnvelope:
 
         mu = numpy.cos(tt)
 
+        RR = rr * numpy.sin(tt)
+        zz = rr * numpy.cos(tt)
+
         # Calculate mu0 at each r, theta combination.
 
         def func(mu0,r,mu,R_c):
@@ -90,8 +93,7 @@ class UlrichEnvelope:
 
         ##### Add an outflow cavity.
 
-        zz = rr*numpy.cos(tt)
-        rho[numpy.abs(zz)-cavz0-(rr*numpy.sin(tt))**cavpl > 0.0] *= cavrfact
+        rho[numpy.abs(zz)/AU-cavz0/AU-(RR/AU)**cavpl > 0.0] *= cavrfact
         
         #numpy.seterr(all='warn')
 
