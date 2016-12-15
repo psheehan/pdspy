@@ -28,7 +28,7 @@ class Model:
 
     def run_thermal_hyperion(self, nphot=1e6, mrw=False, pda=False, \
             niterations=20, percentile=99., absolute=2.0, relative=1.02, \
-            max_interactions=1e8, mpi=False, nprocesses=None):
+            max_interactions=1e8, mpi=False, nprocesses=None, verbose=True):
         d = []
         for i in range(len(self.grid.dust)):
             d.append(IsotropicDust( \
@@ -75,7 +75,11 @@ class Model:
 
         m.write("temp.rtin")
 
-        m.run("temp.rtout", mpi=mpi, n_processes=nprocesses, overwrite=True)
+        if verbose:
+            m.run("temp.rtout", mpi=mpi, n_processes=nprocesses, overwrite=True)
+        else:
+            m.run("temp.rtout", mpi=mpi, n_processes=nprocesses, \
+                    overwrite=True, logfile="temp.log")
 
         n = ModelOutput("temp.rtout")
 
@@ -94,7 +98,7 @@ class Model:
                 self.grid.temperature.append(numpy.transpose(temperature[i], \
                         axes=(2,1,0)))
 
-        os.system("rm temp.rtin temp.rtout")
+        os.system("rm temp.rtin temp.rtout temp.log")
 
     def run_thermal_radmc3d(self, nphot=1e6, verbose=True, **keywords):
         self.write_radmc3d(nphot_therm=nphot, **keywords)
