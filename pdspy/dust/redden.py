@@ -7,8 +7,16 @@ def redden(wave, flux, Av, law="steenman"):
 
     # Read in the extinction coefficients.
 
-    data = numpy.loadtxt(os.path.dirname(__file__)+ \
-            "/reddening/steenman_the.dat", usecols=[1,2])
+    if law == 'steenman':
+        data = numpy.loadtxt(os.path.dirname(__file__)+ \
+                "/reddening/steenman_the.dat", usecols=[1,2])
+    elif law == 'mcclure':
+        if Av <= 1.:
+            data = numpy.loadtxt(os.path.dirname(__file__)+ \
+                    "/reddening/mcclure.dat", usecols=[0,1])
+        else:
+            data = numpy.loadtxt(os.path.dirname(__file__)+ \
+                    "/reddening/mcclure.dat", usecols=[0,2])
 
     waves = data[:,0]
     coeffs = data[:,1]
