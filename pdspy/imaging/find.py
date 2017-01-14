@@ -14,7 +14,7 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
         source_list=None, list_search_radius=1.0, list_threshold=5, \
         beam=[1.0,1.0,0.0], user_aperture=False, aperture=15, \
         fit_aperture=15, include_flux_unc=False, flux_unc=0.1, \
-        bootstrap_unc=True, output_plots=None):
+        bootstrap_unc=True, output_plots=None, just_find=False):
 
     # If plots of the fits have been requested, make the directory if it 
     # doesn't already exist.
@@ -121,6 +121,9 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
                                 good[i] = False
 
     potential_sources = numpy.column_stack(numpy.nonzero(detected_peaks))
+
+    if just_find:
+        return potential_sources
 
     # Now we have a good list of detected sources. Fit all of them with a
     # Gaussian to measure positions and fluxes.
@@ -262,49 +265,52 @@ def find(image, threshold=5, include_radius=20, window_size=40, \
                 "Peak_Flux_unc","Flux","Flux_unc"))
 
     if hasattr(image, "wcs"):
-        ra, dec = image.wcs.wcs_pix2world(sources["x"], sources["y"], 1)
+        try:
+            ra, dec = image.wcs.wcs_pix2world(sources["x"], sources["y"], 1)
 
-        temp = astropy.coordinates.SkyCoord(ra, dec, unit='deg')
+            temp = astropy.coordinates.SkyCoord(ra, dec, unit='deg')
 
-        sources['ra'] = temp.ra.to_string(unit=astropy.units.hour)
-        sources['dec'] = temp.dec.to_string()
+            sources['ra'] = temp.ra.to_string(unit=astropy.units.hour)
+            sources['dec'] = temp.dec.to_string()
 
-        sources['ra_unc'] = abs(image.wcs.wcs.cdelt[0]) * sources['x_unc'] / \
-                (180. / numpy.pi) / arcsec
-        sources['dec_unc'] = abs(image.wcs.wcs.cdelt[1]) * sources['y_unc'] / \
-                (180. / numpy.pi) / arcsec
+            sources['ra_unc'] = abs(image.wcs.wcs.cdelt[0]) * sources['x_unc'] / \
+                    (180. / numpy.pi) / arcsec
+            sources['dec_unc'] = abs(image.wcs.wcs.cdelt[1]) * sources['y_unc'] / \
+                    (180. / numpy.pi) / arcsec
 
-        sources['FWHM_x'] = 2.35482 * abs(image.wcs.wcs.cdelt[0]) * \
-                sources['sigma_x'] / (180. / numpy.pi) / arcsec
-        sources['FWHM_y'] = 2.35482 * abs(image.wcs.wcs.cdelt[1]) * \
-                sources['sigma_y'] / (180. / numpy.pi) / arcsec
-        sources['FWHM_x_unc'] = 2.35482 * abs(image.wcs.wcs.cdelt[0]) * \
-                sources['sigma_x_unc'] / (180. / numpy.pi) / arcsec
-        sources['FWHM_y_unc'] = 2.35482 * abs(image.wcs.wcs.cdelt[1]) * \
-                sources['sigma_y_unc'] / (180. / numpy.pi) / arcsec
+            sources['FWHM_x'] = 2.35482 * abs(image.wcs.wcs.cdelt[0]) * \
+                    sources['sigma_x'] / (180. / numpy.pi) / arcsec
+            sources['FWHM_y'] = 2.35482 * abs(image.wcs.wcs.cdelt[1]) * \
+                    sources['sigma_y'] / (180. / numpy.pi) / arcsec
+            sources['FWHM_x_unc'] = 2.35482 * abs(image.wcs.wcs.cdelt[0]) * \
+                    sources['sigma_x_unc'] / (180. / numpy.pi) / arcsec
+            sources['FWHM_y_unc'] = 2.35482 * abs(image.wcs.wcs.cdelt[1]) * \
+                    sources['sigma_y_unc'] / (180. / numpy.pi) / arcsec
 
-        sources['flux'] = sources['f'] * sources['sigma_x'] * \
-                sources['sigma_y'] * 2 * numpy.pi
-        sources['flux_unc'] = 2*numpy.pi * numpy.sqrt( \
-                (sources['f_unc']*sources['sigma_x']*sources['sigma_y'])**2+\
-                (sources['f']*sources['sigma_x_unc']*sources['sigma_y'])**2+\
-                (sources['f']*sources['sigma_x'] * sources['sigma_y_unc'])**2)
+            sources['flux'] = sources['f'] * sources['sigma_x'] * \
+                    sources['sigma_y'] * 2 * numpy.pi
+            sources['flux_unc'] = 2*numpy.pi * numpy.sqrt( \
+                    (sources['f_unc']*sources['sigma_x']*sources['sigma_y'])**2+\
+                    (sources['f']*sources['sigma_x_unc']*sources['sigma_y'])**2+\
+                    (sources['f']*sources['sigma_x'] * sources['sigma_y_unc'])**2)
 
-        if "BMAJ" in image.header:
-            beam_per_pixel = abs(image.wcs.wcs.cdelt.prod()) / \
-                    (numpy.pi*image.header['BMAJ']*image.header['BMIN']/ \
-                    (4*numpy.log(2)))
+            if "BMAJ" in image.header:
+                beam_per_pixel = abs(image.wcs.wcs.cdelt.prod()) / \
+                        (numpy.pi*image.header['BMAJ']*image.header['BMIN']/ \
+                        (4*numpy.log(2)))
 
-            sources['flux'] *= beam_per_pixel
-            sources['flux_unc'] *= beam_per_pixel
-            sources['Flux'] *= beam_per_pixel
-            sources['Flux_unc'] *= beam_per_pixel
+                sources['flux'] *= beam_per_pixel
+                sources['flux_unc'] *= beam_per_pixel
+                sources['Flux'] *= beam_per_pixel
+                sources['Flux_unc'] *= beam_per_pixel
 
-        if include_flux_unc:
-            sources['flux_unc'] = numpy.sqrt(sources['flux_unc']**2 + \
-                    (flux_unc * sources['flux'])**2)
-            sources['Flux_unc'] = numpy.sqrt(sources['Flux_unc']**2 + \
-                    (flux_unc * sources['Flux'])**2)
+            if include_flux_unc:
+                sources['flux_unc'] = numpy.sqrt(sources['flux_unc']**2 + \
+                        (flux_unc * sources['flux'])**2)
+                sources['Flux_unc'] = numpy.sqrt(sources['Flux_unc']**2 + \
+                        (flux_unc * sources['Flux'])**2)
+        except:
+            print(sources["x"], sources["y"], temp)
 
     return sources
 
