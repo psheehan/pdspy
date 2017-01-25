@@ -75,6 +75,7 @@ class Model:
         m.set_max_interactions(max_interactions)
         m.set_n_initial_iterations(niterations)
         m.set_n_photons(initial=nphot, imaging=0)
+        m.conf.output.output_density = 'last'
         m.set_convergence(True, percentile=percentile, absolute=absolute, \
                 relative=relative)
 
@@ -92,16 +93,23 @@ class Model:
 
         self.grid.temperature = []
         temperature = grid.quantities['temperature']
+        density = grid.quantities['density']
         for i in range(len(temperature)):
             if (self.grid.coordsystem == "cartesian"):
                 self.grid.temperature.append(numpy.transpose(temperature[i], \
                         axes=(2,1,0)))
+                self.grid.density[i] = numpy.transpose(density[i], \
+                        axes=(2,1,0))
             if (self.grid.coordsystem == "cylindrical"):
                 self.grid.temperature.append(numpy.transpose(temperature[i], \
                         axes=(2,0,1)))
+                self.grid.density[i] = numpy.transpose(density[i], \
+                        axes=(2,0,1))
             if (self.grid.coordsystem == "spherical"):
                 self.grid.temperature.append(numpy.transpose(temperature[i], \
                         axes=(2,1,0)))
+                self.grid.density[i] = numpy.transpose(density[i], \
+                        axes=(2,1,0))
 
         os.system("rm temp.rtin temp.rtout temp.log")
 
