@@ -37,7 +37,7 @@ class Model:
                     self.grid.dust[i].albedo[::-1].astype(numpy.float64), \
                     self.grid.dust[i].kext[::-1].astype(numpy.float64)))
 
-            if submlimation_temperature != None:
+            if sublimation_temperature != None:
                 d[-1].set_sublimation_temperature('fast', \
                         temperature=sublimation_temperature)
 
