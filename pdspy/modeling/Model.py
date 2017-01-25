@@ -28,13 +28,18 @@ class Model:
 
     def run_thermal_hyperion(self, nphot=1e6, mrw=False, pda=False, \
             niterations=20, percentile=99., absolute=2.0, relative=1.02, \
-            max_interactions=1e8, mpi=False, nprocesses=None, verbose=True):
+            max_interactions=1e8, mpi=False, nprocesses=None, \
+            sublimation_temperature=None, verbose=True):
         d = []
         for i in range(len(self.grid.dust)):
             d.append(IsotropicDust( \
                     self.grid.dust[i].nu[::-1].astype(numpy.float64), \
                     self.grid.dust[i].albedo[::-1].astype(numpy.float64), \
                     self.grid.dust[i].kext[::-1].astype(numpy.float64)))
+
+            if submlimation_temperature != None:
+                d[-1].set_sublimation_temperature('fast', \
+                        temperature=sublimation_temperature)
 
         m = HypModel()
         if (self.grid.coordsystem == "cartesian"):
