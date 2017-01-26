@@ -3,7 +3,7 @@ from scipy.interpolate import interp1d
 import numpy
 import os
 
-def redden(wave, flux, Av, law="steenman"):
+def redden(wave, flux, Av, law="steenman", Rv='3.1'):
 
     # Read in the extinction coefficients.
 
@@ -17,6 +17,22 @@ def redden(wave, flux, Av, law="steenman"):
         else:
             data = numpy.loadtxt(os.path.dirname(__file__)+ \
                     "/reddening/mcclure.dat", usecols=[0,2])
+    elif law == 'draine':
+        if Rv == '3.1':
+            data = numpy.loadtxt(os.path.dirname(__file__)+ \
+                    "/reddening/draine_3.1.dat", skiprows=80, \
+                    usecols=(0,3))
+        elif Rv == '4.0':
+            data = numpy.loadtxt(os.path.dirname(__file__)+ \
+                    "/reddening/draine_4.0.dat", skiprows=80, \
+                    usecols=(0,3))
+        elif Rv == '5.1':
+            data = numpy.loadtxt(os.path.dirname(__file__)+ \
+                    "/reddening/draine_5.1.dat", skiprows=80, \
+                    usecols=(0,3))
+
+            data = data[::-1,:]
+            data[:,1] /= data[682,1]
 
     waves = data[:,0]
     coeffs = data[:,1]
