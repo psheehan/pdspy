@@ -244,7 +244,7 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
 
     samples = sampler.chain.reshape((-1, ndim))
 
-    params = samples.mean(axis=0)
+    params = numpy.median(samples,axis=0)
     sigma = samples.std(axis=0)
 
     # Clip a few stragglers and re-calculate.
@@ -264,7 +264,7 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
 
         samples = samples[good,:]
 
-        params = samples.mean(axis=0)
+        params = numpy.median(samples, axis=0)
         sigma = samples.std(axis=0)
 
     # Clip a few stragglers and re-calculate.
