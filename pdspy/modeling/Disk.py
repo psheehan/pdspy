@@ -10,7 +10,7 @@ class Disk:
     def __init__(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, h0=0.1, \
             plh=58./45., t0=None, plt=None, dust=None, gap_rin=[], gap_rout=[],\
             gap_delta=[], tmid0=None, tatm0=None, zq0=None, pltgas=None, \
-            delta=None):
+            delta=None, aturb=None):
         self.mass = mass
         self.rmin = rmin
         self.rmax = rmax
@@ -34,6 +34,7 @@ class Disk:
         self.zq0 = zq0
         self.pltgas = pltgas
         self.delta = delta
+        self.aturb = aturb
 
     def add_gas(self, gas, abundance):
         self.gas.append(gas)
@@ -91,7 +92,7 @@ class Disk:
 
         ##### Make the dust density model for a protoplanetary disk.
         
-        t = t0 * (rt / rin)**(-plt)
+        t = t0 * (rr / (1*AU))**(-plt)
 
         t[(rr >= rout) ^ (rr <= rin)] = 0e0
         
@@ -128,8 +129,8 @@ class Disk:
         
         zq = zq0 * (rt / rin)**1.3
 
-        tmid = tmid0 * (rt / rin)**(-pltgas)
-        tatm = tatm0 * (rt / rin)**(-pltgas)
+        tmid = tmid0 * (rr / rin)**(-pltgas)
+        tatm = tatm0 * (rr / rin)**(-pltgas)
 
         t = numpy.zeros(tatm.shape)
         t[zz >= zq] = tatm[zz >= zq]
@@ -137,6 +138,27 @@ class Disk:
                 (numpy.cos(numpy.pi * zz[zz < zq] / (2*zq[zz < zq])))**2*delta
         
         return t
+
+    def microturbulence(self, r, theta, phi):
+        ##### Disk Parameters
+        
+        rin = self.rmin * AU
+        rout = self.rmax * AU
+        t0 = self.t0
+        plt = self.plt
+
+        ##### Set up the coordinates
+
+        rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+
+        rr = rt*numpy.sin(tt)
+        zz = rt*numpy.cos(tt)
+
+        ##### Make the dust density model for a protoplanetary disk.
+        
+        aturb = numpy.ones(rr.shape)*self.aturb*1.0e5
+        
+        return aturb
 
     def surface_density(self, r):
         rin = self.rmin * AU
@@ -213,6 +235,9 @@ class Disk:
             self.pltgas = f['pltgas'].value
             self.delta = f['delta'].value
 
+        if 'aturb' in f:
+            self.aturb = f['aturb'].value
+
         if ('Dust' in f):
             self.dust = Dust()
             self.dust.set_properties_from_file(usefile=f['Dust'])
@@ -249,6 +274,9 @@ class Disk:
             f['zq0'] = self.zq0
             f['pltgas'] = self.pltgas
             f['delta'] = self.delta
+
+        if self.aturb != None:
+            f['aturb'] = self.aturb
 
         if hasattr(self, 'dust'):
             dust = f.create_group("Dust")

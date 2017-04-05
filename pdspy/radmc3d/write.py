@@ -169,7 +169,19 @@ def wavelength_micron(lam):
 
     f.write("{0:d}\n".format(nlam))
     for ilam in range(nlam):
-        f.write("{0:e}\n".format(lam[ilam]))
+        f.write("{0:f}\n".format(lam[ilam]))
+
+    f.close()
+
+def camera_wavelength_micron(lam):
+
+    nlam = len(lam)
+
+    f = open("camera_wavelength_micron.inp","w")
+
+    f.write("{0:d}\n".format(nlam))
+    for ilam in range(nlam):
+        f.write("{0:f}\n".format(lam[ilam]))
 
     f.close()
 
@@ -421,6 +433,24 @@ def gas_temperature(T, gridstyle="normal"):
             for iy in range(ny):
                 for ix in range(nx):
                     f.write("{0:e}\n".format(T[ix,iy,iz]))
+
+    f.close()
+
+def microturbulence(a_turb, gridstyle="normal"):
+
+    if (gridstyle == "normal"):
+        nx, ny, nz = a_turb.shape
+        ncells = nx*ny*nz
+
+    f = open("microturbulence.inp","w")
+    f.write("1\n")
+    f.write("{0:d}\n".format(ncells))
+
+    if (gridstyle == "normal"):
+        for iz in range(nz):
+            for iy in range(ny):
+                for ix in range(nx):
+                    f.write("{0:e}\n".format(a_turb[ix,iy,iz]))
 
     f.close()
 

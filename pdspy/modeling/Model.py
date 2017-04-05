@@ -20,6 +20,9 @@ class Model:
         self.spectra = {}
         self.visibilities = {}
 
+    def set_camera_wavelength(self, lam):
+        self.camera_wavelength = lam
+
     def run_thermal(self, nphot=1e6, code="radmc3d", **keywords):
         if (code == "radmc3d"):
             self.run_thermal_radmc3d(nphot=nphot, **keywords)
@@ -137,9 +140,9 @@ class Model:
         return
 
     def run_image_radmc3d(self, name=None, nphot=1e6, npix=256, pixelsize=1.0, \
-            lam="1300", imolspec=None, iline=None,  widthkms=None, \
-            linenlam=None, doppcatch=False, incl=0, pa=0, phi=0, dpc=1, \
-            verbose=True, **keywords):
+            lam="1300", loadlambda=False, imolspec=None, iline=None,  \
+            widthkms=None, vkms=None, linenlam=None, doppcatch=False, \
+            incl=0, pa=0, phi=0, dpc=1, verbose=True, **keywords):
         self.write_radmc3d(nphot_scat=nphot, **keywords)
 
         if npix%2 == 0:
@@ -149,33 +152,19 @@ class Model:
             zoomau = [-pixelsize*dpc * npix/2, pixelsize*dpc * npix/2, \
                     -pixelsize*dpc * npix/2, pixelsize*dpc * npix/2]
 
-        sizeau=pixelsize*npix*dpc
-
-        if iline != None:
-            radmc3d.run.image(npix=npix, sizeau=sizeau, lam=lam, \
-                    imolspec=imolspec, iline=iline, widthkms=widthkms, \
-                    linenlam=linenlam, doppcatch=doppcatch, incl=incl, \
-                    posang=pa, phi=phi, verbose=verbose)
-        else:
-            radmc3d.run.image(npix=npix, zoomau=zoomau, lam=lam, \
-                    imolspec=imolspec, iline=iline, widthkms=widthkms, \
-                    linenlam=linenlam, doppcatch=doppcatch, incl=incl, \
-                    posang=pa, phi=phi, verbose=verbose)
+        radmc3d.run.image(npix=npix, zoomau=zoomau, lam=lam, \
+                loadlambda=loadlambda, imolspec=imolspec, iline=iline, \
+                widthkms=widthkms, vkms=vkms, linenlam=linenlam, \
+                doppcatch=doppcatch, incl=incl, posang=pa, phi=phi, \
+                verbose=verbose)
 
         image, x, y, lam = radmc3d.read.image()
 
         image = image / Jy * ((x[1] - x[0]) / (dpc * pc)) * \
                 ((y[1] - y[0]) / (dpc * pc))
-        if iline != None:
-            #x = x / (dpc * pc) / arcsec
-            #y = y / (dpc * pc) / arcsec
-            x = x * pixelsize / (x[1] - x[0])
-            y = y * pixelsize / (y[1] - y[0])
-        else:
-            #x = (x - x[int(npix/2)]) / (dpc * pc) / arcsec
-            #y = (y - y[int(npix/2)]) / (dpc * pc) / arcsec
-            x = (x - x[int(npix/2)]) * pixelsize / (x[1] - x[0])
-            y = (y - y[int(npix/2)]) * pixelsize / (y[1] - y[0])
+
+        x = (x - x[int(npix/2)]) * pixelsize / (x[1] - x[0])
+        y = (y - y[int(npix/2)]) * pixelsize / (y[1] - y[0])
 
         self.images[name] = Image(image, x=x, y=y, wave=lam*1.0e-4)
 
@@ -216,9 +205,10 @@ class Model:
         return
 
     def run_visibilities_radmc3d(self, name=None, nphot=1e6, npix=256, \
-            pixelsize=1.0, lam="1300", imolspec=None, iline=None,  \
-            widthkms=None, linenlam=None, doppcatch=False, incl=0, pa=0, \
-            phi=0, dpc=1, verbose=True, **keywords):
+            pixelsize=1.0, lam="1300", loadlambda=False, imolspec=None, \
+            iline=None,  widthkms=None, vkms=None, linenlam=None, \
+            doppcatch=False, incl=0, pa=0, phi=0, dpc=1, verbose=True, \
+            **keywords):
         self.write_radmc3d(nphot_scat=nphot, **keywords)
 
         if npix%2 == 0:
@@ -228,8 +218,9 @@ class Model:
             zoomau = [-pixelsize*dpc * npix/2, pixelsize*dpc * npix/2, \
                     -pixelsize*dpc * npix/2, pixelsize*dpc * npix/2]
 
-        radmc3d.run.image(npix=npix, zoomau=zoomau, lam=lam, imolspec=imolspec,\
-                iline=iline, widthkms=widthkms, linenlam=linenlam, \
+        radmc3d.run.image(npix=npix, zoomau=zoomau, lam=lam, \
+                loadlambda=loadlambda, imolspec=imolspec, iline=iline, \
+                widthkms=widthkms, vkms=vkms, linenlam=linenlam, \
                 doppcatch=doppcatch, incl=incl, posang=pa, phi=phi, \
                 verbose=verbose)
 
@@ -237,8 +228,7 @@ class Model:
 
         image = image / Jy * ((x[1] - x[0]) / (dpc * pc)) * \
                 ((y[1] - y[0]) / (dpc * pc))
-        #x = x / (dpc * pc) / arcsec
-        #y = y / (dpc * pc) / arcsec
+
         x = x * pixelsize / (x[1] - x[0])
         y = y * pixelsize / (y[1] - y[0])
 
@@ -270,6 +260,8 @@ class Model:
                 tstar=tstar)
 
         radmc3d.write.wavelength_micron(self.grid.lam)
+        if hasattr(self, "camera_wavelength"):
+            radmc3d.write.camera_wavelength_micron(self.camera_wavelength)
 
         if (self.grid.coordsystem == "cartesian"):
             radmc3d.write.amr_grid(self.grid.w1*AU, self.grid.w2*AU, \
@@ -327,7 +319,11 @@ class Model:
 
             radmc3d.write.gas_velocity(velocity)
 
-            radmc3d.write.gas_temperature(self.grid.gas_temperature[0])
+            if len(self.grid.gas_temperature) > 0:
+                radmc3d.write.gas_temperature(self.grid.gas_temperature[0])
+
+            if len(self.grid.microturbulence) > 0:
+                radmc3d.write.microturbulence(self.grid.microturbulence[0])
 
     def read(self, filename=None, usefile=None):
         if (usefile == None):

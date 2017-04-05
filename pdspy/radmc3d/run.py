@@ -119,7 +119,7 @@ def image(lam=None, npix=None, npixx=None, npixy=None, nrrefine=None, \
         noapert=None, nphot_scat=None, inclstar=None, nostar=None, \
         inclline=None, noline=None, incldust=None, nodust=None, \
         inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None, \
-        widthkms=None, linenlam=None, iline=None, imolspec=None, \
+        widthkms=None, vkms=None, linenlam=None, iline=None, imolspec=None, \
         doppcatch=None, verbose=True):
 
     command="radmc3d image "
@@ -132,6 +132,8 @@ def image(lam=None, npix=None, npixx=None, npixy=None, nrrefine=None, \
         command += "imolspec {0:d} ".format(imolspec)
     if (widthkms != None):
         command += "widthkms {0:f} ".format(widthkms)
+    if (vkms != None):
+        command += "vkms {0:f} ".format(vkms)
     if (doppcatch == True):
         command += "doppcatch "
     if (linenlam != None):

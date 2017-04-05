@@ -15,6 +15,7 @@ class Grid:
         self.gas_temperature = []
         self.gas = []
         self.velocity = []
+        self.microturbulence = []
 
     def add_density(self, density, dust):
         self.density.append(density)
@@ -35,6 +36,9 @@ class Grid:
 
     def add_velocity(self, velocity):
         self.velocity.append(velocity)
+
+    def add_microturbulence(self, microturbulence):
+        self.microturbulence.append(microturbulence)
 
     def set_cartesian_grid(self, w1, w2, w3):
         self.coordsystem = "cartesian"
@@ -123,6 +127,11 @@ class Grid:
             for name in gas_temperature:
                 self.gas_temperature.append(gas_temperature[name].value)
 
+        if 'Microturbulence' in f:
+            gas_temperature = f['Microturbulence']
+            for name in microturbulence:
+                self.microturbulence.append(microturbulence[name].value)
+
         gas = f['Gas']
         for name in gas:
             g = Gas()
@@ -195,6 +204,14 @@ class Grid:
                     "GasTemperature{0:d}".format(i), \
                     self.gas_temperature[i].shape, dtype='f'))
             gas_temperature_dsets[i][...] = self.gas_temperature[i]
+
+        microturbulence = f.create_group("Microturbulence")
+        microturbulence_dsets = []
+        for i in range(len(self.microturbulence)):
+            microturbulence_dsets.append(microturbulence.create_dataset( \
+                    "Microturbulence{0:d}".format(i), \
+                    self.microturbulence[i].shape, dtype='f'))
+            microturbulence_dsets[i][...] = self.microturbulence[i]
 
         gas = f.create_group("Gas")
         gas_groups = []
