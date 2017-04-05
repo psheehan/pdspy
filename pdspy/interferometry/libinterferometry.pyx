@@ -137,11 +137,12 @@ class Visibilities(VisibilitiesObject):
             f.close()
 
 def average(data, gridsize=256, binsize=None, radial=False, log=False, \
-        logmin=None, logmax=None, mfs=False):
+        logmin=None, logmax=None, mfs=False, mode="continuum"):
 
-    cdef numpy.ndarray[double, ndim=2] new_real, new_imag, new_weights
+    cdef numpy.ndarray[double, ndim=3] new_real, new_imag, new_weights
     cdef numpy.ndarray[unsigned int, ndim=1] i, j
     cdef unsigned int k, l
+
     
     cdef numpy.ndarray[double, ndim=1] u, v, freq, uvdist
     cdef numpy.ndarray[double, ndim=2] real, imag, weights
@@ -159,7 +160,7 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
         u = data.u.copy()
         v = data.v.copy()
         uvdist = data.uvdist.copy()
-        freq = numpy.array([data.freq.mean()])
+        freq = data.freq.copy()
         real = data.real.copy()
         imag = data.imag.copy()
         weights = data.weights.copy()
@@ -176,7 +177,18 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
     real = real[good_data,:]
     imag = imag[good_data,:]
     weights = weights[good_data,:]
+
+    # Set some parameter numbers for future use.
+
+    cdef int nuv = u.size
+    cdef int nfreq = freq.size
     
+    cdef int nchannels
+    if mode == "continuum":
+        nchannels = 1
+    elif mode == "spectralline":
+        nchannels = freq.size
+
     # Average over the U-V plane by creating bins to average over.
     
     if radial:
@@ -188,9 +200,9 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
             new_u = numpy.linspace(binsize/2,(gridsize-0.5)*binsize,gridsize)
         new_u = new_u.reshape((1,gridsize))
         new_v = numpy.zeros((1,gridsize))
-        new_real = numpy.zeros((1,gridsize))
-        new_imag = numpy.zeros((1,gridsize))
-        new_weights = numpy.zeros((1,gridsize))
+        new_real = numpy.zeros((1,gridsize,nchannels))
+        new_imag = numpy.zeros((1,gridsize,nchannels))
+        new_weights = numpy.zeros((1,gridsize,nchannels))
 
         if log:
             dtemp = temp[1] - temp[0]
@@ -213,9 +225,9 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
                     (gridsize-1)*binsize/2, gridsize)
 
         new_u, new_v = numpy.meshgrid(uu, vv)
-        new_real = numpy.zeros((gridsize,gridsize))
-        new_imag = numpy.zeros((gridsize,gridsize))
-        new_weights = numpy.zeros((gridsize,gridsize))
+        new_real = numpy.zeros((gridsize,gridsize,nchannels))
+        new_imag = numpy.zeros((gridsize,gridsize,nchannels))
+        new_weights = numpy.zeros((gridsize,gridsize,nchannels))
 
         if gridsize%2 == 0:
             i = numpy.round(u/binsize+gridsize/2.).astype(numpy.uint32)
@@ -224,41 +236,42 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
             i = numpy.round(u/binsize+(gridsize-1)/2.).astype(numpy.uint32)
             j = numpy.round(v/binsize+(gridsize-1)/2.).astype(numpy.uint32)
     
-    cdef int nuv = u.size
-    cdef int nfreq
-
-    if mfs:
-        nfreq = 1
-    else:
-        nfreq = data.freq.size
-
     for k in range(nuv):
-        for l in range(nfreq):
-            new_real[j[k],i[k]] += real[k,l]*weights[k,l]
-            new_imag[j[k],i[k]] += imag[k,l]*weights[k,l]
-            new_weights[j[k],i[k]] += weights[k,l]
+        if mode == "continuum":
+            for l in range(nfreq):
+                new_real[j[k],i[k],0] += real[k,l]*weights[k,l]
+                new_imag[j[k],i[k],0] += imag[k,l]*weights[k,l]
+                new_weights[j[k],i[k],0] += weights[k,l]
+        elif mode == "spectralline":
+            for l in range(nfreq):
+                new_real[j[k],i[k],l] += real[k,l]*weights[k,l]
+                new_imag[j[k],i[k],l] += imag[k,l]*weights[k,l]
+                new_weights[j[k],i[k],l] += weights[k,l]
     
     good_data = new_weights != 0.0
-    new_u = new_u[good_data]
-    new_v = new_v[good_data]
-    new_real = (new_real[good_data] / new_weights[good_data]).reshape( \
-            (new_u.size,1))
-    new_imag = (new_imag[good_data] / new_weights[good_data]).reshape( \
-            (new_u.size,1))
-    new_weights = new_weights[good_data].reshape((new_u.size,1))
+    good_data = numpy.all(good_data, axis=2)
+    good_data = numpy.dstack([good_data for m in range(nchannels)])
+    new_u = new_u[good_data[:,:,0]]
+    new_v = new_v[good_data[:,:,0]]
     
-    freq = numpy.array([data.freq.sum()/data.freq.size])
+    if mode == "continuum":
+        freq = numpy.array([data.freq.sum()/data.freq.size])
     
-    return Visibilities(new_u,new_v,freq,new_real,new_imag,new_weights)
+    return Visibilities(new_u,new_v,freq,\
+            (new_real[good_data] / new_weights[good_data]).reshape(\
+            (new_u.size,nchannels)),\
+            (new_imag[good_data] / new_weights[good_data]).reshape(\
+            (new_u.size,nchannels)), \
+            new_weights[good_data].reshape((new_u.size,nchannels)))
 
 @cython.boundscheck(False)
 def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
         mfs=False, channel=None, imaging=False, weighting="natural", \
-        robust=2):
+        robust=2, mode="continuum"):
     
     cdef numpy.ndarray[double, ndim=1] u, v, freq
-    cdef numpy.ndarray[double, ndim=2] real, imag, weights, new_u, new_v, \
-            new_real, new_imag, new_weights
+    cdef numpy.ndarray[double, ndim=2] real, imag, weights, new_u, new_v
+    cdef numpy.ndarray[double, ndim=3] new_real, new_imag, new_weights
     cdef numpy.ndarray[unsigned int, ndim=1] i, j
     cdef unsigned int k, l, m, n, ninclude_min, ninclude_max, lmin, lmax, \
             mmin, mmax, ll, mm, ninclude
@@ -281,7 +294,7 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
             weights = data.weights[:,channel].copy(). \
                     reshape((data.real.shape[0],1))
         else:
-            freq = numpy.array([data.freq.mean()])
+            freq = data.freq.copy()
             real = data.real.copy()
             imag = data.imag.copy()
             weights = data.weights.copy()
@@ -290,7 +303,20 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
     weights = numpy.where(weights < 0, 0.0, weights)
     # Set the weights equal to 0 when the real and imaginary parts are both 0
     weights[(real==0) & (imag==0)] = 0.0
+
+    # Set some parameter numbers for future use.
     
+    cdef double convolve
+    cdef double inv_binsize = 1. / binsize
+    cdef int nuv = u.size
+    cdef int nfreq = freq.size
+
+    cdef int nchannels
+    if mode == "continuum":
+        nchannels = 1
+    elif mode == "spectralline":
+        nchannels = freq.size
+
     # Average over the U-V plane by creating bins to average over.
     
     if gridsize%2 == 0:
@@ -305,9 +331,9 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
                 gridsize)
 
     new_u, new_v = numpy.meshgrid(uu, vv)
-    new_real = numpy.zeros((gridsize,gridsize))
-    new_imag = numpy.zeros((gridsize,gridsize))
-    new_weights = numpy.zeros((gridsize,gridsize))
+    new_real = numpy.zeros((gridsize,gridsize,nchannels))
+    new_imag = numpy.zeros((gridsize,gridsize,nchannels))
+    new_weights = numpy.zeros((gridsize,gridsize,nchannels))
 
     if gridsize%2 == 0:
         i = numpy.round(u/binsize+gridsize/2.).astype(numpy.uint32)
@@ -322,16 +348,6 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
     elif convolution == "expsinc":
         convolve_func = exp_sinc
         ninclude = 7
-
-    cdef double convolve
-    cdef double inv_binsize = 1. / binsize
-    cdef int nuv = u.size
-    cdef int nfreq
-
-    if mfs:
-        nfreq = 1
-    else:
-        nfreq = data.freq.size
 
     ninclude_min = numpy.uint32((ninclude-1)*0.5)
     ninclude_max = numpy.uint32((ninclude-1)*0.5)
@@ -352,38 +368,34 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
             mmin = i[k] - ninclude_min
         mmax = int_min(i[k]+ninclude_max+1, gridsize)
 
-        """
-        if k == 1:
-            print(new_u[j[k],i[k]-1], new_u[j[k],i[k]], new_u[j[k],i[k]+1], u[k])
-        """
-
         for l in range(lmin, lmax):
             for m in range(mmin, mmax):
 
                 convolve = convolve_func( (u[k]-new_u[l,m])*inv_binsize, \
                         (v[k] - new_v[l,m]) * inv_binsize)
 
-                """
-                if k == 1:
-                    print(l, m, (u[k]-new_u[l,m])*inv_binsize, \
-                            (v[k] - new_v[l,m])*inv_binsize, convolve)
-                """
-
-                for n in range(nfreq):
-                    new_real[l,m] += real[k,n]*weights[k,n]*convolve
-                    new_imag[l,m] += imag[k,n]*weights[k,n]*convolve
-                    new_weights[l,m] += weights[k,n]*convolve
+                if mode == "continuum":
+                    for n in range(nfreq):
+                        new_real[l,m,0] += real[k,n]*weights[k,n]*convolve
+                        new_imag[l,m,0] += imag[k,n]*weights[k,n]*convolve
+                        new_weights[l,m,0] += weights[k,n]*convolve
+                elif mode == "spectralline":
+                    for n in range(nfreq):
+                        new_real[l,m,n] += real[k,n]*weights[k,n]*convolve
+                        new_imag[l,m,n] += imag[k,n]*weights[k,n]*convolve
+                        new_weights[l,m,n] += weights[k,n]*convolve
 
     # If we have a special weighting scheme, fix the sums..
 
     if weighting == "uniform":
         for l in range(gridsize):
             for m in range(gridsize):
-                if new_weights[l,m] == 0:
-                    continue
+                for n in range(nchannels):
+                    if new_weights[l,m,n] == 0:
+                        continue
 
-                new_real[l,m] /= new_weights[l,m]
-                new_imag[l,m] /= new_weights[l,m]
+                    new_real[l,m,n] /= new_weights[l,m,n]
+                    new_imag[l,m,n] /= new_weights[l,m,n]
 
     elif weighting == "robust":
         f = numpy.sqrt((5 * 10**(-robust))**2 / \
@@ -391,23 +403,25 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
 
         for l in range(gridsize):
             for m in range(gridsize):
-                if new_weights[l,m] == 0:
-                    continue
+                for n in range(nchannels):
+                    if new_weights[l,m,n] == 0:
+                        continue
 
-                new_real[l,m] /= (1+new_weights[l,m]*f**2)
-                new_imag[l,m] /= (1+new_weights[l,m]*f**2)
+                    new_real[l,m,n] /= (1+new_weights[l,m,n]*f**2)
+                    new_imag[l,m,n] /= (1+new_weights[l,m,n]*f**2)
 
     if not imaging:
         good = new_weights > 0
         new_real[good] = new_real[good] / new_weights[good]
         new_imag[good] = new_imag[good] / new_weights[good]
 
-    new_real = new_real.reshape((gridsize**2,1))
-    new_imag = new_imag.reshape((gridsize**2,1))
-    new_weights = new_weights.reshape((gridsize**2,1))
-
+    if mode == "continuum":
+        freq = numpy.array([data.freq.sum()/data.freq.size])
+    
     return Visibilities(new_u.reshape(gridsize**2), new_v.reshape(gridsize**2),\
-            freq, new_real, new_imag, new_weights)
+            freq, new_real.reshape((gridsize**2,nchannels)), \
+            new_imag.reshape((gridsize**2,nchannels)), \
+            new_weights.reshape((gridsize**2,nchannels)))
 
 cdef inline int int_max(int a, int b): return a if a >= b else b
 cdef inline int int_min(int a, int b): return a if a <= b else b
