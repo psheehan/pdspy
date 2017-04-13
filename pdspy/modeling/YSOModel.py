@@ -64,9 +64,9 @@ class YSOModel(Model):
                     self.grid.add_number_density(self.disk.number_density(\
                             self.grid.r, self.grid.theta, self.grid.phi, \
                             gas=i), gas[i])
-                self.grid.add_velocity(self.disk.velocity(self.grid.r, \
-                        self.grid.theta, self.grid.phi, \
-                        mstar=self.grid.stars[0].mass))
+                    self.grid.add_velocity(self.disk.velocity(self.grid.r, \
+                            self.grid.theta, self.grid.phi, \
+                            mstar=self.grid.stars[0].mass))
             else:
                 self.disk.add_gas(gas, abundance)
                 self.grid.add_number_density(self.disk.number_density( \
@@ -107,9 +107,9 @@ class YSOModel(Model):
                     self.grid.add_number_density(self.disk.number_density( \
                             self.grid.r, self.grid.theta, self.grid.phi, \
                             gas=i), gas[i])
-                self.grid.add_velocity(self.disk.velocity(self.grid.r, \
-                        self.grid.theta, self.grid.phi, \
-                        mstar=self.grid.stars[0].mass))
+                    self.grid.add_velocity(self.disk.velocity(self.grid.r, \
+                            self.grid.theta, self.grid.phi, \
+                            mstar=self.grid.stars[0].mass))
             else:
                 self.disk.add_gas(gas, abundance)
                 self.grid.add_number_density(self.disk.number_density( \
@@ -144,9 +144,9 @@ class YSOModel(Model):
                     self.grid.add_number_density(self.envelope.number_density( \
                             self.grid.r, self.grid.theta, self.grid.phi, \
                             gas=i), gas[i])
-                self.grid.add_velocity(self.envelope.velocity(self.grid.r, \
-                        self.grid.theta, self.grid.phi, \
-                        mstar=self.grid.stars[0].mass))
+                    self.grid.add_velocity(self.envelope.velocity(self.grid.r, \
+                            self.grid.theta, self.grid.phi, \
+                            mstar=self.grid.stars[0].mass))
             else:
                 self.envelope.add_gas(gas, abundance)
                 self.grid.add_number_density(self.envelope.number_density( \
@@ -190,9 +190,9 @@ class YSOModel(Model):
                     self.grid.add_number_density(self.envelope.number_density( \
                             self.grid.r, self.grid.theta, self.grid.phi, \
                             gas=i), gas[i])
-                self.grid.add_velocity(self.envelope.velocity(self.grid.r, \
-                        self.grid.theta, self.grid.phi, \
-                        mstar=self.grid.stars[0].mass))
+                    self.grid.add_velocity(self.envelope.velocity(self.grid.r, \
+                            self.grid.theta, self.grid.phi, \
+                            mstar=self.grid.stars[0].mass))
             else:
                 self.envelope.add_gas(gas, abundance)
                 self.grid.add_number_density(self.envelope.number_density( \
