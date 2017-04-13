@@ -7,42 +7,44 @@ from ..constants.astronomy import arcsec
 from scipy.fftpack import ifft2, fftshift, ifftshift, fftfreq
 
 def invert(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
-        weighting="natural", robust=2, centering=None):
+        weighting="natural", robust=2, centering=None, mode='continuum'):
     
     binsize = 1.0 / (pixel_size * imsize * arcsec)
     gridded_data = grid(data, gridsize=imsize, binsize=binsize, \
             convolution=convolution, mfs=mfs, imaging=True, \
-            weighting=weighting, robust=robust)
+            weighting=weighting, robust=robust, mode=mode)
 
     if type(centering) != type(None):
         gridded_data = center(gridded_data, centering)
             
-    u = gridded_data.u.reshape((imsize, imsize))
-    v = gridded_data.v.reshape((imsize, imsize))
-    freq = gridded_data.freq.copy()
-    real = gridded_data.real.reshape((imsize, imsize))
-    imag = gridded_data.imag.reshape((imsize, imsize))
-    weights = gridded_data.weights.reshape((imsize, imsize))
-
-    comp = real + 1j*imag
-    
     x = fftshift(fftfreq(imsize, binsize)) / arcsec
     y = fftshift(fftfreq(imsize, binsize)) / arcsec
     xx, yy = numpy.meshgrid(x, y)
     r = numpy.sqrt(xx**2 + yy**2)
 
-    if convolution == "pillbox":
-        conv_func = pillbox
-    elif convolution == "expsinc":
-        conv_func = exp_sinc
+    image = numpy.zeros((imsize,imsize,gridded_data.real.shape[1],1))
 
-    im = fftshift(ifft2(ifftshift(comp))).real
-    convolve = fftshift(ifft2(ifftshift(conv_func(u, v, binsize, \
-           binsize)))).real
+    for i in range(gridded_data.real.shape[1]):
+        u = gridded_data.u.reshape((imsize, imsize))
+        v = gridded_data.v.reshape((imsize, imsize))
+        real = gridded_data.real[:,i].reshape((imsize, imsize))
+        imag = gridded_data.imag[:,i].reshape((imsize, imsize))
+        weights = gridded_data.weights[:,i].reshape((imsize, imsize))
 
-    image = (im/convolve).reshape((imsize, imsize, 1, 1))[::-1,:,:,:]
+        comp = real + 1j*imag
+        
+        if convolution == "pillbox":
+            conv_func = pillbox
+        elif convolution == "expsinc":
+            conv_func = exp_sinc
 
-    return Image(image, x=x, y=y, freq=freq)
+        im = fftshift(ifft2(ifftshift(comp))).real
+        convolve = fftshift(ifft2(ifftshift(conv_func(u, v, binsize, \
+               binsize)))).real
+
+        image[:,:,i,0] = (im/convolve)[::-1,:]
+
+    return Image(image, x=x, y=y, freq=gridded_data.freq)
 
 def pillbox(u, v, delta_u, delta_v):
 
