@@ -342,6 +342,8 @@ class YSOModel(Model):
             self.grid.temperature[i] = self.grid.temperature[i][1:,0:ntheta/2,:]
         for i in range(len(self.grid.number_density)):
             self.grid.number_density[i] = self.grid.number_density[i][1:,0:ntheta/2,:]
+        for i in range(len(self.grid.microturbulence)):
+            self.grid.microturbulence[i] = self.grid.microturbulence[i][1:,0:ntheta/2,:]
         for i in range(len(self.grid.velocity)):
             self.grid.velocity[i] = self.grid.velocity[i][:,1:,0:ntheta/2,:]
 
