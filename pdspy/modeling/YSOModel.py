@@ -47,11 +47,12 @@ class YSOModel(Model):
             plh=58./45., dust=None,  t0=None, plt=None, gas=None, \
             abundance=None, tmid0=None, tatm0=None, zq0=None, pltgas=None, \
             delta=None, gap_rin=[], gap_rout=[], gap_delta=[], \
-            aturb=None):
+            gaussian_gaps=False, aturb=None):
         self.disk = Disk(mass=mass, rmin=rmin, rmax=rmax, plrho=plrho, h0=h0, \
                 plh=plh, dust=dust, t0=t0, plt=plt, tmid0=tmid0, tatm0=tatm0, \
                 zq0=zq0, pltgas=pltgas, delta=delta, gap_rin=gap_rin, \
-                gap_rout=gap_rout, gap_delta=gap_delta, aturb=aturb)
+                gap_rout=gap_rout, gap_delta=gap_delta, aturb=aturb, \
+                gaussian_gaps=gaussian_gaps)
 
         if (dust != None):
             self.grid.add_density(self.disk.density(self.grid.r, \

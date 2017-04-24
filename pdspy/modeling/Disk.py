@@ -10,7 +10,7 @@ class Disk:
     def __init__(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, h0=0.1, \
             plh=58./45., t0=None, plt=None, dust=None, gap_rin=[], gap_rout=[],\
             gap_delta=[], tmid0=None, tatm0=None, zq0=None, pltgas=None, \
-            delta=None, aturb=None):
+            delta=None, aturb=None, gaussian_gaps=False):
         self.mass = mass
         self.rmin = rmin
         self.rmax = rmax
@@ -22,6 +22,7 @@ class Disk:
         self.gap_rin = gap_rin
         self.gap_rout = gap_rout
         self.gap_delta = gap_delta
+        self.gaussian_gaps = gaussian_gaps
         if (dust != None):
             self.dust = dust
 
@@ -70,8 +71,15 @@ class Disk:
         ##### Add any gaps to the disk.
 
         for i in range(len(self.gap_rin)):
-            rho[(rr >= self.gap_rin[i]*AU) & (rr <= self.gap_rout[i]*AU)] *= \
-                    self.gap_delta[i]
+            if self.gaussian_gaps:
+                gap_r = (self.gap_rin[i] + self.gap_rout[i])/2
+                gap_w = self.gap_rout[i] - self.gap_rin[i]
+
+                rho /= 1 + 1./self.gap_delta[i] * numpy.exp(-4*numpy.log(2.) * \
+                        (rr - gap_r)**2 / gap_w**2)
+            else:
+                rho[(rr >= self.gap_rin[i]*AU) & (rr <= self.gap_rout[i]*AU)]*=\
+                        self.gap_delta[i]
         
         return rho
 
@@ -179,8 +187,15 @@ class Disk:
         Sigma[r == 0] = Sigma0 * (0.7*dr)**(-plrho+plh)
 
         for i in range(len(self.gap_rin)):
-            Sigma[(r >= self.gap_rin[i]) & (r <= self.gap_rout[i])] *= \
-                    self.gap_delta[i]
+            if self.gaussian_gaps:
+                gap_r = (self.gap_rin[i] + self.gap_rout[i])/2
+                gap_w = self.gap_rout[i] - self.gap_rin[i]
+
+                Sigma /= 1 + 1./self.gap_delta[i] * numpy.exp(-4*numpy.log(2.)*\
+                        (rr - gap_r)**2 / gap_w**2)
+            else:
+                Sigma[(rr >= self.gap_rin[i]*AU) & \
+                        (rr <= self.gap_rout[i]*AU)] *= self.gap_delta[i]
         
         return Sigma
 
