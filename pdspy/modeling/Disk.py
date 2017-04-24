@@ -194,8 +194,8 @@ class Disk:
                 Sigma /= 1 + 1./self.gap_delta[i] * numpy.exp(-4*numpy.log(2.)*\
                         (r - gap_r)**2 / gap_w**2)
             else:
-                Sigma[(r >= self.gap_rin[i]*AU) & \
-                        (r <= self.gap_rout[i]*AU)] *= self.gap_delta[i]
+                Sigma[(r >= self.gap_rin[i]) & \
+                        (r <= self.gap_rout[i])] *= self.gap_delta[i]
         
         return Sigma
 
