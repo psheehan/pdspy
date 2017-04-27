@@ -103,6 +103,8 @@ class Disk:
         t = t0 * (rr / (1*AU))**(-plt)
 
         t[(rr >= rout) ^ (rr <= rin)] = 0e0
+
+        t[t > 10000.] = 10000.
         
         return t
 
