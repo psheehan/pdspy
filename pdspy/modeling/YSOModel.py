@@ -272,7 +272,7 @@ class YSOModel(Model):
 
         self.run_simple_dust_image(name="temp", i=i, pa=pa, npix=npix, \
                 dx=dx, nu=nu, kappa0=kappa0, beta0=beta0, r0beta=r0beta, \
-                delta_beta, plbeta=plbeta, dpc=dpc)
+                delta_beta=delta_beta, plbeta=plbeta, dpc=dpc)
 
         self.visibilities[name] = imtovis(self.images["temp"])
 
