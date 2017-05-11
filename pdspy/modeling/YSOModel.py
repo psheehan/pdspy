@@ -217,7 +217,7 @@ class YSOModel(Model):
                     self.grid.r, self.grid.theta, self.grid.phi))
 
     def run_simple_dust_image(self, name=None, i=0., pa=0., npix=256, dx=1., \
-            nu=230., kappa0=0.1, beta0=1, r0beta=100., plbeta=1, \
+            nu=230., kappa0=0.1, beta0=1, delta_beta=1, r0beta=100., plbeta=1, \
             dpc=140):
         # Convert inclination and position angle to radians.
 
@@ -250,7 +250,7 @@ class YSOModel(Model):
 
         B = B_nu(nu*1e9, T)
 
-        beta = beta0 * (1. + (rpp / r0beta)**plbeta)
+        beta = beta0 + delta_beta * (rpp / r0beta)**plbeta
 
         kappa = kappa0 * (nu / 1000.)**beta
 
@@ -267,12 +267,12 @@ class YSOModel(Model):
                 y=yy/dpc, freq=numpy.array([nu])*1.0e9)
 
     def run_simple_dust_visibilities(self, name=None, i=0., pa=0., npix=256, \
-            dx=1., nu=230., kappa0=0.1, beta0=1, r0beta=100., plbeta=1, \
-            dpc=140):
+            dx=1., nu=230., kappa0=0.1, beta0=1, delta_beta=1, r0beta=100., \
+            plbeta=1, dpc=140):
 
         self.run_simple_dust_image(name="temp", i=i, pa=pa, npix=npix, \
                 dx=dx, nu=nu, kappa0=kappa0, beta0=beta0, r0beta=r0beta, \
-                plbeta=plbeta, dpc=dpc)
+                delta_beta, plbeta=plbeta, dpc=dpc)
 
         self.visibilities[name] = imtovis(self.images["temp"])
 
