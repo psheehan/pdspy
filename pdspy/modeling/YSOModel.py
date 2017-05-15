@@ -256,7 +256,7 @@ class YSOModel(Model):
 
         # Now do the actual calculation.
 
-        I = B * kappa * Sigma
+        I = B * (1. - numpy.exp(-kappa * Sigma / numpy.cos(i)))
 
         # Adjust the scale of I to be in the appropriate units.
 
