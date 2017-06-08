@@ -8,7 +8,7 @@ class DustGenerator:
         if type(dust) == str:
             self.read(dust)
         else:
-            self.amax = numpy.logspace(-4.,1.,50)
+            self.amax = numpy.logspace(-4.,2.,60)
             self.lam = dust.lam
 
             self.kabs = []
@@ -18,7 +18,7 @@ class DustGenerator:
 
             for a in self.amax:
                 dust.calculate_size_distribution_opacity(0.005e-4, a, p, \
-                        coat_volume_fraction=0.0)
+                        coat_volume_fraction=0.0, nang=2)
 
                 self.kabs.append(dust.kabs)
                 self.ksca.append(dust.ksca)

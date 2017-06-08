@@ -25,7 +25,7 @@ class Dust:
         self.m = self.n + 1j*self.k
 
     def calculate_size_distribution_opacity(self, amin, amax, p, \
-            coat_volume_fraction=0.0):
+            coat_volume_fraction=0.0, nang=1000):
         na = int(round(numpy.log10(amax) - numpy.log10(amin))*100+1)
         a = numpy.logspace(numpy.log10(amin),numpy.log10(amax),na)
         kabsgrid = numpy.zeros((self.lam.size,na))
@@ -35,7 +35,7 @@ class Dust:
         
         for i in range(na):
             self.calculate_opacity(a[i], \
-                    coat_volume_fraction=coat_volume_fraction)
+                    coat_volume_fraction=coat_volume_fraction, nang=nang)
             
             kabsgrid[:,i] = self.kabs*normfunc[i]
             kscagrid[:,i] = self.ksca*normfunc[i]
@@ -47,7 +47,7 @@ class Dust:
         self.kext = self.kabs + self.ksca
         self.albedo = self.ksca / self.kext
 
-    def calculate_opacity(self, a, coat_volume_fraction=0.0):
+    def calculate_opacity(self, a, coat_volume_fraction=0.0, nang=1000):
         self.kabs = numpy.zeros(self.lam.size)
         self.ksca = numpy.zeros(self.lam.size)
         
@@ -57,7 +57,7 @@ class Dust:
             for i in range(self.lam.size):
                 x = 2*pi*a/self.lam[i]
                 
-                S1,S2,Qext,Qsca,Qback,gsca=bhmie(x,self.m[i],1000)
+                S1,S2,Qext,Qsca,Qback,gsca=bhmie(x,self.m[i],nang)
                 
                 Qabs = Qext - Qsca
                 
