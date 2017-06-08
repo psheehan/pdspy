@@ -50,7 +50,7 @@ def pillbox(u, v, delta_u, delta_v):
 
     m = 1
     
-    arr = numpy.ones(u.shape, dtype=float)
+    arr = numpy.ones(u.shape, dtype=float)*u.size
 
     arr[numpy.abs(u) >= m * delta_u / 2] = 0
     arr[numpy.abs(v) >= m * delta_v / 2] = 0
