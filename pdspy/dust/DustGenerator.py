@@ -4,11 +4,12 @@ import h5py
 from .Dust import Dust
 
 class DustGenerator:
-    def __init__(self, dust, p=3.5):
+    def __init__(self, dust):
         if type(dust) == str:
             self.read(dust)
         else:
-            self.amax = numpy.logspace(-4.,2.,60)
+            self.amax = numpy.logspace(-4.,1.,60)
+            self.p = numpy.linspace(2.5,4.5,11)
             self.lam = dust.lam
 
             self.kabs = []
@@ -16,28 +17,41 @@ class DustGenerator:
             self.kext = []
             self.albedo = []
 
-            for a in self.amax:
-                dust.calculate_size_distribution_opacity(0.005e-4, a, p, \
-                        coat_volume_fraction=0.0, nang=2)
+            for p in self.p:
+                kabs_temp = []
+                ksca_temp = []
+                kext_temp = []
+                albedo_temp = []
 
-                self.kabs.append(dust.kabs)
-                self.ksca.append(dust.ksca)
-                self.kext.append(dust.kext)
-                self.albedo.append(dust.albedo)
+                for a in self.amax:
+                    dust.calculate_size_distribution_opacity(0.005e-4, a, p, \
+                            coat_volume_fraction=0.0, nang=2)
+
+                    kabs_temp.append(dust.kabs)
+                    ksca_temp.append(dust.ksca)
+                    kext_temp.append(dust.kext)
+                    albedo_temp.append(dust.albedo)
+
+                self.kabs.append(kabs_temp)
+                self.ksca.append(ksca_temp)
+                self.kext.append(kext_temp)
+                self.albedo.append(albedo_temp)
 
             self.kabs = numpy.array(self.kabs)
             self.ksca = numpy.array(self.ksca)
             self.kext = numpy.array(self.kext)
             self.albedo = numpy.array(self.albedo)
 
-    def __call__(self, amax):
-        f_kabs = scipy.interpolate.interp2d(self.lam, self.amax, \
-                numpy.log10(self.kabs))
-        f_ksca = scipy.interpolate.interp2d(self.lam, self.amax, \
-                numpy.log10(self.ksca))
+    def __call__(self, amax, p):
+        f_kabs = scipy.interpolate.RegularGridInterpolator(\
+                (self.p, self.amax, self.lam), numpy.log10(self.kabs))
+        f_ksca = scipy.interpolate.RegularGridInterpolator(\
+                (self.p, self.amax, self.lam), numpy.log10(self.ksca))
 
-        kabs = 10.**f_kabs(self.lam, amax)
-        ksca = 10.**f_ksca(self.lam, amax)
+        pts = numpy.array([[p, amax, lam] for lam in self.lam])
+
+        kabs = 10.**f_kabs(pts)
+        ksca = 10.**f_ksca(pts)
 
         d = Dust()
         d.set_properties(self.lam, kabs, ksca)
@@ -52,6 +66,7 @@ class DustGenerator:
 
         self.lam = f['lam'].value
         self.amax = f['amax'].value
+        self.p = f['p'].value
 
         if ('kabs' in f):
             self.kabs = f['kabs'].value
@@ -73,6 +88,9 @@ class DustGenerator:
         if hasattr(self, 'amax'):
             amax_dset = f.create_dataset("amax", (self.amax.size,), dtype='f')
             amax_dset[...] = self.amax
+        if hasattr(self, 'p'):
+            amax_dset = f.create_dataset("p", (self.p.size,), dtype='f')
+            amax_dset[...] = self.p
         if hasattr(self, 'lam'):
             lam_dset = f.create_dataset("lam", (self.lam.size,), dtype='f')
             lam_dset[...] = self.lam
