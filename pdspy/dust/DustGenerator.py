@@ -42,19 +42,32 @@ class DustGenerator:
             self.kext = numpy.array(self.kext)
             self.albedo = numpy.array(self.albedo)
 
-    def __call__(self, amax, p):
-        f_kabs = scipy.interpolate.RegularGridInterpolator(\
-                (self.p, self.amax, self.lam), numpy.log10(self.kabs))
-        f_ksca = scipy.interpolate.RegularGridInterpolator(\
-                (self.p, self.amax, self.lam), numpy.log10(self.ksca))
+    def __call__(self, amax, p=None):
+        if self.old:
+            f_kabs = scipy.interpolate.interp2d(self.lam, self.amax, \
+                    numpy.log10(self.kabs))
+            f_ksca = scipy.interpolate.interp2d(self.lam, self.amax, \
+                    numpy.log10(self.ksca))
 
-        pts = numpy.array([[p, amax, lam] for lam in self.lam])
+            kabs = 10.**f_kabs(self.lam, amax)
+            ksca = 10.**f_ksca(self.lam, amax)
 
-        kabs = 10.**f_kabs(pts)
-        ksca = 10.**f_ksca(pts)
+            d = Dust()
+            d.set_properties(self.lam, kabs, ksca)
+        else:
+            f_kabs = scipy.interpolate.RegularGridInterpolator(\
+                    (self.p, self.amax, self.lam), numpy.log10(self.kabs))
+            f_ksca = scipy.interpolate.RegularGridInterpolator(\
+                    (self.p, self.amax, self.lam), numpy.log10(self.ksca))
 
-        d = Dust()
-        d.set_properties(self.lam, kabs, ksca)
+            print(p, amax)
+            pts = numpy.array([[p, amax, lam] for lam in self.lam])
+
+            kabs = 10.**f_kabs(pts)
+            ksca = 10.**f_ksca(pts)
+
+            d = Dust()
+            d.set_properties(self.lam, kabs, ksca)
 
         return d
 
@@ -66,7 +79,12 @@ class DustGenerator:
 
         self.lam = f['lam'].value
         self.amax = f['amax'].value
-        self.p = f['p'].value
+
+        if ('p' in f):
+            self.p = f['p'].value
+            self.old = False
+        else:
+            self.old = True
 
         if ('kabs' in f):
             self.kabs = f['kabs'].value
