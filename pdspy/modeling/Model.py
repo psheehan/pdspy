@@ -180,11 +180,11 @@ class Model:
         return
 
     def run_sed_radmc3d(self, name=None, nphot=1e6, incl=0, pa=0, \
-            phi=0, dpc=1, verbose=True, **keywords):
+            phi=0, dpc=1, loadlambda=False, verbose=True, **keywords):
         self.write_radmc3d(nphot_spec=nphot, **keywords)
 
         radmc3d.run.sed(incl=incl, posang=pa, phi=phi, noline=True, \
-                verbose=verbose)
+                loadlambda=loadlambda, verbose=verbose)
 
         flux, lam = radmc3d.read.spectrum()
 

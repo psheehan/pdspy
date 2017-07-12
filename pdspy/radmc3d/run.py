@@ -33,7 +33,7 @@ def sed(nrrefine=None, fluxcons=None, norefine=None, nofluxcons=None, \
         noapert=None, nphot_scat=None, inclstar=None, nostar=None, \
         inclline=None, noline=None, incldust=None, nodust=None, \
         inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None, \
-        verbose=True):
+        loadlambda=None, verbose=True):
 
     command="radmc3d sed "
 
@@ -103,6 +103,8 @@ def sed(nrrefine=None, fluxcons=None, norefine=None, nofluxcons=None, \
         command += "inclgascont "
     if (nogascont == True):
         command += "nogascont "
+    if (loadlambda == True):
+        command += "loadlambda "
 
     if not verbose:
         command += " > radmc3d.out"
