@@ -128,7 +128,7 @@ class Grid:
                 self.gas_temperature.append(gas_temperature[name].value)
 
         if 'Microturbulence' in f:
-            gas_temperature = f['Microturbulence']
+            microturbulence = f['Microturbulence']
             for name in microturbulence:
                 self.microturbulence.append(microturbulence[name].value)
 
