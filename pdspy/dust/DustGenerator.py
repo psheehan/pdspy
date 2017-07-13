@@ -60,7 +60,6 @@ class DustGenerator:
             f_ksca = scipy.interpolate.RegularGridInterpolator(\
                     (self.p, self.amax, self.lam), numpy.log10(self.ksca))
 
-            print(p, amax)
             pts = numpy.array([[p, amax, lam] for lam in self.lam])
 
             kabs = 10.**f_kabs(pts)
