@@ -342,6 +342,7 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
     j = numpy.zeros((nuv, nfreq), dtype=numpy.uint32)
 
     mean_freq = numpy.mean(freq)
+    inv_freq = 1./mean_freq
 
     if gridsize%2 == 0:
         for k in range(nuv):
