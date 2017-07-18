@@ -272,9 +272,10 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
     cdef numpy.ndarray[double, ndim=1] u, v, freq
     cdef numpy.ndarray[double, ndim=2] real, imag, weights, new_u, new_v
     cdef numpy.ndarray[double, ndim=3] new_real, new_imag, new_weights
-    cdef numpy.ndarray[unsigned int, ndim=1] i, j
+    cdef numpy.ndarray[unsigned int, ndim=2] i, j
     cdef unsigned int k, l, m, n, ninclude_min, ninclude_max, lmin, lmax, \
             mmin, mmax, ll, mm, ninclude
+    cdef double mean_freq, inv_freq
 
     if mfs:
         vis = freqcorrect(data)
@@ -335,12 +336,27 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
     new_imag = numpy.zeros((gridsize,gridsize,nchannels))
     new_weights = numpy.zeros((gridsize,gridsize,nchannels))
 
+    # Get the indices for binning.
+
+    i = numpy.zeros((nuv, nfreq), dtype=numpy.uint32)
+    j = numpy.zeros((nuv, nfreq), dtype=numpy.uint32)
+
+    mean_freq = numpy.mean(freq)
+
     if gridsize%2 == 0:
-        i = numpy.round(u/binsize+gridsize/2.).astype(numpy.uint32)
-        j = numpy.round(v/binsize+gridsize/2.).astype(numpy.uint32)
+        for k in range(nuv):
+            for n in range(nfreq):
+                i[k,n] = numpy.round(u[k]*freq[n]*inv_freq/binsize+\
+                        gridsize/2.).astype(numpy.uint32)
+                j[k,n] = numpy.round(v[k]*freq[n]*inv_freq/binsize+\
+                        gridsize/2.).astype(numpy.uint32)
     else:
-        i = numpy.round(u/binsize+(gridsize-1)/2.).astype(numpy.uint32)
-        j = numpy.round(v/binsize+(gridsize-1)/2.).astype(numpy.uint32)
+        for k in range(nuv):
+            for n in range(nfreq):
+                i[k,n] = numpy.round(u[k]*freq[n]*inv_freq/binsize+ \
+                        (gridsize-1)/2.).astype(numpy.uint32)
+                j[k,n] = numpy.round(v[k]*freq[n]*inv_freq/binsize+ \
+                        (gridsize-1)/2.).astype(numpy.uint32)
     
     if convolution == "pillbox":
         convolve_func = ones
@@ -355,32 +371,31 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
     # Now actually go through and calculate the new visibilities.
 
     for k in range(nuv):
-        if ninclude_min > j[k]:
-            lmin = 0
-        else:
-            lmin = j[k] - ninclude_min
+        for n in range(nfreq):
+            if ninclude_min > j[k,n]:
+                lmin = 0
+            else:
+                lmin = j[k,n] - ninclude_min
 
-        lmax = int_min(j[k]+ninclude_max+1, gridsize)
+            lmax = int_min(j[k,n]+ninclude_max+1, gridsize)
 
-        if ninclude_min > i[k]:
-            mmin = 0
-        else:
-            mmin = i[k] - ninclude_min
-        mmax = int_min(i[k]+ninclude_max+1, gridsize)
+            if ninclude_min > i[k,n]:
+                mmin = 0
+            else:
+                mmin = i[k,n] - ninclude_min
 
-        for l in range(lmin, lmax):
-            for m in range(mmin, mmax):
+            mmax = int_min(i[k,n]+ninclude_max+1, gridsize)
 
-                convolve = convolve_func( (u[k]-new_u[l,m])*inv_binsize, \
-                        (v[k] - new_v[l,m]) * inv_binsize)
+            for l in range(lmin, lmax):
+                for m in range(mmin, mmax):
+                    convolve = convolve_func( (u[k]-new_u[l,m])*inv_binsize, \
+                            (v[k] - new_v[l,m]) * inv_binsize)
 
-                if mode == "continuum":
-                    for n in range(nfreq):
+                    if mode == "continuum":
                         new_real[l,m,0] += real[k,n]*weights[k,n]*convolve
                         new_imag[l,m,0] += imag[k,n]*weights[k,n]*convolve
                         new_weights[l,m,0] += weights[k,n]*convolve
-                elif mode == "spectralline":
-                    for n in range(nfreq):
+                    elif mode == "spectralline":
                         new_real[l,m,n] += real[k,n]*weights[k,n]*convolve
                         new_imag[l,m,n] += imag[k,n]*weights[k,n]*convolve
                         new_weights[l,m,n] += weights[k,n]*convolve
