@@ -42,15 +42,6 @@ class Disk:
         self.abundance.append(abundance)
 
     def density(self, r, theta, phi):
-        ##### Disk Parameters
-        
-        rin = self.rmin * AU
-        rout = self.rmax * AU
-        mass = self.mass * M_sun
-        h = self.h0 * AU
-        plrho = self.plrho
-        plh = self.plh
-
         ##### Set up the coordinates
 
         rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
@@ -59,29 +50,67 @@ class Disk:
         zz = rt*numpy.cos(tt)
 
         ##### Make the dust density model for a protoplanetary disk.
-        
-        rho0 = mass/((2*pi)**1.5*h*(1*AU)**(plrho-plh))*\
-                (-plrho+plh+2)/(rout**(-plrho+plh+2)-rin**(-plrho+plh+2))
-        hr = h * (rr / (1*AU))**(plh)
-        rho0 = rho0 * (rr / (1*AU))**(-plrho)
-        rho1 = numpy.exp(-0.5*(zz / hr)**2)
-        rho = rho0 * rho1
-        rho[(rr >= rout) ^ (rr <= rin)] = 0e0
 
-        ##### Add any gaps to the disk.
+        Sigma = self.surface_density(rr/AU)
+        h = self.scale_height(rr/AU)
+        
+        rho = Sigma / (numpy.sqrt(2*numpy.pi)*h) * numpy.exp(-0.5*(zz / h)**2)
+
+        return rho
+
+    def number_density(self, r, theta, phi, gas=0):
+        rho = self.density(r, theta, phi)
+
+        rho_gas = rho * 100
+
+        rho_gas_critical = (100. / 0.8) * 2.37*m_p
+        rho_gas[rho_gas < rho_gas_critical] = 1.0e-50
+
+        n_H2 = rho_gas * 0.8 / (2.37*m_p)
+
+        n = n_H2 * self.abundance[gas]
+
+        return n
+
+    def surface_density(self, r):
+        # Get the disk parameters.
+
+        rin = self.rmin * AU
+        rout = self.rmax * AU
+        mass = self.mass * M_sun
+        gamma = self.plrho - self.plh
+
+        # Set up the surface density.
+
+        Sigma0 = (2-gamma)*mass/(2*pi*(1*AU)**(gamma)) / \
+                (rout**(-gamma+2) - rin**(-gamma+2))
+
+        Sigma = Sigma0 * r**(-gamma)
+
+        Sigma[(r >= rout/AU) ^ (r <= rin/AU)] = 0e0
+
+        # In case of r == 0 (a singularity), get the value from slightly off 0.
+
+        dr = r[r > 0].min()
+        Sigma[r == 0] = Sigma0 * (0.7*dr)**(-gamma)
+
+        # Add gaps to the disk.
 
         for i in range(len(self.gap_rin)):
             if self.gaussian_gaps:
                 gap_r = (self.gap_rin[i] + self.gap_rout[i])/2
                 gap_w = self.gap_rout[i] - self.gap_rin[i]
 
-                rho /= 1 + 1./self.gap_delta[i] * numpy.exp(-4*numpy.log(2.) * \
-                        (rr - gap_r)**2 / gap_w**2)
+                Sigma /= 1 + 1./self.gap_delta[i] * numpy.exp(-4*numpy.log(2.)*\
+                        (r - gap_r)**2 / gap_w**2)
             else:
-                rho[(rr >= self.gap_rin[i]*AU) & (rr <= self.gap_rout[i]*AU)]*=\
-                        self.gap_delta[i]
+                Sigma[(r >= self.gap_rin[i]) & \
+                        (r <= self.gap_rout[i])] *= self.gap_delta[i]
         
-        return rho
+        return Sigma
+
+    def scale_height(self, r):
+        return self.h0 * AU * r**self.plh
 
     def temperature(self, r, theta, phi):
         ##### Disk Parameters
@@ -108,14 +137,20 @@ class Disk:
         
         return t
 
-    def number_density(self, r, theta, phi, gas=0):
-        rho = self.density(r, theta, phi)
+    def temperature_1d(self, r):
+        rin = self.rmin * AU
+        rout = self.rmax * AU
+        t0 = self.t0
+        plt = self.plt
 
-        n_H2 = rho * 100. / (2*m_p)
+        T = t0 * r**(-plt)
 
-        n = n_H2 * self.abundance[gas]
+        T[(r >= rout/AU) ^ (r <= rin/AU)] = 0.0
 
-        return n
+        dr = r[r > 0].min()
+        T[r == 0] = t0 * (0.7*dr)**(-plt)
+
+        return T
 
     def gas_temperature(self, r, theta, phi):
         ##### Disk Parameters
@@ -169,52 +204,6 @@ class Disk:
         aturb = numpy.ones(rr.shape)*self.aturb*1.0e5
         
         return aturb
-
-    def surface_density(self, r):
-        rin = self.rmin * AU
-        rout = self.rmax * AU
-        mass = self.mass * M_sun
-        h = self.h0 * AU
-        plrho = self.plrho
-        plh = self.plh
-
-        Sigma0 = (2-plrho+plh)*mass/(2*pi*(1*AU)**(plrho-plh)) / \
-                (rout**(-plrho+plh+2) - rin**(-plrho+plh+2))
-
-        Sigma = Sigma0 * r**(-plrho+plh)
-
-        Sigma[(r >= rout/AU) ^ (r <= rin/AU)] = 0e0
-
-        dr = r[r > 0].min()
-        Sigma[r == 0] = Sigma0 * (0.7*dr)**(-plrho+plh)
-
-        for i in range(len(self.gap_rin)):
-            if self.gaussian_gaps:
-                gap_r = (self.gap_rin[i] + self.gap_rout[i])/2
-                gap_w = self.gap_rout[i] - self.gap_rin[i]
-
-                Sigma /= 1 + 1./self.gap_delta[i] * numpy.exp(-4*numpy.log(2.)*\
-                        (r - gap_r)**2 / gap_w**2)
-            else:
-                Sigma[(r >= self.gap_rin[i]) & \
-                        (r <= self.gap_rout[i])] *= self.gap_delta[i]
-        
-        return Sigma
-
-    def temperature_1d(self, r):
-        rin = self.rmin * AU
-        rout = self.rmax * AU
-        t0 = self.t0
-        plt = self.plt
-
-        T = t0 * r**(-plt)
-
-        T[(r >= rout/AU) ^ (r <= rin/AU)] = 0.0
-
-        dr = r[r > 0].min()
-        T[r == 0] = t0 * (0.7*dr)**(-plt)
-
-        return T
 
     def velocity(self, r, theta, phi, mstar=0.5):
         mstar *= M_sun
