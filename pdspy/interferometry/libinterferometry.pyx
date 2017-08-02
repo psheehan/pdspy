@@ -389,8 +389,9 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
 
             for l in range(lmin, lmax):
                 for m in range(mmin, mmax):
-                    convolve = convolve_func( (u[k]-new_u[l,m])*inv_binsize, \
-                            (v[k] - new_v[l,m]) * inv_binsize)
+                    convolve = convolve_func( (u[k]*freq[n]*inv_freq-\
+                            new_u[l,m])*inv_binsize, \
+                            (v[k]*freq[n]*inv_freq - new_v[l,m]) * inv_binsize)
 
                     if mode == "continuum":
                         new_real[l,m,0] += real[k,n]*weights[k,n]*convolve
