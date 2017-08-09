@@ -8,3 +8,4 @@ from .fit_model_new import fit_model
 from .invert import invert
 from .model import model
 from .rotate import rotate
+from .interpolate_model import interpolate_model
