@@ -13,8 +13,12 @@ def center(data, params):
         params[2] = 1.0
     
     data_complex = data.real+1j*data.imag
-    model_complex = model(data.u, data.v, params, funct="point", \
-            return_type="complex")
+
+    model_complex = numpy.empty(data.real.shape)
+    for i in range(len(data.freq)):
+        model_complex[:,i] = model(data.u*data.freq[i]/data.freq.mean(), \
+                data.v*data.freq[i]/data.freq.mean(), params, funct="point", \
+                return_type="complex")
     
     centered_data = data_complex * model_complex.conj()
     
