@@ -2,7 +2,8 @@ import numpy
 import astropy
 import astropy.coordinates
 
-def update_catalog(catalog, *lists, tol=0.3, column_names=['1']):
+#def update_catalog(catalog, *lists, tol=0.3, column_names=['1']):
+def update_catalog(catalog, tol=0.3, column_names=['1'], *lists):
 
     coord_catalog = astropy.coordinates.SkyCoord(catalog["ra"].tolist(), \
             catalog["dec"].tolist(), frame='icrs')
