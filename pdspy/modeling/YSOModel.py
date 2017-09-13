@@ -333,31 +333,31 @@ class YSOModel(Model):
     def make_hyperion_symmetric(self):
         for i in range(len(self.grid.temperature)):
             ntheta = len(self.grid.theta)
-            upper = self.grid.temperature[i][:,0:ntheta/2,:]
-            lower = self.grid.temperature[i][:,ntheta/2:,:][:,::-1,:]
+            upper = self.grid.temperature[i][:,0:int(ntheta/2),:]
+            lower = self.grid.temperature[i][:,int(ntheta/2):,:][:,::-1,:]
             average = 0.5 * (upper + lower)
 
-            self.grid.temperature[i][:,0:ntheta/2,:] = average
-            self.grid.temperature[i][:,ntheta/2:,:] =  average[:,::-1,:]
+            self.grid.temperature[i][:,0:int(ntheta/2),:] = average
+            self.grid.temperature[i][:,int(ntheta/2):,:] =  average[:,::-1,:]
 
     def convert_hyperion_to_radmc3d(self):
         self.grid.r = self.grid.r[1:]
         self.grid.w1 = self.grid.w1[1:]
 
         ntheta = len(self.grid.theta)
-        self.grid.theta = self.grid.theta[0:ntheta/2]
-        self.grid.w2 = self.grid.w2[0:ntheta/2+1]
+        self.grid.theta = self.grid.theta[0:int(ntheta/2)]
+        self.grid.w2 = self.grid.w2[0:int(ntheta/2+1)]
         
         for i in range(len(self.grid.density)):
-            self.grid.density[i] = self.grid.density[i][1:,0:ntheta/2,:]
+            self.grid.density[i] = self.grid.density[i][1:,0:int(ntheta/2),:]
         for i in range(len(self.grid.temperature)):
-            self.grid.temperature[i] = self.grid.temperature[i][1:,0:ntheta/2,:]
+            self.grid.temperature[i] = self.grid.temperature[i][1:,0:int(ntheta/2),:]
         for i in range(len(self.grid.number_density)):
-            self.grid.number_density[i] = self.grid.number_density[i][1:,0:ntheta/2,:]
+            self.grid.number_density[i] = self.grid.number_density[i][1:,0:int(ntheta/2),:]
         for i in range(len(self.grid.microturbulence)):
-            self.grid.microturbulence[i] = self.grid.microturbulence[i][1:,0:ntheta/2,:]
+            self.grid.microturbulence[i] = self.grid.microturbulence[i][1:,0:int(ntheta/2),:]
         for i in range(len(self.grid.velocity)):
-            self.grid.velocity[i] = self.grid.velocity[i][:,1:,0:ntheta/2,:]
+            self.grid.velocity[i] = self.grid.velocity[i][:,1:,0:int(ntheta/2),:]
 
     def read_yso(self, filename):
         f = h5py.File(filename, "r")
