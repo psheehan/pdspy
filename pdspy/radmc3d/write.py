@@ -16,7 +16,7 @@ def control(incl_dust=None, incl_lines=None, incl_freefree=None, \
         subbox_x0=None, subbox_x1=None, subbox_y0=None, subbox_y1=None, \
         subbox_z0=None, subbox_z1=None, modified_random_walk=None, \
         mrw_gamma=None, mrw_tauthres=None, mrw_count_trigger=None, \
-        setthreads=1, camera_scatsrc_allfreq=None):
+        setthreads=1, camera_scatsrc_allfreq=None, mc_scat_maxtauabs=None):
 
     f = open("radmc3d.inp","w")
 
@@ -132,6 +132,8 @@ def control(incl_dust=None, incl_lines=None, incl_freefree=None, \
         f.write("mrw_tauthres = {0:d}\n".format(mrw_tauthres))
     if (setthreads != 1):
         f.write("setthreads = {0:d}\n".format(setthreads))
+    if (mc_scat_maxtauabs != None):
+        f.write("mc_scat_maxtauabs = {0:d}\n".format(mc_scat_maxtauabs))
 
     f.close()
 
