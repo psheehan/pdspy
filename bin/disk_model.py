@@ -307,42 +307,17 @@ def lnlike(p, x, y, z, zerr, good, output, npix, pixelsize, lam, \
 
     return -0.5*(numpy.sum((z - m)**2 / zerr**2))
 
-if source in ['I04166','I04169','I04302','CRBR12','IRS63','LFAM26']:
-    def lnprior(p):
-        if -1 < p[0] < 1.3 and p[1] <= -2.5 and \
-                0.1 <= 10.**p[2] < 10.**p[3] < 10.**p[7] and \
-                0.01 <= p[4] and -0.5 <= p[5] <= 2 and p[6] < -2.0 and \
-                0.0 <= p[8] <= 1.0 and 0.5 <= p[9] <= 1.5 and \
-                0.0 <= p[10] <= 90. and 0. <= p[11] <= 180. and \
-                0. <= p[12] <= 5. and 0.5 <= p[13] <= 1.5 and \
-                0. <= p[14] <= 2. and 2.5 <= p[15] <= 4.5:
-            return 0.0
+def lnprior(p):
+    if -1 < p[0] < 1.3 and p[1] <= -2.5 and \
+            0.1 <= 10.**p[2] < 10.**p[3] < 10.**p[7] and \
+            0.01 <= p[4] and -0.5 <= p[5] <= 2 and p[6] < -2.0 and \
+            0.0 <= p[8] <= 1.0 and 0.5 <= p[9] <= 1.5 and \
+            0.0 <= p[10] <= 90. and 0. <= p[11] <= 180. and \
+            0. <= p[12] <= 5. and 0.5 <= p[13] <= 1.5 and \
+            0. <= p[14] <= 2. and 2.5 <= p[15] <= 4.5:
+        return 0.0
 
-        return -numpy.inf
-elif source in ['I04016','GSS30-IRS3']:
-    def lnprior(p):
-        if -1 < p[0] < 1.3 and p[1] <= -2.5 and \
-                0.1 <= 10.**p[2] < 10.**p[3] < 10.**p[7] and \
-                0.01 <= p[4] and -0.5 <= p[5] <= 2 and p[6] < -2.0 and \
-                0.0 <= p[8] <= 1.0 and 0.5 <= p[9] <= 1.5 and \
-                0.0 <= p[10] <= 90. and 90.0 <= p[11] <= 270. and \
-                0. <= p[12] <= 5. and 0.5 <= p[13] <= 1.5 and \
-                0. <= p[14] <= 2. and 2.5 <= p[15] <= 4.5:
-            return 0.0
-
-        return -numpy.inf
-else:
-    def lnprior(p):
-        if -1 < p[0] < 1.3 and p[1] <= -2.5 and \
-                0.1 <= 10.**p[2] < 10.**p[3] < 10.**p[7] and \
-                0.01 <= p[4] and -0.5 <= p[5] <= 2 and p[6] < -1.5 and \
-                0.0 <= p[8] <= 1.0 and 0.5 <= p[9] <= 1.5 and \
-                0.0 <= p[10] <= 90. and -90.0 <= p[11] <= 90. and \
-                0. <= p[12] <= 5. and 0.5 <= p[13] <= 1.5 and \
-                0. <= p[14] <= 2. and 2.5 <= p[15] <= 4.5:
-            return 0.0
-
-        return -numpy.inf
+    return -numpy.inf
 
 def lnprob(p, x, y, z, zerr, good, output, npix, pixelsize, lam, \
         scattered_light, with_extinction, dpc, sed_lam, with_graindist):
@@ -394,8 +369,9 @@ os.system("rm -r /tmp/temp_{0:s}_*".format(source))
 #
 ################################################################################
 
-# Define some useful values depending on the source.
+# Define some useful values depending on the source. => now in config.py
 
+"""
 if source in ['I04016','I04108B','I04158','I04166','I04169','I04181A', \
         'I04181B','I04263','I04295','I04302','I04365']:
     binsize = [8057.218995847603]
@@ -414,8 +390,13 @@ elif source in ['CRBR12','Elias21','Elias29','GSS30-IRS3','GY91','IRS48',\
     npix = [256,256]
     gridsize = npix
     dpc = 137
+"""
 
-# Read in centroid parameters.
+# Import the configuration file information.
+
+from config import *
+
+# Read in centroid parameters. => specify in config.py?
 
 f = open("{0:s}/{0:s}_gaussian_fit.txt".format(source),"r")
 lines = f.readlines()
@@ -436,43 +417,42 @@ if source in ['I04181B']:
 
 # Read in the millimeter visibilities.
 
-vis = {}
+visibilities["data"] = []
+visibilities["data1d"] = []
 data_1d = {}
 image = {}
 
-for j in range(len(freq)):
+for j in range(len(visibilities["file"])):
     # Read the raw data.
 
     data = uv.Visibilities()
-    data.read("../Data/{0:s}/{1:s}/{0:s}_{1:s}.hdf5".format(source, freq[j]))
+    data.read(visiblities["file"][j])
 
-    # Center the data.
+    # Center the data. => need to update!
 
     data = uv.center(data, params[freq[j]])
 
     # Average the data to a more manageable size.
 
-    vis[lam[j]] = uv.grid(data, gridsize=gridsize[j], binsize=binsize[j])
+    visibilities["data"].append(uv.grid(data, \
+            gridsize=visibilities["gridsize"][j], \
+            binsize=visibilities["binsize"][j]))
 
     # Scale the weights of the visibilities to force them to be fit well.
 
-    if freq[j] in ['100GHz','230GHz']:
-        if source in ['IRS63']:
-            vis[lam[j]].weights *= 1.
-        else:
-            vis[lam[j]].weights *= 10.
+    visibilities["data"][j].weights *= visibilities["weight"][j]
 
     # Average the visibilities radially.
 
-    data_1d[lam[j]] = uv.average(data, gridsize=20, radial=True, log=True, \
-            logmin=data.uvdist[numpy.nonzero(data.uvdist)].min()*0.95, \
-            logmax=data.uvdist.max()*1.05)
+    visibilities["data1d"].append(uv.average(data, gridsize=20, radial=True, \
+            log=True, logmin=data.uvdist[numpy.nonzero(data.uvdist)].min()*\
+            0.95, logmax=data.uvdist.max()*1.05)
 
     # Clean up the data because we don't need it any more.
 
     del data
 
-    # Read in the image
+    # Read in the image => need to update.
 
     image[lam[j]] = im.readimfits("../Data/{0:s}/{1:s}/{0:s}_{1:s}.fits".\
             format(source, freq[j]))
