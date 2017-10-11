@@ -210,16 +210,17 @@ def model(x, y, params, good=None, output="concat", npix=256, pixelsize=0.1, \
 
         # Run the SED.
 
-        m.set_camera_wavelength(sed_lam)
+        if "total" in spectra:
+            m.set_camera_wavelength(spectra["total"].wave)
 
-        m.run_sed(name="SED", nphot=1e4, loadlambda=True, incl=inclination, \
-                pa=position_angle, dpc=dpc, code="radmc3d", \
-                camera_scatsrc_allfreq=True, mc_scat_maxtauabs=5, \
-                verbose=False)
+            m.run_sed(name="SED", nphot=1e4, loadlambda=True, incl=inclination,\
+                    pa=position_angle, dpc=dpc, code="radmc3d", \
+                    camera_scatsrc_allfreq=True, mc_scat_maxtauabs=5, \
+                    verbose=False)
 
-        if with_extinction:
-            m.spectra["SED"].flux = dust.redden(m.spectra["SED"].wave, \
-                    m.spectra["SED"].flux, Av, law="mcclure")
+            if with_extinction:
+                m.spectra["SED"].flux = dust.redden(m.spectra["SED"].wave, \
+                        m.spectra["SED"].flux, Av, law="mcclure")
 
         # Concatenate everything in the right way.
 
@@ -418,12 +419,18 @@ if source in ['I04181B']:
     params['230GHz'] = [0.,0.,1.]
 """
 
-# Read in the millimeter visibilities.
+# Set up the places where we will put all of the data.
 
 visibilities["data"] = []
 visibilities["data1d"] = []
 visibilities["image"] = []
+spectra["data"] = []
+spectra["binned"] = []
 images["data"] = []
+
+######################################
+# Read in the millimeter visibilities.
+######################################
 
 for j in range(len(visibilities["file"])):
     # Read the raw data.
@@ -459,40 +466,45 @@ for j in range(len(visibilities["file"])):
 
     visibilities["image"][j] = im.readimfits(visibilities["image_file"][j])
 
-# Read in the SEDs
+######################
+# Read in the spectra.
+######################
 
-sed = sp.Spectrum()
-sed.read("../Data/{0:s}/Literature/{0:s}_SED.hdf5".format(source))
-
-sed_av = sp.Spectrum()
-sed_av.read("../Data/{0:s}/Literature/{0:s}_SED_averaged.hdf5".format(source))
-
-sed_log = sp.Spectrum(sed_av.wave, numpy.log10(sed_av.flux), \
-        sed_av.unc/sed_av.flux)
-sed_log.flux[sed_log.flux == -numpy.inf] == 0.
-
-# Read in the Spitzer spectrum.
-
-if os.path.exists("../Data/{0:s}/IRS/{0:s}_IRS_spectrum.hdf5".format(source)):
-    spitzer = sp.Spectrum()
-    spitzer.read("../Data/{0:s}/IRS/{0:s}_IRS_spectrum.hdf5".format(source))
+for j in range(len(spectra["file"])):
+    spectra["data"].append(sp.Spectrum())
+    spectra["data"][j].read(spectra["file"][j])
 
     # Merge the SED with the binned Spitzer spectrum.
 
-    wave = numpy.linspace(5., 35., 25)
-    flux = numpy.interp(wave, spitzer.wave, spitzer.flux)
+    if spectra["bin?"]:
+        wave = numpy.linspace(spectra["data"][j].wave.min(), \
+                spectra["data"][j].wave.max(), spectra["nbins"][j])
+        flux = numpy.interp(wave, spectra["data"][j].wave, \
+                spectra["data"][j].flux)
 
-    sed_log.wave = numpy.concatenate((sed_log.wave, wave))
-    sed_log.flux = numpy.concatenate((sed_log.flux, numpy.log10(flux)))
-    sed_log.unc = numpy.concatenate((sed_log.unc, numpy.repeat(0.1, wave.size)))
+        spectra["binned"].append(sp.Spectrum(wave, flux))
+    else:
+        spectra["binned"].append(spectra["data"][j])
 
-    order = numpy.argsort(sed_log.wave)
+    # Merge all the spectra together in one big SED.
 
-    sed_log.wave = sed_log.wave[order]
-    sed_log.flux = sed_log.flux[order]
-    sed_log.unc = sed_log.unc[order]
-else:
-    spitzer = None
+    try:
+        spectra["total"].wave = numpy.concatenate((spectra["total"].wave, \
+                spectra["binned"][j].wave))
+        spectra["total"].flux = numpy.concatenate((spectra["total"].flux, \
+                numpy.log10(spectra["binned"][j].flux)))
+        spectra["total"].unc = numpy.concatenate((spectra["total"].unc, \
+                numpy.repeat(0.1, spectra["binned"][j].wave.size)))
+
+        order = numpy.argsort(spectra["total"].wave)
+
+        spectra["total"].wave = spectra["total"].wave[order]
+        spectra["total"].flux = spectra["total"].flux[order]
+        spectra["total"].unc = spectra["total"].unc[order]
+    except:
+        spectra["total"] = sp.Spectrum(spectra["binned"][j].wave, \
+                numpy.log10(spectra["binned"][j].flux), \
+                numpy.repeat(0.1, spectra["binned"][j].wave.size))
 
 # Adjust the weight of the SED, as necessary.
 
@@ -503,7 +515,9 @@ elif source in ['WL12']:
     sed_log.unc /= 10.
 """
 
+#####################
 # Read in the images.
+#####################
 
 """OLD:
 if os.path.exists("../Data/{0:s}/HST/{0:s}_scattered_light.hdf5".\

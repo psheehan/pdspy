@@ -30,4 +30,7 @@ images = {
 # Something similar for spectra.
 
 spectra = {
+        "file":["path/to/file1"]
+        "bin?":[False]
+        "nbins":[25]
         }
