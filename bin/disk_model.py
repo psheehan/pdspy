@@ -36,7 +36,7 @@ parser.add_argument('-r', '--resume', action='store_true')
 parser.add_argument('-s', '--scatteredlight', action='store_true')
 parser.add_argument('-e', '--withextinction', action='store_true')
 parser.add_argument('-g', '--withgraindist', action='store_true')
-parser.add_argument('-h', '--withhyperion', action='store_true')
+parser.add_argument('-c', '--withhyperion', action='store_true')
 parser.add_argument('-p', '--resetprob', action='store_true')
 parser.add_argument('-a', '--action', type=str, default="run")
 args = parser.parse_args()
@@ -61,9 +61,8 @@ if args.action == 'plot':
 #
 ################################################################################
 
-def model(x, y, params, good=None, output="concat", npix=256, pixelsize=0.1, \
-        lam="1300", scattered_light=False, with_extinction=False, dpc=140, \
-        sed_lam=None, with_graindist=False):
+def model(visibilities, images, spectra, params, output="concat", \
+        with_extinction=False, dpc=140, with_graindist=False):
     # Stellar parameters.
 
     T_star = params[0]
@@ -224,6 +223,7 @@ def model(x, y, params, good=None, output="concat", npix=256, pixelsize=0.1, \
 
         # Concatenate everything in the right way.
 
+        """OLD: Now returning the whole damn model.
         if scattered_light:
             z_model = numpy.concatenate((m.images["scattered_light"].\
                     image.reshape((128**2,)), numpy.log10(m.spectra["SED"].\
@@ -234,6 +234,7 @@ def model(x, y, params, good=None, output="concat", npix=256, pixelsize=0.1, \
             z_model = numpy.concatenate((z_model, \
                     m.visibilities[lam[j]].real[:,0], \
                     m.visibilities[lam[j]].imag[:,0]))
+        """
 
         # Clean up everything and return.
 
@@ -241,7 +242,10 @@ def model(x, y, params, good=None, output="concat", npix=256, pixelsize=0.1, \
         os.chdir(original_dir)
         os.rmdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
 
+        """OLD: Now returning the whole damn model.
         return z_model[good]
+        """
+        return m
     else:
         # Run the high resolution visibilities.
 
@@ -302,12 +306,16 @@ def model(x, y, params, good=None, output="concat", npix=256, pixelsize=0.1, \
 
 # Define a likelihood function.
 
-def lnlike(p, x, y, z, zerr, good, output, npix, pixelsize, lam, \
-        scattered_light, with_extinction, dpc, sed_lam, with_graindist):
-    m = model(x, y, p, good, output, npix, pixelsize, lam, scattered_light, \
-            with_extinction, dpc, sed_lam, with_graindist)
+def lnlike(p, visibilities, images, spectra, output, with_extinction, \
+        dpc, with_graindist):
 
+    m = model(visibilities, images, spectra, output, with_extinction, dpc, \
+            with_graindist)
+
+    ####!!!!! Needs updating
     return -0.5*(numpy.sum((z - m)**2 / zerr**2))
+
+# Define a prior function.
 
 def lnprior(p):
     if -1 < p[0] < 1.3 and p[1] <= -2.5 and \
@@ -321,15 +329,18 @@ def lnprior(p):
 
     return -numpy.inf
 
-def lnprob(p, x, y, z, zerr, good, output, npix, pixelsize, lam, \
-        scattered_light, with_extinction, dpc, sed_lam, with_graindist):
+# Define a probability function.
+
+def lnprob(p, visibilities, images, spectra, output, with_extinction, dpc, \
+        with_graindist):
+
     lp = lnprior(p)
 
     if not numpy.isfinite(lp):
         return -numpy.inf
 
-    return lp + lnlike(p, x, y, z, zerr, good, output, npix, pixelsize, lam, \
-            scattered_light, with_extinction, dpc, sed_lam, with_graindist)
+    return lp + lnlike(p, visibilities, images, spectra, output, \
+            with_extinction, dpc, with_graindist)
 
 # Define a useful class for plotting.
 
@@ -462,7 +473,7 @@ for j in range(len(visibilities["file"])):
 
     del data
 
-    # Read in the image => need to update.
+    # Read in the image.
 
     visibilities["image"][j] = im.readimfits(visibilities["image_file"][j])
 
@@ -543,8 +554,12 @@ for j in range(len(images["file"])):
 
 # Set up the inputs for the MCMC function.
 
-x = vis[lam[0]].u
-y = vis[lam[0]].v
+""" OLD: Trying to pass visibilities, images, and spectra as args now.
+x = None
+y = None
+z = []
+zerr = []
+
 if args.scatteredlight:
     z = numpy.concatenate((scattered_light.image.reshape((128**2,)), \
             sed_log.flux))
@@ -562,6 +577,7 @@ for j in range(len(lam)):
 good = numpy.isfinite(zerr)
 z = z[good]
 zerr = zerr[good]
+"""
 
 # Set up the emcee run.
 
@@ -629,9 +645,8 @@ else:
 
 if args.action == "run":
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, \
-            args=(x, y, z, zerr, good, "concat", npix, pixelsize, lam, \
-            args.scatteredlight, args.withextinction, dpc, sed_log.wave, \
-            args.withgraindist), pool=pool)
+            args=(visibilities, images, spectra, "concat", args.withextinction,\
+            dpc, args.withgraindist), pool=pool)
 
 # Run a few burner steps.
 
