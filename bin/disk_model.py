@@ -184,22 +184,27 @@ def model(x, y, params, good=None, output="concat", npix=256, pixelsize=0.1, \
                 mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
                 verbose=False)
 
-    # Run the images/visibilities/SEDs.
+    # Run the images/visibilities/SEDs. If output == "concat" then we are doing
+    # a fit and we need less. Otherwise we are making a plot of the best fit 
+    # model so we need to generate a few extra things.
 
     if output == "concat":
         # Run the visibilities.
 
-        for j in range(len(lam)):
-            m.run_visibilities(name=lam[j], nphot=1e5, npix=npix[j], \
-                    pixelsize=pixelsize[j], lam=lam[j], incl=inclination, \
+        for j in range(len(visibilities["file"])):
+            m.run_visibilities(name=visibilities["lam"][j], nphot=1e5, \
+                    npix=visibilities["npix"][j], \
+                    pixelsize=visibilities["pixelsize"][j], \
+                    lam=visibilities["lam"][j], incl=inclination, \
                     pa=position_angle, dpc=dpc, code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=False)
 
-        # Run the scattered light images.
+        # Run the images.
 
-        if scattered_light:
-            m.run_image(name="scattered_light", nphot=1e5, npix=128, \
-                    pixelsize=0.1, lam="0.8", incl=inclination, \
+        for j in range(len(images["file"])):
+            m.run_image(name=images["lam"][j], nphot=1e5, \
+                    npix=images["npix"][j], pixelsize=images["pixelsize"][j], \
+                    lam=images["lam"][j], incl=inclination, \
                     pa=position_angle, dpc=dpc, code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=False)
 
@@ -239,43 +244,39 @@ def model(x, y, params, good=None, output="concat", npix=256, pixelsize=0.1, \
     else:
         # Run the high resolution visibilities.
 
-        for j in range(len(lam)):
-            m.run_visibilities(name=lam[j], nphot=1e5, npix=2048, \
-                    pixelsize=0.05, lam=lam[j], incl=inclination, \
+        for j in range(len(visibilities["file"])):
+            # Run a high resolution version of the visibilities.
+
+            m.run_visibilities(name=visibilities["lam"][j], nphot=1e5, \
+                    npix=2048, pixelsize=0.05, lam=lam[j], incl=inclination, \
                     pa=position_angle, dpc=dpc, code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=False)
 
             # Run the visibilities they were done for the fit to show in 2D
 
-            if lam[j] == "870":
-                m.run_visibilities(name=lam[j]+"2D", nphot=1e5, npix=256, \
-                        pixelsize=0.03, lam=lam[j], incl=inclination, \
-                        pa=-position_angle, dpc=dpc, code="radmc3d", \
-                        mc_scat_maxtauabs=5, verbose=False)
-            elif lam[j] == "1300":
-                m.run_visibilities(name=lam[j]+"2D", nphot=1e5, npix=256, \
-                        pixelsize=0.1, lam=lam[j], incl=inclination, \
-                        pa=-position_angle, dpc=dpc, code="radmc3d", \
-                        mc_scat_maxtauabs=5, verbose=False)
-            elif lam[j] == "3100":
-                m.run_visibilities(name=lam[j]+"2D", nphot=1e5, npix=256, \
-                        pixelsize=0.02, lam=lam[j], incl=inclination, \
-                        pa=-position_angle, dpc=dpc, code="radmc3d", \
-                        mc_scat_maxtauabs=5, verbose=False)
+            m.run_visibilities(name=visibilities["lam"][j]+"2D", nphot=1e5, \
+                    npix=visibilities["npix"][j], \
+                    pixelsize=visibilities["pixelsize"][j], \
+                    lam=visibilities["lam"][j], incl=inclination, \
+                    pa=-position_angle, dpc=dpc, code="radmc3d", \
+                    mc_scat_maxtauabs=5, verbose=False)
 
             # Run a millimeter image.
 
-            m.run_image(name=lam[j], nphot=1e5, npix=npix[j], \
-                    pixelsize=pixelsize[j], lam=lam[j], incl=inclination, \
+            m.run_image(name=visibilities["lam"][j], nphot=1e5, \
+                    npix=visibilities["image_npix"][j], \
+                    pixelsize=visibilities["image_pixelsize"][j], \
+                    lam=visibilities["lam"][j], incl=inclination, \
                     pa=position_angle, dpc=dpc, code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=False)
 
         # Run the scattered light image. 
 
-        m.run_image(name="scattered_light", nphot=1e5, npix=128, \
-                pixelsize=0.1, lam="0.8", incl=inclination, \
-                pa=position_angle, dpc=dpc, code="radmc3d", \
-                mc_scat_maxtauabs=5, verbose=False)
+        for j in range(len(images["file"])):
+            m.run_image(name=images["lam"][j], nphot=1e5, \
+                    npix=images["npix"][j], pixelsize=images["pixelsize"][j], \
+                    lam=images["lam"][j], incl=inclination, pa=position_angle, \
+                    dpc=dpc, code="radmc3d", mc_scat_maxtauabs=5, verbose=False)
 
         # Run the SED
 
@@ -371,7 +372,7 @@ os.system("rm -r /tmp/temp_{0:s}_*".format(source))
 
 # Define some useful values depending on the source. => now in config.py
 
-"""
+"""OLD:
 if source in ['I04016','I04108B','I04158','I04166','I04169','I04181A', \
         'I04181B','I04263','I04295','I04302','I04365']:
     binsize = [8057.218995847603]
@@ -398,6 +399,7 @@ from config import *
 
 # Read in centroid parameters. => specify in config.py?
 
+"""
 f = open("{0:s}/{0:s}_gaussian_fit.txt".format(source),"r")
 lines = f.readlines()
 f.close()
@@ -414,13 +416,14 @@ for j in range(len(freq)):
 
 if source in ['I04181B']:
     params['230GHz'] = [0.,0.,1.]
+"""
 
 # Read in the millimeter visibilities.
 
 visibilities["data"] = []
 visibilities["data1d"] = []
-data_1d = {}
-image = {}
+visibilities["image"] = []
+images["data"] = []
 
 for j in range(len(visibilities["file"])):
     # Read the raw data.
@@ -454,8 +457,7 @@ for j in range(len(visibilities["file"])):
 
     # Read in the image => need to update.
 
-    image[lam[j]] = im.readimfits("../Data/{0:s}/{1:s}/{0:s}_{1:s}.fits".\
-            format(source, freq[j]))
+    visibilities["image"][j] = im.readimfits(visibilities["image_file"][j])
 
 # Read in the SEDs
 
@@ -494,13 +496,16 @@ else:
 
 # Adjust the weight of the SED, as necessary.
 
+"""OLD:
 if source in ['IRS63','LFAM26']:
     sed_log.unc /= 3.
 elif source in ['WL12']:
     sed_log.unc /= 10.
+"""
 
-# Read in the scattered light image.
+# Read in the images.
 
+"""OLD:
 if os.path.exists("../Data/{0:s}/HST/{0:s}_scattered_light.hdf5".\
         format(source)):
     scattered_light = im.Image()
@@ -510,6 +515,11 @@ else:
     if args.scatteredlight:
         print("No scattered light image available... Exiting.")
         sys.exit(0)
+"""
+
+for j in range(len(images["file"])):
+    images["data"].append(im.Image())
+    images["data"][j].read(images["file"][j])
 
 ################################################################################
 #
