@@ -587,15 +587,15 @@ ndim, nwalkers = 16, 200
 # set up the info.
 
 if args.resume:
-    pos = numpy.load("{0:s}/pos.npy".format(source))
-    chain = numpy.load("{0:s}/chain.npy".format(source))
+    pos = numpy.load("pos.npy".format(source))
+    chain = numpy.load("chain.npy".format(source))
     state = None
     nsteps = chain[0,:,0].size
 
     if args.resetprob:
         prob = None
     else:
-        prob = numpy.load("{0:s}/prob.npy".format(source))
+        prob = numpy.load("prob.npy".format(source))
 
     # If we started running without p, make sure we add the necessary stuff.
 
@@ -664,15 +664,15 @@ while nsteps < 100000:
             for j in range(nwalkers):
                 ax.plot(chain[j,:,i])
 
-            plt.savefig("{1:s}/disk_test_{0:d}.pdf".format(i, source))
+            plt.savefig("test_{0:d}.pdf".format(i, source))
 
             plt.close(fig)
 
         # Save walker positions in case the code stps running for some reason.
 
-        numpy.save("{0:s}/pos".format(source), pos)
-        numpy.save("{0:s}/prob".format(source), prob)
-        numpy.save("{0:s}/chain".format(source), chain)
+        numpy.save("pos".format(source), pos)
+        numpy.save("prob".format(source), prob)
+        numpy.save("chain".format(source), chain)
 
         # Augment the nuber of steps and reset the sampler for the next run.
 
@@ -701,7 +701,7 @@ while nsteps < 100000:
     if args.action == "run":
         # Write out the results.
 
-        f = open("{0:s}/{0:s}_disk_fit.txt".format(source), "w")
+        f = open("fit.txt".format(source), "w")
         f.write("Best fit to {0:s}:\n\n".format(source))
         f.write("Lstar = {0:f} +/- {1:f}\n".format(params[0], sigma[0]))
         f.write("log10(Mdisk) = {0:f} +/- {1:f}\n".format(params[1], sigma[1]))
@@ -721,7 +721,7 @@ while nsteps < 100000:
         f.write("p = {0:f} +/- {1:f}\n\n".format(params[15], sigma[15]))
         f.close()
 
-        os.system("cat {0:s}/{0:s}_disk_fit.txt".format(source))
+        os.system("cat fit.txt".format(source))
 
         # Plot histograms of the resulting parameters.
 
@@ -732,7 +732,7 @@ while nsteps < 100000:
 
         fig = corner.corner(samples, labels=xlabels, truths=params)
 
-        plt.savefig("{0:s}/{0:s}_disk_fit.pdf".format(source))
+        plt.savefig("fit.pdf".format(source))
 
     ############################################################################
     #
@@ -971,7 +971,7 @@ while nsteps < 100000:
 
     # Adjust the figure and save.
 
-    fig.savefig("{0:s}/{0:s}_disk_model.pdf".format(source))
+    fig.savefig("model.pdf".format(source))
 
     plt.close(fig)
 
