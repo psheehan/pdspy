@@ -309,8 +309,8 @@ def model(visibilities, images, spectra, params, output="concat", \
 def lnlike(p, visibilities, images, spectra, output, with_extinction, \
         dpc, with_graindist):
 
-    m = model(visibilities, images, spectra, output, with_extinction, dpc, \
-            with_graindist)
+    m = model(visibilities, images, spectra, params, output, with_extinction, \
+            dpc, with_graindist)
 
     ####!!!!! Needs updating
     return -0.5*(numpy.sum((z - m)**2 / zerr**2))
@@ -746,25 +746,22 @@ while nsteps < 100000:
 
     # Create a high resolution model for averaging.
 
-    N = [image[lam[j]].image.shape[0] for j in range(len(lam))]
-    dx = [image[lam[j]].header["CDELT2"] * numpy.pi / 180. / arcsec for j in \
-            range(len(lam))]
-
-    m = model(1, 1, params, output="data", npix=N, pixelsize=dx, \
-            lam=lam, with_extinction=args.withextinction)
+    m = model(visibilities, images. spectra, params, output="data", \
+            with_extinction=args.withextinction)
 
     # Plot the millimeter data/models.
 
-    for j in range(len(lam)):
+    for j in range(len(visibilities["file"])):
         # Create a high resolution model for averaging.
 
-        m1d = uv.average(m.visibilities[lam[j]], gridsize=10000, binsize=3500, \
-                radial=True)
+        m1d = uv.average(m.visibilities[visibilities["lam"][j]], \
+                gridsize=10000, binsize=3500, radial=True)
 
         # Plot the visibilities.
 
-        ax[2*j,0].errorbar(data_1d[lam[j]].uvdist/1000, data_1d[lam[j]].amp, \
-                yerr=numpy.sqrt(1./data_1d[lam[j]].weights),\
+        ax[2*j,0].errorbar(visibilities["data1d"][j].uvdist/1000, \
+                visibilities["data1d"][j].amp, \
+                yerr=numpy.sqrt(1./visibilities["data1d"][j].weights),\
                 fmt="bo", markersize=8, markeredgecolor="b")
 
         # Plot the best fit model
@@ -780,54 +777,67 @@ while nsteps < 100000:
                 'IRS63','LFAM26','WL12','WL17']:
             ticks = numpy.array([-1500,-1000,-500,0,500,1000,1500])
 
-        xmin, xmax = int(npix[j]/2+ticks[0]/(binsize[j]/1000)), \
-                int(npix[j]/2+ticks[6]/(binsize[j]/1000))
-        ymin, ymax = int(npix[j]/2+ticks[0]/(binsize[j]/1000)), \
-                int(npix[j]/2+ticks[6]/(binsize[j]/1000))
+        xmin, xmax = int(visibilities["npix"][j]/2+ticks[0]/\
+                (visibilities["binsize"][j]/1000)), \
+                int(visibilities["npix"][j]/2+ticks[6]/\
+                (visibilities["binsize"][j]/1000))
+        ymin, ymax = int(visibilities["npix"][j]/2+ticks[0]/\
+                (visibilities["binsize"][j]/1000)), \
+                int(visibilities["npix"][j]/2+ticks[6]/\
+                (visibilities["binsize"][j]/1000))
 
-        vmin = min(0, data_1d[lam[j]].real.min())
-        vmax = data_1d[lam[j]].real.max()
+        vmin = min(0, visibilities["data1d"][j].real.min())
+        vmax = visibilities["data1d"][j].real.max()
 
-        ax[2*j+1,0].imshow(vis[lam[j]].real.reshape((npix[j],npix[j]))\
+        ax[2*j+1,0].imshow(visibilities["data"][j].real.reshape(\
+                (visibilities["npix"][j],visibilities["npix"][j]))\
                 [xmin:xmax,xmin:xmax][:,::-1], origin="lower", \
                 interpolation="nearest", vmin=vmin, vmax=vmax)
-        ax[2*j+1,0].contour(m.visibilities[lam[j]+"2D"].real.reshape(\
-                (npix[j],npix[j]))[xmin:xmax,xmin:xmax][:,::-1])
+        ax[2*j+1,0].contour(m.visibilities[visibilities["lam"][j]+"2D"].real.\
+                reshape((visibilities["npix"][j],visibilities["npix"][j]))\
+                [xmin:xmax,xmin:xmax][:,::-1])
 
-        vmin = -data_1d[lam[j]].real.max()
-        vmax = data_1d[lam[j]].real.max()
+        vmin = -visibilities["data_1d"][j].real.max()
+        vmax =  visibilities["data_1d"][j].real.max()
 
-        ax[2*j+1,1].imshow(vis[lam[j]].imag.reshape((npix[j],npix[j]))\
+        ax[2*j+1,1].imshow(visibilities["data"][j].imag.reshape(\
+                (visibilities["npix"][j],visibilities["npix"][j]))\
                 [xmin:xmax,xmin:xmax][:,::-1], origin="lower", \
                 interpolation="nearest", vmin=vmin, vmax=vmax)
-        ax[2*j+1,1].contour(m.visibilities[lam[j]+"2D"].imag.reshape(\
-                (npix[j],npix[j]))[xmin:xmax,xmin:xmax][:,::-1], linewidth=0.2)
+        ax[2*j+1,1].contour(m.visibilities[visibilities["lam"][j]+"2D"].imag.\
+                reshape((visibilities["npix"][j],visibilities["npix"][j]))\
+                [xmin:xmax,xmin:xmax][:,::-1])
 
         transform1 = ticker.FuncFormatter(Transform(xmin, xmax, \
-                binsize[j]/1000, '%.0f'))
+                visibilities["binsize"][j]/1000, '%.0f'))
 
-        ax[2*j+1,0].set_xticks(npix[j]/2+ticks[1:-1]/(binsize[j]/1000)-xmin)
-        ax[2*j+1,0].set_yticks(npix[j]/2+ticks[1:-1]/(binsize[j]/1000)-ymin)
+        ax[2*j+1,0].set_xticks(visibilities["npix"][j]/2+ticks[1:-1]/\
+                (visibilities["binsize"][j]/1000)-xmin)
+        ax[2*j+1,0].set_yticks(visibilities["npix"][j]/2+ticks[1:-1]/\
+                (visibilities["binsize"][j]/1000)-ymin)
         ax[2*j+1,0].get_xaxis().set_major_formatter(transform1)
         ax[2*j+1,0].get_yaxis().set_major_formatter(transform1)
 
-        ax[2*j+1,1].set_xticks(npix[j]/2+ticks[1:-1]/(binsize[j]/1000)-xmin)
-        ax[2*j+1,1].set_yticks(npix[j]/2+ticks[1:-1]/(binsize[j]/1000)-ymin)
+        ax[2*j+1,1].set_xticks(visibilities["npix"][j]/2+ticks[1:-1]/\
+                (visibilities["binsize"][j]/1000)-xmin)
+        ax[2*j+1,1].set_yticks(visibilities["npix"][j]/2+ticks[1:-1]/\
+                (visibilities["binsize"][j]/1000)-ymin)
         ax[2*j+1,1].get_xaxis().set_major_formatter(transform1)
         ax[2*j+1,1].get_yaxis().set_major_formatter(transform1)
 
         # Create a model image to contour over the image.
 
-        model_image = m.images[lam[j]]
+        model_image = m.images[visibilities["lam"][j]]
 
         x, y = numpy.meshgrid(numpy.linspace(-256,255,512), \
                 numpy.linspace(-256,255,512))
 
-        beam = misc.gaussian2d(x, y, 0., 0.,image[lam[j]].header["BMAJ"]/2.355/\
-                image[lam[j]].header["CDELT2"], \
-                image[lam[j]].header["BMIN"]/2.355/\
-                image[lam[j]].header["CDELT2"], \
-                (90-image[lam[j]].header["BPA"])*numpy.pi/180., 1.0)
+        beam = misc.gaussian2d(x, y, 0., 0., \
+                visibilities["data"][j].header["BMAJ"]/2.355/\
+                visibilities["data"][j].header["CDELT2"], \
+                visibilities["data"][j].header["BMIN"]/2.355/\
+                visibilities["data"][j].header["CDELT2"], \
+                (90-visibilities["data"][j].header["BPA"])*numpy.pi/180., 1.0)
 
         model_image.image = scipy.signal.fftconvolve(\
                 model_image.image[:,:,0,0], beam, mode="same").\
@@ -847,43 +857,49 @@ while nsteps < 100000:
         else:
             ticks = numpy.array([-4.5,-4.0,-2.0,0,2.0,4.0,4.5])
 
-        xmin, xmax = int(N[j]/2+round(ticks[0]/dx[j])), \
-                round(N[j]/2+int(ticks[6]/dx[j]))
-        ymin, ymax = int(N[j]/2+round(ticks[0]/dx[j])), \
-                round(N[j]/2+int(ticks[6]/dx[j]))
+        xmin, xmax = int(visibilities["image_npix"][j]/2+\
+                round(ticks[0]/visibilities["image_pixelsize"][j])), \
+                round(visibilities["image_npix"][j]/2+\
+                int(ticks[6]/visibilities["image_pixelsize"][j]))
+        ymin, ymax = int(visibilities["image_npix"][j]/2+\
+                round(ticks[0]/visibilities["image_pixelsize"][j])), \
+                round(visibilities["image_npix"][j]/2+\
+                int(ticks[6]/visibilities["image_npix"][j]))
 
-        ax[2*j,1].imshow(image[lam[j]].image[xmin:xmax,ymin:ymax,0,0], \
-                origin="lower", interpolation="nearest")
+        ax[2*j,1].imshow(visibilities["image"][j].image\
+                [xmin:xmax,ymin:ymax,0,0], origin="lower", \
+                interpolation="nearest")
 
         ax[2*j,1].contour(model_image.image[xmin:xmax,ymin:ymax,0,0])
 
         transform = ticker.FuncFormatter(Transform(xmin, xmax, dx[j], '%.1f"'))
 
-        ax[2*j,1].set_xticks(N[j]/2+ticks[1:-1]/dx[j]-xmin)
-        ax[2*j,1].set_yticks(N[j]/2+ticks[1:-1]/dx[j]-ymin)
+        ax[2*j,1].set_xticks(visibilities["image_npix"][j]/2+\
+                ticks[1:-1]/visibilities["image_pixelsize"][j]-xmin)
+        ax[2*j,1].set_yticks(visibilities["image_npix"][j]/2+\
+                ticks[1:-1]/visibilities["image_pixelsize"][j]-ymin)
         ax[2*j,1].get_xaxis().set_major_formatter(transform)
         ax[2*j,1].get_yaxis().set_major_formatter(transform)
 
     # Plot the SED.
 
-    ax[0,2].errorbar(sed.wave, sed.flux, fmt="bo", yerr=sed.unc, \
-            markeredgecolor="b")
+    for j in range(len(spectra["file"])):
+        if spectra["bin?"][j]:
+            ax[0,2].plot(spectra["data"][j].wave, spectra["data"][j].flux, "b-")
+        else:
+            ax[0,2].errorbar(spectra["data"][j].wave, spectra["data"][j].flux, \
+                    fmt="bo", yerr=sed.unc, markeredgecolor="b")
 
     ax[0,2].plot(m.spectra["SED"].wave, m.spectra["SED"].flux, "g-")
 
-    if spitzer != None:
-        ax[0,2].plot(spitzer.wave, spitzer.flux, "b-")
-
     # Plot the scattered light image.
 
-    if os.path.exists("../Data/{0:s}/HST/{0:s}_scattered_light.hdf5".\
-            format(source)):
-
-        vmin = scattered_light.image.min()
-        vmax = numpy.percentile(scattered_light.image, 95)
+    for j in range(len(images["file"])):
+        vmin = images["data"][j].image.min()
+        vmax = numpy.percentile(images["data"][j].image, 95)
         a = 1000.
         
-        b = (scattered_light.image - vmin) / (vmax - vmin)
+        b = (images["data"][j].image - vmin) / (vmax - vmin)
 
         c = numpy.arcsinh(10*b)/3.
 
@@ -901,7 +917,7 @@ while nsteps < 100000:
 
         # Create a model image to contour over the image.
 
-        model_image = m.images["scattered_light"]
+        model_image = m.images[images["lam"][j]]
 
         beam = misc.gaussian2d(x, y, 0., 0., 1., 1., 0., 1.0)
 
@@ -939,9 +955,9 @@ while nsteps < 100000:
     ax[0,2].set_xlabel("$\lambda$ [$\mu$]")
     ax[0,2].set_ylabel(r"$F_{\nu}$ [Jy]")
 
-    for j in range(len(lam)):
-        ax[2*j,0].axis([1,data_1d[lam[j]].uvdist.max()/1000*3,0,\
-                data_1d[lam[j]].amp.max()*1.1])
+    for j in range(len(visibilities["file"])):
+        ax[2*j,0].axis([1,visibilities["data1d"][j].uvdist.max()/1000*3,0,\
+                visibilities["data1d"][j].amp.max()*1.1])
 
         ax[2*j,0].set_xscale("log", nonposx='clip')
 
