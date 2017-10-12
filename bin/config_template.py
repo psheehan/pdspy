@@ -1,5 +1,8 @@
 # Define the necessary info for the visiblity datasets.
 
+x0 = [0.]
+y0 = [0.]
+
 visibilities = {
         "file":["path/to/file1"],
         "binsize" = [8057.218995847603],

@@ -326,8 +326,35 @@ def lnlike(p, visibilities, images, spectra, output, with_extinction, \
     m = model(visibilities, images, spectra, params, output, with_extinction, \
             dpc, with_graindist)
 
-    ####!!!!! Needs updating
-    return -0.5*(numpy.sum((z - m)**2 / zerr**2))
+    # A list to put all of the chisq into.
+
+    chisq = []
+
+    # Calculate the chisq for the visibilities.
+
+    for j in range(len(visibilities["file"])):
+        chisq.append(-0.5*(numpy.sum((visibilities["data"][j].real - \
+                m.visibilities[visibilities["lam"][j]].real)**2 * \
+                visibilities["data"][j].weights)) + \
+                -0.5*(numpy.sum((visibilities["data"][j].imag - \
+                m.visibilities[visibilities["lam"][j]].imag)**2 * \
+                visibilities["data"][j].weights)))
+
+    # Calculate the chisq for all of the images.
+
+    for j in range(len(images["file"])):
+        chisq.append(-0.5 * (numpy.sum((images["data"][j].image - \
+                m.images[images["lam"][j]].image) / images["data"][j].unc**2)))
+
+    # Calculate the chisq for the SED.
+
+    if "total" in spectra:
+        chisq.append(-0.5 * (numpy.sum((spectra["total"].flux - \
+                m.spectra["SED"].flux) / spectra["total"].unc**2)))
+
+    # Return the sum of the chisq.
+
+    return numpy.array(chisq).sum()
 
 # Define a prior function.
 
@@ -465,9 +492,7 @@ for j in range(len(visibilities["file"])):
 
     # Center the data. => need to update!
 
-    """
-    data = uv.center(data, params[freq[j]])
-    """
+    data = uv.center(data, [x0[j], y0[j], 1.])
 
     #NEW: interpolate model to baselines instead of averaging the data to the
     #        model grid?
