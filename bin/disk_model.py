@@ -65,45 +65,50 @@ def model(visibilities, images, spectra, params, output="concat", \
         with_extinction=False, dpc=140, with_graindist=False):
     # Stellar parameters.
 
-    T_star = params[0]
-    L_star = 10.**params[1]
+    M_star = 1.0
+    #T_star = params[0]
+    T_star = 4000.
+    L_star = 10.**params[0]
 
     # Disk parameters.
 
-    M_disk = 10.**params[2]
-    R_in = 10.**params[3]
-    R_disk = 10.**params[4]
-    h_0 = params[5]
-    gamma = params[6]
-    beta = params[7]
+    M_disk = 10.**params[1]
+    R_in = 10.**params[2]
+    R_disk = 10.**params[3]
+    h_0 = params[4]
+    gamma = params[5]
+    beta = params[13]
     alpha = gamma + beta
 
     # Envelope parameters.
 
-    M_env = 10.**params[8]
-    R_env = 10.**params[9]
-    R_c = 10.**params[10]
-    f_cav = params[11]
-    ksi = params[12]
+    M_env = 10.**params[6]
+    R_env = 10.**params[7]
+    R_c = R_disk
+    #R_c = 10.**params[10]
+    f_cav = params[8]
+    ksi = params[9]
 
     # Dust parameters.
 
-    a_max = 10.**params[13]
+    a_max = 10.**params[12]
     if with_graindist:
-        p = params[14]
+        p = params[15]
     else:
         p = 3.5
 
-    inclination = params[15]
-    position_angle = params[16]
+    inclination = params[10]
+    position_angle = params[11]
 
-    Av = params[17]
+    Av = params[14]
 
     # Viewing parameters.
 
+    """
     x0 = params[18]
     y0 = params[19]
     dpc = params[20]
+    """
 
     # Set up the dust.
 
@@ -166,7 +171,7 @@ def model(visibilities, images, spectra, params, output="concat", \
 
             m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
                     mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
-                    verbose=False, set_threads=20)
+                    verbose=False, setthreads=20)
     else:
         m = modeling.YSOModel()
         m.add_star(luminosity=L_star, temperature=T_star)
@@ -198,6 +203,13 @@ def model(visibilities, images, spectra, params, output="concat", \
                     pa=position_angle, dpc=dpc, code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=False)
 
+            """
+            m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
+                    visibilities["data"].u, visibilities["data"].v, \
+                    visibilities["data"].freq, \
+                    m.visibilities[visibilities["lam"][j]])
+            """
+
         # Run the images.
 
         for j in range(len(images["file"])):
@@ -206,6 +218,8 @@ def model(visibilities, images, spectra, params, output="concat", \
                     lam=images["lam"][j], incl=inclination, \
                     pa=position_angle, dpc=dpc, code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=False)
+
+            """NEW: convolve the image with the beam?"""
 
         # Run the SED.
 
@@ -253,9 +267,9 @@ def model(visibilities, images, spectra, params, output="concat", \
             # Run a high resolution version of the visibilities.
 
             m.run_visibilities(name=visibilities["lam"][j], nphot=1e5, \
-                    npix=2048, pixelsize=0.05, lam=lam[j], incl=inclination, \
-                    pa=position_angle, dpc=dpc, code="radmc3d", \
-                    mc_scat_maxtauabs=5, verbose=False)
+                    npix=2048, pixelsize=0.05, lam=visibilities["lam"][j], \
+                    incl=inclination, pa=position_angle, dpc=dpc, \
+                    code="radmc3d", mc_scat_maxtauabs=5, verbose=False)
 
             # Run the visibilities they were done for the fit to show in 2D
 
@@ -447,11 +461,20 @@ for j in range(len(visibilities["file"])):
     # Read the raw data.
 
     data = uv.Visibilities()
-    data.read(visiblities["file"][j])
+    data.read(visibilities["file"][j])
 
     # Center the data. => need to update!
 
+    """
     data = uv.center(data, params[freq[j]])
+    """
+
+    #NEW: interpolate model to baselines instead of averaging the data to the
+    #        model grid?
+
+    """
+    visibilities["data"].append(data)
+    """
 
     # Average the data to a more manageable size.
 
@@ -467,15 +490,17 @@ for j in range(len(visibilities["file"])):
 
     visibilities["data1d"].append(uv.average(data, gridsize=20, radial=True, \
             log=True, logmin=data.uvdist[numpy.nonzero(data.uvdist)].min()*\
-            0.95, logmax=data.uvdist.max()*1.05)
+            0.95, logmax=data.uvdist.max()*1.05))
 
+    """
     # Clean up the data because we don't need it any more.
 
     del data
+    """
 
     # Read in the image.
 
-    visibilities["image"][j] = im.readimfits(visibilities["image_file"][j])
+    visibilities["image"].append(im.readimfits(visibilities["image_file"][j]))
 
 ######################
 # Read in the spectra.
@@ -742,11 +767,11 @@ while nsteps < 100000:
 
     # Plot the best fit model over the data.
 
-    fig, ax = plt.subplots(nrows=2*len(lam), ncols=3)
+    fig, ax = plt.subplots(nrows=2*len(visibilities["file"]), ncols=3)
 
     # Create a high resolution model for averaging.
 
-    m = model(visibilities, images. spectra, params, output="data", \
+    m = model(visibilities, images, spectra, params, output="data", \
             with_extinction=args.withextinction)
 
     # Plot the millimeter data/models.
@@ -797,8 +822,8 @@ while nsteps < 100000:
                 reshape((visibilities["npix"][j],visibilities["npix"][j]))\
                 [xmin:xmax,xmin:xmax][:,::-1])
 
-        vmin = -visibilities["data_1d"][j].real.max()
-        vmax =  visibilities["data_1d"][j].real.max()
+        vmin = -visibilities["data1d"][j].real.max()
+        vmax =  visibilities["data1d"][j].real.max()
 
         ax[2*j+1,1].imshow(visibilities["data"][j].imag.reshape(\
                 (visibilities["npix"][j],visibilities["npix"][j]))\
@@ -833,11 +858,11 @@ while nsteps < 100000:
                 numpy.linspace(-256,255,512))
 
         beam = misc.gaussian2d(x, y, 0., 0., \
-                visibilities["data"][j].header["BMAJ"]/2.355/\
-                visibilities["data"][j].header["CDELT2"], \
-                visibilities["data"][j].header["BMIN"]/2.355/\
-                visibilities["data"][j].header["CDELT2"], \
-                (90-visibilities["data"][j].header["BPA"])*numpy.pi/180., 1.0)
+                visibilities["image"][j].header["BMAJ"]/2.355/\
+                visibilities["image"][j].header["CDELT2"], \
+                visibilities["image"][j].header["BMIN"]/2.355/\
+                visibilities["image"][j].header["CDELT2"], \
+                (90-visibilities["image"][j].header["BPA"])*numpy.pi/180., 1.0)
 
         model_image.image = scipy.signal.fftconvolve(\
                 model_image.image[:,:,0,0], beam, mode="same").\
@@ -864,15 +889,16 @@ while nsteps < 100000:
         ymin, ymax = int(visibilities["image_npix"][j]/2+\
                 round(ticks[0]/visibilities["image_pixelsize"][j])), \
                 round(visibilities["image_npix"][j]/2+\
-                int(ticks[6]/visibilities["image_npix"][j]))
+                int(ticks[6]/visibilities["image_pixelsize"][j]))
 
         ax[2*j,1].imshow(visibilities["image"][j].image\
-                [xmin:xmax,ymin:ymax,0,0], origin="lower", \
+                [ymin:ymax,xmin:xmax,0,0], origin="lower", \
                 interpolation="nearest")
 
-        ax[2*j,1].contour(model_image.image[xmin:xmax,ymin:ymax,0,0])
+        ax[2*j,1].contour(model_image.image[ymin:ymax,xmin:xmax,0,0])
 
-        transform = ticker.FuncFormatter(Transform(xmin, xmax, dx[j], '%.1f"'))
+        transform = ticker.FuncFormatter(Transform(xmin, xmax, \
+                visibilities["image_pixelsize"][j], '%.1f"'))
 
         ax[2*j,1].set_xticks(visibilities["image_npix"][j]/2+\
                 ticks[1:-1]/visibilities["image_pixelsize"][j]-xmin)
@@ -888,7 +914,7 @@ while nsteps < 100000:
             ax[0,2].plot(spectra["data"][j].wave, spectra["data"][j].flux, "b-")
         else:
             ax[0,2].errorbar(spectra["data"][j].wave, spectra["data"][j].flux, \
-                    fmt="bo", yerr=sed.unc, markeredgecolor="b")
+                    fmt="bo", yerr=spectra["data"][j].unc, markeredgecolor="b")
 
     ax[0,2].plot(m.spectra["SED"].wave, m.spectra["SED"].flux, "g-")
 
@@ -976,12 +1002,12 @@ while nsteps < 100000:
     ax[1,2].set_xlabel("$\Delta$RA")
     ax[1,2].set_ylabel("$\Delta$Dec")
 
-    for j in range(len(lam)):
+    for j in range(len(visibilities["file"])):
         if j > 0:
             ax[2*j,2].set_axis_off()
             ax[2*j+1,2].set_axis_off()
 
-    fig.set_size_inches((12.5,8*len(lam)))
+    fig.set_size_inches((12.5,8*len(visibilities["file"])))
     fig.subplots_adjust(left=0.07, right=0.98, top=0.95, bottom=0.08, \
             wspace=0.25, hspace=0.2)
 
