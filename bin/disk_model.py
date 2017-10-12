@@ -423,53 +423,9 @@ os.system("rm -r /tmp/temp_{0:s}_*".format(source))
 #
 ################################################################################
 
-# Define some useful values depending on the source. => now in config.py
-
-"""OLD:
-if source in ['I04016','I04108B','I04158','I04166','I04169','I04181A', \
-        'I04181B','I04263','I04295','I04302','I04365']:
-    binsize = [8057.218995847603]
-    pixelsize = [0.1]
-    freq = ["230GHz"]
-    lam = ["1300"]
-    npix = [256]
-    gridsize = npix
-    dpc = 140
-elif source in ['CRBR12','Elias21','Elias29','GSS30-IRS3','GY91','IRS48',\
-        'IRS63','LFAM26','WL12','WL17']:
-    binsize = [26857.396652825348,40286.09497923802]
-    pixelsize = [0.03,0.02]
-    freq = ["345GHz","100GHz"]
-    lam = ["870","3100"]
-    npix = [256,256]
-    gridsize = npix
-    dpc = 137
-"""
-
 # Import the configuration file information.
 
 from config import *
-
-# Read in centroid parameters. => specify in config.py?
-
-"""
-f = open("{0:s}/{0:s}_gaussian_fit.txt".format(source),"r")
-lines = f.readlines()
-f.close()
-
-params = {}
-
-for j in range(len(freq)):
-    key = lines[9*j].split(' ')[-1].split(':')[0]
-
-    x0 = float(lines[9*j+2].split(' ')[2])
-    y0 = float(lines[9*j+3].split(' ')[2])
-
-    params[key] = [x0, y0, 1.]
-
-if source in ['I04181B']:
-    params['230GHz'] = [0.,0.,1.]
-"""
 
 # Set up the places where we will put all of the data.
 
@@ -517,11 +473,9 @@ for j in range(len(visibilities["file"])):
             log=True, logmin=data.uvdist[numpy.nonzero(data.uvdist)].min()*\
             0.95, logmax=data.uvdist.max()*1.05))
 
-    """
     # Clean up the data because we don't need it any more.
 
     del data
-    """
 
     # Read in the image.
 
@@ -567,30 +521,11 @@ for j in range(len(spectra["file"])):
                 numpy.log10(spectra["binned"][j].flux), \
                 numpy.repeat(0.1, spectra["binned"][j].wave.size))
 
-# Adjust the weight of the SED, as necessary.
-
-"""OLD:
-if source in ['IRS63','LFAM26']:
-    sed_log.unc /= 3.
-elif source in ['WL12']:
-    sed_log.unc /= 10.
-"""
+    # Adjust the weight of the SED, as necessary.
 
 #####################
 # Read in the images.
 #####################
-
-"""OLD:
-if os.path.exists("../Data/{0:s}/HST/{0:s}_scattered_light.hdf5".\
-        format(source)):
-    scattered_light = im.Image()
-    scattered_light.read("../Data/{0:s}/HST/{0:s}_scattered_light.hdf5".\
-            format(source))
-else:
-    if args.scatteredlight:
-        print("No scattered light image available... Exiting.")
-        sys.exit(0)
-"""
 
 for j in range(len(images["file"])):
     images["data"].append(im.Image())
