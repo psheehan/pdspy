@@ -61,18 +61,18 @@ if args.action == 'plot':
 #
 ################################################################################
 
-def model(visibilities, images, spectra, params, output="concat", \
+def model(visibilities, images, spectra, params, parameters, output="concat", \
         with_extinction=False, dpc=140, with_graindist=False):
 
-    r"""
     # Set the values of all of the parameters.
 
-    log_parameters = ["logMstar", "logLstar", "logMdisk", "logRin", \
-            "logRdisk", "logMenv", "logRenv", "logRc", "loga_max"]
+    log_parameters = ["logM_star", "logL_star", "logM_disk", "logR_in", \
+            "logR_disk", "logM_env", "logR_in_env", "logR_env", "logR_c", \
+            "loga_max"]
 
     for key in parameters:
         if parameters[key]["fixed"]:
-            if type(parameters[key]["value"]) == type(str):
+            if isinstance(parameters[key]["value"], str):
                 if parameters[parameters[key]["value"]]["fixed"]:
                     value = parameters[parameters[key]["value"]]["value"]
                 else:
@@ -83,11 +83,11 @@ def model(visibilities, images, spectra, params, output="concat", \
             value = params[key]
 
         if key in log_parameters:
-            exec("{0:s} = {1}".format(key[3:], value))
+            exec("{0:s} = {1}".format(key[3:], 10.**value))
         else:
             exec("{0:s} = {1}".format(key, value))
-    """
 
+    """OLD
     # Stellar parameters.
 
     M_star = 1.0
@@ -126,6 +126,7 @@ def model(visibilities, images, spectra, params, output="concat", \
     position_angle = params[11]
 
     Av = params[14]
+    """
 
     # Set up the dust.
 
@@ -146,7 +147,7 @@ def model(visibilities, images, spectra, params, output="concat", \
     # Write the parameters to a text file so it is easy to keep track of them.
 
     f = open("params.txt","w")
-    for i in range(len(params)):
+    for j in range(len(params)):
         f.write("params[{0:d}] = {1:f}\n".format(i, params[i]))
     f.close()
 
@@ -319,11 +320,11 @@ def model(visibilities, images, spectra, params, output="concat", \
 
 # Define a likelihood function.
 
-def lnlike(p, visibilities, images, spectra, output, with_extinction, \
-        dpc, with_graindist):
+def lnlike(params, visibilities, images, spectra, parameters, output, \
+        with_extinction, dpc, with_graindist):
 
-    m = model(visibilities, images, spectra, p, output, with_extinction, \
-            dpc, with_graindist)
+    m = model(visibilities, images, spectra, params, parameters, output, \
+            with_extinction, dpc, with_graindist)
 
     # A list to put all of the chisq into.
 
@@ -357,11 +358,10 @@ def lnlike(p, visibilities, images, spectra, output, with_extinction, \
 
 # Define a prior function.
 
-def lnprior(p):
-    r"""NEW: loop through the parameters and test their limits if not fixed.
+def lnprior(params, parameters):
     for key in parameters:
         if not parameters[key]["fixed"]:
-            if parameters[key]["limits"][0] <= p[key] <= \
+            if parameters[key]["limits"][0] <= params[key] <= \
                     parameters[key]["limits"][1]:
                 pass
             else:
@@ -377,8 +377,8 @@ def lnprior(p):
     # Everything was correct, so continue on.
 
     return 0.0
-    """
 
+    r"""OLD
     if -1 < p[0] < 1.3 and p[1] <= -2.5 and \
             0.1 <= 10.**p[2] < 10.**p[3] < 10.**p[7] and \
             0.01 <= p[4] and -0.5 <= p[5] <= 2 and p[6] < -2.0 and \
@@ -389,27 +389,27 @@ def lnprior(p):
         return 0.0
 
     return -numpy.inf
+    """
 
 # Define a probability function.
 
-def lnprob(p, visibilities, images, spectra, output, with_extinction, dpc, \
-        with_graindist):
-    """NEW: make a dictionary out of the parameters.
+def lnprob(p, visibilities, images, spectra, parameters, output, \
+        with_extinction, dpc, with_graindist):
+
     keys = []
     for key in parameters:
         if not parameteres[key]["fixed"]:
             keys.append(key)
 
     params = dict(zip(keys, p))
-    """
 
-    lp = lnprior(p)
+    lp = lnprior(params, parameters)
 
     if not numpy.isfinite(lp):
         return -numpy.inf
 
-    return lp + lnlike(p, visibilities, images, spectra, output, \
-            with_extinction, dpc, with_graindist)
+    return lp + lnlike(params, visibilities, images, spectra, parameters, \
+            output, with_extinction, dpc, with_graindist)
 
 # Define a useful class for plotting.
 
@@ -483,15 +483,15 @@ for j in range(len(visibilities["file"])):
     #NEW: interpolate model to baselines instead of averaging the data to the
     #        model grid?
 
-    """
     visibilities["data"].append(data)
-    """
 
+    """
     # Average the data to a more manageable size.
 
     visibilities["data"].append(uv.grid(data, \
             gridsize=visibilities["gridsize"][j], \
             binsize=visibilities["binsize"][j]))
+    """
 
     # Scale the weights of the visibilities to force them to be fit well.
 
@@ -505,7 +505,9 @@ for j in range(len(visibilities["file"])):
 
     # Clean up the data because we don't need it any more.
 
+    """
     del data
+    """
 
     # Read in the image.
 
@@ -595,7 +597,7 @@ if args.resume:
         pos = chain[:,-1,:]
 else:
     pos = []
-    for i in range(nwalkers):
+    for j in range(nwalkers):
         r_env = numpy.random.uniform(2.5,4.,1)[0]
         r_disk = numpy.random.uniform(numpy.log10(30.),\
                 numpy.log10(10.**r_env),1)[0]
@@ -639,27 +641,25 @@ while nsteps < 100000:
 
         chain = numpy.concatenate((chain, sampler.chain), axis=1)
 
-        """NEW: get a list of keys that vary for plotting purposes
         # Get keys of the parameters that are varying.
 
         keys = []
         for key in parameters:
             if not parameteres[key]["fixed"]:
                 keys.append(key)
-        """
 
         # Plot the steps of the walkers.
 
-        for i in range(ndim):
+        for j in range(ndim):
             fig, ax = plt.subplots(nrows=1, ncols=1)
 
-            for j in range(nwalkers):
-                ax.plot(chain[j,:,i])
+            for k in range(nwalkers):
+                ax.plot(chain[k,:,j])
 
+            """OLD
             plt.savefig("test_{0:d}.pdf".format(i, source))
-            """NEW: save based on the name of the parameter
-            plt.savefig("steps_{0:s}.pdf".format(keys[i]))
             """
+            plt.savefig("steps_{0:s}.pdf".format(keys[i]))
 
             plt.close(fig)
 
@@ -696,6 +696,7 @@ while nsteps < 100000:
     if args.action == "run":
         # Write out the results.
 
+        r"""OLD
         f = open("fit.txt".format(source), "w")
         f.write("Best fit to {0:s}:\n\n".format(source))
         f.write("Lstar = {0:f} +/- {1:f}\n".format(params[0], sigma[0]))
@@ -715,15 +716,14 @@ while nsteps < 100000:
         f.write("Av = {0:f} +/- {1:f}\n\n".format(params[14], sigma[14]))
         f.write("p = {0:f} +/- {1:f}\n\n".format(params[15], sigma[15]))
         f.close()
+        """
 
-        r"""NEW: use the list of keys to write this out.
         f = open("fit.txt", "w")
         f.write("Best fit parameters:\n\n")
-        for i in range(len(keys)):
-            f.write("{0:s} = {1:f} +/- {2:f}\n".format(keys[j],params[j], \
+        for j in range(len(keys)):
+            f.write("{0:s} = {1:f} +/- {2:f}\n".format(keys[j], params[j], \
                     sigma[j]))
         f.close()
-        """
 
         os.system("cat fit.txt".format(source))
 
@@ -734,10 +734,10 @@ while nsteps < 100000:
                 "$f_{cav}$", r"$\xi$", "$i$", "p.a.", "$log_{10}(a_{max})$", \
                 r"$\beta$", "$A_v$", "p"]
 
+        """OLD
         fig = corner.corner(samples, labels=xlabels, truths=params)
-        """NEW: Use the keys list in place of the xlabels list
-        fig = corner.corner(samples, labels=keys, truths=params)
         """
+        fig = corner.corner(samples, labels=keys, truths=params)
 
         plt.savefig("fit.pdf".format(source))
 
@@ -753,8 +753,8 @@ while nsteps < 100000:
 
     # Create a high resolution model for averaging.
 
-    m = model(visibilities, images, spectra, params, output="data", \
-            with_extinction=args.withextinction)
+    m = model(visibilities, images, spectra, params, parameters, \
+            output="data", with_extinction=args.withextinction)
 
     # Plot the millimeter data/models.
 
