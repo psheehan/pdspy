@@ -6,6 +6,7 @@ from ..constants.physics import c
 
 cdef class ImageObject:
     cdef public numpy.ndarray image, x, y, unc, velocity, freq, wave
+    cdef public header, wcs
 
     def __init__(self, numpy.ndarray[double, ndim=4] image=None, \
             numpy.ndarray[double, ndim=1] x=None, \
@@ -16,20 +17,16 @@ cdef class ImageObject:
             numpy.ndarray[double, ndim=1] velocity=None, \
             header=None, wcs = None):
 
-        if (type(image) != type(None)):
-            self.image = image
+        self.image = image
 
-        if (type(x) != type(None)):
-            self.x = x
-            self.y = y
-        if (type(header) != type(None)):
-            self.header = header
-        if (type(wcs) != type(None)):
-            self.wcs = wcs
-        if (type(unc) != type(None)):
-            self.unc = unc
-        if (type(velocity) != type(None)):
-            self.velocity = velocity
+        self.x = x
+        self.y = y
+
+        self.header = header
+        self.wcs = wcs
+
+        self.unc = unc
+        self.velocity = velocity
 
         if (type(wave) == type(None)) and (type(freq) != type(None)):
             self.freq = freq
@@ -40,6 +37,13 @@ cdef class ImageObject:
         elif (type(wave) != type(None)) and (type(freq) != type(None)):
             self.wave = wave
             self.freq = freq
+
+    def __reduce__(self):
+        return (rebuild, (self.image, self.x, self.y, self.wave, self.freq, \
+                self.unc, self.velocity, self.header, self.wcs))
+
+def rebuild(image, x, y, wave, freq, unc, velocity, header, wcs):
+    return ImageObject(image, x, y, wave, freq, unc, velocity, header, wcs)
 
 class Image(ImageObject):
 
