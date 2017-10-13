@@ -4,6 +4,7 @@ import h5py
 import astropy
 cimport cython
 
+@cython.auto_pickle(True)
 cdef class VisibilitiesObject:
     cdef public numpy.ndarray u, v, freq, real, imag, weights, \
             uvdist, amp, phase
@@ -40,6 +41,13 @@ cdef class VisibilitiesObject:
         self.baseline = baseline
         self.array_name = array_name
 
+    def __reduce__(self):
+        return (rebuild, (self.u, self.v, self.freq, self.real, self.imag, \
+                self.weights, self.baseline, self.array_name))
+
+def rebuild(u, v, freq, real, imag, weights, baseline, array_name):
+    return VisibilitiesObject(u, v, freq, real, imag, weights, baseline, \
+            array_name)
 
 class Visibilities(VisibilitiesObject):
 
@@ -69,12 +77,14 @@ class Visibilities(VisibilitiesObject):
 
         return hdulist
 
+    """
     def __reduce__(self):
         return (self.rebuild, (self.u, self.v, self.freq, self.real, self.imag,\
                 self.weights))
 
     def rebuild(u, v, freq, real, imag, weights):
         return Visibilities(u, v, freq, real, imag, weights)
+    """
 
     def read(self, filename=None, usefile=None):
         if (usefile == None):
