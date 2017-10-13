@@ -63,6 +63,31 @@ if args.action == 'plot':
 
 def model(visibilities, images, spectra, params, output="concat", \
         with_extinction=False, dpc=140, with_graindist=False):
+
+    r"""
+    # Set the values of all of the parameters.
+
+    log_parameters = ["logMstar", "logLstar", "logMdisk", "logRin", \
+            "logRdisk", "logMenv", "logRenv", "logRc", "loga_max"]
+
+    for key in parameters:
+        if parameters[key]["fixed"]:
+            if type(parameters[key]["value"]) == type(str):
+                if parameters[parameters[key]["value"]]["fixed"]:
+                    value = parameters[parameters[key]["value"]]["value"]
+                else:
+                    value = params[parameters[key]["value"]]
+            else:
+                value = parameters[key]["value"]
+        else:
+            value = params[key]
+
+        if key in log_parameters:
+            exec("{0:s} = {1}".format(key[3:], value))
+        else:
+            exec("{0:s} = {1}".format(key, value))
+    """
+
     # Stellar parameters.
 
     M_star = 1.0
@@ -101,14 +126,6 @@ def model(visibilities, images, spectra, params, output="concat", \
     position_angle = params[11]
 
     Av = params[14]
-
-    # Viewing parameters.
-
-    """
-    x0 = params[18]
-    y0 = params[19]
-    dpc = params[20]
-    """
 
     # Set up the dust.
 
@@ -203,7 +220,7 @@ def model(visibilities, images, spectra, params, output="concat", \
                     pa=position_angle, dpc=dpc, code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=False)
 
-            """
+            """NEW: Interpolate model to native baselines?
             m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
                     visibilities["data"].u, visibilities["data"].v, \
                     visibilities["data"].freq, \
@@ -359,6 +376,27 @@ def lnlike(p, visibilities, images, spectra, output, with_extinction, \
 # Define a prior function.
 
 def lnprior(p):
+    r"""NEW: loop through the parameters and test their limits if not fixed.
+    for key in parameters:
+        if not parameters[key]["fixed"]:
+            if parameters[key]["limits"][0] <= p[key] <= \
+                    parameters[key]["limits"][1]:
+                pass
+            else:
+                return -numpy.inf
+
+    # Make sure that the radii are correct.
+
+    if params["Rin"] <= params["Rdisk"] <= params["Renv"]:
+        pass
+    else:
+        return -numpy.inf
+
+    # Everything was correct, so continue on.
+
+    return 0.0
+    """
+
     if -1 < p[0] < 1.3 and p[1] <= -2.5 and \
             0.1 <= 10.**p[2] < 10.**p[3] < 10.**p[7] and \
             0.01 <= p[4] and -0.5 <= p[5] <= 2 and p[6] < -2.0 and \
@@ -374,6 +412,14 @@ def lnprior(p):
 
 def lnprob(p, visibilities, images, spectra, output, with_extinction, dpc, \
         with_graindist):
+    """NEW: make a dictionary out of the parameters.
+    keys = []
+    for key in parameters:
+        if not parameteres[key]["fixed"]:
+            keys.append(key)
+
+    params = dict(zip(keys, p))
+    """
 
     lp = lnprior(p)
 
@@ -424,6 +470,8 @@ os.system("rm -r /tmp/temp_{0:s}_*".format(source))
 ################################################################################
 
 # Import the configuration file information.
+
+sys.path.insert(0, '')
 
 from config import *
 
@@ -636,6 +684,15 @@ while nsteps < 100000:
 
         chain = numpy.concatenate((chain, sampler.chain), axis=1)
 
+        """NEW: get a list of keys that vary for plotting purposes
+        # Get keys of the parameters that are varying.
+
+        keys = []
+        for key in parameters:
+            if not parameteres[key]["fixed"]:
+                keys.append(key)
+        """
+
         # Plot the steps of the walkers.
 
         for i in range(ndim):
@@ -645,6 +702,9 @@ while nsteps < 100000:
                 ax.plot(chain[j,:,i])
 
             plt.savefig("test_{0:d}.pdf".format(i, source))
+            """NEW: save based on the name of the parameter
+            plt.savefig("steps_{0:s}.pdf".format(keys[i]))
+            """
 
             plt.close(fig)
 
@@ -701,6 +761,15 @@ while nsteps < 100000:
         f.write("p = {0:f} +/- {1:f}\n\n".format(params[15], sigma[15]))
         f.close()
 
+        r"""NEW: use the list of keys to write this out.
+        f = open("fit.txt", "w")
+        f.write("Best fit parameters:\n\n")
+        for i in range(len(keys)):
+            f.write("{0:s} = {1:f} +/- {2:f}\n".format(keys[j],params[j], \
+                    sigma[j]))
+        f.close()
+        """
+
         os.system("cat fit.txt".format(source))
 
         # Plot histograms of the resulting parameters.
@@ -711,6 +780,9 @@ while nsteps < 100000:
                 r"$\beta$", "$A_v$", "p"]
 
         fig = corner.corner(samples, labels=xlabels, truths=params)
+        """NEW: Use the keys list in place of the xlabels list
+        fig = corner.corner(samples, labels=keys, truths=params)
+        """
 
         plt.savefig("fit.pdf".format(source))
 
