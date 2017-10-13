@@ -252,30 +252,12 @@ def model(visibilities, images, spectra, params, output="concat", \
                 m.spectra["SED"].flux = dust.redden(m.spectra["SED"].wave, \
                         m.spectra["SED"].flux, Av, law="mcclure")
 
-        # Concatenate everything in the right way.
-
-        """OLD: Now returning the whole damn model.
-        if scattered_light:
-            z_model = numpy.concatenate((m.images["scattered_light"].\
-                    image.reshape((128**2,)), numpy.log10(m.spectra["SED"].\
-                    flux)))
-        else:
-            z_model = numpy.log10(m.spectra["SED"].flux)
-        for j in range(len(lam)):
-            z_model = numpy.concatenate((z_model, \
-                    m.visibilities[lam[j]].real[:,0], \
-                    m.visibilities[lam[j]].imag[:,0]))
-        """
-
         # Clean up everything and return.
 
         os.system("rm params.txt")
         os.chdir(original_dir)
         os.rmdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
 
-        """OLD: Now returning the whole damn model.
-        return z_model[good]
-        """
         return m
     else:
         # Run the high resolution visibilities.
@@ -584,33 +566,6 @@ for j in range(len(images["file"])):
 # Fit the model to the data.
 #
 ################################################################################
-
-# Set up the inputs for the MCMC function.
-
-""" OLD: Trying to pass visibilities, images, and spectra as args now.
-x = None
-y = None
-z = []
-zerr = []
-
-if args.scatteredlight:
-    z = numpy.concatenate((scattered_light.image.reshape((128**2,)), \
-            sed_log.flux))
-    zerr = numpy.concatenate((scattered_light.image.reshape((128**2,)), \
-            sed_log.unc))
-else:
-    z = sed_log.flux
-    zerr = sed_log.unc
-
-for j in range(len(lam)):
-    z = numpy.concatenate((z, vis[lam[j]].real[:,0], vis[lam[j]].imag[:,0]))
-    zerr = numpy.concatenate((zerr, 1./numpy.sqrt(vis[lam[j]].weights[:,0]), \
-            1./numpy.sqrt(vis[lam[j]].weights[:,0])))
-
-good = numpy.isfinite(zerr)
-z = z[good]
-zerr = zerr[good]
-"""
 
 # Set up the emcee run.
 
