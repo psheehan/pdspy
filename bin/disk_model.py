@@ -323,7 +323,7 @@ def model(visibilities, images, spectra, params, output="concat", \
 def lnlike(p, visibilities, images, spectra, output, with_extinction, \
         dpc, with_graindist):
 
-    m = model(visibilities, images, spectra, params, output, with_extinction, \
+    m = model(visibilities, images, spectra, p, output, with_extinction, \
             dpc, with_graindist)
 
     # A list to put all of the chisq into.
@@ -599,12 +599,7 @@ else:
         r_in = numpy.random.uniform(numpy.log10(0.1),\
                 numpy.log10((10.**r_disk)/2),1)[0]
 
-        if source in ['I04166','I04169','I04302','CRBR12','IRS63','LFAM26']:
-            pa = numpy.random.uniform(0.,180.,1)[0]
-        elif source in ['I04016','GSS30-IRS3']:
-            pa = numpy.random.uniform(90.,270.,1)[0]
-        else:
-            pa = numpy.random.uniform(-90.,90.,1)[0]
+        pa = numpy.random.uniform(0.,180.,1)[0]
 
         pos.append([numpy.random.uniform(-1., 1., 1)[0], \
                 numpy.random.uniform(-5., -3., 1)[0], \
