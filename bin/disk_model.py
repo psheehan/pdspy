@@ -70,6 +70,7 @@ def model(visibilities, images, spectra, params, parameters, output="concat", \
             "logR_disk", "logM_env", "logR_in_env", "logR_env", "logR_c", \
             "loga_max"]
 
+    p = {}
     for key in parameters:
         if parameters[key]["fixed"]:
             if isinstance(parameters[key]["value"], str):
@@ -83,9 +84,11 @@ def model(visibilities, images, spectra, params, parameters, output="concat", \
             value = params[key]
 
         if key in log_parameters:
-            exec("{0:s} = {1}".format(key[3:], 10.**value))
+            #exec("{0:s} = {1}".format(key[3:], 10.**value))
+            p[key[3:]] = 10.**value
         else:
-            exec("{0:s} = {1}".format(key, value))
+            #exec("{0:s} = {1}".format(key, value))
+            p[key[3:]] = value
 
     """OLD
     # Stellar parameters.
@@ -156,55 +159,39 @@ def model(visibilities, images, spectra, params, parameters, output="concat", \
     if params[1] > -3.0 or 10.**params[3] < 50 or params[6] > -3.0 or \
             10.**params[7] < 500:
         if args.withhyperion:
-            m = modeling.YSOModel()
-            m.add_star(luminosity=L_star, temperature=T_star)
-            m.set_spherical_grid(R_in, R_env, 100, 201, 2, code="hyperion")
-            m.add_disk(mass=M_disk, rmin=R_in, rmax=R_disk, plrho=alpha, \
-                    h0=h_0, plh=beta, dust=ddust)
-            m.add_ulrich_envelope(mass=M_env, rmin=R_in, rmax=R_env, cavpl=ksi,\
-                    cavrfact=f_cav, dust=edust)
-            m.grid.set_wavelength_grid(0.1,1.0e5,500,log=True)
-
-            # Run the thermal simulation.
-
-            m.run_thermal(code="hyperion", nphot=2e5, mrw=True, pda=True, \
-                    niterations=20, mpi=True, nprocesses=ncpus, verbose=False)
-
-            # Convert model to radmc-3d format.
-
-            m.make_hyperion_symmetric()
-
-            m.convert_hyperion_to_radmc3d()
+            nphi = 201
+            code = "hyperion"
+            nprocesses = ncpus
         else:
-            m = modeling.YSOModel()
-            m.add_star(luminosity=L_star, temperature=T_star)
-            m.set_spherical_grid(R_in, R_env, 100, 101, 2, code="radmc3d")
-            m.add_disk(mass=M_disk, rmin=R_in, rmax=R_disk, plrho=alpha, \
-                    h0=h_0, plh=beta, dust=ddust)
-            m.add_ulrich_envelope(mass=M_env, rmin=R_in, rmax=R_env, cavpl=ksi,\
-                    cavrfact=f_cav, dust=edust)
-            m.grid.set_wavelength_grid(0.1,1.0e5,500,log=True)
-
-            # Run the thermal simulation.
-
-            m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
-                    mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
-                    verbose=False, setthreads=20)
+            nphi = 101
+            code = "radmc3d"
+            nprocesses = 20
     else:
-        m = modeling.YSOModel()
-        m.add_star(luminosity=L_star, temperature=T_star)
-        m.set_spherical_grid(R_in, R_env, 100, 101, 2, code="radmc3d")
-        m.add_disk(mass=M_disk, rmin=R_in, rmax=R_disk, plrho=alpha, h0=h_0, \
-                plh=beta, dust=ddust)
-        m.add_ulrich_envelope(mass=M_env, rmin=R_in, rmax=R_env, cavpl=ksi, \
-                cavrfact=f_cav, dust=edust)
-        m.grid.set_wavelength_grid(0.1,1.0e5,500,log=True)
 
-        # Run the thermal simulation.
+    m = modeling.YSOModel()
+    m.add_star(mass=p["M_star"],luminosity=p["L_star"],temperature=p["T_star"])
+    m.set_spherical_grid(p["R_in"], p["R_env"], 100, nphi, 2, code=code)
+    m.add_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
+            plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=p["ddust")
+    m.add_ulrich_envelope(mass=p["M_env"], rmin=p["R_in"], rmax=p["R_env"], \
+            cavpl=p["ksi"], cavrfact=p["f_cav"], dust=edust)
+    m.grid.set_wavelength_grid(0.1,1.0e5,500,log=True)
 
-        m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True, \
+    # Run the thermal simulation.
+
+    if code == "hyperion":
+        m.run_thermal(code="hyperion", nphot=2e5, mrw=True, pda=True, \
+                niterations=20, mpi=True, nprocesses=nprocesses, verbose=False)
+
+        # Convert model to radmc-3d format.
+
+        m.make_hyperion_symmetric()
+
+        m.convert_hyperion_to_radmc3d()
+    else:
+        m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
                 mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
-                verbose=False)
+                verbose=False, setthreads=nprocesses)
 
     # Run the images/visibilities/SEDs. If output == "concat" then we are doing
     # a fit and we need less. Otherwise we are making a plot of the best fit 
