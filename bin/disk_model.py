@@ -61,8 +61,7 @@ if args.action == 'plot':
 #
 ################################################################################
 
-def model(visibilities, images, spectra, params, parameters, output="concat", \
-        with_extinction=False, dpc=140, with_graindist=False):
+def model(visibilities, images, spectra, params, parameters, output="concat"):
 
     # Set the values of all of the parameters.
 
@@ -204,8 +203,8 @@ def model(visibilities, images, spectra, params, parameters, output="concat", \
             m.run_visibilities(name=visibilities["lam"][j], nphot=1e5, \
                     npix=visibilities["npix"][j], \
                     pixelsize=visibilities["pixelsize"][j], \
-                    lam=visibilities["lam"][j], incl=inclination, \
-                    pa=position_angle, dpc=dpc, code="radmc3d", \
+                    lam=visibilities["lam"][j], incl=p["i"], \
+                    pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=False)
 
             """NEW: Interpolate model to native baselines?
@@ -220,8 +219,8 @@ def model(visibilities, images, spectra, params, parameters, output="concat", \
         for j in range(len(images["file"])):
             m.run_image(name=images["lam"][j], nphot=1e5, \
                     npix=images["npix"][j], pixelsize=images["pixelsize"][j], \
-                    lam=images["lam"][j], incl=inclination, \
-                    pa=position_angle, dpc=dpc, code="radmc3d", \
+                    lam=images["lam"][j], incl=p["i"], \
+                    pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=False)
 
             """NEW: convolve the image with the beam?"""
@@ -231,8 +230,8 @@ def model(visibilities, images, spectra, params, parameters, output="concat", \
         if "total" in spectra:
             m.set_camera_wavelength(spectra["total"].wave)
 
-            m.run_sed(name="SED", nphot=1e4, loadlambda=True, incl=inclination,\
-                    pa=position_angle, dpc=dpc, code="radmc3d", \
+            m.run_sed(name="SED", nphot=1e4, loadlambda=True, incl=p["i"],\
+                    pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                     camera_scatsrc_allfreq=True, mc_scat_maxtauabs=5, \
                     verbose=False)
 
@@ -255,7 +254,7 @@ def model(visibilities, images, spectra, params, parameters, output="concat", \
 
             m.run_visibilities(name=visibilities["lam"][j], nphot=1e5, \
                     npix=2048, pixelsize=0.05, lam=visibilities["lam"][j], \
-                    incl=inclination, pa=position_angle, dpc=dpc, \
+                    incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
                     code="radmc3d", mc_scat_maxtauabs=5, verbose=False)
 
             # Run the visibilities they were done for the fit to show in 2D
@@ -263,8 +262,8 @@ def model(visibilities, images, spectra, params, parameters, output="concat", \
             m.run_visibilities(name=visibilities["lam"][j]+"2D", nphot=1e5, \
                     npix=visibilities["npix"][j], \
                     pixelsize=visibilities["pixelsize"][j], \
-                    lam=visibilities["lam"][j], incl=inclination, \
-                    pa=-position_angle, dpc=dpc, code="radmc3d", \
+                    lam=visibilities["lam"][j], incl=p["i"], \
+                    pa=-p["pa"], dpc=p["dpc"], code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=False)
 
             # Run a millimeter image.
@@ -272,8 +271,8 @@ def model(visibilities, images, spectra, params, parameters, output="concat", \
             m.run_image(name=visibilities["lam"][j], nphot=1e5, \
                     npix=visibilities["image_npix"][j], \
                     pixelsize=visibilities["image_pixelsize"][j], \
-                    lam=visibilities["lam"][j], incl=inclination, \
-                    pa=position_angle, dpc=dpc, code="radmc3d", \
+                    lam=visibilities["lam"][j], incl=p["i"], \
+                    pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=False)
 
         # Run the scattered light image. 
@@ -281,15 +280,16 @@ def model(visibilities, images, spectra, params, parameters, output="concat", \
         for j in range(len(images["file"])):
             m.run_image(name=images["lam"][j], nphot=1e5, \
                     npix=images["npix"][j], pixelsize=images["pixelsize"][j], \
-                    lam=images["lam"][j], incl=inclination, pa=position_angle, \
-                    dpc=dpc, code="radmc3d", mc_scat_maxtauabs=5, verbose=False)
+                    lam=images["lam"][j], incl=p["i"], pa=p["pa"], \
+                    dpc=p["dpc"], code="radmc3d", mc_scat_maxtauabs=5, \
+                    verbose=False)
 
         # Run the SED
 
         m.set_camera_wavelength(numpy.logspace(-1,4,50))
 
-        m.run_sed(name="SED", nphot=1e4, loadlambda=True, incl=inclination, \
-                pa=position_angle, dpc=dpc, code="radmc3d", \
+        m.run_sed(name="SED", nphot=1e4, loadlambda=True, incl=p["i"], \
+                pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                 camera_scatsrc_allfreq=True, mc_scat_maxtauabs=5, \
                 verbose=False)
 
@@ -307,11 +307,9 @@ def model(visibilities, images, spectra, params, parameters, output="concat", \
 
 # Define a likelihood function.
 
-def lnlike(params, visibilities, images, spectra, parameters, output, \
-        with_extinction, dpc, with_graindist):
+def lnlike(params, visibilities, images, spectra, parameters, output):
 
-    m = model(visibilities, images, spectra, params, parameters, output, \
-            with_extinction, dpc, with_graindist)
+    m = model(visibilities, images, spectra, params, parameters, output)
 
     # A list to put all of the chisq into.
 
@@ -380,8 +378,7 @@ def lnprior(params, parameters):
 
 # Define a probability function.
 
-def lnprob(p, visibilities, images, spectra, parameters, output, \
-        with_extinction, dpc, with_graindist):
+def lnprob(p, visibilities, images, spectra, parameters, output):
 
     keys = []
     for key in parameters:
@@ -396,7 +393,7 @@ def lnprob(p, visibilities, images, spectra, parameters, output, \
         return -numpy.inf
 
     return lp + lnlike(params, visibilities, images, spectra, parameters, \
-            output, with_extinction, dpc, with_graindist)
+            output)
 
 # Define a useful class for plotting.
 
@@ -617,8 +614,7 @@ else:
 
 if args.action == "run":
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, \
-            args=(visibilities, images, spectra, "concat", args.withextinction,\
-            dpc, args.withgraindist), pool=pool)
+            args=(visibilities, images, spectra, "concat"), pool=pool)
 
 # Run a few burner steps.
 
