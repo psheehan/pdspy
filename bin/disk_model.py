@@ -87,7 +87,7 @@ def model(visibilities, images, spectra, params, parameters, output="concat"):
             p[key[3:]] = 10.**value
         else:
             #exec("{0:s} = {1}".format(key, value))
-            p[key[3:]] = value
+            p[key] = value
 
     """OLD
     # Stellar parameters.
@@ -129,6 +129,9 @@ def model(visibilities, images, spectra, params, parameters, output="concat"):
 
     Av = params[14]
     """
+    # Make sure alpha is defined.
+
+    p["alpha"] = p["gamma"] + p["beta"]
 
     # Set up the dust.
 
@@ -137,7 +140,7 @@ def model(visibilities, images, spectra, params, parameters, output="concat"):
     dust_gen = dust.DustGenerator(os.environ["HOME"]+\
             "/Documents/Projects/DiskMasses/Modeling/Dust/"+dustopac)
 
-    ddust = dust_gen(a_max / 1e4, p)
+    ddust = dust_gen(p["a_max"] / 1e4, p["p"])
     edust = dust_gen(1.0e-4, 3.5)
 
     # Make sure we are in a temp directory to not overwrite anything.
@@ -149,8 +152,8 @@ def model(visibilities, images, spectra, params, parameters, output="concat"):
     # Write the parameters to a text file so it is easy to keep track of them.
 
     f = open("params.txt","w")
-    for j in range(len(params)):
-        f.write("params[{0:d}] = {1:f}\n".format(i, params[i]))
+    for key in p:
+        f.write("{0:s} = {1:f}\n".format(key, p[key]))
     f.close()
 
     # Set up the model and run the thermal simulation.
@@ -166,12 +169,15 @@ def model(visibilities, images, spectra, params, parameters, output="concat"):
             code = "radmc3d"
             nprocesses = 20
     else:
+        nphi = 101
+        code = "radmc3d"
+        nprocesses = 1
 
     m = modeling.YSOModel()
     m.add_star(mass=p["M_star"],luminosity=p["L_star"],temperature=p["T_star"])
     m.set_spherical_grid(p["R_in"], p["R_env"], 100, nphi, 2, code=code)
     m.add_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
-            plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=p["ddust")
+            plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust)
     m.add_ulrich_envelope(mass=p["M_env"], rmin=p["R_in"], rmax=p["R_env"], \
             cavpl=p["ksi"], cavrfact=p["f_cav"], dust=edust)
     m.grid.set_wavelength_grid(0.1,1.0e5,500,log=True)
@@ -235,9 +241,8 @@ def model(visibilities, images, spectra, params, parameters, output="concat"):
                     camera_scatsrc_allfreq=True, mc_scat_maxtauabs=5, \
                     verbose=False)
 
-            if with_extinction:
-                m.spectra["SED"].flux = dust.redden(m.spectra["SED"].wave, \
-                        m.spectra["SED"].flux, Av, law="mcclure")
+            m.spectra["SED"].flux = dust.redden(m.spectra["SED"].wave, \
+                    m.spectra["SED"].flux, p["Ak"], law="mcclure")
 
         # Clean up everything and return.
 
@@ -293,9 +298,8 @@ def model(visibilities, images, spectra, params, parameters, output="concat"):
                 camera_scatsrc_allfreq=True, mc_scat_maxtauabs=5, \
                 verbose=False)
 
-        if with_extinction:
-            m.spectra["SED"].flux = dust.redden(m.spectra["SED"].wave, \
-                    m.spectra["SED"].flux, Av, law="mcclure")
+        m.spectra["SED"].flux = dust.redden(m.spectra["SED"].wave, \
+                m.spectra["SED"].flux, p["Ak"], law="mcclure")
 
         # Clean up everything and return.
 
@@ -467,15 +471,15 @@ for j in range(len(visibilities["file"])):
     #NEW: interpolate model to baselines instead of averaging the data to the
     #        model grid?
 
-    visibilities["data"].append(data)
-
     """
+    visibilities["data"].append(data)
+    """
+
     # Average the data to a more manageable size.
 
     visibilities["data"].append(uv.grid(data, \
             gridsize=visibilities["gridsize"][j], \
             binsize=visibilities["binsize"][j]))
-    """
 
     # Scale the weights of the visibilities to force them to be fit well.
 
@@ -489,9 +493,7 @@ for j in range(len(visibilities["file"])):
 
     # Clean up the data because we don't need it any more.
 
-    """
     del data
-    """
 
     # Read in the image.
 
@@ -736,8 +738,7 @@ while nsteps < 100000:
 
     # Create a high resolution model for averaging.
 
-    m = model(visibilities, images, spectra, params, parameters, \
-            output="data", with_extinction=args.withextinction)
+    m = model(visibilities, images, spectra, params, parameters, output="data")
 
     # Plot the millimeter data/models.
 
