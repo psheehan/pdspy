@@ -385,7 +385,7 @@ def lnprior(params, parameters):
 def lnprob(p, visibilities, images, spectra, parameters, output):
 
     keys = []
-    for key in parameters:
+    for key in sorted(parameters.keys()):
         if not parameteres[key]["fixed"]:
             keys.append(key)
 
@@ -557,7 +557,12 @@ for j in range(len(images["file"])):
 
 # Set up the emcee run.
 
-ndim, nwalkers = 16, 200
+nwalkers = 200
+
+ndim = 0
+for key in parameters:
+    if not parameters[key]["fixed"]:
+        ndim += 1
 
 # If we are resuming an MCMC simulation, read in the necessary info, otherwise
 # set up the info.
@@ -572,15 +577,6 @@ if args.resume:
         prob = None
     else:
         prob = numpy.load("prob.npy".format(source))
-
-    # If we started running without p, make sure we add the necessary stuff.
-
-    if chain.shape[2] == 15:
-        extra = numpy.random.uniform(2.5, 4.5, nwalkers*nsteps).\
-                reshape((nwalkers, nsteps, 1))
-
-        chain = numpy.concatenate((chain, extra), axis=2)
-        pos = chain[:,-1,:]
 else:
     pos = []
     for j in range(nwalkers):
@@ -590,23 +586,28 @@ else:
         r_in = numpy.random.uniform(numpy.log10(0.1),\
                 numpy.log10((10.**r_disk)/2),1)[0]
 
-        pa = numpy.random.uniform(0.,180.,1)[0]
+        temp_pos = []
 
-        pos.append([numpy.random.uniform(-1., 1., 1)[0], \
-                numpy.random.uniform(-5., -3., 1)[0], \
-                r_in, r_disk, \
-                numpy.random.uniform(0.01,0.15,1)[0], \
-                numpy.random.uniform(-0.5,2.0,1)[0], \
-                numpy.random.uniform(-5., -3., 1)[0], \
-                r_env, \
-                numpy.random.uniform(0, 1., 1)[0], \
-                numpy.random.uniform(0.5, 1.5, 1)[0], \
-                numpy.random.uniform(0, 90., 1)[0], \
-                pa, \
-                numpy.random.uniform(0., 5., 1)[0], \
-                numpy.random.uniform(0.5, 1.5, 1)[0], \
-                numpy.random.uniform(0., 2., 1)[0], \
-                numpy.random.uniform(2.5, 4.5, 1)[0]])
+        for key in sorted(parameters.keys()):
+            if parameters[key]["fixed"]:
+                pass
+            elif key == "R_in":
+                temp_pos.append(r_in)
+            elif key == "R_disk":
+                temp_pos.append(r_disk)
+            elif key == "R_env":
+                temp_pos.append(r_env)
+            elif key == "M_disk":
+                temp_pos.append(numpy.random.uniform(-5.,-3.,1)[0])
+            elif key == "M_env":
+                temp_pos.append(numpy.random.uniform(-5.,-3.,1)[0])
+            else:
+                temp_pos.append(numpy.random.uniform(\
+                        parameters[key]["limits"][0], \
+                        parameters[key]["limits"][1], 1)[0])
+
+        pos.append(temp_pos)
+
     prob = None
     chain = numpy.empty((nwalkers, 0, ndim))
     state = None
