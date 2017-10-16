@@ -158,8 +158,8 @@ def model(visibilities, images, spectra, params, parameters, output="concat"):
 
     # Set up the model and run the thermal simulation.
 
-    if params[1] > -3.0 or 10.**params[3] < 50 or params[6] > -3.0 or \
-            10.**params[7] < 500:
+    if p["M_disk"] > 0.001 or p["R_disk"] < 50 or p["M_env"] > 0.001 or \
+            p["R_env"] < 500:
         if args.withhyperion:
             nphi = 201
             code = "hyperion"
@@ -358,7 +358,22 @@ def lnprior(params, parameters):
 
     # Make sure that the radii are correct.
 
-    if params["Rin"] <= params["Rdisk"] <= params["Renv"]:
+    if "logR_in" in params:
+        R_in = 10.**params["logR_in"]
+    else:
+        R_in = 10.**parameters["logR_in"]["value"]
+
+    if "logR_disk" in params:
+        R_disk = 10.**params["logR_disk"]
+    else:
+        R_disk = 10.**parameters["logR_disk"]["value"]
+
+    if "logR_env" in params:
+        R_env = 10.**params["logR_env"]
+    else:
+        R_env = 10.**parameters["logR_env"]["value"]
+
+    if R_in <= R_disk <= R_env:
         pass
     else:
         return -numpy.inf
@@ -386,7 +401,7 @@ def lnprob(p, visibilities, images, spectra, parameters, output):
 
     keys = []
     for key in sorted(parameters.keys()):
-        if not parameteres[key]["fixed"]:
+        if not parameters[key]["fixed"]:
             keys.append(key)
 
     params = dict(zip(keys, p))
@@ -557,7 +572,7 @@ for j in range(len(images["file"])):
 
 # Set up the emcee run.
 
-nwalkers = 200
+nwalkers = 6
 
 ndim = 0
 for key in parameters:
@@ -617,11 +632,12 @@ else:
 
 if args.action == "run":
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, \
-            args=(visibilities, images, spectra, "concat"), pool=pool)
+            args=(visibilities, images, spectra, parameters, "concat"), \
+            pool=pool)
 
 # Run a few burner steps.
 
-while nsteps < 100000:
+while nsteps < 5:
     if args.action == "run":
         pos, prob, state = sampler.run_mcmc(pos, 5, lnprob0=prob, rstate0=state)
 
@@ -630,8 +646,8 @@ while nsteps < 100000:
         # Get keys of the parameters that are varying.
 
         keys = []
-        for key in parameters:
-            if not parameteres[key]["fixed"]:
+        for key in sorted(parameters.keys()):
+            if not parameters[key]["fixed"]:
                 keys.append(key)
 
         # Plot the steps of the walkers.
@@ -645,7 +661,7 @@ while nsteps < 100000:
             """OLD
             plt.savefig("test_{0:d}.pdf".format(i, source))
             """
-            plt.savefig("steps_{0:s}.pdf".format(keys[i]))
+            plt.savefig("steps_{0:s}.pdf".format(keys[j]))
 
             plt.close(fig)
 
@@ -667,10 +683,6 @@ while nsteps < 100000:
 
     params = numpy.median(samples, axis=0)
     sigma = samples.std(axis=0)
-
-    # Fix the position angle.
-
-    params[11] = -params[11]
 
     # When plotting, change parameter values here.
 
