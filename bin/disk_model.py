@@ -58,7 +58,7 @@ if args.action == 'plot':
 #
 ################################################################################
 
-def model(visibilities, images, spectra, params, parameters, output="concat"):
+def model(visibilities, images, spectra, params, parameters, plot=False):
 
     # Set the values of all of the parameters.
 
@@ -155,78 +155,34 @@ def model(visibilities, images, spectra, params, parameters, output="concat"):
                 mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
                 verbose=False, setthreads=nprocesses)
 
-    # Run the images/visibilities/SEDs. If output == "concat" then we are doing
+    # Run the images/visibilities/SEDs. If plot == "concat" then we are doing
     # a fit and we need less. Otherwise we are making a plot of the best fit 
     # model so we need to generate a few extra things.
 
-    if output == "concat":
-        # Run the visibilities.
+    # Run the visibilities.
 
-        for j in range(len(visibilities["file"])):
-            m.run_visibilities(name=visibilities["lam"][j], nphot=1e5, \
-                    npix=visibilities["npix"][j], \
-                    pixelsize=visibilities["pixelsize"][j], \
-                    lam=visibilities["lam"][j], incl=p["i"], \
-                    pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
-                    mc_scat_maxtauabs=5, verbose=False)
+    for j in range(len(visibilities["file"])):
+        m.run_visibilities(name=visibilities["lam"][j], nphot=1e5, \
+                npix=visibilities["npix"][j], \
+                pixelsize=visibilities["pixelsize"][j], \
+                lam=visibilities["lam"][j], incl=p["i"], \
+                pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
+                mc_scat_maxtauabs=5, verbose=False)
 
-            """NEW: Interpolate model to native baselines?
-            m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
-                    visibilities["data"].u, visibilities["data"].v, \
-                    visibilities["data"].freq, \
-                    m.visibilities[visibilities["lam"][j]])
-            """
+        """NEW: Interpolate model to native baselines?
+        m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
+                visibilities["data"].u, visibilities["data"].v, \
+                visibilities["data"].freq, \
+                m.visibilities[visibilities["lam"][j]])
+        """
 
-        # Run the images.
-
-        for j in range(len(images["file"])):
-            m.run_image(name=images["lam"][j], nphot=1e5, \
-                    npix=images["npix"][j], pixelsize=images["pixelsize"][j], \
-                    lam=images["lam"][j], incl=p["i"], \
-                    pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
-                    mc_scat_maxtauabs=5, verbose=False)
-
-            """NEW: convolve the image with the beam?"""
-
-        # Run the SED.
-
-        if "total" in spectra:
-            m.set_camera_wavelength(spectra["total"].wave)
-
-            m.run_sed(name="SED", nphot=1e4, loadlambda=True, incl=p["i"],\
-                    pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
-                    camera_scatsrc_allfreq=True, mc_scat_maxtauabs=5, \
-                    verbose=False)
-
-            m.spectra["SED"].flux = dust.redden(m.spectra["SED"].wave, \
-                    m.spectra["SED"].flux, p["Ak"], law="mcclure")
-
-        # Clean up everything and return.
-
-        os.system("rm params.txt")
-        os.chdir(original_dir)
-        os.rmdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
-
-        return m
-    else:
-        # Run the high resolution visibilities.
-
-        for j in range(len(visibilities["file"])):
+        if plot:
             # Run a high resolution version of the visibilities.
 
-            m.run_visibilities(name=visibilities["lam"][j], nphot=1e5, \
+            m.run_visibilities(name=visibilities["lam"][j]+"_high", nphot=1e5, \
                     npix=2048, pixelsize=0.05, lam=visibilities["lam"][j], \
                     incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
                     code="radmc3d", mc_scat_maxtauabs=5, verbose=False)
-
-            # Run the visibilities they were done for the fit to show in 2D
-
-            m.run_visibilities(name=visibilities["lam"][j]+"2D", nphot=1e5, \
-                    npix=visibilities["npix"][j], \
-                    pixelsize=visibilities["pixelsize"][j], \
-                    lam=visibilities["lam"][j], incl=p["i"], \
-                    pa=-p["pa"], dpc=p["dpc"], code="radmc3d", \
-                    mc_scat_maxtauabs=5, verbose=False)
 
             # Run a millimeter image.
 
@@ -237,20 +193,50 @@ def model(visibilities, images, spectra, params, parameters, output="concat"):
                     pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=False)
 
-        # Run the scattered light image. 
+            x, y = numpy.meshgrid(numpy.linspace(-256,255,512), \
+                    numpy.linspace(-256,255,512))
 
-        for j in range(len(images["file"])):
-            m.run_image(name=images["lam"][j], nphot=1e5, \
-                    npix=images["npix"][j], pixelsize=images["pixelsize"][j], \
-                    lam=images["lam"][j], incl=p["i"], pa=p["pa"], \
-                    dpc=p["dpc"], code="radmc3d", mc_scat_maxtauabs=5, \
-                    verbose=False)
+            beam = misc.gaussian2d(x, y, 0., 0., \
+                    visibilities["image"][j].header["BMAJ"]/2.355/\
+                    visibilities["image"][j].header["CDELT2"], \
+                    visibilities["image"][j].header["BMIN"]/2.355/\
+                    visibilities["image"][j].header["CDELT2"], \
+                    (90-visibilities["image"][j].header["BPA"])*numpy.pi/180., \
+                    1.0)
 
-        # Run the SED
+            model_image.image = scipy.signal.fftconvolve(\
+                    model_image.image[:,:,0,0], beam, mode="same").\
+                    reshape(model_image.image.shape)
 
-        m.set_camera_wavelength(numpy.logspace(-1,4,50))
+    # Run the images.
 
-        m.run_sed(name="SED", nphot=1e4, loadlambda=True, incl=p["i"], \
+    for j in range(len(images["file"])):
+        m.run_image(name=images["lam"][j], nphot=1e5, \
+                npix=images["npix"][j], pixelsize=images["pixelsize"][j], \
+                lam=images["lam"][j], incl=p["i"], \
+                pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
+                mc_scat_maxtauabs=5, verbose=False)
+
+        # Convolve with the beam.
+
+        x, y = numpy.meshgrid(numpy.linspace(-256,255,512), \
+                numpy.linspace(-256,255,512))
+
+        beam = misc.gaussian2d(x, y, 0., 0., 1., 1., 0., 1.0)
+
+        m.images[image["lam"][j]].image = scipy.signal.fftconvolve(\
+                m.images[image["lam"][j]].image[:,:,0,0], beam, mode="same").\
+                reshape(model_image.image.shape)
+
+    # Run the SED.
+
+    if "total" in spectra:
+        if plot:
+            m.set_camera_wavelength(numpy.logspace(-1,4,50))
+        else:
+            m.set_camera_wavelength(spectra["total"].wave)
+
+        m.run_sed(name="SED", nphot=1e4, loadlambda=True, incl=p["i"],\
                 pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                 camera_scatsrc_allfreq=True, mc_scat_maxtauabs=5, \
                 verbose=False)
@@ -258,19 +244,19 @@ def model(visibilities, images, spectra, params, parameters, output="concat"):
         m.spectra["SED"].flux = dust.redden(m.spectra["SED"].wave, \
                 m.spectra["SED"].flux, p["Ak"], law="mcclure")
 
-        # Clean up everything and return.
+    # Clean up everything and return.
 
-        os.system("rm params.txt")
-        os.chdir(original_dir)
-        os.rmdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
+    os.system("rm params.txt")
+    os.chdir(original_dir)
+    os.rmdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
 
-        return m
+    return m
 
 # Define a likelihood function.
 
-def lnlike(params, visibilities, images, spectra, parameters, output):
+def lnlike(params, visibilities, images, spectra, parameters, plot):
 
-    m = model(visibilities, images, spectra, params, parameters, output)
+    m = model(visibilities, images, spectra, params, parameters, plot)
 
     # A list to put all of the chisq into.
 
@@ -341,7 +327,7 @@ def lnprior(params, parameters):
 
 # Define a probability function.
 
-def lnprob(p, visibilities, images, spectra, parameters, output):
+def lnprob(p, visibilities, images, spectra, parameters, plot):
 
     keys = []
     for key in sorted(parameters.keys()):
@@ -356,7 +342,7 @@ def lnprob(p, visibilities, images, spectra, parameters, output):
         return -numpy.inf
 
     return lp + lnlike(params, visibilities, images, spectra, parameters, \
-            output)
+            plot)
 
 # Define a useful class for plotting.
 
@@ -575,7 +561,7 @@ else:
 
 if args.action == "run":
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, \
-            args=(visibilities, images, spectra, parameters, "concat"), \
+            args=(visibilities, images, spectra, parameters, False), \
             pool=pool)
 
 # Run a few burner steps.
@@ -671,14 +657,14 @@ while nsteps < 5:
 
     # Create a high resolution model for averaging.
 
-    m = model(visibilities, images, spectra, params, parameters, output="data")
+    m = model(visibilities, images, spectra, params, parameters, plot=True)
 
     # Plot the millimeter data/models.
 
     for j in range(len(visibilities["file"])):
         # Create a high resolution model for averaging.
 
-        m1d = uv.average(m.visibilities[visibilities["lam"][j]], \
+        m1d = uv.average(m.visibilities[visibilities["lam"][j]+"_high"], \
                 gridsize=10000, binsize=3500, radial=True)
 
         # Plot the visibilities.
@@ -717,7 +703,7 @@ while nsteps < 5:
                 (visibilities["npix"][j],visibilities["npix"][j]))\
                 [xmin:xmax,xmin:xmax][:,::-1], origin="lower", \
                 interpolation="nearest", vmin=vmin, vmax=vmax)
-        ax[2*j+1,0].contour(m.visibilities[visibilities["lam"][j]+"2D"].real.\
+        ax[2*j+1,0].contour(m.visibilities[visibilities["lam"][j]].real.\
                 reshape((visibilities["npix"][j],visibilities["npix"][j]))\
                 [xmin:xmax,xmin:xmax][:,::-1])
 
@@ -728,7 +714,7 @@ while nsteps < 5:
                 (visibilities["npix"][j],visibilities["npix"][j]))\
                 [xmin:xmax,xmin:xmax][:,::-1], origin="lower", \
                 interpolation="nearest", vmin=vmin, vmax=vmax)
-        ax[2*j+1,1].contour(m.visibilities[visibilities["lam"][j]+"2D"].imag.\
+        ax[2*j+1,1].contour(m.visibilities[visibilities["lam"][j]].imag.\
                 reshape((visibilities["npix"][j],visibilities["npix"][j]))\
                 [xmin:xmax,xmin:xmax][:,::-1])
 
@@ -752,20 +738,6 @@ while nsteps < 5:
         # Create a model image to contour over the image.
 
         model_image = m.images[visibilities["lam"][j]]
-
-        x, y = numpy.meshgrid(numpy.linspace(-256,255,512), \
-                numpy.linspace(-256,255,512))
-
-        beam = misc.gaussian2d(x, y, 0., 0., \
-                visibilities["image"][j].header["BMAJ"]/2.355/\
-                visibilities["image"][j].header["CDELT2"], \
-                visibilities["image"][j].header["BMIN"]/2.355/\
-                visibilities["image"][j].header["CDELT2"], \
-                (90-visibilities["image"][j].header["BPA"])*numpy.pi/180., 1.0)
-
-        model_image.image = scipy.signal.fftconvolve(\
-                model_image.image[:,:,0,0], beam, mode="same").\
-                reshape(model_image.image.shape)
 
         # Plot the image.
 
@@ -843,12 +815,6 @@ while nsteps < 5:
         # Create a model image to contour over the image.
 
         model_image = m.images[images["lam"][j]]
-
-        beam = misc.gaussian2d(x, y, 0., 0., 1., 1., 0., 1.0)
-
-        model_image.image = scipy.signal.fftconvolve(\
-                model_image.image[:,:,0,0], beam, mode="same").\
-                reshape(model_image.image.shape)
 
         vmin = model_image.image.min()
         vmax = model_image.image.max()
