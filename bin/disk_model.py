@@ -80,10 +80,8 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
             value = params[key]
 
         if key in log_parameters:
-            #exec("{0:s} = {1}".format(key[3:], 10.**value))
             p[key[3:]] = 10.**value
         else:
-            #exec("{0:s} = {1}".format(key, value))
             p[key] = value
 
     # Make sure alpha is defined.
@@ -512,15 +510,15 @@ for key in parameters:
 # set up the info.
 
 if args.resume:
-    pos = numpy.load("pos.npy".format(source))
-    chain = numpy.load("chain.npy".format(source))
+    pos = numpy.load("pos.npy")
+    chain = numpy.load("chain.npy")
     state = None
     nsteps = chain[0,:,0].size
 
     if args.resetprob:
         prob = None
     else:
-        prob = numpy.load("prob.npy".format(source))
+        prob = numpy.load("prob.npy")
 else:
     pos = []
     for j in range(nwalkers):
@@ -593,9 +591,9 @@ while nsteps < 5:
 
         # Save walker positions in case the code stps running for some reason.
 
-        numpy.save("pos".format(source), pos)
-        numpy.save("prob".format(source), prob)
-        numpy.save("chain".format(source), chain)
+        numpy.save("pos", pos)
+        numpy.save("prob", prob)
+        numpy.save("chain", chain)
 
         # Augment the nuber of steps and reset the sampler for the next run.
 
@@ -623,7 +621,7 @@ while nsteps < 5:
         f.write("\n")
         f.close()
 
-        os.system("cat fit.txt".format(source))
+        os.system("cat fit.txt")
 
         # Plot histograms of the resulting parameters.
 
@@ -634,7 +632,7 @@ while nsteps < 5:
 
         fig = corner.corner(samples, labels=keys, truths=params)
 
-        plt.savefig("fit.pdf".format(source))
+        plt.savefig("fit.pdf")
 
     # Make a dictionary of the best fit parameters.
 
@@ -878,7 +876,7 @@ while nsteps < 5:
 
     # Adjust the figure and save.
 
-    fig.savefig("model.pdf".format(source))
+    fig.savefig("model.pdf")
 
     plt.close(fig)
 
