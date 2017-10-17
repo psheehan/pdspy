@@ -606,15 +606,15 @@ else:
         for key in sorted(parameters.keys()):
             if parameters[key]["fixed"]:
                 pass
-            elif key == "R_in":
+            elif key == "logR_in":
                 temp_pos.append(r_in)
-            elif key == "R_disk":
+            elif key == "logR_disk":
                 temp_pos.append(r_disk)
-            elif key == "R_env":
+            elif key == "logR_env":
                 temp_pos.append(r_env)
-            elif key == "M_disk":
+            elif key == "logM_disk":
                 temp_pos.append(numpy.random.uniform(-5.,-3.,1)[0])
-            elif key == "M_env":
+            elif key == "logM_env":
                 temp_pos.append(numpy.random.uniform(-5.,-3.,1)[0])
             else:
                 temp_pos.append(numpy.random.uniform(\
@@ -684,11 +684,6 @@ while nsteps < 5:
     params = numpy.median(samples, axis=0)
     sigma = samples.std(axis=0)
 
-    # When plotting, change parameter values here.
-
-    if args.action == "plot":
-        pass
-
     # Print out the status of the fit.
 
     if args.action == "run":
@@ -721,6 +716,7 @@ while nsteps < 5:
         for j in range(len(keys)):
             f.write("{0:s} = {1:f} +/- {2:f}\n".format(keys[j], params[j], \
                     sigma[j]))
+        f.write("\n")
         f.close()
 
         os.system("cat fit.txt".format(source))
@@ -738,6 +734,15 @@ while nsteps < 5:
         fig = corner.corner(samples, labels=keys, truths=params)
 
         plt.savefig("fit.pdf".format(source))
+
+    # Make a dictionary of the best fit parameters.
+
+    keys = []
+    for key in sorted(parameters.keys()):
+        if not parameters[key]["fixed"]:
+            keys.append(key)
+
+    params = dict(zip(keys, params))
 
     ############################################################################
     #
