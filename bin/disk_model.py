@@ -201,9 +201,10 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
                     (90-visibilities["image"][j].header["BPA"])*numpy.pi/180., \
                     1.0)
 
-            model_image.image = scipy.signal.fftconvolve(\
-                    model_image.image[:,:,0,0], beam, mode="same").\
-                    reshape(model_image.image.shape)
+            m.images[visibilities["lam"][j]].image = scipy.signal.fftconvolve(\
+                    m.images[visibilities["lam"][j]].image[:,:,0,0], beam, \
+                    mode="same").reshape(m.images[visibilities["lam"][j]].\
+                    image.shape)
 
     # Run the images.
 
@@ -221,9 +222,9 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
 
         beam = misc.gaussian2d(x, y, 0., 0., 1., 1., 0., 1.0)
 
-        m.images[image["lam"][j]].image = scipy.signal.fftconvolve(\
-                m.images[image["lam"][j]].image[:,:,0,0], beam, mode="same").\
-                reshape(model_image.image.shape)
+        m.images[images["lam"][j]].image = scipy.signal.fftconvolve(\
+                m.images[images["lam"][j]].image[:,:,0,0], beam, mode="same").\
+                reshape(m.images[images["lam"][j]].image.shape)
 
     # Run the SED.
 
@@ -667,7 +668,6 @@ while nsteps < 1000:
 
     # Plot the best fit model over the data.
 
-    print("Hello!")
     fig, ax = plt.subplots(nrows=2*len(visibilities["file"]), ncols=3)
 
     # Create a high resolution model for averaging.
@@ -815,7 +815,7 @@ while nsteps < 1000:
                 (c.max() - c.min()) + c.min()
 
         ax[1,2].contour(c[:,:,0,0], colors='gray', levels=levels)
-    else:
+    if len(images["file"]) == 0:
         ax[1,2].set_axis_off()
 
     # Adjust the plot and save it.
