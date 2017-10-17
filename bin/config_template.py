@@ -1,3 +1,5 @@
+import numpy
+
 ################################################################################
 #
 # Set up the list of datasets that will be fit.
@@ -14,31 +16,35 @@ visibilities = {
         "lam" = ["1300"],
         "npix" = [256],
         "gridsize" = [256],
-        "weight" = [10.]
+        "weight" = [10.],
+        "ticks":[numpy.array([-250,-200,-100,0,100,200,250])],
         # Info for the image.
-        "image_file":["path/to/image_file1"]
-        "image_pixelsize":[0.05]
-        "image_npix":[1024]
+        "image_file":["path/to/image_file1"],
+        "image_pixelsize":[0.05],
+        "image_npix":[1024],
+        "image_ticks":[numpy.array([-6.0,-5.0,-2.5,0,2.5,5.0,6.0])],
         }
 
 # Something similar for images.
 
 images = {
-        "file":["path/to/file1"]
-        "npix":[128]
-        "pixelsize":[0.1]
-        "lam":["0.8"]
-        "bmaj":[1.0]
-        "bmin":[1.0]
-        "bpa":[0.0]
+        "file":["path/to/file1"],
+        "npix":[128],
+        "pixelsize":[0.1],
+        "lam":["0.8"],
+        "bmaj":[1.0],
+        "bmin":[1.0],
+        "bpa":[0.0],
+        "ticks":[numpy.array([-6,-3,0,3,6])],
+        "plot_mode":["linear"],
         }
 
 # Something similar for spectra.
 
 spectra = {
-        "file":["path/to/file1"]
-        "bin?":[False]
-        "nbins":[25]
+        "file":["path/to/file1"],
+        "bin?":[False],
+        "nbins":[25],
         }
 
 ################################################################################

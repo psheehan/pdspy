@@ -353,6 +353,26 @@ class Transform:
     def __call__(self, x, p):
         return self.fmt% ((x-(self.xmax-self.xmin+1)/2)*self.dx)
 
+# Define a function to scale an image to look nice.
+
+def scale_image(image, mode="linear"):
+    vmin = image.image.min()
+    vmax = numpy.percentile(image.image, 95)
+
+    a = 1000.
+    b = (image.image - vmin) / (vmax - vmin)
+
+    if mode == "linear":
+        c = b
+    elif mode == "arcsinh":
+        c = numpy.arcsinh(10*b)/3.
+    elif mode == "log":
+        c = numpy.log10(a*b+1)/numpy.log10(a)
+    else:
+        print("Not a valid mode!")
+
+    return c
+
 ################################################################################
 #
 # Set up a pool for parallel runs.
@@ -565,7 +585,7 @@ if args.action == "run":
 
 # Run a few burner steps.
 
-while nsteps < 5:
+while nsteps < 1000:
     if args.action == "run":
         pos, prob, state = sampler.run_mcmc(pos, 5, lnprob0=prob, rstate0=state)
 
@@ -626,11 +646,6 @@ while nsteps < 5:
 
         # Plot histograms of the resulting parameters.
 
-        xlabels = ["$L_{star}$","$log_{10}(M_{disk})$","$R_{in}$","$R_{disk}$",\
-                "$h_0$", "$\gamma$", "$log_{10}(M_{env})$", "$R_{env}$", \
-                "$f_{cav}$", r"$\xi$", "$i$", "p.a.", "$log_{10}(a_{max})$", \
-                r"$\beta$", "$A_v$", "p"]
-
         fig = corner.corner(samples, labels=keys, truths=params)
 
         plt.savefig("fit.pdf")
@@ -652,6 +667,7 @@ while nsteps < 5:
 
     # Plot the best fit model over the data.
 
+    print("Hello!")
     fig, ax = plt.subplots(nrows=2*len(visibilities["file"]), ncols=3)
 
     # Create a high resolution model for averaging.
@@ -679,12 +695,7 @@ while nsteps < 5:
 
         # Plot the 2D visibilities.
 
-        if source in ['I04016','I04108B','I04158','I04166','I04169','I04181A', \
-                'I04181B','I04263','I04295','I04302','I04365']:
-            ticks = numpy.array([-250,-200,-100,0,100,200,250])
-        elif source in ['CRBR12','Elias21','Elias29','GSS30-IRS3','GY91', \
-                'IRS63','LFAM26','WL12','WL17']:
-            ticks = numpy.array([-1500,-1000,-500,0,500,1000,1500])
+        ticks = visibilities["ticks"][j]
 
         xmin, xmax = int(visibilities["npix"][j]/2+ticks[0]/\
                 (visibilities["binsize"][j]/1000)), \
@@ -740,17 +751,7 @@ while nsteps < 5:
 
         # Plot the image.
 
-        if source in ['I04158']:
-            ticks = numpy.array([-6.0,-5.0,-2.5,0,2.5,5.0,6.0])
-        elif source in ['I04166','I04169']:
-            ticks = numpy.array([-2.5,-2.0,-1.0,0,1.0,2.0,2.5])
-        elif source in ['I04181A','I04181B','I04295','I04365']:
-            ticks = numpy.array([-6.0,-5.0,-2.5,0,2.5,5.0,6.0])
-        elif source in ['CRBR12','Elias21','Elias29','GSS30-IRS3','GY91', \
-                'IRS48','IRS63','LFAM26','WL12','WL17']:
-            ticks = numpy.array([-0.75,-0.6,-0.3,0,0.3,0.6,0.75])
-        else:
-            ticks = numpy.array([-4.5,-4.0,-2.0,0,2.0,4.0,4.5])
+        ticks = visibilities["image_ticks"][j]
 
         xmin, xmax = int(visibilities["image_npix"][j]/2+\
                 round(ticks[0]/visibilities["image_pixelsize"][j])), \
@@ -791,42 +792,24 @@ while nsteps < 5:
     # Plot the scattered light image.
 
     for j in range(len(images["file"])):
-        vmin = images["data"][j].image.min()
-        vmax = numpy.percentile(images["data"][j].image, 95)
-        a = 1000.
-        
-        b = (images["data"][j].image - vmin) / (vmax - vmin)
-
-        c = numpy.arcsinh(10*b)/3.
+        c = scale_image(images["data"][j], mode="arcsinh")
 
         ax[1,2].imshow(c[:,:,0,0], origin="lower", interpolation="nearest", \
                 cmap="gray")
 
-        transform3 = ticker.FuncFormatter(Transform(0, 128, 0.1, '%.1f"'))
+        transform3 = ticker.FuncFormatter(Transform(0, images["npix"][j], \
+                images["pixelsize"][j], '%.1f"'))
 
-        ticks = numpy.array([-6,-3,0,3,6])
+        ticks = images["ticks"][j]
 
-        ax[1,2].set_xticks(128/2+ticks/0.1)
-        ax[1,2].set_yticks(128/2+ticks/0.1)
+        ax[1,2].set_xticks(images["npix"][j]/2+ticks/images["pixelsize"][j])
+        ax[1,2].set_yticks(images["npix"][j]/2+ticks/images["pixelsize"][j])
         ax[1,2].get_xaxis().set_major_formatter(transform3)
         ax[1,2].get_yaxis().set_major_formatter(transform3)
 
         # Create a model image to contour over the image.
 
-        model_image = m.images[images["lam"][j]]
-
-        vmin = model_image.image.min()
-        vmax = model_image.image.max()
-        a = 1000.
-        
-        b = (model_image.image - vmin) / (vmax - vmin)
-
-        if source in ['I04158','I04295']:
-            # Log scaling.
-            c = numpy.log10(a*b+1)/numpy.log10(a)
-        else:
-            # Linear scaling.
-            c = b
+        c = scale_image(m.images[images["lam"][j]], mode=images["plot_mode"][j])
 
         levels = numpy.array([0.05,0.25,0.45,0.65,0.85,1.0]) * \
                 (c.max() - c.min()) + c.min()
