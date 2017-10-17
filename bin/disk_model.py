@@ -92,8 +92,7 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
 
     dustopac = "pollack_new.hdf5"
 
-    dust_gen = dust.DustGenerator(os.environ["HOME"]+\
-            "/Documents/Projects/DiskMasses/Modeling/Dust/"+dustopac)
+    dust_gen = dust.DustGenerator(dust.__path__[0]+"/data/"+dustopac)
 
     ddust = dust_gen(p["a_max"] / 1e4, p["p"])
     edust = dust_gen(1.0e-4, 3.5)
