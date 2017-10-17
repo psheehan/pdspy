@@ -33,9 +33,6 @@ comm = MPI.COMM_WORLD
 parser = argparse.ArgumentParser()
 parser.add_argument('-o', '--object')
 parser.add_argument('-r', '--resume', action='store_true')
-parser.add_argument('-s', '--scatteredlight', action='store_true')
-parser.add_argument('-e', '--withextinction', action='store_true')
-parser.add_argument('-g', '--withgraindist', action='store_true')
 parser.add_argument('-c', '--withhyperion', action='store_true')
 parser.add_argument('-p', '--resetprob', action='store_true')
 parser.add_argument('-a', '--action', type=str, default="run")
@@ -89,46 +86,6 @@ def model(visibilities, images, spectra, params, parameters, output="concat"):
             #exec("{0:s} = {1}".format(key, value))
             p[key] = value
 
-    """OLD
-    # Stellar parameters.
-
-    M_star = 1.0
-    #T_star = params[0]
-    T_star = 4000.
-    L_star = 10.**params[0]
-
-    # Disk parameters.
-
-    M_disk = 10.**params[1]
-    R_in = 10.**params[2]
-    R_disk = 10.**params[3]
-    h_0 = params[4]
-    gamma = params[5]
-    beta = params[13]
-    alpha = gamma + beta
-
-    # Envelope parameters.
-
-    M_env = 10.**params[6]
-    R_env = 10.**params[7]
-    R_c = R_disk
-    #R_c = 10.**params[10]
-    f_cav = params[8]
-    ksi = params[9]
-
-    # Dust parameters.
-
-    a_max = 10.**params[12]
-    if with_graindist:
-        p = params[15]
-    else:
-        p = 3.5
-
-    inclination = params[10]
-    position_angle = params[11]
-
-    Av = params[14]
-    """
     # Make sure alpha is defined.
 
     p["alpha"] = p["gamma"] + p["beta"]
@@ -382,19 +339,6 @@ def lnprior(params, parameters):
 
     return 0.0
 
-    r"""OLD
-    if -1 < p[0] < 1.3 and p[1] <= -2.5 and \
-            0.1 <= 10.**p[2] < 10.**p[3] < 10.**p[7] and \
-            0.01 <= p[4] and -0.5 <= p[5] <= 2 and p[6] < -2.0 and \
-            0.0 <= p[8] <= 1.0 and 0.5 <= p[9] <= 1.5 and \
-            0.0 <= p[10] <= 90. and 0. <= p[11] <= 180. and \
-            0. <= p[12] <= 5. and 0.5 <= p[13] <= 1.5 and \
-            0. <= p[14] <= 2. and 2.5 <= p[15] <= 4.5:
-        return 0.0
-
-    return -numpy.inf
-    """
-
 # Define a probability function.
 
 def lnprob(p, visibilities, images, spectra, parameters, output):
@@ -483,10 +427,9 @@ for j in range(len(visibilities["file"])):
 
     data = uv.center(data, [x0[j], y0[j], 1.])
 
-    #NEW: interpolate model to baselines instead of averaging the data to the
-    #        model grid?
+    """NEW: interpolate model to baselines instead of averaging the data to the
+            model grid?
 
-    """
     visibilities["data"].append(data)
     """
 
@@ -658,9 +601,6 @@ while nsteps < 5:
             for k in range(nwalkers):
                 ax.plot(chain[k,:,j])
 
-            """OLD
-            plt.savefig("test_{0:d}.pdf".format(i, source))
-            """
             plt.savefig("steps_{0:s}.pdf".format(keys[j]))
 
             plt.close(fig)
@@ -689,28 +629,6 @@ while nsteps < 5:
     if args.action == "run":
         # Write out the results.
 
-        r"""OLD
-        f = open("fit.txt".format(source), "w")
-        f.write("Best fit to {0:s}:\n\n".format(source))
-        f.write("Lstar = {0:f} +/- {1:f}\n".format(params[0], sigma[0]))
-        f.write("log10(Mdisk) = {0:f} +/- {1:f}\n".format(params[1], sigma[1]))
-        f.write("Rin = {0:f} +/- {1:f}\n".format(params[2], sigma[2]))
-        f.write("Rdisk = {0:f} +/- {1:f}\n".format(params[3], sigma[3]))
-        f.write("h0 = {0:f} +/- {1:f}\n".format(params[4], sigma[4]))
-        f.write("gamma = {0:f} +/- {1:f}\n".format(params[5], sigma[5]))
-        f.write("beta = {0:f} +/- {1:f}\n".format(params[13], sigma[13]))
-        f.write("log10(Menv) = {0:f} +/- {1:f}\n".format(params[6], sigma[6]))
-        f.write("Renv = {0:f} +/- {1:f}\n".format(params[7], sigma[7]))
-        f.write("fcav = {0:f} +/- {1:f}\n".format(params[8], sigma[8]))
-        f.write("ksi = {0:f} +/- {1:f}\n".format(params[9], sigma[9]))
-        f.write("i = {0:f} +/- {1:f}\n".format(params[10], sigma[10]))
-        f.write("pa = {0:f} +/- {1:f}\n".format(params[11], sigma[11]))
-        f.write("log10(a_max) = {0:f} +/- {1:f}\n".format(params[12],sigma[12]))
-        f.write("Av = {0:f} +/- {1:f}\n\n".format(params[14], sigma[14]))
-        f.write("p = {0:f} +/- {1:f}\n\n".format(params[15], sigma[15]))
-        f.close()
-        """
-
         f = open("fit.txt", "w")
         f.write("Best fit parameters:\n\n")
         for j in range(len(keys)):
@@ -728,9 +646,6 @@ while nsteps < 5:
                 "$f_{cav}$", r"$\xi$", "$i$", "p.a.", "$log_{10}(a_{max})$", \
                 r"$\beta$", "$A_v$", "p"]
 
-        """OLD
-        fig = corner.corner(samples, labels=xlabels, truths=params)
-        """
         fig = corner.corner(samples, labels=keys, truths=params)
 
         plt.savefig("fit.pdf".format(source))
