@@ -75,7 +75,7 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
         else:
             value = params[key]
 
-        if key[3:] == "log":
+        if key[0:3] == "log":
             p[key[3:]] = 10.**value
         else:
             p[key] = value
@@ -83,6 +83,7 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
     # Make sure alpha is defined.
 
     p["alpha"] = p["gamma"] + p["beta"]
+    p["alpha_large"] = p["gamma"] + p["beta_large"]
 
     # Get the needed values of the gaps.
 
