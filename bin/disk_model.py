@@ -64,7 +64,7 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
 
     log_parameters = ["logM_star", "logL_star", "logM_disk", "logR_in", \
             "logR_disk", "logM_env", "logR_in_env", "logR_env", "logR_c", \
-            "loga_max"]
+            "loga_max", "logR_cav", "logdelta_cav"]
 
     p = {}
     for key in parameters:
@@ -131,7 +131,9 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
     m.add_star(mass=p["M_star"],luminosity=p["L_star"],temperature=p["T_star"])
     m.set_spherical_grid(p["R_in"], p["R_env"], 100, nphi, 2, code=code)
     m.add_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
-            plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust)
+            plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
+            gap_rin=[p["R_in"]], gap_rout=[p["R_cav"]], \
+            gap_delta=[p["delta_cav"]])
     m.add_ulrich_envelope(mass=p["M_env"], rmin=p["R_in"], rmax=p["R_env"], \
             cavpl=p["ksi"], cavrfact=p["f_cav"], dust=edust)
     m.grid.set_wavelength_grid(0.1,1.0e5,500,log=True)
@@ -318,6 +320,14 @@ def lnprior(params, parameters):
         pass
     else:
         return -numpy.inf
+
+    # Check that the cavity actually falls within the disk.
+
+    if not parameters["logR_cav"]["fixed"]:
+        if R_in <= 10.**params["logR_cav"] <= R_disk:
+            pass
+        else:
+            return -numpy.inf
 
     # Everything was correct, so continue on.
 
@@ -548,6 +558,8 @@ else:
         r_in = numpy.random.uniform(numpy.log10(0.1),\
                 numpy.log10((10.**r_disk)/2),1)[0]
 
+        r_cav = numpy.random.uniform(r_in, numpy.log10(0.75*10.**r_disk),1)[0]
+
         temp_pos = []
 
         for key in sorted(parameters.keys()):
@@ -559,6 +571,8 @@ else:
                 temp_pos.append(r_disk)
             elif key == "logR_env":
                 temp_pos.append(r_env)
+            elif key == "logR_cav":
+                temp_pos.append(r_cav)
             elif key == "logM_disk":
                 temp_pos.append(numpy.random.uniform(-5.,-3.,1)[0])
             elif key == "logM_env":

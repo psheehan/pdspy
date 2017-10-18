@@ -10,13 +10,13 @@ import numpy
 
 visibilities = {
         "file":["path/to/file1"],
-        "binsize" = [8057.218995847603],
-        "pixelsize" = [0.1],
-        "freq" = ["230GHz"],
-        "lam" = ["1300"],
-        "npix" = [256],
-        "gridsize" = [256],
-        "weight" = [10.],
+        "binsize":[8057.218995847603],
+        "pixelsize":[0.1],
+        "freq":["230GHz"],
+        "lam":["1300"],
+        "npix":[256],
+        "gridsize":[256],
+        "weight":[10.],
         "ticks":[numpy.array([-250,-200,-100,0,100,200,250])],
         # Info for the image.
         "image_file":["path/to/image_file1"],
@@ -77,7 +77,7 @@ nplot = 5
 
 parameters = {
         # Stellar parameters.
-        "logM_star":{"fixed":True, "value":1.0, "limits":[-1.,1.]},
+        "logM_star":{"fixed":True, "value":0.0, "limits":[-1.,1.]},
         "T_star":{"fixed":True, "value":4000., "limits":[500.,10000.]},
         "logL_star":{"fixed":True, "value":0.0, "limits":[-1.,2.]},
         # Disk parameters.
@@ -87,6 +87,8 @@ parameters = {
         "h_0":{"fixed":True, "value":0.1, "limits":[0.01,0.5]},
         "gamma":{"fixed":True, "value":1.0, "limits":[-0.5,2.0]},
         "beta":{"fixed":True, "value":1.0, "limits":[0.5,1.5]},
+        "logR_cav":{"fixed":True, "value":1.0, "limits":[-1.,3.]},
+        "logdelta_cav":{"fixed":True, "value":0.0, "limits":[-4.,0.]},
         # Envelope parameters.
         "logM_env":{"fixed":True, "value":-3., "limits":[-10., -2.]},
         "logR_in_env":{"fixed":True, "value":"logR_in", "limits":[-1., 4.]},
