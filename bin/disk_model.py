@@ -62,10 +62,6 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
 
     # Set the values of all of the parameters.
 
-    log_parameters = ["logM_star", "logL_star", "logM_disk", "logR_in", \
-            "logR_disk", "logM_env", "logR_in_env", "logR_env", "logR_c", \
-            "loga_max", "logR_cav", "logdelta_cav"]
-
     p = {}
     for key in parameters:
         if parameters[key]["fixed"]:
@@ -79,7 +75,7 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
         else:
             value = params[key]
 
-        if key in log_parameters:
+        if key[3:] == "log":
             p[key[3:]] = 10.**value
         else:
             p[key] = value
@@ -87,6 +83,15 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
     # Make sure alpha is defined.
 
     p["alpha"] = p["gamma"] + p["beta"]
+
+    # Get the needed values of the gaps.
+
+    p["R_in_gap1"] = p["R_gap1"] - p["w_gap1"]/2
+    p["R_out_gap1"] = p["R_gap1"] + p["w_gap1"]/2
+    p["R_in_gap2"] = p["R_gap2"] - p["w_gap2"]/2
+    p["R_out_gap2"] = p["R_gap2"] + p["w_gap2"]/2
+    p["R_in_gap3"] = p["R_gap3"] - p["w_gap3"]/2
+    p["R_out_gap3"] = p["R_gap3"] + p["w_gap3"]/2
 
     # Set up the dust.
 
@@ -132,8 +137,10 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
     m.set_spherical_grid(p["R_in"], p["R_env"], 100, nphi, 2, code=code)
     m.add_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
             plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
-            gap_rin=[p["R_in"]], gap_rout=[p["R_cav"]], \
-            gap_delta=[p["delta_cav"]])
+            gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"],p["R_in_gap3"]], \
+            gap_rout=[p["R_cav"],p["R_out_gap1"],p["R_out_gap2"], \
+            p["R_out_gap3"]], gap_delta=[p["delta_cav"],p["delta_gap1"], \
+            p["delta_gap2"],p["delta_gap3"]])
     m.add_ulrich_envelope(mass=p["M_env"], rmin=p["R_in"], rmax=p["R_env"], \
             cavpl=p["ksi"], cavrfact=p["f_cav"], dust=edust)
     m.grid.set_wavelength_grid(0.1,1.0e5,500,log=True)
