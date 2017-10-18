@@ -98,6 +98,9 @@ parameters = {
         "logR_gap3":{"fixed":True, "value":1.8, "limits":[-1.,3.]},
         "w_gap3":{"fixed":True, "value":10., "limits":[1.,100.]},
         "logdelta_gap3":{"fixed":True, "value":0.0, "limits":[-4.,0.]},
+        "f_M_large":{"fixed":True, "value":0.8, "limits":[0.05, 1.]},
+        "f_h_large":{"fixed":True, "value":0.5, "limits":[0.1, 1.]},
+        "beta_large":{"fixed":True, "value":1., "limits":[0.5, 1.5]},
         # Envelope parameters.
         "logM_env":{"fixed":True, "value":-3., "limits":[-10., -2.]},
         "logR_in_env":{"fixed":True, "value":"logR_in", "limits":[-1., 4.]},
