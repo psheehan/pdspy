@@ -521,8 +521,6 @@ for j in range(len(images["file"])):
 
 # Set up the emcee run.
 
-nwalkers = 6
-
 ndim = 0
 for key in parameters:
     if not parameters[key]["fixed"]:
@@ -586,9 +584,10 @@ if args.action == "run":
 
 # Run a few burner steps.
 
-while nsteps < 1000:
+while nsteps < max_nsteps:
     if args.action == "run":
-        pos, prob, state = sampler.run_mcmc(pos, 5, lnprob0=prob, rstate0=state)
+        pos, prob, state = sampler.run_mcmc(pos, steps_per_iter, lnprob0=prob, \
+                rstate0=state)
 
         chain = numpy.concatenate((chain, sampler.chain), axis=1)
 
@@ -619,13 +618,13 @@ while nsteps < 1000:
 
         # Augment the nuber of steps and reset the sampler for the next run.
 
-        nsteps += 5
+        nsteps += steps_per_iter
 
         sampler.reset()
 
     # Get the best fit parameters and uncertainties from the last 10 steps.
 
-    samples = chain[:,-5:,:].reshape((-1, ndim))
+    samples = chain[:,-nplot:,:].reshape((-1, ndim))
 
     params = numpy.median(samples, axis=0)
     sigma = samples.std(axis=0)

@@ -49,6 +49,28 @@ spectra = {
 
 ################################################################################
 #
+# Set up a number of configuration parameters.
+#
+################################################################################
+
+# The number of walkers to use.
+
+nwalkers = 6
+
+# The number of steps to do at one time.
+
+steps_per_iter = 5
+
+# The maximum total number of steps to take.
+
+max_nsteps = 10
+
+# The number of previous steps to plot.
+
+nplot = 5
+
+################################################################################
+#
 # Set up the list of parameters and default fixed values.
 #
 ################################################################################
