@@ -69,6 +69,8 @@ class PringleDisk(Disk):
         t = t0 * (rr / (1*AU))**(-plt)
 
         t[rr <= rin] = 0e0
+
+        t[t > 10000] = 10000
         
         return t
 
