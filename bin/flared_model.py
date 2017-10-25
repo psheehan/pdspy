@@ -67,7 +67,7 @@ def model(visibilities, params, parameters, plot=False):
     p = {}
     for key in parameters:
         if parameters[key]["fixed"]:
-            if isinstance(parameters[key]["value"], str):
+            if parameters[key]["value"] in parameters.keys():
                 if parameters[parameters[key]["value"]]["fixed"]:
                     value = parameters[parameters[key]["value"]]["value"]
                 else:
@@ -98,22 +98,23 @@ def model(visibilities, params, parameters, plot=False):
 
     # Set up the dust.
 
-    dustopac = "draine_3mm.hdf5"
+    dustopac = "pollack_new.hdf5"
 
-    ddust = dust.Dust()
-    ddust.set_properties_from_file(os.environ["HOME"]+\
-            "/Documents/Projects/DiskMasses/Modeling/Dust/"+dustopac)
+    dust_gen = dust.DustGenerator(dust.__path__[0]+"/data/"+dustopac)
+
+    ddust = dust_gen(p["a_max"] / 1e4, p["p"])
+    edust = dust_gen(1.0e-4, 3.5)
 
     # Set up the gas.
 
     gases = []
     abundance = []
 
-    co = gas.Gas()
-    co.set_properties_from_lambda(os.environ["HOME"]+\
-            "/Documents/Projects/DiskMasses/Modeling/Gas/co.dat")
-    gases.append(co)
-    abundance.append(1.5e-4)
+    g = gas.Gas()
+    g.set_properties_from_lambda(gas.__path__[0]+"/data/"+p["gas_file"])
+
+    gases.append(g)
+    abundance.append(p["abundance"])
 
     # Make sure we are in a temp directory to not overwrite anything.
 
@@ -124,8 +125,8 @@ def model(visibilities, params, parameters, plot=False):
     # Write the parameters to a text file so it is easy to keep track of them.
 
     f = open("params.txt","w")
-    for i in range(len(params)):
-        f.write("params[{0:d}] = {1:f}\n".format(i, params[i]))
+    for key in p:
+        f.write("{0:s} = {1}\n".format(key, p[key]))
     f.close()
 
     # Set up the model. 
@@ -156,8 +157,8 @@ def model(visibilities, params, parameters, plot=False):
                 m.visibilities[visibilities["lam"][j]], [p["x0"], p["y0"], 1])
 
         m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
-                visibilities["lam"][j].u, visibilities["lam"][j].v, \
-                visibilities["lam"][j].freq, \
+                visibilities["data"][j].u, visibilities["data"][j].v, \
+                visibilities["data"][j].freq, \
                 m.visibilities[visibilities["lam"][j]])
 
         if plot:
@@ -172,13 +173,19 @@ def model(visibilities, params, parameters, plot=False):
             x, y = numpy.meshgrid(numpy.linspace(-256,255,512), \
                     numpy.linspace(-256,255,512))
 
-            beam = misc.gaussian2d(x, y, 0., 0., image.header["BMAJ"]/2.355/\
-                    image.header["CDELT2"], image.header["BMIN"]/2.355/\
-                    image.header["CDELT2"], (90-image.header["BPA"])*\
+            beam = misc.gaussian2d(x, y, 0., 0., \
+                    visibilities["image"][j].header["BMAJ"]/2.355/\
+                    visibilities["image"][j].header["CDELT2"], \
+                    visibilities["image"][j].header["BMIN"]/2.355/\
+                    visibilities["image"][j].header["CDELT2"], \
+                    (90-visibilities["image"][j].header["BPA"])*\
                     numpy.pi/180., 1.0)
 
-            m.images["CO2-1"].image[:,:,ind,0] = scipy.signal.fftconvolve(\
-                    m.images["CO2-1"].image[:,:,ind,0], beam, mode="same")
+            for ind in range(len(wave)):
+                m.images[visibilities["lam"][j]].image[:,:,ind,0] = \
+                        scipy.signal.fftconvolve(\
+                        m.images[visibilities["lam"][j]].image[:,:,ind,0], \
+                        beam, mode="same")
 
         os.system("rm params.txt")
         os.chdir(original_dir)
@@ -325,9 +332,6 @@ from config import *
 visibilities["data"] = []
 visibilities["data1d"] = []
 visibilities["image"] = []
-spectra["data"] = []
-spectra["binned"] = []
-images["data"] = []
 
 ######################################
 # Read in the millimeter visibilities.
@@ -357,7 +361,7 @@ for j in range(len(visibilities["file"])):
 
     visibilities["data1d"].append(uv.average(data, gridsize=20, radial=True, \
             log=True, logmin=data.uvdist[numpy.nonzero(data.uvdist)].min()*\
-            0.95, logmax=data.uvdist.max()*1.05), mode="spectralline")
+            0.95, logmax=data.uvdist.max()*1.05, mode="spectralline"))
 
     # Read in the image.
 
@@ -518,28 +522,32 @@ while nsteps < 10000:
     #
     ############################################################################
 
-    # Plot the best fit model over the data.
-
-    fig, ax = plt.subplots(nrows=5, ncols=5, sharex=True, sharey=True)
-
     # Create a high resolution model for averaging.
 
     m = model(visibilities, params, parameters, plot=True)
 
+    # Loop through the visibilities and plot.
+
     for j in range(len(visibilities["file"])):
+        # Plot the best fit model over the data.
+
+        fig, ax = plt.subplots(nrows=visibilities["nrows"][j], \
+                ncols=visibilities["ncols"][j], sharex=True, sharey=True)
+
         # Calculate the velocity for each image.
 
-        v = c * (visibilities["nu0"][j] - visibilities["image"][j].nu) / \
-                visibilities["nu0"][j]
+        v = c * (float(visibilities["freq"][j])*1.0e9 - \
+                visibilities["image"][j].freq)/(float(visibilities["freq"][j])*\
+                1.0e9)
 
         # Plot the image.
 
         vmin = numpy.nanmin(visibilities["image"][j].image)
         vmax = numpy.nanmax(visibilities["image"][j].image)
 
-        for k in range(5):
-            for l in range(5):
-                ind = k*5 + l + 1
+        for k in range(visibilities["nrows"][j]):
+            for l in range(visibilities["ncols"][j]):
+                ind = k*visibilities["ncols"][j] + l + visibilities["ind0"][j]
 
                 # Get the centroid position.
 
@@ -548,15 +556,15 @@ while nsteps < 10000:
                 xmin, xmax = int(visibilities["image_npix"][j]/2 + \
                         params["x0"]/visibilities["image_pixelsize"][j]+ \
                         round(ticks[0]/visibilities["image_pixelsize"][j])), \
-                        round(visibilities["image_npix"][j]/2+\
+                        int(round(visibilities["image_npix"][j]/2+\
                         params["x0"]/visibilities["image_pixelsize"][j]+ \
-                        int(ticks[-1]/visibilities["image_pixelsize"][j]))
-                ymin, ymax = int(visibilities["image_npix"][j]/2+\
+                        int(ticks[-1]/visibilities["image_pixelsize"][j])))
+                ymin, ymax = int(visibilities["image_npix"][j]/2-\
                         params["y0"]/visibilities["image_pixelsize"][j]+ \
                         round(ticks[0]/visibilities["image_pixelsize"][j])), \
-                        round(visibilities["image_npix"][j]/2+\
+                        int(round(visibilities["image_npix"][j]/2-\
                         params["y0"]/visibilities["image_pixelsize"][j]+ \
-                        int(ticks[-1]/visibilities["image_pixelsize"][j]))
+                        int(ticks[-1]/visibilities["image_pixelsize"][j])))
 
                 # Plot the image.
 
@@ -568,19 +576,19 @@ while nsteps < 10000:
 
                 xmin, xmax = int(visibilities["image_npix"][j]/2 + \
                         round(ticks[0]/visibilities["image_pixelsize"][j])), \
-                        round(visibilities["image_npix"][j]/2+\
-                        int(ticks[-1]/visibilities["image_pixelsize"][j]))
+                        int(round(visibilities["image_npix"][j]/2+\
+                        int(ticks[-1]/visibilities["image_pixelsize"][j])))
                 ymin, ymax = int(visibilities["image_npix"][j]/2+\
                         round(ticks[0]/visibilities["image_pixelsize"][j])), \
-                        round(visibilities["image_npix"][j]/2+\
-                        int(ticks[-1]/visibilities["image_pixelsize"][j]))
+                        int(round(visibilities["image_npix"][j]/2+\
+                        int(ticks[-1]/visibilities["image_pixelsize"][j])))
 
                 # Plot the model image.
 
                 levels = numpy.array([0.05, 0.25, 0.45, 0.65, 0.85, 0.95]) * \
                         m.images[visibilities["lam"][j]].image.max()
 
-                ax[i,j].contour(m.images[visibilities["lam"][j]].\
+                ax[k,l].contour(m.images[visibilities["lam"][j]].\
                         image[ymin:ymax,xmin:xmax,ind,0], levels=levels)
 
                 # Add the velocity to the map.
@@ -609,9 +617,9 @@ while nsteps < 10000:
                 # Show the size of the beam.
 
                 bmaj = visibilities["image"][j].header["BMAJ"] / \
-                        abs(image.header["CDELT1"])
+                        abs(visibilities["image"][j].header["CDELT1"])
                 bmin = visibilities["image"][j].header["BMIN"] / \
-                        abs(image.header["CDELT1"])
+                        abs(visibilities["image"][j].header["CDELT1"])
                 bpa = visibilities["image"][j].header["BPA"]
 
                 ax[k,l].add_artist(patches.Ellipse(xy=(12.5,17.5), width=bmaj, \

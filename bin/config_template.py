@@ -17,12 +17,16 @@ visibilities = {
         "npix":[256],
         "gridsize":[256],
         "weight":[10.],
-        "ticks":[numpy.array([-250,-200,-100,0,100,200,250])],
         # Info for the image.
         "image_file":["path/to/image_file1"],
         "image_pixelsize":[0.05],
         "image_npix":[1024],
-        "image_ticks":[numpy.array([-6.0,-5.0,-2.5,0,2.5,5.0,6.0])],
+        # Info for the plots.
+        "nrows":[5],
+        "ncols":[5],
+        "ind0":[1],
+        "ticks":[numpy.array([-250,-200,-100,0,100,200,250])],
+        "image_ticks":[numpy.array([-0.75,-0.5,0,0.5,0.75])],
         }
 
 # Something similar for images.
@@ -115,6 +119,9 @@ parameters = {
         # Dust parameters.
         "loga_max":{"fixed":True, "value":0., "limits":[0.,5.]},
         "p":{"fixed":True, "value":3.5, "limits":[2.5,4.5]},
+        # Gas parameters.
+        "gas_file":{"fixed":True, "value":"co.dat", "limits":[0.,0.]},
+        "logabundance":{"fixed":True, "value":-4., "limits":[-6.,-2.]},
         # Viewing parameters.
         "i":{"fixed":True, "value":45., "limits":[0.,180.]},
         "pa":{"fixed":True, "value":0., "limits":[0.,360.]},
