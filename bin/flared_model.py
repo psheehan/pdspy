@@ -82,13 +82,6 @@ def model(visibilities, params, parameters, plot=False):
         else:
             p[key] = value
 
-    # Add these to parameters:
-
-    t0 = 10.**params[3]
-    q = params[4]
-    a_turb = 10.**params[5]
-    v_sys = params[6]
-
     # Make sure alpha and beta are defined.
 
     t_rdisk = p["T0"] * (p["R_disk"] / 1.)**-p["q"]
@@ -100,7 +93,7 @@ def model(visibilities, params, parameters, plot=False):
     # Shift the wavelengths by the velocities.
 
     b = p["v_sys"]*1.0e5 / c
-    lam = c / data.freq / 1.0e-4
+    lam = c / visibilities["data"][0].freq / 1.0e-4
     wave = lam * numpy.sqrt((1. - b) / (1. + b))
 
     # Set up the dust.
@@ -125,8 +118,8 @@ def model(visibilities, params, parameters, plot=False):
     # Make sure we are in a temp directory to not overwrite anything.
 
     original_dir = os.environ["PWD"]
-    os.mkdir("/tmp/temp_ROXs12_{0:d}".format(comm.Get_rank()))
-    os.chdir("/tmp/temp_ROXs12_{0:d}".format(comm.Get_rank()))
+    os.mkdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
+    os.chdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
 
     # Write the parameters to a text file so it is easy to keep track of them.
 
@@ -189,7 +182,7 @@ def model(visibilities, params, parameters, plot=False):
 
         os.system("rm params.txt")
         os.chdir(original_dir)
-        os.system("rmdir /tmp/temp_ROXs12_{0:d}".format(comm.Get_rank()))
+        os.system("rmdir /tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
 
     return m
 
@@ -299,7 +292,7 @@ class Transform:
 #
 ################################################################################
 
-os.system("rm -r /tmp/temp_ROXs12_*")
+os.system("rm -r /tmp/temp_{0:s}_*".format(source))
 
 ################################################################################
 #
