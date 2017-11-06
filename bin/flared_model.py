@@ -499,7 +499,7 @@ while nsteps < 10000:
         f.write("\n")
         f.close()
 
-        os.system("cat flared_ROXs12/flared_fit.txt")
+        os.system("cat fit.txt")
 
         # Plot histograms of the resulting parameters.
 
