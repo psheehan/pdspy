@@ -151,7 +151,7 @@ def model(visibilities, params, parameters, plot=False):
                 pixelsize=visibilities["pixelsize"][j], tgas_eq_tdust=True, \
                 scattering_mode_max=0, incl_dust=False, incl_lines=True, \
                 loadlambda=True, incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
-                code="radmc3d", verbose=False)
+                code="radmc3d", verbose=False, writeimage_unformatted=True)
 
         m.visibilities[visibilities["lam"][j]] = uv.center(\
                 m.visibilities[visibilities["lam"][j]], [p["x0"], p["y0"], 1])
