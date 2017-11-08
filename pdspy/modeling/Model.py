@@ -11,6 +11,7 @@ from ..interferometry import Visibilities
 from ..spectroscopy import Spectrum
 from ..constants.astronomy import AU, M_sun, R_sun, L_sun, Jy, arcsec, pc
 from ..constants.physics import c
+import time
 
 class Model:
 
@@ -218,13 +219,20 @@ class Model:
             zoomau = [-pixelsize*dpc * npix/2, pixelsize*dpc * npix/2, \
                     -pixelsize*dpc * npix/2, pixelsize*dpc * npix/2]
 
+        t1 = time.time()
         radmc3d.run.image(npix=npix, zoomau=zoomau, lam=lam, \
                 loadlambda=loadlambda, imolspec=imolspec, iline=iline, \
                 widthkms=widthkms, vkms=vkms, linenlam=linenlam, \
                 doppcatch=doppcatch, incl=incl, posang=pa, phi=phi, \
                 verbose=verbose)
+        t2 = time.time()
 
-        image, x, y, lam = radmc3d.read.image()
+        if 'writeimage_unformatted' in keywords:
+            image, x, y, lam = radmc3d.read.image(\
+                    binary=keywords["writeimage_unformatted"])
+        else:
+            image, x, y, lam = radmc3d.read.image()
+        t3 = time.time()
 
         image = image / Jy * ((x[1] - x[0]) / (dpc * pc)) * \
                 ((y[1] - y[0]) / (dpc * pc))
@@ -237,6 +245,10 @@ class Model:
         self.visibilities[name] = imtovis(im)
 
         os.system("rm *.out *.inp *.dat")
+        t4 = time.time()
+        print("Time to run the image:", t2-t1)
+        print("Time to read in the image:", t3-t2)
+        print("Time to INVERT and save:", t4-t3)
 
     def write_radmc3d(self, **keywords):
         radmc3d.write.control(**keywords)
