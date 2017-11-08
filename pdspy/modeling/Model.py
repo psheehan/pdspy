@@ -244,7 +244,7 @@ class Model:
 
         self.visibilities[name] = imtovis(im)
 
-        os.system("rm *.out *.inp *.dat")
+        os.system("rm *.out *.bout *.inp *.dat")
         t4 = time.time()
         print("Time to run the image:", t2-t1)
         print("Time to read in the image:", t3-t2)
