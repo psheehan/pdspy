@@ -219,20 +219,17 @@ class Model:
             zoomau = [-pixelsize*dpc * npix/2, pixelsize*dpc * npix/2, \
                     -pixelsize*dpc * npix/2, pixelsize*dpc * npix/2]
 
-        t1 = time.time()
         radmc3d.run.image(npix=npix, zoomau=zoomau, lam=lam, \
                 loadlambda=loadlambda, imolspec=imolspec, iline=iline, \
                 widthkms=widthkms, vkms=vkms, linenlam=linenlam, \
                 doppcatch=doppcatch, incl=incl, posang=pa, phi=phi, \
                 verbose=verbose)
-        t2 = time.time()
 
         if 'writeimage_unformatted' in keywords:
             image, x, y, lam = radmc3d.read.image(\
                     binary=keywords["writeimage_unformatted"])
         else:
             image, x, y, lam = radmc3d.read.image()
-        t3 = time.time()
 
         image = image / Jy * ((x[1] - x[0]) / (dpc * pc)) * \
                 ((y[1] - y[0]) / (dpc * pc))
@@ -244,11 +241,10 @@ class Model:
 
         self.visibilities[name] = imtovis(im)
 
-        os.system("rm *.out *.bout *.inp *.dat")
-        t4 = time.time()
-        print("Time to run the image:", t2-t1)
-        print("Time to read in the image:", t3-t2)
-        print("Time to INVERT and save:", t4-t3)
+        os.system("rm *.out *.inp *.dat")
+        if 'writeimage_unformatted' in keywords:
+            if keywords['writeimage_unformatted']:
+                os.system("rm *.bout")
 
     def write_radmc3d(self, **keywords):
         radmc3d.write.control(**keywords)
