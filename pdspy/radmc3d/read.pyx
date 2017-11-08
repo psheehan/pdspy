@@ -6,6 +6,9 @@
 #==========================================================================
 #==========================================================================
 
+cimport cython
+cimport numpy
+
 from os.path import exists
 from numpy import array, empty, linspace
 
@@ -17,11 +20,12 @@ from numpy import array, empty, linspace
 #-----------------------------------------------------------------
 #              READ THE RECTANGULAR TELESCOPE IMAGE
 #-----------------------------------------------------------------
+@cython.boundscheck(False)
 def image(filename=None,ext=None):
     
-    nx=0
-    ny=0
-    nf=0
+    cdef unsigned int nx=0
+    cdef unsigned int ny=0
+    cdef unsigned int nf=0
     sizepix_x=0.e0
     sizepix_y=0.e0
     
@@ -65,6 +69,7 @@ def image(filename=None,ext=None):
     
     f.readline()
 
+    cdef numpy.ndarray[ndim=4, dtype=double] image
     if stokes:
         image = empty((ny,nx,nf,4))
     else:
