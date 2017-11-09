@@ -36,14 +36,24 @@ parser.add_argument('-r', '--resume', action='store_true')
 parser.add_argument('-c', '--withhyperion', action='store_true')
 parser.add_argument('-p', '--resetprob', action='store_true')
 parser.add_argument('-a', '--action', type=str, default="run")
+parser.add_argument('-n', '--ncpus', type=int, default=1)
+parser.add_argument('-m', '--ncpus_highmass', type=int, default=8)
 args = parser.parse_args()
 
+# Set the number of cpus to use.
+
+ncpus = args.ncpus
+ncpus_highmass = args.ncpus_highmass
+
+# Get the source name and check that it has been set correctly.
+
 source = args.object
-ncpus = comm.Get_size()
 
 if source == None:
     print("--object must be specified")
     sys.exit()
+
+# Determine what action should be taken and set some variables appropriately.
 
 if args.action not in ['run','plot']:
     print("Please select a valid action")
@@ -123,15 +133,15 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
         if args.withhyperion:
             nphi = 201
             code = "hyperion"
-            nprocesses = ncpus
+            nprocesses = ncpus_highmass
         else:
             nphi = 101
             code = "radmc3d"
-            nprocesses = 20
+            nprocesses = ncpus_highmass
     else:
         nphi = 101
         code = "radmc3d"
-        nprocesses = 1
+        nprocesses = ncpus
 
     m = modeling.YSOModel()
     m.add_star(mass=p["M_star"],luminosity=p["L_star"],temperature=p["T_star"])
@@ -182,7 +192,7 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
                 pixelsize=visibilities["pixelsize"][j], \
                 lam=visibilities["lam"][j], incl=p["i"], \
                 pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
-                mc_scat_maxtauabs=5, verbose=False)
+                mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses)
 
         """NEW: Interpolate model to native baselines?
         m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
@@ -197,7 +207,8 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
             m.run_visibilities(name=visibilities["lam"][j]+"_high", nphot=1e5, \
                     npix=2048, pixelsize=0.05, lam=visibilities["lam"][j], \
                     incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
-                    code="radmc3d", mc_scat_maxtauabs=5, verbose=False)
+                    code="radmc3d", mc_scat_maxtauabs=5, verbose=False, \
+                    setthreads=nprocesses)
 
             # Run a millimeter image.
 
@@ -206,7 +217,7 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
                     pixelsize=visibilities["image_pixelsize"][j], \
                     lam=visibilities["lam"][j], incl=p["i"], \
                     pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
-                    mc_scat_maxtauabs=5, verbose=False)
+                    mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses)
 
             x, y = numpy.meshgrid(numpy.linspace(-256,255,512), \
                     numpy.linspace(-256,255,512))
@@ -231,7 +242,7 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
                 npix=images["npix"][j], pixelsize=images["pixelsize"][j], \
                 lam=images["lam"][j], incl=p["i"], \
                 pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
-                mc_scat_maxtauabs=5, verbose=False)
+                mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses)
 
         # Convolve with the beam.
 
@@ -255,7 +266,7 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
         m.run_sed(name="SED", nphot=1e4, loadlambda=True, incl=p["i"],\
                 pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                 camera_scatsrc_allfreq=True, mc_scat_maxtauabs=5, \
-                verbose=False)
+                verbose=False, setthreads=nprocesses)
 
         m.spectra["SED"].flux = dust.redden(m.spectra["SED"].wave, \
                 m.spectra["SED"].flux, p["Ak"], law="mcclure")
