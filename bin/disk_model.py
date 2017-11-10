@@ -40,6 +40,10 @@ parser.add_argument('-n', '--ncpus', type=int, default=1)
 parser.add_argument('-m', '--ncpus_highmass', type=int, default=8)
 args = parser.parse_args()
 
+# Check whether we are using MPI.
+
+withmpi = comm.Get_size() > 1
+
 # Set the number of cpus to use.
 
 ncpus = args.ncpus
@@ -413,25 +417,28 @@ def scale_image(image, mode="linear"):
 
 ################################################################################
 #
-# Set up a pool for parallel runs.
-#
-################################################################################
-
-if args.action == "run":
-    pool = emcee.utils.MPIPool(loadbalance=True)
-
-    if not pool.is_master():
-        pool.wait()
-        sys.exit(0)
-
-################################################################################
-#
 # In case we are restarting this from the same job submission, delete any
 # temporary directories associated with this run.
 #
 ################################################################################
 
-os.system("rm -r /tmp/temp_{0:s}_*".format(source))
+os.system("rm -r /tmp/temp_{0:s}_{1:d}".format(source, comm.Get_rank()))
+
+################################################################################
+#
+# Set up a pool for parallel runs.
+#
+################################################################################
+
+if args.action == "run":
+    if withmpi:
+        pool = emcee.utils.MPIPool(loadbalance=True)
+
+        if not pool.is_master():
+            pool.wait()
+            sys.exit(0)
+    else:
+        pool = None
 
 ################################################################################
 #
@@ -910,4 +917,5 @@ while nsteps < max_nsteps:
 # Now we can close the pool and end the code.
 
 if args.action == "run":
-    pool.close()
+    if withmpi:
+        pool.close()

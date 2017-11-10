@@ -43,6 +43,10 @@ parser.add_argument('-a', '--action', type=str, default="run")
 parser.add_argument('-n', '--ncpus', type=int, default=1)
 args = parser.parse_args()
 
+# Check whether we are using MPI.
+
+withmpi = comm.Get_size() > 1
+
 # Set the number of cpus to use.
 
 ncpus = args.ncpus
@@ -309,7 +313,7 @@ class Transform:
 #
 ################################################################################
 
-os.system("rm -r /tmp/temp_{0:s}_*".format(source))
+os.system("rm -r /tmp/temp_{0:s}_{1:d}".format(source, comm.Get_rank()))
 
 ################################################################################
 #
@@ -318,12 +322,15 @@ os.system("rm -r /tmp/temp_{0:s}_*".format(source))
 ################################################################################
 
 if args.action == "run":
-    #pool = emcee.utils.MPIPool()
-    pool = pdspy.modeling.mpi_pool.MPIPool(largedata=False)
+    if withmpi:
+        #pool = emcee.utils.MPIPool()
+        pool = pdspy.modeling.mpi_pool.MPIPool(largedata=False)
 
-    if not pool.is_master():
-        pool.wait()
-        sys.exit(0)
+        if not pool.is_master():
+            pool.wait()
+            sys.exit(0)
+    else:
+        pool = None
 
 ################################################################################
 #
@@ -658,4 +665,5 @@ while nsteps < 10000:
 # Now we can close the pool.
 
 if args.action == "run":
-    pool.close()
+    if withmpi:
+        pool.close()
