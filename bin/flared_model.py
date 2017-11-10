@@ -40,13 +40,22 @@ parser.add_argument('-o', '--object')
 parser.add_argument('-r', '--resume', action='store_true')
 parser.add_argument('-p', '--resetprob', action='store_true')
 parser.add_argument('-a', '--action', type=str, default="run")
+parser.add_argument('-n', '--ncpus', type=int, default=1)
 args = parser.parse_args()
+
+# Set the number of cpus to use.
+
+ncpus = args.ncpus
+
+# Get the source name and check that it has been set correctly.
 
 source = args.object
 
 if source == None:
     print("--object must be specified")
     sys.exit()
+
+# Determine what action should be taken and set some variables appropriately.
 
 if args.action not in ['run','plot']:
     print("Please select a valid action")
@@ -151,7 +160,8 @@ def model(visibilities, params, parameters, plot=False):
                 pixelsize=visibilities["pixelsize"][j], tgas_eq_tdust=True, \
                 scattering_mode_max=0, incl_dust=False, incl_lines=True, \
                 loadlambda=True, incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
-                code="radmc3d", verbose=False, writeimage_unformatted=True)
+                code="radmc3d", verbose=False, writeimage_unformatted=True, \
+                setthreads=ncpus)
 
         m.visibilities[visibilities["lam"][j]] = uv.center(\
                 m.visibilities[visibilities["lam"][j]], [p["x0"], p["y0"], 1])
@@ -168,7 +178,7 @@ def model(visibilities, params, parameters, plot=False):
                     tgas_eq_tdust=True, scattering_mode_max=0, \
                     incl_dust=False, incl_lines=True, loadlambda=True, \
                     incl=p["i"], pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
-                    verbose=False)
+                    verbose=False, setthreads=ncpus)
 
             x, y = numpy.meshgrid(numpy.linspace(-256,255,512), \
                     numpy.linspace(-256,255,512))
