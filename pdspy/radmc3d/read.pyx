@@ -140,8 +140,8 @@ def image(filename=None,ext=None,binary=False):
 
     # Compute the x and y coordinates
 
-    x = linspace(-(nx-1)/2.,(nx-1)/2.,nx)*sizepix_x
-    y = linspace(-(ny-1)/2.,(ny-1)/2.,ny)*sizepix_y
+    x = linspace(-(<int>nx-1)/2.,(<int>nx-1)/2.,<int>nx)*sizepix_x
+    y = linspace(-(<int>ny-1)/2.,(<int>ny-1)/2.,<int>ny)*sizepix_y
     
     return image, x, y, lam
 
