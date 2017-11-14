@@ -458,7 +458,7 @@ if args.action == "run":
 
 # Run a few burner steps.
 
-while nsteps < 10000:
+while nsteps < max_nsteps:
     if args.action == "run":
         pos, prob, state = sampler.run_mcmc(pos, steps_per_iter, lnprob0=prob, \
                 rstate0=state)
