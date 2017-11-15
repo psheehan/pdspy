@@ -1,9 +1,6 @@
 from os import system
 from collections import Iterable
 
-# for scalability I would define **kwargs here instead
-# example 
-'''
 def typecheck(obj): return not isinstance(obj, str) and isinstance(obj, Iterable)
 
 def commandmaker(type,verbose=True,**kwargs):
@@ -31,7 +28,6 @@ def sed(verbose=True,**kwargs):
 def image(verbose=True,**kwargs):
     command = commandmaker('image',verbose,kwargs)
     system(command)
-
 '''
 def thermal(noscat=None, nphot_therm=None, nphot_scat=None, setthreads=1, \
         inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None, \
@@ -269,7 +265,7 @@ def image(lam=None, npix=None, npixx=None, npixy=None, nrrefine=None, \
 
     system(command)
 
-
+'''
 # The code below has every single command, if you need to implement more command line options.
 """
 def run_thermal(npix=None, npixx=None, npixy=None, nrrefine=None, \
