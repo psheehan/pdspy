@@ -199,7 +199,7 @@ class Messenger(object):
 
     def pyinput(self,message=None,verb_level=0):
 
-        total_Message = "Please input {}: ".format(message)
+        total_Message = "{}: ".format(message)
         if self.PY2:
             out = raw_input(total_Message)
         if self.PY3:
@@ -222,7 +222,7 @@ class Messenger(object):
         such that the files removed are displayed appropriately or not removed
         if the file is not found
         """
-        if type(file) is str:
+        if not typecheck(file):
             for f in glob('*'+file+'*'):
                 if isfile(f):
                     try:
@@ -237,8 +237,9 @@ class Messenger(object):
                         remove(f)
                         self.debug("Removed file {}".format(f))
                     except OSError:
-                        self.debug("Cannot find {} to remove".format(f))                   
+                        self.debug("Cannot find {} to remove".format(f))   
 
+def typecheck(obj): return not isinstance(obj, str) and isinstance(obj, Iterable)
 
 if __name__ == "__main__":
     print('Testing module\n')
