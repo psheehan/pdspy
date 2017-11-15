@@ -12,3 +12,4 @@ from . import spectroscopy
 from . import statistics
 from . import table
 from . import version
+from . import proplyd
