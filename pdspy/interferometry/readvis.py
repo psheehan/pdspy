@@ -3,18 +3,18 @@ from .libinterferometry import Visibilities
 from glob import glob
 import numpy
 
-def readvis(filename):
+def readvis(filename, fmt="casa"):
 
     filenames = numpy.array(glob(filename+"/*.uv.fits"))
 
     for i in range(filenames.size):
         if i == 0:
-            vis = readuvfits(filenames[i],fmt="casa")
+            vis = readuvfits(filenames[i],fmt=fmt)
 
             vis.u /= vis.freq.mean()
             vis.v /= vis.freq.mean()
         else:
-            new = readuvfits(filenames[i],fmt="casa")
+            new = readuvfits(filenames[i],fmt=fmt)
 
             vis.freq = numpy.concatenate((vis.freq,new.freq))
             vis.real = numpy.concatenate((vis.real,new.real),axis=1)
