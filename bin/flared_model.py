@@ -456,6 +456,11 @@ if args.action == "run":
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, \
             args=(visibilities, parameters, False), pool=pool)
 
+# If we are plotting, make sure that nsteps < max_nsteps.
+
+if args.action == "plot":
+    nsteps = max_nsteps - 1
+
 # Run a few burner steps.
 
 while nsteps < max_nsteps:
