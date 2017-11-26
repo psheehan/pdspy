@@ -5,7 +5,10 @@ import numpy
 
 def readvis(filename, fmt="casa"):
 
-    filenames = numpy.array(glob(filename+"/*.uv.fits"))
+    temp = glob(filename+"/*.uv.fits")
+    if temp == []:
+        temp = glob(filename)
+    filenames = numpy.array(temp)
 
     for i in range(filenames.size):
         if i == 0:
