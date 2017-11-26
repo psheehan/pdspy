@@ -17,7 +17,7 @@ from datetime import datetime as dtime
 import time
 
 # import custom modules
-from colours import colours
+from .colours import colours
 
 # function that creates a logger
 class Messenger(object):

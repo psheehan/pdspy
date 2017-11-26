@@ -4,3 +4,5 @@ from .gaussian import gaussian
 from .gaussian2d import gaussian2d
 from . import colours
 from . import logger
+from . import config
+from . import config_template
