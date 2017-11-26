@@ -18,15 +18,18 @@ def commandmaker(type,verbose=True,**kwargs):
     return command
 
 def thermal(verbose=True,**kwargs):
-    command = commandmaker('thermal',verbose,kwargs)
+    command = commandmaker('thermal',verbose,**kwargs)
+    #return command
     system(command)
 
 def sed(verbose=True,**kwargs):
-    command = commandmaker('sed',verbose,kwargs)
+    command = commandmaker('sed',verbose,**kwargs)
+    #return command
     system(command)
 
 def image(verbose=True,**kwargs):
-    command = commandmaker('image',verbose,kwargs)
+    command = commandmaker('image',verbose,**kwargs)
+    #return command
     system(command)
 '''
 def thermal(noscat=None, nphot_therm=None, nphot_scat=None, setthreads=1, \
