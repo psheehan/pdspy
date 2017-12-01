@@ -159,6 +159,7 @@ def model(visibilities, params, parameters, plot=False):
     for j in range(len(visibilities["file"])):
         m.set_camera_wavelength(wave)
 
+        """
         m.run_visibilities(name=visibilities["lam"][j], nphot=1e5, \
                 npix=visibilities["npix"][j], lam=None, \
                 pixelsize=visibilities["pixelsize"][j], tgas_eq_tdust=True, \
@@ -174,6 +175,20 @@ def model(visibilities, params, parameters, plot=False):
                 visibilities["data"][j].u, visibilities["data"][j].v, \
                 visibilities["data"][j].freq, \
                 m.visibilities[visibilities["lam"][j]])
+        """
+        m.run_image(name=visibilities["lam"][j], nphot=1e5, \
+                npix=visibilities["npix"][j], lam=None, \
+                pixelsize=visibilities["pixelsize"][j], tgas_eq_tdust=True, \
+                scattering_mode_max=0, incl_dust=False, incl_lines=True, \
+                loadlambda=True, incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
+                code="radmc3d", verbose=False, writeimage_unformatted=True, \
+                setthreads=ncpus)
+
+        m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
+                visibilities["data"][j].u, visibilities["data"][j].v, \
+                visibilities["data"][j].freq, \
+                m.images[visibilities["lam"][j]], dRA=-p["x0"], dDec=-p["y0"], \
+                nthreads=ncpus)
 
         if plot:
             m.run_image(name=visibilities["lam"][j], nphot=1e5, \
