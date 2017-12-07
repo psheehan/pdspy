@@ -1,25 +1,26 @@
 import numpy
 import scipy.interpolate
+from ..constants.astronomy import arcsec
 from .libinterferometry import Visibilities
+from galario import double
 
-def interpolate_model(u, v, freq, model):
+def interpolate_model(u, v, freq, model, nthreads=1, dRA=0., dDec=0.):
 
-    nu = int(model.u.size**0.5)
-    model_u = model.u[0:nu]
-    model_v = model.v[0:-1:nu]
+    double.threads(nthreads)
 
     real = []
     imag = []
 
-    for i in range(len(model.freq)):
-        f = scipy.interpolate.RectBivariateSpline(model_u, model_v, \
-                model.real[:,i].reshape((nu,nu)), kx=5, ky=5)
-        real.append(f.ev(u*freq[i]/freq.mean(), v*freq[i]/freq.mean()))
-        f = scipy.interpolate.RectBivariateSpline(model_u, model_v, \
-                model.imag[:,i].reshape((nu,nu)), kx=5, ky=5)
-        imag.append(f.ev(u*freq[i]/freq.mean(), v*freq[i]/freq.mean()))
+    dxy = (model.x[1] - model.x[0])*arcsec
 
-    real = numpy.transpose(numpy.array(real))
-    imag = numpy.transpose(numpy.array(imag))
+    for i in range(len(model.freq)):
+        vis = double.sampleImage(model.image[:,:,i,0].copy(order='C'), \
+                dxy, u, v, dRA=dRA*arcsec, dDec=dDec*arcsec)
+
+        real.append(vis.real.reshape((u.size,1)))
+        imag.append(vis.imag.reshape((u.size,1)))
+
+    real = numpy.concatenate(real, axis=1)
+    imag = numpy.concatenate(imag, axis=1)
 
     return Visibilities(u, v, freq, real, imag, numpy.ones(real.shape))
