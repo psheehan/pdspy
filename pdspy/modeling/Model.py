@@ -159,7 +159,11 @@ class Model:
                 doppcatch=doppcatch, incl=incl, posang=pa, phi=phi, \
                 verbose=verbose)
 
-        image, x, y, lam = radmc3d.read.image()
+        if 'writeimage_unformatted' in keywords:
+            image, x, y, lam = radmc3d.read.image(\
+                    binary=keywords["writeimage_unformatted"])
+        else:
+            image, x, y, lam = radmc3d.read.image()
 
         image = image / Jy * ((x[1] - x[0]) / (dpc * pc)) * \
                 ((y[1] - y[0]) / (dpc * pc))
@@ -170,6 +174,9 @@ class Model:
         self.images[name] = Image(image, x=x, y=y, wave=lam*1.0e-4)
 
         os.system("rm *.out *.inp *.dat")
+        if 'writeimage_unformatted' in keywords:
+            if keywords['writeimage_unformatted']:
+                os.system("rm *.bout")
 
     def run_sed(self, name=None, nphot=1e6, code="radmc3d", **keywords):
         if (code == "radmc3d"):
