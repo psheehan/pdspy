@@ -608,9 +608,11 @@ else:
             elif key == "logR_cav":
                 temp_pos.append(r_cav)
             elif key == "logM_disk":
-                temp_pos.append(numpy.random.uniform(-5.,-3.,1)[0])
+                temp_pos.append(numpy.random.uniform(-6.,\
+                        parameters[key]["limits"][1],1)[0])
             elif key == "logM_env":
-                temp_pos.append(numpy.random.uniform(-5.,-3.,1)[0])
+                temp_pos.append(numpy.random.uniform(-6.,\
+                        parameters[key]["limits"][1],1)[0])
             else:
                 temp_pos.append(numpy.random.uniform(\
                         parameters[key]["limits"][0], \
