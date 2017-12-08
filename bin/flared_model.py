@@ -197,6 +197,11 @@ def model(visibilities, params, parameters, plot=False):
         print("Time to invert, interpolate, and center:", t3 - t2, "\n")
 
         if plot:
+            lam = c / visibilities["image"][0].freq / 1.0e-4
+            wave = lam * numpy.sqrt((1. - b) / (1. + b))
+
+            m.set_camera_wavelength(wave)
+
             m.run_image(name=visibilities["lam"][j], nphot=1e5, \
                     npix=visibilities["image_npix"][j], lam=None, \
                     pixelsize=visibilities["image_pixelsize"][j], \
