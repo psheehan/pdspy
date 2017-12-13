@@ -1,5 +1,37 @@
 from os import system
+from collections import Iterable
 
+def typecheck(obj): return not isinstance(obj, str) and isinstance(obj, Iterable)
+
+def commandmaker(type,verbose=True,**kwargs):
+    command = 'radmc3d {} '.format(type)    
+    for key,val in kwargs.items():
+        if typecheck(val):
+            base = ' '.join(val)
+            val = base
+
+        command += '{} {} '.format(key,val)
+
+    if not verbose:
+        command += " > radmc3d.out"
+
+    return command
+
+def thermal(verbose=True,**kwargs):
+    command = commandmaker('thermal',verbose,**kwargs)
+    #return command
+    system(command)
+
+def sed(verbose=True,**kwargs):
+    command = commandmaker('sed',verbose,**kwargs)
+    #return command
+    system(command)
+
+def image(verbose=True,**kwargs):
+    command = commandmaker('image',verbose,**kwargs)
+    #return command
+    system(command)
+'''
 def thermal(noscat=None, nphot_therm=None, nphot_scat=None, setthreads=1, \
         inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None, \
         verbose=True):
@@ -236,7 +268,7 @@ def image(lam=None, npix=None, npixx=None, npixy=None, nrrefine=None, \
 
     system(command)
 
-
+'''
 # The code below has every single command, if you need to implement more command line options.
 """
 def run_thermal(npix=None, npixx=None, npixy=None, nrrefine=None, \

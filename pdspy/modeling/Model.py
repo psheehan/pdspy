@@ -231,6 +231,9 @@ class Model:
                 widthkms=widthkms, vkms=vkms, linenlam=linenlam, \
                 doppcatch=doppcatch, incl=incl, posang=pa, phi=phi, \
                 verbose=verbose)
+        
+        if verbose:
+            print('kwargs in {}...{},{}'.format(__file__,keywords,type(keywords)))
 
         if 'writeimage_unformatted' in keywords:
             image, x, y, lam = radmc3d.read.image(\
