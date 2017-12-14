@@ -614,6 +614,9 @@ else:
             elif key == "logM_env":
                 temp_pos.append(numpy.random.uniform(-6.,\
                         parameters[key]["limits"][1],1)[0])
+            elif key == "h_0":
+                temp_pos.append(numpy.random.uniform(\
+                        parameters[key]["limits"][0], 0.2, 1)[0])
             else:
                 temp_pos.append(numpy.random.uniform(\
                         parameters[key]["limits"][0], \
