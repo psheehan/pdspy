@@ -133,7 +133,7 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
     # Set up the model and run the thermal simulation.
 
     if p["M_disk"] > 0.001 or p["R_disk"] < 50 or p["M_env"] > 0.001 or \
-            p["R_env"] < 500:
+            p["R_env"] < 500 or p["h_0"] > 0.25:
         if args.withhyperion:
             nphi = 201
             code = "hyperion"
