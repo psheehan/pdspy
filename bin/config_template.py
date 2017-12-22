@@ -9,27 +9,38 @@ import numpy
 # Define the necessary info for the visiblity datasets.
 
 visibilities = {
-        "file":["path/to/file1"],
+        # info for the readin file
+        "file":["path/to/file1"], \
+        # vis file
+        # irellevant cause galario needed for disk model 
         "binsize":[8057.218995847603],
         "pixelsize":[0.1],
         "freq":["230GHz"],
         "lam":["1300"],
+        # placeholder name
         "npix":[256],
         "gridsize":[256],
         "weight":[10.],
+        # weight 1, for 
         # Info for the image.
         "image_file":["path/to/image_file1"],
+        # fits file w/ channel map science data from clean
         "image_pixelsize":[0.05],
         "image_npix":[1024],
         # Info for the plots.
         "nrows":[5],
         "ncols":[5],
         "ind0":[1],
+        # for skipping irrel.chans
+        # ticks for plotting vis models in disk model
         "ticks":[numpy.array([-250,-200,-100,0,100,200,250])],
+        # image ticks for oplotting image, starting size, tick 1, tick2, tick3, finished size in arcsecs
         "image_ticks":[numpy.array([-0.75,-0.5,0,0.5,0.75])],
         }
 
 # Something similar for images.
+
+# for continuum use disk_model
 
 images = {
         "file":["path/to/file1"],
@@ -81,6 +92,7 @@ nplot = 5
 
 parameters = {
         # Stellar parameters.
+        # fixed true, fixparams
         "logM_star":{"fixed":True, "value":0.0, "limits":[-1.,1.]},
         "T_star":{"fixed":True, "value":4000., "limits":[500.,10000.]},
         "logL_star":{"fixed":True, "value":0.0, "limits":[-1.,2.]},
@@ -89,8 +101,11 @@ parameters = {
         "logR_in":{"fixed":True, "value":-1., "limits":[-1.,4.]},
         "logR_disk":{"fixed":True, "value":2., "limits":[0.,4.]},
         "h_0":{"fixed":True, "value":0.1, "limits":[0.01,0.5]},
+        # surf. dens. pwrlaw
         "gamma":{"fixed":True, "value":1.0, "limits":[-0.5,2.0]},
+        # scaling param, 
         "beta":{"fixed":True, "value":1.0, "limits":[0.5,1.5]},
+        # gaps and cavs
         "logR_cav":{"fixed":True, "value":1.0, "limits":[-1.,3.]},
         "logdelta_cav":{"fixed":True, "value":0.0, "limits":[-4.,0.]},
         "logR_gap1":{"fixed":True, "value":1.0, "limits":[-1.,3.]},
@@ -102,6 +117,7 @@ parameters = {
         "logR_gap3":{"fixed":True, "value":1.8, "limits":[-1.,3.]},
         "w_gap3":{"fixed":True, "value":10., "limits":[1.,100.]},
         "logdelta_gap3":{"fixed":True, "value":0.0, "limits":[-4.,0.]},
+        # forgrain siz manip.
         "f_M_large":{"fixed":True, "value":0.8, "limits":[0.05, 1.]},
         "f_h_large":{"fixed":True, "value":0.5, "limits":[0.1, 1.]},
         "beta_large":{"fixed":True, "value":1., "limits":[0.5, 1.5]},
@@ -121,6 +137,7 @@ parameters = {
         "p":{"fixed":True, "value":3.5, "limits":[2.5,4.5]},
         # Gas parameters.
         "gas_file":{"fixed":True, "value":"co.dat", "limits":[0.,0.]},
+        # gas abundance 
         "logabundance":{"fixed":True, "value":-4., "limits":[-6.,-2.]},
         # Viewing parameters.
         "i":{"fixed":True, "value":45., "limits":[0.,180.]},
@@ -128,6 +145,9 @@ parameters = {
         "x0":{"fixed":True, "value":0., "limits":[-0.1,0.1]},
         "y0":{"fixed":True, "value":0., "limits":[-0.1,0.1]},
         "dpc":{"fixed":True, "value":140., "limits":[1.,1e6]},
+        # extinction
         "Ak":{"fixed":True, "value":0., "limits":[0.,1.]},
         "v_sys":{"fixed":True, "value":5., "limits":[0.,10.]},
         }
+# add option for both plots images and visibilities
+# add config mani file
