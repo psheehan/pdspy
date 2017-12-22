@@ -18,7 +18,7 @@ from importlib import import_module
 from time import time as ctime
 
 # import custom modules
-from . import defaultconfig
+from . import config_template as defaulconfig
 from .colours import colours
 from ..version import *
 
