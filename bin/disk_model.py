@@ -393,7 +393,7 @@ class Transform:
         self.fmt = fmt
 
     def __call__(self, x, p):
-        return self.fmt% ((x-(self.xmax-self.xmin+1)/2)*self.dx)
+        return self.fmt% ((x-(self.xmax-self.xmin)/2)*self.dx)
 
 # Define a function to scale an image to look nice.
 
@@ -750,14 +750,14 @@ while nsteps < max_nsteps:
 
         ticks = visibilities["ticks"][j]
 
-        xmin, xmax = int(visibilities["npix"][j]/2+ticks[0]/\
-                (visibilities["binsize"][j]/1000)), \
-                int(visibilities["npix"][j]/2+ticks[6]/\
-                (visibilities["binsize"][j]/1000))
-        ymin, ymax = int(visibilities["npix"][j]/2+ticks[0]/\
-                (visibilities["binsize"][j]/1000)), \
-                int(visibilities["npix"][j]/2+ticks[6]/\
-                (visibilities["binsize"][j]/1000))
+        xmin, xmax = int(round(visibilities["npix"][j]/2+ticks[0]/\
+                (visibilities["binsize"][j]/1000))), \
+                int(round(visibilities["npix"][j]/2+ticks[6]/\
+                (visibilities["binsize"][j]/1000)))
+        ymin, ymax = int(round(visibilities["npix"][j]/2+ticks[0]/\
+                (visibilities["binsize"][j]/1000))), \
+                int(round(visibilities["npix"][j]/2+ticks[6]/\
+                (visibilities["binsize"][j]/1000)))
 
         vmin = min(0, visibilities["data1d"][j].real.min())
         vmax = visibilities["data1d"][j].real.max()
@@ -807,63 +807,63 @@ while nsteps < max_nsteps:
         ticks = visibilities["image_ticks"][j]
 
         if "x0" in params:
-            xmin, xmax = int(visibilities["image_npix"][j]/2 + \
+            xmin, xmax = int(round(visibilities["image_npix"][j]/2 + \
                     visibilities["x0"][j]/visibilities["image_pixelsize"][j]+ \
                     params["x0"]/visibilities["image_pixelsize"][j]+ \
-                    round(ticks[0]/visibilities["image_pixelsize"][j])), \
+                    ticks[0]/visibilities["image_pixelsize"][j])), \
                     int(round(visibilities["image_npix"][j]/2+\
                     visibilities["x0"][j]/visibilities["image_pixelsize"][j]+ \
                     params["x0"]/visibilities["image_pixelsize"][j]+ \
-                    int(ticks[-1]/visibilities["image_pixelsize"][j])))
+                    ticks[-1]/visibilities["image_pixelsize"][j]))
         else:
-            xmin, xmax = int(visibilities["image_npix"][j]/2 + \
+            xmin, xmax = int(round(visibilities["image_npix"][j]/2 + \
                     visibilities["x0"][j]/visibilities["image_pixelsize"][j]+ \
                     parameters["x0"]["value"]/visibilities["image_pixelsize"][j]+ \
-                    round(ticks[0]/visibilities["image_pixelsize"][j])), \
+                    ticks[0]/visibilities["image_pixelsize"][j])), \
                     int(round(visibilities["image_npix"][j]/2+\
                     visibilities["x0"][j]/visibilities["image_pixelsize"][j]+ \
                     parameters["x0"]["value"]/visibilities["image_pixelsize"][j]+ \
-                    int(ticks[-1]/visibilities["image_pixelsize"][j])))
+                    ticks[-1]/visibilities["image_pixelsize"][j]))
         if "y0" in params:
-            ymin, ymax = int(visibilities["image_npix"][j]/2-\
+            ymin, ymax = int(round(visibilities["image_npix"][j]/2-\
                     visibilities["y0"][j]/visibilities["image_pixelsize"][j]- \
                     params["y0"]/visibilities["image_pixelsize"][j]+ \
-                    round(ticks[0]/visibilities["image_pixelsize"][j])), \
+                    ticks[0]/visibilities["image_pixelsize"][j])), \
                     int(round(visibilities["image_npix"][j]/2-\
                     visibilities["y0"][j]/visibilities["image_pixelsize"][j]- \
                     params["y0"]/visibilities["image_pixelsize"][j]+ \
-                    int(ticks[-1]/visibilities["image_pixelsize"][j])))
+                    ticks[-1]/visibilities["image_pixelsize"][j]))
         else:
-            ymin, ymax = int(visibilities["image_npix"][j]/2-\
+            ymin, ymax = int(round(visibilities["image_npix"][j]/2-\
                     visibilities["y0"][j]/visibilities["image_pixelsize"][j]- \
                     parameters["y0"]["value"]/visibilities["image_pixelsize"][j]+ \
-                    round(ticks[0]/visibilities["image_pixelsize"][j])), \
+                    ticks[0]/visibilities["image_pixelsize"][j])), \
                     int(round(visibilities["image_npix"][j]/2-\
                     visibilities["y0"][j]/visibilities["image_pixelsize"][j]- \
                     parameters["y0"]["value"]/visibilities["image_pixelsize"][j]+ \
-                    int(ticks[-1]/visibilities["image_pixelsize"][j])))
+                    ticks[-1]/visibilities["image_pixelsize"][j]))
 
         ax[2*j,1].imshow(visibilities["image"][j].image\
                 [ymin:ymax,xmin:xmax,0,0], origin="lower", \
                 interpolation="nearest")
 
-        xmin, xmax = int(visibilities["image_npix"][j]/2 + \
-                round(ticks[0]/visibilities["image_pixelsize"][j])), \
-                int(round(visibilities["image_npix"][j]/2+\
-                int(ticks[-1]/visibilities["image_pixelsize"][j])))
-        ymin, ymax = int(visibilities["image_npix"][j]/2+\
-                round(ticks[0]/visibilities["image_pixelsize"][j])), \
-                int(round(visibilities["image_npix"][j]/2+\
-                int(ticks[-1]/visibilities["image_pixelsize"][j])))
+        xmin, xmax = int(round(visibilities["image_npix"][j]/2+1 + \
+                ticks[0]/visibilities["image_pixelsize"][j])), \
+                int(round(visibilities["image_npix"][j]/2+1 + \
+                ticks[-1]/visibilities["image_pixelsize"][j]))
+        ymin, ymax = int(round(visibilities["image_npix"][j]/2+1 + \
+                ticks[0]/visibilities["image_pixelsize"][j])), \
+                int(round(visibilities["image_npix"][j]/2+1 + \
+                ticks[-1]/visibilities["image_pixelsize"][j]))
 
         ax[2*j,1].contour(model_image.image[ymin:ymax,xmin:xmax,0,0])
 
         transform = ticker.FuncFormatter(Transform(xmin, xmax, \
                 visibilities["image_pixelsize"][j], '%.1f"'))
 
-        ax[2*j,1].set_xticks(visibilities["image_npix"][j]/2+\
+        ax[2*j,1].set_xticks(visibilities["image_npix"][j]/2+1+\
                 ticks[1:-1]/visibilities["image_pixelsize"][j]-xmin)
-        ax[2*j,1].set_yticks(visibilities["image_npix"][j]/2+\
+        ax[2*j,1].set_yticks(visibilities["image_npix"][j]/2+1+\
                 ticks[1:-1]/visibilities["image_pixelsize"][j]-ymin)
         ax[2*j,1].get_xaxis().set_major_formatter(transform)
         ax[2*j,1].get_yaxis().set_major_formatter(transform)
