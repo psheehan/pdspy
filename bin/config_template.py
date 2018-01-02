@@ -17,6 +17,8 @@ visibilities = {
         "npix":[256],
         "gridsize":[256],
         "weight":[10.],
+        "x0":[0.],
+        "y0":[0.],
         # Info for the image.
         "image_file":["path/to/image_file1"],
         "image_pixelsize":[0.05],
