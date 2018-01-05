@@ -31,6 +31,7 @@ import pdspy.table
 import pdspy.dust as dust
 import pdspy.gas as gas
 import pdspy.mcmc as mc
+import pdspy.misc.logger as logger
 from pdspy.misc.config import configuration as config
 
 comm = MPI.COMM_WORLD

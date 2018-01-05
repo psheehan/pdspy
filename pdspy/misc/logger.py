@@ -17,7 +17,12 @@ from datetime import datetime as dtime
 import time
 
 # import custom modules
-from colours import colours
+from .colours import colours
+from ..version import *
+
+# checking python version
+assert assertion()
+__version__ = package_version()
 
 # function that creates a logger
 class Messenger(object):
