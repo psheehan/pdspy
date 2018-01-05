@@ -180,9 +180,16 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
 
         m.convert_hyperion_to_radmc3d()
     else:
-        m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
-                mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
-                verbose=False, setthreads=nprocesses)
+        try:
+            m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
+                    mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
+                    verbose=False, setthreads=nprocesses)
+        # Catch a strange RADMC3D error and re-run. Not an ideal fix, but 
+        # perhaps the simplest option.
+        except:
+            m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
+                    mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
+                    verbose=False, setthreads=nprocesses)
 
     # Run the images/visibilities/SEDs. If plot == "concat" then we are doing
     # a fit and we need less. Otherwise we are making a plot of the best fit 
