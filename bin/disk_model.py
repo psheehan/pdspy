@@ -38,6 +38,7 @@ parser.add_argument('-p', '--resetprob', action='store_true')
 parser.add_argument('-a', '--action', type=str, default="run")
 parser.add_argument('-n', '--ncpus', type=int, default=1)
 parser.add_argument('-m', '--ncpus_highmass', type=int, default=8)
+parser.add_argument('-e', '--withexptaper', action='store_true')
 args = parser.parse_args()
 
 # Check whether we are using MPI.
@@ -99,6 +100,11 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
     p["alpha"] = p["gamma"] + p["beta"]
     p["alpha_large"] = p["gamma"] + p["beta_large"]
 
+    # If we're using a Pringle disk, make sure the scale height is set correctly
+
+    if args.withexptaper:
+        p["h_0"] *= p["R_disk"]**p["beta"]
+
     # Get the needed values of the gaps.
 
     p["R_in_gap1"] = p["R_gap1"] - p["w_gap1"]/2
@@ -150,22 +156,43 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
     m = modeling.YSOModel()
     m.add_star(mass=p["M_star"],luminosity=p["L_star"],temperature=p["T_star"])
     m.set_spherical_grid(p["R_in"], p["R_env"], 100, nphi, 2, code=code)
-    m.add_disk(mass=p["M_disk"]*p["f_M_large"], rmin=p["R_in"], \
-            rmax=p["R_disk"], plrho=p["alpha_large"], \
-            h0=p["h_0"]*p["f_h_large"], plh=p["beta_large"], dust=ddust, \
-            gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"],p["R_in_gap3"]], \
-            gap_rout=[p["R_cav"],p["R_out_gap1"],p["R_out_gap2"], \
-            p["R_out_gap3"]], gap_delta=[p["delta_cav"],p["delta_gap1"], \
-            p["delta_gap2"],p["delta_gap3"]])
-    if p["f_M_large"] < 1:
-        m.add_disk(mass=p["M_disk"]*(1-p["f_M_large"]), rmin=p["R_in"], \
-                rmax=p["R_disk"], plrho=p["alpha"], h0=p["h_0"], plh=p["beta"],\
-                dust=edust, gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"], \
-                p["R_in_gap3"]], gap_rout=[p["R_cav"],p["R_out_gap1"], \
+
+    if args.withexptaper:
+        m.add_pringle_disk(mass=p["M_disk"]*p["f_M_large"], rmin=p["R_in"], \
+                rmax=p["R_disk"], plrho=p["alpha_large"], \
+                h0=p["h_0"]*p["f_h_large"], plh=p["beta_large"], dust=ddust, \
+                gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"],\
+                p["R_in_gap3"]], gap_rout=[p["R_cav"],p["R_out_gap1"],\
                 p["R_out_gap2"],p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
-                p["delta_gap1"], p["delta_gap2"],p["delta_gap3"]])
+                p["delta_gap1"],p["delta_gap2"],p["delta_gap3"]])
+        if p["f_M_large"] < 1:
+            m.add_pringle_disk(mass=p["M_disk"]*(1-p["f_M_large"]), \
+                    rmin=p["R_in"], rmax=p["R_disk"], plrho=p["alpha"], \
+                    h0=p["h_0"], plh=p["beta"], dust=edust, gap_rin=[p["R_in"],\
+                    p["R_in_gap1"],p["R_in_gap2"],p["R_in_gap3"]], \
+                    gap_rout=[p["R_cav"],p["R_out_gap1"],p["R_out_gap2"],\
+                    p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
+                    p["delta_gap1"], p["delta_gap2"],p["delta_gap3"]])
+    else:
+        m.add_disk(mass=p["M_disk"]*p["f_M_large"], rmin=p["R_in"], \
+                rmax=p["R_disk"], plrho=p["alpha_large"], \
+                h0=p["h_0"]*p["f_h_large"], plh=p["beta_large"], dust=ddust, \
+                gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"],\
+                p["R_in_gap3"]], gap_rout=[p["R_cav"],p["R_out_gap1"],\
+                p["R_out_gap2"],p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
+                p["delta_gap1"],p["delta_gap2"],p["delta_gap3"]])
+        if p["f_M_large"] < 1:
+            m.add_disk(mass=p["M_disk"]*(1-p["f_M_large"]), rmin=p["R_in"], \
+                    rmax=p["R_disk"], plrho=p["alpha"], h0=p["h_0"], \
+                    plh=p["beta"], dust=edust, gap_rin=[p["R_in"],\
+                    p["R_in_gap1"],p["R_in_gap2"],p["R_in_gap3"]], \
+                    gap_rout=[p["R_cav"],p["R_out_gap1"],p["R_out_gap2"],\
+                    p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
+                    p["delta_gap1"], p["delta_gap2"],p["delta_gap3"]])
+
     m.add_ulrich_envelope(mass=p["M_env"], rmin=p["R_in"], rmax=p["R_env"], \
             cavpl=p["ksi"], cavrfact=p["f_cav"], dust=edust)
+
     m.grid.set_wavelength_grid(0.1,1.0e5,500,log=True)
 
     # Run the thermal simulation.
