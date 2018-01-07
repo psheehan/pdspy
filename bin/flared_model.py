@@ -41,6 +41,7 @@ parser.add_argument('-r', '--resume', action='store_true')
 parser.add_argument('-p', '--resetprob', action='store_true')
 parser.add_argument('-a', '--action', type=str, default="run")
 parser.add_argument('-n', '--ncpus', type=int, default=1)
+parser.add_argument('-v', '--plot_vis', action='store_true')
 args = parser.parse_args()
 
 # Check whether we are using MPI.
@@ -205,6 +206,16 @@ def model(visibilities, params, parameters, plot=False):
                         scipy.signal.fftconvolve(\
                         m.images[visibilities["lam"][j]].image[:,:,ind,0], \
                         beam, mode="same")
+
+            if args.plot_vis:
+                m.visibilities[visibilities["lam"][j]] = \
+                        uv.average(m.visibilities[visibilities["lam"][j]], \
+                        gridsize=20, radial=True, log=True, \
+                        logmin=m.visibilities[visibilities["lam"][j]].uvdist[\
+                        numpy.nonzero(m.visibilities[visibilities["lam"][j]].\
+                        uvdist)].min()*0.95, logmax=m.visibilities[\
+                        visibilities["lam"][j]].uvdist.max()*1.05, \
+                        mode="spectralline")
 
         os.system("rm params.txt")
         os.chdir(original_dir)
@@ -597,9 +608,13 @@ while nsteps < max_nsteps:
 
                 # Plot the image.
 
-                ax[k,l].imshow(visibilities["image"][j].image[ymin:ymax,\
-                        xmin:xmax,ind,0], origin="lower", \
-                        interpolation="nearest", vmin=vmin, vmax=vmax)
+                if args.plot_vis:
+                    ax[k,l].semilogx(visibilities["data1d"][j].uvdist, \
+                            visibilities["data1d"][j].amp[:,ind], "bo")
+                else:
+                    ax[k,l].imshow(visibilities["image"][j].image[ymin:ymax,\
+                            xmin:xmax,ind,0], origin="lower", \
+                            interpolation="nearest", vmin=vmin, vmax=vmax)
 
                 # Now make the centroid the map center for the model.
 
@@ -614,11 +629,16 @@ while nsteps < max_nsteps:
 
                 # Plot the model image.
 
-                levels = numpy.array([0.05, 0.25, 0.45, 0.65, 0.85, 0.95]) * \
-                        m.images[visibilities["lam"][j]].image.max()
+                if args.plot_vis:
+                    ax[k,l].plot(m.visibilities[visibilities["lam"][j]].uvdist,\
+                            m.visibilities[visibilities["lam"][j]].amp[:,ind], \
+                            "g-")
+                else:
+                    levels = numpy.array([0.05, 0.25, 0.45, 0.65, 0.85, 0.95])*\
+                            m.images[visibilities["lam"][j]].image.max()
 
-                ax[k,l].contour(m.images[visibilities["lam"][j]].\
-                        image[ymin:ymax,xmin:xmax,ind,0], levels=levels)
+                    ax[k,l].contour(m.images[visibilities["lam"][j]].\
+                            image[ymin:ymax,xmin:xmax,ind,0], levels=levels)
 
                 # Add the velocity to the map.
 
@@ -630,34 +650,40 @@ while nsteps < max_nsteps:
 
                 # Fix the axes labels.
 
-                transform = ticker.FuncFormatter(Transform(xmin, xmax, \
-                        visibilities["image_pixelsize"][j], '%.1f"'))
+                if args.plot_vis:
+                    ax[-1,l].set_xlabel("U-V Distance [k$\lambda$]")
+                else:
+                    transform = ticker.FuncFormatter(Transform(xmin, xmax, \
+                            visibilities["image_pixelsize"][j], '%.1f"'))
 
-                ax[k,l].set_xticks(visibilities["image_npix"][j]/2+\
-                        ticks[1:-1]/visibilities["image_pixelsize"][j]-xmin)
-                ax[k,l].set_yticks(visibilities["image_npix"][j]/2+\
-                        ticks[1:-1]/visibilities["image_pixelsize"][j]-ymin)
+                    ax[k,l].set_xticks(visibilities["image_npix"][j]/2+\
+                            ticks[1:-1]/visibilities["image_pixelsize"][j]-xmin)
+                    ax[k,l].set_yticks(visibilities["image_npix"][j]/2+\
+                            ticks[1:-1]/visibilities["image_pixelsize"][j]-ymin)
 
-                ax[k,l].get_xaxis().set_major_formatter(transform)
-                ax[k,l].get_yaxis().set_major_formatter(transform)
+                    ax[k,l].get_xaxis().set_major_formatter(transform)
+                    ax[k,l].get_yaxis().set_major_formatter(transform)
 
-                ax[-1,l].set_xlabel("$\Delta$RA")
+                    ax[-1,l].set_xlabel("$\Delta$RA")
 
-                # Show the size of the beam.
+                    # Show the size of the beam.
 
-                bmaj = visibilities["image"][j].header["BMAJ"] / \
-                        abs(visibilities["image"][j].header["CDELT1"])
-                bmin = visibilities["image"][j].header["BMIN"] / \
-                        abs(visibilities["image"][j].header["CDELT1"])
-                bpa = visibilities["image"][j].header["BPA"]
+                    bmaj = visibilities["image"][j].header["BMAJ"] / \
+                            abs(visibilities["image"][j].header["CDELT1"])
+                    bmin = visibilities["image"][j].header["BMIN"] / \
+                            abs(visibilities["image"][j].header["CDELT1"])
+                    bpa = visibilities["image"][j].header["BPA"]
 
-                ax[k,l].add_artist(patches.Ellipse(xy=(12.5,17.5), width=bmaj, \
-                        height=bmin, angle=(bpa+90), facecolor="white", \
-                        edgecolor="black"))
+                    ax[k,l].add_artist(patches.Ellipse(xy=(12.5,17.5), \
+                            width=bmaj, height=bmin, angle=(bpa+90), \
+                            facecolor="white", edgecolor="black"))
 
-                ax[k,l].set_adjustable('box-forced')
+                    ax[k,l].set_adjustable('box-forced')
 
-            ax[k,0].set_ylabel("$\Delta$Dec")
+            if args.plot_vis:
+                ax[k,0].set_ylabel("Amplitude [Jy]")
+            else:
+                ax[k,0].set_ylabel("$\Delta$Dec")
 
     # Adjust the plot and save it.
 
