@@ -214,7 +214,10 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
                     verbose=False, setthreads=nprocesses)
         # Catch a timeout error from models running for too long...
         except subprocess.TimeoutExpired:
-            os.system("rm params.txt *.inp *.out *.dat *.uinp")
+            os.system("mv params.txt {0:s}/params_timeout_{1:s}".format(\
+                    original_dir, time.strftime("%Y-%m-%d-%H:%M:%S", \
+                    time.gmtime())))
+            os.system("rm *.inp *.out *.dat *.uinp")
             os.chdir(original_dir)
             os.rmdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
 
