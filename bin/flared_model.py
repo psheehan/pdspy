@@ -185,7 +185,7 @@ def model(visibilities, params, parameters, plot=False):
                     pixelsize=visibilities["image_pixelsize"][j], \
                     tgas_eq_tdust=True, scattering_mode_max=0, \
                     incl_dust=False, incl_lines=True, loadlambda=True, \
-                    incl=p["i"], pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
+                    incl=p["i"], pa=-p["pa"], dpc=p["dpc"], code="radmc3d", \
                     verbose=False, setthreads=ncpus)
 
             x, y = numpy.meshgrid(numpy.linspace(-256,255,512), \
