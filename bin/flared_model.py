@@ -376,9 +376,7 @@ for j in range(len(visibilities["file"])):
 
     # Center the data. => need to update!
 
-    if parameters["x0"]["fixed"]:
-        data = uv.center(data, [parameters["x0"]["value"], \
-                parameters["y0"]["value"], 1.])
+    data = uv.center(data, [visibilities["x0"][j], visibilities["y0"][j], 1.])
 
     # Add the data to the dictionary structure.
 
@@ -591,18 +589,54 @@ while nsteps < max_nsteps:
 
                 ticks = visibilities["image_ticks"][j]
 
-                xmin, xmax = int(visibilities["image_npix"][j]/2 + \
-                        params["x0"]/visibilities["image_pixelsize"][j]+ \
-                        round(ticks[0]/visibilities["image_pixelsize"][j])), \
-                        int(round(visibilities["image_npix"][j]/2+\
-                        params["x0"]/visibilities["image_pixelsize"][j]+ \
-                        int(ticks[-1]/visibilities["image_pixelsize"][j])))
-                ymin, ymax = int(visibilities["image_npix"][j]/2-\
-                        params["y0"]/visibilities["image_pixelsize"][j]+ \
-                        round(ticks[0]/visibilities["image_pixelsize"][j])), \
-                        int(round(visibilities["image_npix"][j]/2-\
-                        params["y0"]/visibilities["image_pixelsize"][j]+ \
-                        int(ticks[-1]/visibilities["image_pixelsize"][j])))
+                if "x0" in params:
+                    xmin, xmax = int(round(visibilities["image_npix"][j]/2 + \
+                            visibilities["x0"][j]/\
+                            visibilities["image_pixelsize"][j]+ \
+                            params["x0"]/visibilities["image_pixelsize"][j]+ \
+                            ticks[0]/visibilities["image_pixelsize"][j])), \
+                            int(round(visibilities["image_npix"][j]/2+\
+                            visibilities["x0"][j]/\
+                            visibilities["image_pixelsize"][j]+ \
+                            params["x0"]/visibilities["image_pixelsize"][j]+ \
+                            ticks[-1]/visibilities["image_pixelsize"][j]))
+                else:
+                    xmin, xmax = int(round(visibilities["image_npix"][j]/2 + \
+                            visibilities["x0"][j]/\
+                            visibilities["image_pixelsize"][j]+ \
+                            parameters["x0"]["value"]/\
+                            visibilities["image_pixelsize"][j]+ \
+                            ticks[0]/visibilities["image_pixelsize"][j])), \
+                            int(round(visibilities["image_npix"][j]/2+\
+                            visibilities["x0"][j]/\
+                            visibilities["image_pixelsize"][j]+ \
+                            parameters["x0"]["value"]/\
+                            visibilities["image_pixelsize"][j]+ \
+                            ticks[-1]/visibilities["image_pixelsize"][j]))
+                if "y0" in params:
+                    ymin, ymax = int(round(visibilities["image_npix"][j]/2-\
+                            visibilities["y0"][j]/\
+                            visibilities["image_pixelsize"][j]- \
+                            params["y0"]/visibilities["image_pixelsize"][j]+ \
+                            ticks[0]/visibilities["image_pixelsize"][j])), \
+                            int(round(visibilities["image_npix"][j]/2-\
+                            visibilities["y0"][j]/\
+                            visibilities["image_pixelsize"][j]- \
+                            params["y0"]/visibilities["image_pixelsize"][j]+ \
+                            ticks[-1]/visibilities["image_pixelsize"][j]))
+                else:
+                    ymin, ymax = int(round(visibilities["image_npix"][j]/2-\
+                            visibilities["y0"][j]/\
+                            visibilities["image_pixelsize"][j]- \
+                            parameters["y0"]["value"]/\
+                            visibilities["image_pixelsize"][j]+ \
+                            ticks[0]/visibilities["image_pixelsize"][j])), \
+                            int(round(visibilities["image_npix"][j]/2-\
+                            visibilities["y0"][j]/\
+                            visibilities["image_pixelsize"][j]- \
+                            parameters["y0"]["value"]/\
+                            visibilities["image_pixelsize"][j]+ \
+                            ticks[-1]/visibilities["image_pixelsize"][j]))
 
                 # Plot the image.
 
@@ -616,14 +650,14 @@ while nsteps < max_nsteps:
 
                 # Now make the centroid the map center for the model.
 
-                xmin, xmax = int(visibilities["image_npix"][j]/2 + \
-                        round(ticks[0]/visibilities["image_pixelsize"][j])), \
-                        int(round(visibilities["image_npix"][j]/2+\
-                        int(ticks[-1]/visibilities["image_pixelsize"][j])))
-                ymin, ymax = int(visibilities["image_npix"][j]/2+\
-                        round(ticks[0]/visibilities["image_pixelsize"][j])), \
-                        int(round(visibilities["image_npix"][j]/2+\
-                        int(ticks[-1]/visibilities["image_pixelsize"][j])))
+                xmin, xmax = int(round(visibilities["image_npix"][j]/2+1 + \
+                        ticks[0]/visibilities["image_pixelsize"][j])), \
+                        int(round(visibilities["image_npix"][j]/2+1 +\
+                        ticks[-1]/visibilities["image_pixelsize"][j]))
+                ymin, ymax = int(round(visibilities["image_npix"][j]/2+1 + \
+                        ticks[0]/visibilities["image_pixelsize"][j])), \
+                        int(round(visibilities["image_npix"][j]/2+1 + \
+                        ticks[-1]/visibilities["image_pixelsize"][j]))
 
                 # Plot the model image.
 

@@ -523,9 +523,7 @@ for j in range(len(visibilities["file"])):
 
     # Center the data. => need to update!
 
-    if parameters["x0"]["fixed"]:
-        data = uv.center(data, [visibilities["x0"][j], \
-                visibilities["y0"][j], 1.])
+    data = uv.center(data, [visibilities["x0"][j], visibilities["y0"][j], 1.])
 
     """NEW: interpolate model to baselines instead of averaging the data to the
             model grid?
