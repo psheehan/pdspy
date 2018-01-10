@@ -585,6 +585,12 @@ while nsteps < max_nsteps:
             for l in range(visibilities["ncols"][j]):
                 ind = k*visibilities["ncols"][j] + l + visibilities["ind0"][j]
 
+                # Turn off the axis if ind >= nchannels
+
+                if ind >= v.size:
+                    ax[k,l].set_axis_off()
+                    continue
+
                 # Get the centroid position.
 
                 ticks = visibilities["image_ticks"][j]
