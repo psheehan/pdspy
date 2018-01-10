@@ -502,6 +502,16 @@ sys.path.insert(0, '')
 
 from config import *
 
+# Get the correct binsize and number of bins for averaging the visibility data.
+
+visibilities["gridsize"] = []
+visibilities["binsize"] = []
+
+for i in range(len(visibilities["file"])):
+    visibilities["gridsize"].append(visibilities["npix"][i])
+    visibilities["binsize"].append(1./(visibilities["npix"][i]*\
+            visibilities["pixelsize"][i]*arcsec))
+
 # Set up the places where we will put all of the data.
 
 visibilities["data"] = []
