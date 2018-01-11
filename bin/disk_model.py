@@ -698,41 +698,43 @@ if args.action == "run":
 
 while nsteps < max_nsteps:
     if args.action == "run":
-        pos, prob, state = sampler.run_mcmc(pos, steps_per_iter, lnprob0=prob, \
-                rstate0=state)
+        for i in range(steps_per_iter):
+            pos, prob, state = sampler.run_mcmc(pos, 1, lnprob0=prob, \
+                    rstate0=state)
 
-        chain = numpy.concatenate((chain, sampler.chain), axis=1)
+            chain = numpy.concatenate((chain, sampler.chain), axis=1)
 
-        # Get keys of the parameters that are varying.
+            # Get keys of the parameters that are varying.
 
-        keys = []
-        for key in sorted(parameters.keys()):
-            if not parameters[key]["fixed"]:
-                keys.append(key)
+            keys = []
+            for key in sorted(parameters.keys()):
+                if not parameters[key]["fixed"]:
+                    keys.append(key)
 
-        # Plot the steps of the walkers.
+            # Plot the steps of the walkers.
 
-        for j in range(ndim):
-            fig, ax = plt.subplots(nrows=1, ncols=1)
+            for j in range(ndim):
+                fig, ax = plt.subplots(nrows=1, ncols=1)
 
-            for k in range(nwalkers):
-                ax.plot(chain[k,:,j])
+                for k in range(nwalkers):
+                    ax.plot(chain[k,:,j])
 
-            plt.savefig("steps_{0:s}.pdf".format(keys[j]))
+                plt.savefig("steps_{0:s}.pdf".format(keys[j]))
 
-            plt.close(fig)
+                plt.close(fig)
 
-        # Save walker positions in case the code stps running for some reason.
+            # Save walker positions in case the code stps running for some 
+            # reason.
 
-        numpy.save("pos", pos)
-        numpy.save("prob", prob)
-        numpy.save("chain", chain)
+            numpy.save("pos", pos)
+            numpy.save("prob", prob)
+            numpy.save("chain", chain)
 
-        # Augment the nuber of steps and reset the sampler for the next run.
+            # Augment the nuber of steps and reset the sampler for the next run.
 
-        nsteps += steps_per_iter
+            nsteps += 1
 
-        sampler.reset()
+            sampler.reset()
 
     # Get the best fit parameters and uncertainties from the last 10 steps.
 
