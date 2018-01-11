@@ -250,6 +250,10 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
                 m.visibilities[visibilities["lam"][j]])
         """
 
+        m.visibilities[visibilities["lam"][j]] = uv.center(\
+                m.visibilities[visibilities["lam"][j]], [p["x0"], \
+                p["y0"], 1.])
+
         if plot:
             # Run a high resolution version of the visibilities.
 
@@ -258,6 +262,10 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
                     incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
                     code="radmc3d", mc_scat_maxtauabs=5, verbose=False, \
                     setthreads=nprocesses)
+
+            m.visibilities[visibilities["lam"][j]+"_high"] = uv.center(\
+                    m.visibilities[visibilities["lam"][j]+"_high"], \
+                    [p["x0"], p["y0"], 1.])
 
             # Run a millimeter image.
 
