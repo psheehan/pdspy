@@ -647,8 +647,10 @@ while nsteps < max_nsteps:
                 # Plot the image.
 
                 if args.plot_vis:
-                    ax[k,l].semilogx(visibilities["data1d"][j].uvdist, \
-                            visibilities["data1d"][j].amp[:,ind], "bo")
+                    ax[k,l].errorbar(visibilities["data1d"][j].uvdist, \
+                            visibilities["data1d"][j].amp[:,ind], yerr=1./\
+                            visibilities["data1d"][j].weights[:,ind]**0.5, \
+                            fmt="bo")
                 else:
                     ax[k,l].imshow(visibilities["image"][j].image[ymin:ymax,\
                             xmin:xmax,ind,0], origin="lower", \
@@ -720,6 +722,8 @@ while nsteps < max_nsteps:
 
             if args.plot_vis:
                 ax[k,0].set_ylabel("Amplitude [Jy]")
+
+                ax[k,l].set_xscale("log", nonposx='clip')
             else:
                 ax[k,0].set_ylabel("$\Delta$Dec")
 
