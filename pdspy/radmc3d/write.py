@@ -367,8 +367,8 @@ def molecule(species, name):
     f.write("!LEVEL + ENERGIES(cm^-1) + WEIGHT + J\n")
 
     for i in range(species.J.size):
-        f.write("{0:>5d}{1:>16.9f}{2:>10.1f}{3:>6d}\n".format(i+1, \
-                species.E[i], species.g[i], int(species.J[i])))
+        f.write("{0:>5d}{1:>16.9f}{2:>10.1f}{3:>10s}\n".format(i+1, \
+                species.E[i], species.g[i], species.J[i]))
 
     f.write("!NUMBER OF RADIATIVE TRANSITIONS\n")
     f.write("{0:d}\n".format(species.J_u.size))

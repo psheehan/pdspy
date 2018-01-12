@@ -16,7 +16,7 @@ class Gas:
         nlev = int(f.readline())
         f.readline()
 
-        self.J = numpy.empty(nlev, dtype=int)
+        self.J = numpy.empty(nlev, dtype="<U6")
         self.E = numpy.empty(nlev, dtype=float)
         self.g = numpy.empty(nlev, dtype=float)
         for i in range(nlev):
@@ -115,7 +115,7 @@ class Gas:
 
         f['mass'] = self.mass
 
-        J_dset = f.create_dataset("J", (self.J.size,), dtype='f')
+        J_dset = f.create_dataset("J", (self.J.size,), dtype='s')
         J_dset[...] = self.J
         E_dset = f.create_dataset("E", (self.E.size,), dtype='f')
         E_dset[...] = self.E
