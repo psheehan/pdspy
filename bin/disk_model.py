@@ -209,11 +209,21 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
         m.convert_hyperion_to_radmc3d()
     else:
         try:
+            t1 = time.time()
             m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
                     mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
                     verbose=False, setthreads=nprocesses)
+            t2 = time.time()
+            f = open(original_dir + "/times.txt", "a")
+            f.write("{0:f}\n".format(t2-t1))
+            f.close()
         # Catch a timeout error from models running for too long...
         except subprocess.TimeoutExpired:
+            t2 = time.time()
+            f = open(original_dir + "/times.txt", "a")
+            f.write("{0:f}\n".format(t2-t1))
+            f.close()
+
             os.system("mv params.txt {0:s}/params_timeout_{1:s}".format(\
                     original_dir, time.strftime("%Y-%m-%d-%H:%M:%S", \
                     time.gmtime())))
@@ -225,9 +235,14 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
         # Catch a strange RADMC3D error and re-run. Not an ideal fix, but 
         # perhaps the simplest option.
         except:
+            t1 = time.time()
             m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
                     mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
                     verbose=False, setthreads=nprocesses)
+            t2 = time.time()
+            f = open(original_dir + "/times.txt", "a")
+            f.write("{0:f}\n".format(t2-t1))
+            f.close()
 
     # Run the images/visibilities/SEDs. If plot == "concat" then we are doing
     # a fit and we need less. Otherwise we are making a plot of the best fit 
