@@ -117,10 +117,11 @@ class Model:
 
         os.system("rm temp.rtin temp.rtout temp.log")
 
-    def run_thermal_radmc3d(self, nphot=1e6, verbose=True, **keywords):
+    def run_thermal_radmc3d(self, nphot=1e6, verbose=True, timelimit=7200, \
+            **keywords):
         self.write_radmc3d(nphot_therm=nphot, **keywords)
 
-        radmc3d.run.thermal(verbose=verbose)
+        radmc3d.run.thermal(verbose=verbose, timelimit=timelimit)
 
         self.grid.temperature = radmc3d.read.dust_temperature()
         for i in range(len(self.grid.temperature)):

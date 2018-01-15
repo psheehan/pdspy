@@ -3,7 +3,7 @@ from subprocess import STDOUT, run
 
 def thermal(noscat=None, nphot_therm=None, nphot_scat=None, setthreads=1, \
         inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None, \
-        verbose=True):
+        verbose=True, timelimit=7200):
 
     command="radmc3d mctherm"
 
@@ -24,10 +24,10 @@ def thermal(noscat=None, nphot_therm=None, nphot_scat=None, setthreads=1, \
 
     if not verbose:
         f = open("radmc3d.out","w")
-        output = run(command.split(" "), stdout=f, stderr=f, timeout=7200)
+        output = run(command.split(" "), stdout=f, stderr=f, timeout=timelimit)
         f.close()
     else:
-        output = run(command.split(" "), stderr=STDOUT, timeout=7200)
+        output = run(command.split(" "), stderr=STDOUT, timeout=timelimit)
 
 def sed(nrrefine=None, fluxcons=None, norefine=None, nofluxcons=None, \
         noscat=None, sizeau=None, sizepc=None, zoomau=None, zoompc=None, \

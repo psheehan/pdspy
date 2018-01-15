@@ -465,7 +465,7 @@ else:
     pos = []
     for j in range(nwalkers):
         r_env = numpy.random.uniform(2.5,4.,1)[0]
-        r_disk = numpy.random.uniform(numpy.log10(30.),\
+        r_disk = numpy.random.uniform(numpy.log10(5.),\
                 numpy.log10(10.**r_env),1)[0]
         r_in = numpy.random.uniform(numpy.log10(0.1),\
                 numpy.log10((10.**r_disk)/2),1)[0]
