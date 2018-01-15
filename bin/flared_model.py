@@ -42,6 +42,7 @@ parser.add_argument('-p', '--resetprob', action='store_true')
 parser.add_argument('-a', '--action', type=str, default="run")
 parser.add_argument('-n', '--ncpus', type=int, default=1)
 parser.add_argument('-v', '--plot_vis', action='store_true')
+parser.add_argument('-c', '--withcontsub', action='store_true')
 args = parser.parse_args()
 
 # Check whether we are using MPI.
@@ -160,13 +161,32 @@ def model(visibilities, params, parameters, plot=False):
     for j in range(len(visibilities["file"])):
         m.set_camera_wavelength(wave)
 
-        m.run_image(name=visibilities["lam"][j], nphot=1e5, \
-                npix=visibilities["npix"][j], lam=None, \
-                pixelsize=visibilities["pixelsize"][j], tgas_eq_tdust=True, \
-                scattering_mode_max=0, incl_dust=False, incl_lines=True, \
-                loadlambda=True, incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
-                code="radmc3d", verbose=False, writeimage_unformatted=True, \
-                setthreads=ncpus)
+        if args.withcontsub:
+            m.run_image(name=visibilities["lam"][j], nphot=1e5, \
+                    npix=visibilities["npix"][j], lam=None, \
+                    pixelsize=visibilities["pixelsize"][j], tgas_eq_tdust=True,\
+                    scattering_mode_max=0, incl_dust=True, incl_lines=True, \
+                    loadlambda=True, incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
+                    code="radmc3d", verbose=False, writeimage_unformatted=True,\
+                    setthreads=ncpus)
+
+            m.run_image(name="cont", nphot=1e5, \
+                    npix=visibilities["npix"][j], lam=None, \
+                    pixelsize=visibilities["pixelsize"][j], tgas_eq_tdust=True,\
+                    scattering_mode_max=0, incl_dust=True, incl_lines=False, \
+                    loadlambda=True, incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
+                    code="radmc3d", verbose=False, writeimage_unformatted=True,\
+                    setthreads=ncpus)
+
+            m.images[visibilities["lam"][j]].image -= m.images["cont"].image
+        else:
+            m.run_image(name=visibilities["lam"][j], nphot=1e5, \
+                    npix=visibilities["npix"][j], lam=None, \
+                    pixelsize=visibilities["pixelsize"][j], tgas_eq_tdust=True,\
+                    scattering_mode_max=0, incl_dust=False, incl_lines=True, \
+                    loadlambda=True, incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
+                    code="radmc3d", verbose=False, writeimage_unformatted=True,\
+                    setthreads=ncpus)
 
         m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
                 visibilities["data"][j].u, visibilities["data"][j].v, \
@@ -180,13 +200,32 @@ def model(visibilities, params, parameters, plot=False):
 
             m.set_camera_wavelength(wave)
 
-            m.run_image(name=visibilities["lam"][j], nphot=1e5, \
-                    npix=visibilities["image_npix"][j], lam=None, \
-                    pixelsize=visibilities["image_pixelsize"][j], \
-                    tgas_eq_tdust=True, scattering_mode_max=0, \
-                    incl_dust=False, incl_lines=True, loadlambda=True, \
-                    incl=p["i"], pa=-p["pa"], dpc=p["dpc"], code="radmc3d", \
-                    verbose=False, setthreads=ncpus)
+            if args.withcontsub:
+                m.run_image(name=visibilities["lam"][j], nphot=1e5, \
+                        npix=visibilities["image_npix"][j], lam=None, \
+                        pixelsize=visibilities["image_pixelsize"][j], \
+                        tgas_eq_tdust=True, scattering_mode_max=0, \
+                        incl_dust=True, incl_lines=True, loadlambda=True, \
+                        incl=p["i"], pa=-p["pa"], dpc=p["dpc"], code="radmc3d",\
+                        verbose=False, setthreads=ncpus)
+
+                m.run_image(name="cont", nphot=1e5, \
+                        npix=visibilities["image_npix"][j], lam=None, \
+                        pixelsize=visibilities["image_pixelsize"][j], \
+                        tgas_eq_tdust=True, scattering_mode_max=0, \
+                        incl_dust=True, incl_lines=False, loadlambda=True, \
+                        incl=p["i"], pa=-p["pa"], dpc=p["dpc"], code="radmc3d",\
+                        verbose=False, setthreads=ncpus)
+
+                m.images[visibilities["lam"][j]].image -= m.images["cont"].image
+            else:
+                m.run_image(name=visibilities["lam"][j], nphot=1e5, \
+                        npix=visibilities["image_npix"][j], lam=None, \
+                        pixelsize=visibilities["image_pixelsize"][j], \
+                        tgas_eq_tdust=True, scattering_mode_max=0, \
+                        incl_dust=False, incl_lines=True, loadlambda=True, \
+                        incl=p["i"], pa=-p["pa"], dpc=p["dpc"], code="radmc3d",\
+                        verbose=False, setthreads=ncpus)
 
             x, y = numpy.meshgrid(numpy.linspace(-256,255,512), \
                     numpy.linspace(-256,255,512))
