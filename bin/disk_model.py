@@ -40,6 +40,7 @@ parser.add_argument('-a', '--action', type=str, default="run")
 parser.add_argument('-n', '--ncpus', type=int, default=1)
 parser.add_argument('-m', '--ncpus_highmass', type=int, default=8)
 parser.add_argument('-e', '--withexptaper', action='store_true')
+parser.add_argument('-t', '--timelimit', type=int, default=7200)
 args = parser.parse_args()
 
 # Check whether we are using MPI.
@@ -212,7 +213,8 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
             t1 = time.time()
             m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
                     mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
-                    verbose=False, setthreads=nprocesses)
+                    verbose=False, setthreads=nprocesses, \
+                    timelimit=args.timelimit)
             t2 = time.time()
             f = open(original_dir + "/times.txt", "a")
             f.write("{0:f}\n".format(t2-t1))
@@ -238,7 +240,8 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
             t1 = time.time()
             m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
                     mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
-                    verbose=False, setthreads=nprocesses)
+                    verbose=False, setthreads=nprocesses, \
+                    timelimit=args.timelimit)
             t2 = time.time()
             f = open(original_dir + "/times.txt", "a")
             f.write("{0:f}\n".format(t2-t1))
