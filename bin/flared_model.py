@@ -102,7 +102,7 @@ def model(visibilities, params, parameters, plot=False):
 
     # Make sure alpha and beta are defined.
 
-    if args.withexptaper:
+    if p["disk_type"] == "exptaper":
         t_rdisk = p["T0"] * (p["R_disk"] / 1.)**-p["q"]
         p["h_0"] = ((k_b*(p["R_disk"]*AU)**3*t_rdisk) / (G*p["M_star"]*M_sun * \
                 2.37*m_p))**0.5 / AU
@@ -158,7 +158,7 @@ def model(visibilities, params, parameters, plot=False):
     m.set_spherical_grid(p["R_in"], max(5*p["R_disk"],300), 100, 51, 2, \
             code="radmc3d")
 
-    if args.withexptaper:
+    if p["disk_type"] == "exptaper":
         m.add_pringle_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
                 plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
                 t0=p["T0"], plt=p["q"], gas=gases, abundance=abundance,\
@@ -176,7 +176,7 @@ def model(visibilities, params, parameters, plot=False):
     for j in range(len(visibilities["file"])):
         m.set_camera_wavelength(wave)
 
-        if args.withcontsub:
+        if p["docontsub"]:
             m.run_image(name=visibilities["lam"][j], nphot=1e5, \
                     npix=visibilities["npix"][j], lam=None, \
                     pixelsize=visibilities["pixelsize"][j], tgas_eq_tdust=True,\
@@ -215,7 +215,7 @@ def model(visibilities, params, parameters, plot=False):
 
             m.set_camera_wavelength(wave)
 
-            if args.withcontsub:
+            if p["docontsub"]:
                 m.run_image(name=visibilities["lam"][j], nphot=1e5, \
                         npix=visibilities["image_npix"][j], lam=None, \
                         pixelsize=visibilities["image_pixelsize"][j], \
@@ -417,6 +417,23 @@ from config import *
 visibilities["data"] = []
 visibilities["data1d"] = []
 visibilities["image"] = []
+
+# Decide whether to use an exponentially tapered 
+
+if not "disk_type" in parameters:
+    parameters["disk_type"] = {"fixed":True, "value":"truncated", \
+            "limits":[0.,0.]}
+
+if args.withexptaper:
+    parameters["disk_type"]["value"] = "exptaper"
+
+# Decide whether to do continuum subtraction or not.
+
+if not "docontsub" in parameters:
+    parameters["docontsub"] = {"fixed":True, "value":False, "limits":[0.,0.]}
+
+if args.withcontsub:
+    parameters["docontsub"]["value"] = True
 
 ######################################
 # Read in the millimeter visibilities.
