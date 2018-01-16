@@ -1,30 +1,33 @@
 from os import system
+from subprocess import STDOUT, run
 
 def thermal(noscat=None, nphot_therm=None, nphot_scat=None, setthreads=1, \
         inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None, \
-        verbose=True):
+        verbose=True, timelimit=7200):
 
-    command="radmc3d mctherm "
+    command="radmc3d mctherm"
 
     if (noscat == True):
-        command += "noscat "
+        command += " noscat"
     if (nphot_therm != None):
-        command += "nphot_therm {0:d} ".format(nphot_therm)
+        command += " nphot_therm {0:d}".format(nphot_therm)
     if (setthreads != 1):
-        command += "setthreads {0:d} ".format(setthreads)
+        command += " setthreads {0:d}".format(setthreads)
     if (inclfreefree == True):
-        command += "inclfreefree "
+        command += " inclfreefree"
     if (nofreefree == True):
-        command += "nofreefree "
+        command += " nofreefree"
     if (inclgascont == True):
-        command += "inclgascont "
+        command += " inclgascont"
     if (nogascont == True):
-        command += "nogascont "
+        command += " nogascont"
 
     if not verbose:
-        command += " > radmc3d.out"
-
-    system(command)
+        f = open("radmc3d.out","w")
+        output = run(command.split(" "), stdout=f, stderr=f, timeout=timelimit)
+        f.close()
+    else:
+        output = run(command.split(" "), stderr=STDOUT, timeout=timelimit)
 
 def sed(nrrefine=None, fluxcons=None, norefine=None, nofluxcons=None, \
         noscat=None, sizeau=None, sizepc=None, zoomau=None, zoompc=None, \

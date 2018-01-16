@@ -12,6 +12,7 @@ import pdspy.table
 import pdspy.dust as dust
 import pdspy.mcmc as mc
 import scipy.signal
+import subprocess
 import argparse
 import signal
 import numpy
@@ -38,6 +39,8 @@ parser.add_argument('-p', '--resetprob', action='store_true')
 parser.add_argument('-a', '--action', type=str, default="run")
 parser.add_argument('-n', '--ncpus', type=int, default=1)
 parser.add_argument('-m', '--ncpus_highmass', type=int, default=8)
+parser.add_argument('-e', '--withexptaper', action='store_true')
+parser.add_argument('-t', '--timelimit', type=int, default=7200)
 args = parser.parse_args()
 
 # Check whether we are using MPI.
@@ -99,6 +102,11 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
     p["alpha"] = p["gamma"] + p["beta"]
     p["alpha_large"] = p["gamma"] + p["beta_large"]
 
+    # If we're using a Pringle disk, make sure the scale height is set correctly
+
+    if args.withexptaper:
+        p["h_0"] *= p["R_disk"]**p["beta"]
+
     # Get the needed values of the gaps.
 
     p["R_in_gap1"] = p["R_gap1"] - p["w_gap1"]/2
@@ -150,22 +158,43 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
     m = modeling.YSOModel()
     m.add_star(mass=p["M_star"],luminosity=p["L_star"],temperature=p["T_star"])
     m.set_spherical_grid(p["R_in"], p["R_env"], 100, nphi, 2, code=code)
-    m.add_disk(mass=p["M_disk"]*p["f_M_large"], rmin=p["R_in"], \
-            rmax=p["R_disk"], plrho=p["alpha_large"], \
-            h0=p["h_0"]*p["f_h_large"], plh=p["beta_large"], dust=ddust, \
-            gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"],p["R_in_gap3"]], \
-            gap_rout=[p["R_cav"],p["R_out_gap1"],p["R_out_gap2"], \
-            p["R_out_gap3"]], gap_delta=[p["delta_cav"],p["delta_gap1"], \
-            p["delta_gap2"],p["delta_gap3"]])
-    if p["f_M_large"] < 1:
-        m.add_disk(mass=p["M_disk"]*(1-p["f_M_large"]), rmin=p["R_in"], \
-                rmax=p["R_disk"], plrho=p["alpha"], h0=p["h_0"], plh=p["beta"],\
-                dust=edust, gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"], \
-                p["R_in_gap3"]], gap_rout=[p["R_cav"],p["R_out_gap1"], \
+
+    if args.withexptaper:
+        m.add_pringle_disk(mass=p["M_disk"]*p["f_M_large"], rmin=p["R_in"], \
+                rmax=p["R_disk"], plrho=p["alpha_large"], \
+                h0=p["h_0"]*p["f_h_large"], plh=p["beta_large"], dust=ddust, \
+                gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"],\
+                p["R_in_gap3"]], gap_rout=[p["R_cav"],p["R_out_gap1"],\
                 p["R_out_gap2"],p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
-                p["delta_gap1"], p["delta_gap2"],p["delta_gap3"]])
+                p["delta_gap1"],p["delta_gap2"],p["delta_gap3"]])
+        if p["f_M_large"] < 1:
+            m.add_pringle_disk(mass=p["M_disk"]*(1-p["f_M_large"]), \
+                    rmin=p["R_in"], rmax=p["R_disk"], plrho=p["alpha"], \
+                    h0=p["h_0"], plh=p["beta"], dust=edust, gap_rin=[p["R_in"],\
+                    p["R_in_gap1"],p["R_in_gap2"],p["R_in_gap3"]], \
+                    gap_rout=[p["R_cav"],p["R_out_gap1"],p["R_out_gap2"],\
+                    p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
+                    p["delta_gap1"], p["delta_gap2"],p["delta_gap3"]])
+    else:
+        m.add_disk(mass=p["M_disk"]*p["f_M_large"], rmin=p["R_in"], \
+                rmax=p["R_disk"], plrho=p["alpha_large"], \
+                h0=p["h_0"]*p["f_h_large"], plh=p["beta_large"], dust=ddust, \
+                gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"],\
+                p["R_in_gap3"]], gap_rout=[p["R_cav"],p["R_out_gap1"],\
+                p["R_out_gap2"],p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
+                p["delta_gap1"],p["delta_gap2"],p["delta_gap3"]])
+        if p["f_M_large"] < 1:
+            m.add_disk(mass=p["M_disk"]*(1-p["f_M_large"]), rmin=p["R_in"], \
+                    rmax=p["R_disk"], plrho=p["alpha"], h0=p["h_0"], \
+                    plh=p["beta"], dust=edust, gap_rin=[p["R_in"],\
+                    p["R_in_gap1"],p["R_in_gap2"],p["R_in_gap3"]], \
+                    gap_rout=[p["R_cav"],p["R_out_gap1"],p["R_out_gap2"],\
+                    p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
+                    p["delta_gap1"], p["delta_gap2"],p["delta_gap3"]])
+
     m.add_ulrich_envelope(mass=p["M_env"], rmin=p["R_in"], rmax=p["R_env"], \
             cavpl=p["ksi"], cavrfact=p["f_cav"], dust=edust)
+
     m.grid.set_wavelength_grid(0.1,1.0e5,500,log=True)
 
     # Run the thermal simulation.
@@ -180,9 +209,43 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
 
         m.convert_hyperion_to_radmc3d()
     else:
-        m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
-                mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
-                verbose=False, setthreads=nprocesses)
+        try:
+            t1 = time.time()
+            m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
+                    mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
+                    verbose=False, setthreads=nprocesses, \
+                    timelimit=args.timelimit)
+            t2 = time.time()
+            f = open(original_dir + "/times.txt", "a")
+            f.write("{0:f}\n".format(t2-t1))
+            f.close()
+        # Catch a timeout error from models running for too long...
+        except subprocess.TimeoutExpired:
+            t2 = time.time()
+            f = open(original_dir + "/times.txt", "a")
+            f.write("{0:f}\n".format(t2-t1))
+            f.close()
+
+            os.system("mv params.txt {0:s}/params_timeout_{1:s}".format(\
+                    original_dir, time.strftime("%Y-%m-%d-%H:%M:%S", \
+                    time.gmtime())))
+            os.system("rm *.inp *.out *.dat *.uinp")
+            os.chdir(original_dir)
+            os.rmdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
+
+            return 0.
+        # Catch a strange RADMC3D error and re-run. Not an ideal fix, but 
+        # perhaps the simplest option.
+        except:
+            t1 = time.time()
+            m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
+                    mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
+                    verbose=False, setthreads=nprocesses, \
+                    timelimit=args.timelimit)
+            t2 = time.time()
+            f = open(original_dir + "/times.txt", "a")
+            f.write("{0:f}\n".format(t2-t1))
+            f.close()
 
     # Run the images/visibilities/SEDs. If plot == "concat" then we are doing
     # a fit and we need less. Otherwise we are making a plot of the best fit 
@@ -205,6 +268,10 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
                 m.visibilities[visibilities["lam"][j]])
         """
 
+        m.visibilities[visibilities["lam"][j]] = uv.center(\
+                m.visibilities[visibilities["lam"][j]], [p["x0"], \
+                p["y0"], 1.])
+
         if plot:
             # Run a high resolution version of the visibilities.
 
@@ -214,13 +281,17 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
                     code="radmc3d", mc_scat_maxtauabs=5, verbose=False, \
                     setthreads=nprocesses)
 
+            m.visibilities[visibilities["lam"][j]+"_high"] = uv.center(\
+                    m.visibilities[visibilities["lam"][j]+"_high"], \
+                    [p["x0"], p["y0"], 1.])
+
             # Run a millimeter image.
 
             m.run_image(name=visibilities["lam"][j], nphot=1e5, \
                     npix=visibilities["image_npix"][j], \
                     pixelsize=visibilities["image_pixelsize"][j], \
                     lam=visibilities["lam"][j], incl=p["i"], \
-                    pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
+                    pa=-p["pa"], dpc=p["dpc"], code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses)
 
             x, y = numpy.meshgrid(numpy.linspace(-256,255,512), \
@@ -288,6 +359,11 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
 def lnlike(params, visibilities, images, spectra, parameters, plot):
 
     m = model(visibilities, images, spectra, params, parameters, plot)
+
+    # Catch whether the model timed out.
+
+    if m == 0.:
+        return -numpy.inf
 
     # A list to put all of the chisq into.
 
@@ -393,7 +469,7 @@ class Transform:
         self.fmt = fmt
 
     def __call__(self, x, p):
-        return self.fmt% ((x-(self.xmax-self.xmin+1)/2)*self.dx)
+        return self.fmt% ((x-(self.xmax-self.xmin)/2)*self.dx)
 
 # Define a function to scale an image to look nice.
 
@@ -452,6 +528,16 @@ sys.path.insert(0, '')
 
 from config import *
 
+# Get the correct binsize and number of bins for averaging the visibility data.
+
+visibilities["gridsize"] = []
+visibilities["binsize"] = []
+
+for i in range(len(visibilities["file"])):
+    visibilities["gridsize"].append(visibilities["npix"][i])
+    visibilities["binsize"].append(1./(visibilities["npix"][i]*\
+            visibilities["pixelsize"][i]*arcsec))
+
 # Set up the places where we will put all of the data.
 
 visibilities["data"] = []
@@ -473,9 +559,7 @@ for j in range(len(visibilities["file"])):
 
     # Center the data. => need to update!
 
-    if parameters["x0"]["fixed"]:
-        data = uv.center(data, [parameters["x0"]["value"], \
-                parameters["y0"]["value"], 1.])
+    data = uv.center(data, [visibilities["x0"][j], visibilities["y0"][j], 1.])
 
     """NEW: interpolate model to baselines instead of averaging the data to the
             model grid?
@@ -640,41 +724,43 @@ if args.action == "run":
 
 while nsteps < max_nsteps:
     if args.action == "run":
-        pos, prob, state = sampler.run_mcmc(pos, steps_per_iter, lnprob0=prob, \
-                rstate0=state)
+        for i in range(steps_per_iter):
+            pos, prob, state = sampler.run_mcmc(pos, 1, lnprob0=prob, \
+                    rstate0=state)
 
-        chain = numpy.concatenate((chain, sampler.chain), axis=1)
+            chain = numpy.concatenate((chain, sampler.chain), axis=1)
 
-        # Get keys of the parameters that are varying.
+            # Get keys of the parameters that are varying.
 
-        keys = []
-        for key in sorted(parameters.keys()):
-            if not parameters[key]["fixed"]:
-                keys.append(key)
+            keys = []
+            for key in sorted(parameters.keys()):
+                if not parameters[key]["fixed"]:
+                    keys.append(key)
 
-        # Plot the steps of the walkers.
+            # Plot the steps of the walkers.
 
-        for j in range(ndim):
-            fig, ax = plt.subplots(nrows=1, ncols=1)
+            for j in range(ndim):
+                fig, ax = plt.subplots(nrows=1, ncols=1)
 
-            for k in range(nwalkers):
-                ax.plot(chain[k,:,j])
+                for k in range(nwalkers):
+                    ax.plot(chain[k,:,j])
 
-            plt.savefig("steps_{0:s}.pdf".format(keys[j]))
+                plt.savefig("steps_{0:s}.pdf".format(keys[j]))
 
-            plt.close(fig)
+                plt.close(fig)
 
-        # Save walker positions in case the code stps running for some reason.
+            # Save walker positions in case the code stps running for some 
+            # reason.
 
-        numpy.save("pos", pos)
-        numpy.save("prob", prob)
-        numpy.save("chain", chain)
+            numpy.save("pos", pos)
+            numpy.save("prob", prob)
+            numpy.save("chain", chain)
 
-        # Augment the nuber of steps and reset the sampler for the next run.
+            # Augment the nuber of steps and reset the sampler for the next run.
 
-        nsteps += steps_per_iter
+            nsteps += 1
 
-        sampler.reset()
+            sampler.reset()
 
     # Get the best fit parameters and uncertainties from the last 10 steps.
 
@@ -750,14 +836,14 @@ while nsteps < max_nsteps:
 
         ticks = visibilities["ticks"][j]
 
-        xmin, xmax = int(visibilities["npix"][j]/2+ticks[0]/\
-                (visibilities["binsize"][j]/1000)), \
-                int(visibilities["npix"][j]/2+ticks[6]/\
-                (visibilities["binsize"][j]/1000))
-        ymin, ymax = int(visibilities["npix"][j]/2+ticks[0]/\
-                (visibilities["binsize"][j]/1000)), \
-                int(visibilities["npix"][j]/2+ticks[6]/\
-                (visibilities["binsize"][j]/1000))
+        xmin, xmax = int(round(visibilities["npix"][j]/2+ticks[0]/\
+                (visibilities["binsize"][j]/1000))), \
+                int(round(visibilities["npix"][j]/2+ticks[6]/\
+                (visibilities["binsize"][j]/1000)))
+        ymin, ymax = int(round(visibilities["npix"][j]/2+ticks[0]/\
+                (visibilities["binsize"][j]/1000))), \
+                int(round(visibilities["npix"][j]/2+ticks[6]/\
+                (visibilities["binsize"][j]/1000)))
 
         vmin = min(0, visibilities["data1d"][j].real.min())
         vmax = visibilities["data1d"][j].real.max()
@@ -806,27 +892,64 @@ while nsteps < max_nsteps:
 
         ticks = visibilities["image_ticks"][j]
 
-        xmin, xmax = int(visibilities["image_npix"][j]/2+\
-                round(ticks[0]/visibilities["image_pixelsize"][j])), \
-                round(visibilities["image_npix"][j]/2+\
-                int(ticks[6]/visibilities["image_pixelsize"][j]))
-        ymin, ymax = int(visibilities["image_npix"][j]/2+\
-                round(ticks[0]/visibilities["image_pixelsize"][j])), \
-                round(visibilities["image_npix"][j]/2+\
-                int(ticks[6]/visibilities["image_pixelsize"][j]))
+        if "x0" in params:
+            xmin, xmax = int(round(visibilities["image_npix"][j]/2 + \
+                    visibilities["x0"][j]/visibilities["image_pixelsize"][j]+ \
+                    params["x0"]/visibilities["image_pixelsize"][j]+ \
+                    ticks[0]/visibilities["image_pixelsize"][j])), \
+                    int(round(visibilities["image_npix"][j]/2+\
+                    visibilities["x0"][j]/visibilities["image_pixelsize"][j]+ \
+                    params["x0"]/visibilities["image_pixelsize"][j]+ \
+                    ticks[-1]/visibilities["image_pixelsize"][j]))
+        else:
+            xmin, xmax = int(round(visibilities["image_npix"][j]/2 + \
+                    visibilities["x0"][j]/visibilities["image_pixelsize"][j]+ \
+                    parameters["x0"]["value"]/visibilities["image_pixelsize"][j]+ \
+                    ticks[0]/visibilities["image_pixelsize"][j])), \
+                    int(round(visibilities["image_npix"][j]/2+\
+                    visibilities["x0"][j]/visibilities["image_pixelsize"][j]+ \
+                    parameters["x0"]["value"]/visibilities["image_pixelsize"][j]+ \
+                    ticks[-1]/visibilities["image_pixelsize"][j]))
+        if "y0" in params:
+            ymin, ymax = int(round(visibilities["image_npix"][j]/2-\
+                    visibilities["y0"][j]/visibilities["image_pixelsize"][j]- \
+                    params["y0"]/visibilities["image_pixelsize"][j]+ \
+                    ticks[0]/visibilities["image_pixelsize"][j])), \
+                    int(round(visibilities["image_npix"][j]/2-\
+                    visibilities["y0"][j]/visibilities["image_pixelsize"][j]- \
+                    params["y0"]/visibilities["image_pixelsize"][j]+ \
+                    ticks[-1]/visibilities["image_pixelsize"][j]))
+        else:
+            ymin, ymax = int(round(visibilities["image_npix"][j]/2-\
+                    visibilities["y0"][j]/visibilities["image_pixelsize"][j]- \
+                    parameters["y0"]["value"]/visibilities["image_pixelsize"][j]+ \
+                    ticks[0]/visibilities["image_pixelsize"][j])), \
+                    int(round(visibilities["image_npix"][j]/2-\
+                    visibilities["y0"][j]/visibilities["image_pixelsize"][j]- \
+                    parameters["y0"]["value"]/visibilities["image_pixelsize"][j]+ \
+                    ticks[-1]/visibilities["image_pixelsize"][j]))
 
         ax[2*j,1].imshow(visibilities["image"][j].image\
                 [ymin:ymax,xmin:xmax,0,0], origin="lower", \
                 interpolation="nearest")
+
+        xmin, xmax = int(round(visibilities["image_npix"][j]/2+1 + \
+                ticks[0]/visibilities["image_pixelsize"][j])), \
+                int(round(visibilities["image_npix"][j]/2+1 + \
+                ticks[-1]/visibilities["image_pixelsize"][j]))
+        ymin, ymax = int(round(visibilities["image_npix"][j]/2+1 + \
+                ticks[0]/visibilities["image_pixelsize"][j])), \
+                int(round(visibilities["image_npix"][j]/2+1 + \
+                ticks[-1]/visibilities["image_pixelsize"][j]))
 
         ax[2*j,1].contour(model_image.image[ymin:ymax,xmin:xmax,0,0])
 
         transform = ticker.FuncFormatter(Transform(xmin, xmax, \
                 visibilities["image_pixelsize"][j], '%.1f"'))
 
-        ax[2*j,1].set_xticks(visibilities["image_npix"][j]/2+\
+        ax[2*j,1].set_xticks(visibilities["image_npix"][j]/2+1+\
                 ticks[1:-1]/visibilities["image_pixelsize"][j]-xmin)
-        ax[2*j,1].set_yticks(visibilities["image_npix"][j]/2+\
+        ax[2*j,1].set_yticks(visibilities["image_npix"][j]/2+1+\
                 ticks[1:-1]/visibilities["image_pixelsize"][j]-ymin)
         ax[2*j,1].get_xaxis().set_major_formatter(transform)
         ax[2*j,1].get_yaxis().set_major_formatter(transform)

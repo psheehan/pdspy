@@ -21,7 +21,6 @@ visibilities = {
         "npix":[256],
         "gridsize":[256],
         "weight":[10.],
-        # weight 1, for 
         # Info for the image.
         "image_file":["path/to/image_file1"],
         # fits file w/ channel map science data from clean
