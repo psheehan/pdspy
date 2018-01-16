@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 
 # Standard Modules
@@ -44,12 +45,10 @@ comm = MPI.COMM_WORLD
 
 class Info:
     def __init__(self,cmdargs,save,source_name,radmc3d='/tmp/'):
-        if radmc3d == None:
-            radmc3d = '/tmp/'
+        self.radmc3d = radmc3d
         self.cmdargs = cmdargs
         self.source  = source_name
         self.svd     = save
-        self.radmc3d = radmc3d
         self.tmp     = None
 
 ################################################################################
@@ -60,20 +59,17 @@ class Info:
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-o', '--object')
-parser.add_argument('-c', '--config',default='config.py')
+parser.add_argument('--config',default='config.py')
 parser.add_argument('-r', '--resume', action='store_true')
 parser.add_argument('-p', '--resetprob', action='store_true')
 parser.add_argument('-a', '--action', type=str, default="run")
 parser.add_argument('-n', '--ncpus', type=int, default=1)
-<<<<<<< HEAD
 parser.add_argument('-l', '--logfile',dest='logger')
-parser.add_argument('-v', '--verbosity',default=2,dest='verb',type=int)
+parser.add_argument('--verbosity',default=2,dest='verb',type=int)
 parser.add_argument('-w', '--radmc3d-dir',type=str,default=None,dest='work')
 parser.add_argument('-s', '--save-dir',type=str, default=os.environ['HOME']+'/radmc3d/',dest='save')
-=======
 parser.add_argument('-v', '--plot_vis', action='store_true')
 parser.add_argument('-c', '--withcontsub', action='store_true')
->>>>>>> 3cefe33a69038af4cbe0c61d1e91e041ba9d7d53
 args = parser.parse_args()
 
 
@@ -189,8 +185,8 @@ def model(visibilities, params, parameters,cmdinfo, plot=False):
     # Make sure we are in a temp directory to not overwrite anything.
 
     original_dir = os.environ["PWD"]
-    os.mkdir("/{0:d}/temp_{1:s}_{0:d}".format(cmdinfo.radmc3d,comm.Get_rank(), source))
-    os.chdir("/{0:d}/temp_{1:s}_{0:d}".format(cmdinfo.radmc3d,comm.Get_rank(), source))
+    os.mkdir("/{}/temp_{}_{}".format(cmdinfo.radmc3d,comm.Get_rank(), source))
+    os.chdir("/{}/temp_{}_{}".format(cmdinfo.radmc3d,comm.Get_rank(), source))
 
     # Write the parameters to a text file so it is easy to keep track of them.
 
@@ -311,15 +307,15 @@ def model(visibilities, params, parameters,cmdinfo, plot=False):
 
         os.system("rm params.txt")
         os.chdir(original_dir)
-        os.system("rmdir /{0:d}/temp_{1:s}_{2:d}".format(cmdinfo.radmc3d,comm.Get_rank(), source))
+        os.system("rmdir /{}/temp_{}_{}".format(cmdinfo.radmc3d,comm.Get_rank(), source))
 
     return m
 
 # Define a likelihood function.
 
-def lnlike(params, visibilities, parameters, plot):
+def lnlike(params, visibilities, parameters,cmdinfo, plot):
 
-    m = model(visibilities, params, parameters, plot)
+    m = model(visibilities, params, parameters,cmdinfo, plot)
 
     # A list to put all of the chisq into.
 
@@ -386,7 +382,7 @@ def lnprior(params, parameters):
 
 # Define a probability function.
 
-def lnprob(p, visibilities, parameters, plot):
+def lnprob(p, visibilities, parameters,cmdinfo, plot):
 
     keys = []
     for key in sorted(parameters.keys()):
@@ -400,7 +396,7 @@ def lnprob(p, visibilities, parameters, plot):
     if not numpy.isfinite(lp):
         return -numpy.inf
 
-    return lp + lnlike(params, visibilities, parameters, plot)
+    return lp + lnlike(params, visibilities, parameters,cmdinfo, plot)
 
 # Define a useful class for plotting.
 
@@ -430,7 +426,7 @@ logger.message('The working directory for radmc3d: {}'.format(cmdinfo.radmc3d))
 #
 ################################################################################
 
-os.system('rm -rf {0}/temp_{1}_{2:d}'.format(cmdinfo.radmc3d,cmdinfo.source, comm.Get_rank()))
+os.system('rm -rf /{}/temp_{}_{}'.format(cmdinfo.radmc3d,comm.Get_rank(),cmdinfo.source))
 
 ################################################################################
 #
@@ -487,18 +483,9 @@ for j in range(len(visibilities["file"])):
     data.read(visibilities["file"][j])
 
     # Center the data. => need to update!
-<<<<<<< HEAD
-    print(len(data.uvdist))
-    ''' 
-    if parameters["x0"]["fixed"]:
-        data = uv.center(data, [parameters["x0"]["value"], \
-                parameters["y0"]["value"], 1.])
-    '''
-=======
 
     data = uv.center(data, [visibilities["x0"][j], visibilities["y0"][j], 1.])
 
->>>>>>> 3cefe33a69038af4cbe0c61d1e91e041ba9d7d53
     # Add the data to the dictionary structure.
 
     visibilities["data"].append(data)
@@ -583,7 +570,7 @@ else:
 
 if args.action == "run":
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, \
-            args=(visibilities, parameters, False), pool=pool)
+            args=(visibilities, parameters,cmdinfo, False), pool=pool)
 
 # If we are plotting, make sure that nsteps < max_nsteps.
 
