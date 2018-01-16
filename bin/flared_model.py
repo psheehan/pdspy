@@ -3,6 +3,7 @@
 from pdspy.constants.physics import c, m_p, G
 from pdspy.constants.physics import k as k_b
 from pdspy.constants.astronomy import M_sun, AU
+from matplotlib.backends.backend_pdf import PdfPages
 import pdspy.modeling.mpi_pool
 import pdspy.interferometry as uv
 import pdspy.spectroscopy as sp
@@ -609,6 +610,10 @@ while nsteps < max_nsteps:
 
     m = model(visibilities, params, parameters, plot=True)
 
+    # Open up a pdf file to plot into.
+
+    pdf = PdfPages("model.pdf")
+
     # Loop through the visibilities and plot.
 
     for j in range(len(visibilities["file"])):
@@ -774,17 +779,23 @@ while nsteps < max_nsteps:
             else:
                 ax[k,0].set_ylabel("$\Delta$Dec")
 
-    # Adjust the plot and save it.
+        # Adjust the plot and save it.
 
-    fig.set_size_inches((10,9))
-    fig.subplots_adjust(left=0.08, right=0.98, top=0.98, bottom=0.07, \
-            wspace=0.0,hspace=0.0)
+        fig.set_size_inches((10,9))
+        fig.subplots_adjust(left=0.08, right=0.98, top=0.98, bottom=0.07, \
+                wspace=0.0,hspace=0.0)
 
-    # Adjust the figure and save.
+        # Adjust the figure and save.
 
-    fig.savefig("model.pdf")
+        pdf.savefig(fig)
 
-    plt.clf()
+        plt.clf()
+
+    # Close the pdf.
+
+    pdf.close()
+
+    # If we're just plotting make sure we don't loop forever.
 
     if args.action == "plot":
         nsteps = numpy.inf
