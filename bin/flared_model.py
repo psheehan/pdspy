@@ -41,6 +41,7 @@ parser.add_argument('-r', '--resume', action='store_true')
 parser.add_argument('-p', '--resetprob', action='store_true')
 parser.add_argument('-a', '--action', type=str, default="run")
 parser.add_argument('-n', '--ncpus', type=int, default=1)
+parser.add_argument('-e', '--withexptaper', action='store_true')
 parser.add_argument('-v', '--plot_vis', action='store_true')
 parser.add_argument('-c', '--withcontsub', action='store_true')
 args = parser.parse_args()
@@ -77,6 +78,7 @@ if args.action == 'plot':
 ################################################################################
 
 def model(visibilities, params, parameters, plot=False):
+
     # Set the values of all of the parameters.
 
     p = {}
@@ -99,9 +101,13 @@ def model(visibilities, params, parameters, plot=False):
 
     # Make sure alpha and beta are defined.
 
-    t_rdisk = p["T0"] * (p["R_disk"] / 1.)**-p["q"]
-    p["h_0"] = ((k_b*(p["R_disk"]*AU)**3*t_rdisk) / (G*p["M_star"]*M_sun * \
-            2.37*m_p))**0.5 / AU
+    if args.withexptaper:
+        t_rdisk = p["T0"] * (p["R_disk"] / 1.)**-p["q"]
+        p["h_0"] = ((k_b*(p["R_disk"]*AU)**3*t_rdisk) / (G*p["M_star"]*M_sun * \
+                2.37*m_p))**0.5 / AU
+    else:
+        p["h_0"] = ((k_b * AU**3 * p["T0"]) / (G*p["M_star"]*M_sun * \
+                2.37*m_p))**0.5 / AU
     p["beta"] = 0.5 * (3 - p["q"])
     p["alpha"] = p["gamma"] + p["beta"]
 
@@ -150,10 +156,18 @@ def model(visibilities, params, parameters, plot=False):
     m.add_star(mass=p["M_star"], luminosity=p["L_star"],temperature=p["T_star"])
     m.set_spherical_grid(p["R_in"], max(5*p["R_disk"],300), 100, 51, 2, \
             code="radmc3d")
-    m.add_pringle_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
-            plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
-            t0=p["T0"], plt=p["q"], gas=gases, abundance=abundance,\
-            aturb=p["a_turb"])
+
+    if args.withexptaper:
+        m.add_pringle_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
+                plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
+                t0=p["T0"], plt=p["q"], gas=gases, abundance=abundance,\
+                aturb=p["a_turb"])
+    else:
+        m.add_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
+                plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
+                t0=p["T0"], plt=p["q"], gas=gases, abundance=abundance,\
+                aturb=p["a_turb"])
+
     m.grid.set_wavelength_grid(0.1,1.0e5,500,log=True)
 
     # Run the images/visibilities/SEDs.
