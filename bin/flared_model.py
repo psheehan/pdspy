@@ -38,6 +38,22 @@ comm = MPI.COMM_WORLD
 
 ################################################################################
 #
+# Holds the command line argument parameters.
+#
+################################################################################
+
+class Info:
+    def __init__(self,cmdargs,save,source_name,radmc3d='/tmp/'):
+        if radmc3d == None:
+            radmc3d = '/tmp/'
+        self.cmdargs = cmdargs
+        self.source  = source_name
+        self.svd     = save
+        self.radmc3d = radmc3d
+        self.tmp     = None
+
+################################################################################
+#
 # Parse command line arguments.
 #
 ################################################################################
@@ -84,7 +100,7 @@ ncpus = args.ncpus
 
 source = args.object
 
-logger.message(node + 'Finished setting up initial parameters...')
+logger.message('Finished setting up initial parameters...')
 
 if source == None:
     print("--object must be specified")
@@ -102,23 +118,7 @@ if args.action == 'plot':
 save_dir = args.save + '/' + source+'/'
 work_dir = os.environ["PWD"]
 
-cmdinfo=Info(args,save_dir,source_name,args.work)
-
-################################################################################
-#
-# Holds the command line argument parameters.
-#
-################################################################################
-
-class Info:
-    def __init__(self,cmdargs,save,source_name,radmc3d='/tmp/'):
-        if radmc3d == None:
-            radmc3d = '/tmp/'
-        self.cmdargs = cmdargs
-        self.source  = source_name
-        self.svd     = save
-        self.radmc3d = radmc3d
-        self.tmp     = None
+cmdinfo=Info(args,save_dir,source,args.work)
 
 ################################################################################
 #
@@ -368,7 +368,7 @@ class Transform:
 ################################################################################
 
 logger.message('Finished setting up initial parameters...')
-logger.message('The working directory for radmc3d: {}'.format(info.radmc3d))
+logger.message('The working directory for radmc3d: {}'.format(cmdinfo.radmc3d))
 
 ################################################################################
 #
@@ -377,7 +377,7 @@ logger.message('The working directory for radmc3d: {}'.format(info.radmc3d))
 #
 ################################################################################
 
-os.system('rm -rf {0:d}/temp_{1:s}_{2:d}'.format(info.radmc3d,source_name, comm.Get_rank()))
+os.system('rm -rf {0}/temp_{1}_{2:d}'.format(cmdinfo.radmc3d,cmdinfo.source, comm.Get_rank()))
 
 ################################################################################
 #
@@ -410,10 +410,11 @@ configfile.read()
 configparams   = configfile.get_params()
 visibilities   = configparams['visibilities']
 parameters     = configparams['parameters']
-nwalkers       = config.params['nwalkers']
-steps_per_iter = config.params['steps_per_iter']
-max_nsteps     = config.params['max_nsteps']
-nplot          = config.params['nplot']
+nwalkers       = configparams['nwalkers']
+steps_per_iter = configparams['steps_per_iter']
+max_nsteps     = configparams['max_nsteps']
+nplot          = configparams['nplot']
+
 
 # Set up the places where we will put all of the data.
 
@@ -427,16 +428,18 @@ visibilities["image"] = []
 
 for j in range(len(visibilities["file"])):
     # Read the raw data.
+    logger.header2("Working on file: {}".format(visibilities["file"][j]))
 
     data = uv.Visibilities()
     data.read(visibilities["file"][j])
 
     # Center the data. => need to update!
-
+    print(len(data.uvdist))
+    ''' 
     if parameters["x0"]["fixed"]:
         data = uv.center(data, [parameters["x0"]["value"], \
                 parameters["y0"]["value"], 1.])
-
+    '''
     # Add the data to the dictionary structure.
 
     visibilities["data"].append(data)

@@ -12,7 +12,7 @@ visibilities = {
         # info for the readin file
         "file":["path/to/file1"], \
         # vis file
-        # irellevant cause galario needed for disk model 
+        # irrelevant cause galario needed for disk model 
         "binsize":[8057.218995847603],
         "pixelsize":[0.1],
         "freq":["230GHz"],

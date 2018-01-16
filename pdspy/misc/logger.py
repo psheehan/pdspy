@@ -131,7 +131,7 @@ class Messenger(object):
         if self.use_structure:
             string = string + self.structure_string
         if self.un_string:
-            string = self.un_string +' '+ self.structure_string 
+            string = self.un_string + self.structure_string 
         return string
 
     def _get_time_string(self):
