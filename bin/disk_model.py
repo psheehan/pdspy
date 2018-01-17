@@ -82,7 +82,7 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
     p = {}
     for key in parameters:
         if parameters[key]["fixed"]:
-            if isinstance(parameters[key]["value"], str):
+            if parameters[key]["value"] in parameters.keys():
                 if parameters[parameters[key]["value"]]["fixed"]:
                     value = parameters[parameters[key]["value"]]["value"]
                 else:
@@ -104,7 +104,7 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
 
     # If we're using a Pringle disk, make sure the scale height is set correctly
 
-    if args.withexptaper:
+    if p["disk_type"] == "exptaper":
         p["h_0"] *= p["R_disk"]**p["beta"]
 
     # Get the needed values of the gaps.
@@ -135,7 +135,7 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
 
     f = open("params.txt","w")
     for key in p:
-        f.write("{0:s} = {1:f}\n".format(key, p[key]))
+        f.write("{0:s} = {1}\n".format(key, p[key]))
     f.close()
 
     # Set up the model and run the thermal simulation.
@@ -159,7 +159,7 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
     m.add_star(mass=p["M_star"],luminosity=p["L_star"],temperature=p["T_star"])
     m.set_spherical_grid(p["R_in"], p["R_env"], 100, nphi, 2, code=code)
 
-    if args.withexptaper:
+    if p["disk_type"] == "exptaper":
         m.add_pringle_disk(mass=p["M_disk"]*p["f_M_large"], rmin=p["R_in"], \
                 rmax=p["R_disk"], plrho=p["alpha_large"], \
                 h0=p["h_0"]*p["f_h_large"], plh=p["beta_large"], dust=ddust, \
@@ -546,6 +546,15 @@ visibilities["image"] = []
 spectra["data"] = []
 spectra["binned"] = []
 images["data"] = []
+
+# Decide whether to use an exponentially tapered 
+
+if not "disk_type" in parameters:
+    parameters["disk_type"] = {"fixed":True, "value":"truncated", \
+            "limits":[0.,0.]}
+
+if args.withexptaper:
+    parameters["disk_type"]["value"] = "exptaper"
 
 ######################################
 # Read in the millimeter visibilities.

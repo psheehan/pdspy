@@ -22,6 +22,7 @@ from mpi4py import MPI
 from pdspy.constants.physics import c, m_p, G
 from pdspy.constants.physics import k as k_b
 from pdspy.constants.astronomy import M_sun, AU
+from matplotlib.backends.backend_pdf import PdfPages
 import pdspy.modeling.mpi_pool
 import pdspy.interferometry as uv
 import pdspy.spectroscopy as sp
@@ -68,6 +69,7 @@ parser.add_argument('-l', '--logfile',dest='logger')
 parser.add_argument('--verbosity',default=2,dest='verb',type=int)
 parser.add_argument('-w', '--radmc3d-dir',type=str,default=None,dest='work')
 parser.add_argument('-s', '--save-dir',type=str, default=os.environ['HOME']+'/radmc3d/',dest='save')
+parser.add_argument('-e', '--withexptaper', action='store_true')
 parser.add_argument('-v', '--plot_vis', action='store_true')
 parser.add_argument('-c', '--withcontsub', action='store_true')
 args = parser.parse_args()
@@ -128,6 +130,7 @@ cmdinfo=Info(args,save_dir,source,args.work)
 ################################################################################
 
 def model(visibilities, params, parameters,cmdinfo, plot=False):
+
     # Set the values of all of the parameters.
 
     p = {}
@@ -150,9 +153,13 @@ def model(visibilities, params, parameters,cmdinfo, plot=False):
 
     # Make sure alpha and beta are defined.
 
-    t_rdisk = p["T0"] * (p["R_disk"] / 1.)**-p["q"]
-    p["h_0"] = ((k_b*(p["R_disk"]*AU)**3*t_rdisk) / (G*p["M_star"]*M_sun * \
-            2.37*m_p))**0.5 / AU
+    if p["disk_type"] == "exptaper":
+        t_rdisk = p["T0"] * (p["R_disk"] / 1.)**-p["q"]
+        p["h_0"] = ((k_b*(p["R_disk"]*AU)**3*t_rdisk) / (G*p["M_star"]*M_sun * \
+                2.37*m_p))**0.5 / AU
+    else:
+        p["h_0"] = ((k_b * AU**3 * p["T0"]) / (G*p["M_star"]*M_sun * \
+                2.37*m_p))**0.5 / AU
     p["beta"] = 0.5 * (3 - p["q"])
     p["alpha"] = p["gamma"] + p["beta"]
 
@@ -201,10 +208,18 @@ def model(visibilities, params, parameters,cmdinfo, plot=False):
     m.add_star(mass=p["M_star"], luminosity=p["L_star"],temperature=p["T_star"])
     m.set_spherical_grid(p["R_in"], max(5*p["R_disk"],300), 100, 51, 2, \
             code="radmc3d")
-    m.add_pringle_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
-            plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
-            t0=p["T0"], plt=p["q"], gas=gases, abundance=abundance,\
-            aturb=p["a_turb"])
+
+    if p["disk_type"] == "exptaper":
+        m.add_pringle_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
+                plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
+                t0=p["T0"], plt=p["q"], gas=gases, abundance=abundance,\
+                aturb=p["a_turb"])
+    else:
+        m.add_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
+                plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
+                t0=p["T0"], plt=p["q"], gas=gases, abundance=abundance,\
+                aturb=p["a_turb"])
+
     m.grid.set_wavelength_grid(0.1,1.0e5,500,log=True)
 
     # Run the images/visibilities/SEDs.
@@ -212,7 +227,7 @@ def model(visibilities, params, parameters,cmdinfo, plot=False):
     for j in range(len(visibilities["file"])):
         m.set_camera_wavelength(wave)
 
-        if args.withcontsub:
+        if p["docontsub"]:
             m.run_image(name=visibilities["lam"][j], nphot=1e5, \
                     npix=visibilities["npix"][j], lam=None, \
                     pixelsize=visibilities["pixelsize"][j], tgas_eq_tdust=True,\
@@ -251,7 +266,7 @@ def model(visibilities, params, parameters,cmdinfo, plot=False):
 
             m.set_camera_wavelength(wave)
 
-            if args.withcontsub:
+            if p["docontsub"]:
                 m.run_image(name=visibilities["lam"][j], nphot=1e5, \
                         npix=visibilities["image_npix"][j], lam=None, \
                         pixelsize=visibilities["image_pixelsize"][j], \
@@ -471,6 +486,23 @@ visibilities["data"] = []
 visibilities["data1d"] = []
 visibilities["image"] = []
 
+# Decide whether to use an exponentially tapered 
+
+if not "disk_type" in parameters:
+    parameters["disk_type"] = {"fixed":True, "value":"truncated", \
+            "limits":[0.,0.]}
+
+if args.withexptaper:
+    parameters["disk_type"]["value"] = "exptaper"
+
+# Decide whether to do continuum subtraction or not.
+
+if not "docontsub" in parameters:
+    parameters["docontsub"] = {"fixed":True, "value":False, "limits":[0.,0.]}
+
+if args.withcontsub:
+    parameters["docontsub"]["value"] = True
+
 ######################################
 # Read in the millimeter visibilities.
 ######################################
@@ -664,6 +696,10 @@ while nsteps < max_nsteps:
 
     m = model(visibilities, params, parameters, plot=True)
 
+    # Open up a pdf file to plot into.
+
+    pdf = PdfPages("model.pdf")
+
     # Loop through the visibilities and plot.
 
     for j in range(len(visibilities["file"])):
@@ -829,17 +865,23 @@ while nsteps < max_nsteps:
             else:
                 ax[k,0].set_ylabel("$\Delta$Dec")
 
-    # Adjust the plot and save it.
+        # Adjust the plot and save it.
 
-    fig.set_size_inches((10,9))
-    fig.subplots_adjust(left=0.08, right=0.98, top=0.98, bottom=0.07, \
-            wspace=0.0,hspace=0.0)
+        fig.set_size_inches((10,9))
+        fig.subplots_adjust(left=0.08, right=0.98, top=0.98, bottom=0.07, \
+                wspace=0.0,hspace=0.0)
 
-    # Adjust the figure and save.
+        # Adjust the figure and save.
 
-    fig.savefig(cmdinfo.svd + "model.pdf")
+        pdf.savefig(fig)
 
-    plt.clf()
+        plt.clf()
+
+    # Close the pdf.
+    pdf.close()
+
+
+    # If we're just plotting make sure we don't loop forever.
 
     if args.action == "plot":
         nsteps = numpy.inf
