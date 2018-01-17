@@ -12,7 +12,7 @@ visibilities = {
         # info for the readin file
         "file":["path/to/file1"], \
         # vis file
-        # irrelevant cause galario needed for disk model 
+        # irellevant cause galario needed for disk model 
         "binsize":[8057.218995847603],
         "pixelsize":[0.1],
         "freq":["230GHz"],
@@ -21,6 +21,7 @@ visibilities = {
         "npix":[256],
         "gridsize":[256],
         "weight":[10.],
+        # weight 1, for 
         # Info for the image.
         "image_file":["path/to/image_file1"],
         # fits file w/ channel map science data from clean
@@ -35,7 +36,6 @@ visibilities = {
         "ticks":[numpy.array([-250,-200,-100,0,100,200,250])],
         # image ticks for oplotting image, starting size, tick 1, tick2, tick3, finished size in arcsecs
         "image_ticks":[numpy.array([-0.75,-0.5,0,0.5,0.75])],
-        "fmt":['4.1f'],
         }
 
 # Something similar for images.
@@ -97,7 +97,6 @@ parameters = {
         "T_star":{"fixed":True, "value":4000., "limits":[500.,10000.]},
         "logL_star":{"fixed":True, "value":0.0, "limits":[-1.,2.]},
         # Disk parameters.
-        "disk_type":{"fixed":True, "value":"truncated", "limits":[0.,0.]},
         "logM_disk":{"fixed":True, "value":-4., "limits":[-10.,-2.5]},
         "logR_in":{"fixed":True, "value":-1., "limits":[-1.,4.]},
         "logR_disk":{"fixed":True, "value":2., "limits":[0.,4.]},
@@ -149,7 +148,6 @@ parameters = {
         # extinction
         "Ak":{"fixed":True, "value":0., "limits":[0.,1.]},
         "v_sys":{"fixed":True, "value":5., "limits":[0.,10.]},
-        "docontsub":{"fixed":True, "value":False, "limits":[0.,0.]},
         }
 # add option for both plots images and visibilities
 # add config mani file

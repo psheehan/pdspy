@@ -1,5 +1,24 @@
+
 #!/usr/bin/env python3
 
+# Standard Modules
+import argparse
+import time
+import sys
+import os
+
+# Canonical Modules
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+import matplotlib.patches as patches
+import matplotlib.patheffects as PathEffects
+import scipy.signal
+import numpy
+import emcee
+import corner
+from mpi4py import MPI
+
+# Custom Modules
 from pdspy.constants.physics import c, m_p, G
 from pdspy.constants.physics import k as k_b
 from pdspy.constants.astronomy import M_sun, AU
@@ -10,25 +29,28 @@ import pdspy.spectroscopy as sp
 import pdspy.modeling as modeling
 import pdspy.imaging as im
 import pdspy.misc as misc
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
-import matplotlib.patches as patches
-import matplotlib.patheffects as PathEffects
 import pdspy.table
 import pdspy.dust as dust
 import pdspy.gas as gas
 import pdspy.mcmc as mc
-import scipy.signal
-import argparse
-import numpy
-import time
-import sys
-import os
-import emcee
-import corner
-from mpi4py import MPI
+import pdspy.misc.logger as logger
+from pdspy.misc.config import configuration as config
 
 comm = MPI.COMM_WORLD
+
+################################################################################
+#
+# Holds the command line argument parameters.
+#
+################################################################################
+
+class Info:
+    def __init__(self,cmdargs,save,source_name,radmc3d='/tmp/'):
+        self.radmc3d = radmc3d
+        self.cmdargs = cmdargs
+        self.source  = source_name
+        self.svd     = save
+        self.tmp     = None
 
 ################################################################################
 #
@@ -38,14 +60,36 @@ comm = MPI.COMM_WORLD
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-o', '--object')
+parser.add_argument('--config',default='config.py')
 parser.add_argument('-r', '--resume', action='store_true')
 parser.add_argument('-p', '--resetprob', action='store_true')
 parser.add_argument('-a', '--action', type=str, default="run")
 parser.add_argument('-n', '--ncpus', type=int, default=1)
+parser.add_argument('-l', '--logfile',dest='logger')
+parser.add_argument('--verbosity',default=2,dest='verb',type=int)
+parser.add_argument('-w', '--radmc3d-dir',type=str,default=None,dest='work')
+parser.add_argument('-s', '--save-dir',type=str, default=os.environ['HOME']+'/radmc3d/',dest='save')
 parser.add_argument('-e', '--withexptaper', action='store_true')
 parser.add_argument('-v', '--plot_vis', action='store_true')
 parser.add_argument('-c', '--withcontsub', action='store_true')
 args = parser.parse_args()
+
+
+logfile = args.logger
+verbosity = args.verb
+
+# Set up message logger            
+print('Setting up logger')
+try:
+    node = '{'+str(os.environ['HOSTNAME']).split('.')[0]+'} '
+except:
+    node = '{Single} '
+
+if verbosity >= 3:
+    logger = logger.Messenger(verbosity=verbosity, universal_string=node,add_timestamp=True,logfile=logfile,override=False)
+else:
+    logger = logger.Messenger(verbosity=verbosity, add_timestamp=False,logfile=logfile,override=False)
+logger._write(logger.HEADER1,'{}'.format(''.join(['#' for x in range(25)])),out=False)
 
 # Check whether we are using MPI.
 
@@ -58,6 +102,8 @@ ncpus = args.ncpus
 # Get the source name and check that it has been set correctly.
 
 source = args.object
+
+logger.message('Finished setting up initial parameters...')
 
 if source == None:
     print("--object must be specified")
@@ -72,13 +118,18 @@ if args.action not in ['run','plot']:
 if args.action == 'plot':
     args.resume = True
 
+save_dir = args.save + '/' + source+'/'
+work_dir = os.environ["PWD"]
+
+cmdinfo=Info(args,save_dir,source,args.work)
+
 ################################################################################
 #
 # Create a function which returns a model of the data.
 #
 ################################################################################
 
-def model(visibilities, params, parameters, plot=False):
+def model(visibilities, params, parameters,cmdinfo, plot=False):
 
     # Set the values of all of the parameters.
 
@@ -141,8 +192,8 @@ def model(visibilities, params, parameters, plot=False):
     # Make sure we are in a temp directory to not overwrite anything.
 
     original_dir = os.environ["PWD"]
-    os.mkdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
-    os.chdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
+    os.mkdir("/{}/temp_{}_{}".format(cmdinfo.radmc3d,comm.Get_rank(), source))
+    os.chdir("/{}/temp_{}_{}".format(cmdinfo.radmc3d,comm.Get_rank(), source))
 
     # Write the parameters to a text file so it is easy to keep track of them.
 
@@ -271,15 +322,15 @@ def model(visibilities, params, parameters, plot=False):
 
         os.system("rm params.txt")
         os.chdir(original_dir)
-        os.system("rmdir /tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
+        os.system("rmdir /{}/temp_{}_{}".format(cmdinfo.radmc3d,comm.Get_rank(), source))
 
     return m
 
 # Define a likelihood function.
 
-def lnlike(params, visibilities, parameters, plot):
+def lnlike(params, visibilities, parameters,cmdinfo, plot):
 
-    m = model(visibilities, params, parameters, plot)
+    m = model(visibilities, params, parameters,cmdinfo, plot)
 
     # A list to put all of the chisq into.
 
@@ -346,7 +397,7 @@ def lnprior(params, parameters):
 
 # Define a probability function.
 
-def lnprob(p, visibilities, parameters, plot):
+def lnprob(p, visibilities, parameters,cmdinfo, plot):
 
     keys = []
     for key in sorted(parameters.keys()):
@@ -360,7 +411,7 @@ def lnprob(p, visibilities, parameters, plot):
     if not numpy.isfinite(lp):
         return -numpy.inf
 
-    return lp + lnlike(params, visibilities, parameters, plot)
+    return lp + lnlike(params, visibilities, parameters,cmdinfo, plot)
 
 # Define a useful class for plotting.
 
@@ -376,12 +427,21 @@ class Transform:
 
 ################################################################################
 #
+# Finished Setup
+#
+################################################################################
+
+logger.message('Finished setting up initial parameters...')
+logger.message('The working directory for radmc3d: {}'.format(cmdinfo.radmc3d))
+
+################################################################################
+#
 # In case we are restarting this from the same job submission, delete any
 # temporary directories associated with this run.
 #
 ################################################################################
 
-os.system("rm -r /tmp/temp_{0:s}_{1:d}".format(source, comm.Get_rank()))
+os.system('rm -rf /{}/temp_{}_{}'.format(cmdinfo.radmc3d,comm.Get_rank(),cmdinfo.source))
 
 ################################################################################
 #
@@ -409,8 +469,16 @@ if args.action == "run":
 # Import the configuration file information.
 
 sys.path.insert(0, '')
+configfile   = config(args.config)
+configfile.read()
+configparams   = configfile.get_params()
+visibilities   = configparams['visibilities']
+parameters     = configparams['parameters']
+nwalkers       = configparams['nwalkers']
+steps_per_iter = configparams['steps_per_iter']
+max_nsteps     = configparams['max_nsteps']
+nplot          = configparams['nplot']
 
-from config import *
 
 # Set up the places where we will put all of the data.
 
@@ -446,6 +514,7 @@ if args.withcontsub:
 
 for j in range(len(visibilities["file"])):
     # Read the raw data.
+    logger.header2("Working on file: {}".format(visibilities["file"][j]))
 
     data = uv.Visibilities()
     data.read(visibilities["file"][j])
@@ -489,15 +558,15 @@ for key in parameters:
 # set up the info.
 
 if args.resume:
-    pos = numpy.load("pos.npy")
-    chain = numpy.load("chain.npy")
+    pos = numpy.load(cmdinfo.svd + "pos.npy")
+    chain = numpy.load(cmdinfo.svd + "chain.npy")
     state = None
     nsteps = chain[0,:,0].size
 
     if args.resetprob:
         prob = None
     else:
-        prob = numpy.load("prob.npy")
+        prob = numpy.load(cmdinfo.svd + "prob.npy")
 else:
     pos = []
     for j in range(nwalkers):
@@ -538,7 +607,7 @@ else:
 
 if args.action == "run":
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, \
-            args=(visibilities, parameters, False), pool=pool)
+            args=(visibilities, parameters,cmdinfo, False), pool=pool)
 
 # If we are plotting, make sure that nsteps < max_nsteps.
 
@@ -575,9 +644,9 @@ while nsteps < max_nsteps:
 
         # Save walker positions in case the code stps running for some reason.
 
-        numpy.save("pos", pos)
-        numpy.save("prob", prob)
-        numpy.save("chain", chain)
+        numpy.save(cmdinfo.svd + "pos", pos)
+        numpy.save(cmdinfo.svd + "prob", prob)
+        numpy.save(cmdinfo.svd + "chain", chain)
 
         # Augment the nuber of steps and reset the sampler for the next run.
 
@@ -597,7 +666,7 @@ while nsteps < max_nsteps:
     if args.action == "run":
         # Write out the results.
 
-        f = open("fit.txt", "w")
+        f = open(cmdinfo.svd + "fit.txt", "w")
         f.write("Best fit parameters:\n\n")
         for j in range(len(keys)):
             f.write("{0:s} = {1:f} +/- {2:f}\n".format(keys[j], params[j], \
@@ -605,13 +674,13 @@ while nsteps < max_nsteps:
         f.write("\n")
         f.close()
 
-        os.system("cat fit.txt")
+        os.system("cat {}fit.txt".format(cmdinfo.svd))
 
         # Plot histograms of the resulting parameters.
 
         fig = corner.corner(samples, labels=keys, truths=params)
 
-        plt.savefig("fit.pdf")
+        plt.savefig(cmdinfo.svd + "fit.pdf")
 
     # Make a dictionary of the best fit parameters.
 
@@ -815,8 +884,8 @@ while nsteps < max_nsteps:
         plt.clf()
 
     # Close the pdf.
-
     pdf.close()
+
 
     # If we're just plotting make sure we don't loop forever.
 
