@@ -418,6 +418,11 @@ visibilities["data"] = []
 visibilities["data1d"] = []
 visibilities["image"] = []
 
+# Make sure "fmt" is in the visibilities dictionary.
+
+if not "fmt" in visibilities:
+    visibilities["fmt"] = ['4.1f' for i in range(len(visibilities["file"]))]
+
 # Decide whether to use an exponentially tapered 
 
 if not "disk_type" in parameters:
@@ -751,7 +756,8 @@ while nsteps < max_nsteps:
 
                 # Add the velocity to the map.
 
-                txt = ax[k,l].annotate(r"$v=%4.1f$ km s$^{-1}$" % (v[ind]/1e5),\
+                txt = ax[k,l].annotate(r"$v=%{0:s}$ km s$^{{-1}}$".format(\
+                        visibilities["fmt"][j]) % (v[ind]/1e5),\
                         xy=(0.1,0.8), xycoords='axes fraction')
 
                 #txt.set_path_effects([PathEffects.withStroke(linewidth=2, \

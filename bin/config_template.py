@@ -29,6 +29,7 @@ visibilities = {
         "ind0":[1],
         "ticks":[numpy.array([-250,-200,-100,0,100,200,250])],
         "image_ticks":[numpy.array([-0.75,-0.5,0,0.5,0.75])],
+        "fmt":['4.1f'],
         }
 
 # Something similar for images.
