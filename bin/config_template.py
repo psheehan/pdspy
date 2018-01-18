@@ -124,8 +124,8 @@ parameters = {
         "loga_max":{"fixed":True, "value":0., "limits":[0.,5.]},
         "p":{"fixed":True, "value":3.5, "limits":[2.5,4.5]},
         # Gas parameters.
-        "gas_file":{"fixed":True, "value":"co.dat", "limits":[0.,0.]},
-        "logabundance":{"fixed":True, "value":-4., "limits":[-6.,-2.]},
+        "gas_file1":{"fixed":True, "value":"co.dat", "limits":[0.,0.]},
+        "logabundance1":{"fixed":True, "value":-4., "limits":[-6.,-2.]},
         # Viewing parameters.
         "i":{"fixed":True, "value":45., "limits":[0.,180.]},
         "pa":{"fixed":True, "value":0., "limits":[0.,360.]},

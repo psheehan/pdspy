@@ -132,11 +132,19 @@ def model(visibilities, params, parameters, plot=False):
     gases = []
     abundance = []
 
-    g = gas.Gas()
-    g.set_properties_from_lambda(gas.__path__[0]+"/data/"+p["gas_file"])
+    index = 1
+    while index > 0:
+        if "gas_file"+str(index) in p:
+            g = gas.Gas()
+            g.set_properties_from_lambda(gas.__path__[0]+"/data/"+\
+                    p["gas_file"+str(index)])
 
-    gases.append(g)
-    abundance.append(p["abundance"])
+            gases.append(g)
+            abundance.append(p["abundance"+str(index)])
+
+            index += 1
+        else:
+            index = -1
 
     # Make sure we are in a temp directory to not overwrite anything.
 
@@ -439,6 +447,13 @@ if not "docontsub" in parameters:
 
 if args.withcontsub:
     parameters["docontsub"]["value"] = True
+
+# Make sure the code is backwards compatible to a time when only a single gas
+# file was being supplied.
+
+if "gas_file" in parameters:
+    parameters["gas_file1"] = parameters["gas_file"]
+    parameters["logabundance1"] = parameters["logabundance"]
 
 ######################################
 # Read in the millimeter visibilities.
