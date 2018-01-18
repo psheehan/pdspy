@@ -269,9 +269,9 @@ def model(visibilities, params, parameters, plot=False):
                         visibilities["lam"][j]].uvdist.max()*1.05, \
                         mode="spectralline")
 
-        os.system("rm params.txt")
-        os.chdir(original_dir)
-        os.system("rmdir /tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
+    os.system("rm params.txt")
+    os.chdir(original_dir)
+    os.system("rmdir /tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
 
     return m
 
