@@ -10,7 +10,7 @@ from ..gas import Gas
 class UlrichEnvelope:
 
     def __init__(self, mass=1.0e-3, rmin=0.1, rmax=1000, rcent=30, cavpl=1.0, \
-            cavrfact=0.2, t0=None, tpl=None, dust=None):
+            cavrfact=0.2, t0=None, tpl=None, dust=None, aturb=None):
         self.mass = mass
         self.rmin = rmin
         self.rmax= rmax
@@ -21,8 +21,10 @@ class UlrichEnvelope:
         self.tpl = tpl
         if (dust != None):
             self.dust = dust
+
         self.gas = []
         self.abundance = []
+        self.aturb = aturb
 
     def add_gas(self, gas, abundance):
         self.gas.append(gas)
@@ -116,20 +118,45 @@ class UlrichEnvelope:
 
         ##### Make the dust density model for a protoplanetary disk.
         
-        t = t0 * (rt / rin)**(-tpl)
+        t = t0 * (rt / (1*AU))**(-tpl)
 
         t[(rr >= rout) ^ (rr <= rin)] = 0e0
+
+        t[t > 10000.] = 10000.
         
         return t
 
     def number_density(self, r, theta, phi, gas=0):
         rho = self.density(r, theta, phi)
 
-        n_H2 = rho * 100. / (2*m_p)
+        rho_gas = rho * 100
+
+        n_H2 = rho_gas * 0.8 / (2.37*m_p)
 
         n = n_H2 * self.abundance[gas]
 
         return n
+
+    def microturbulence(self, r, theta, phi):
+        ##### Disk Parameters
+        
+        rin = self.rmin * AU
+        rout = self.rmax * AU
+        t0 = self.t0
+        plt = self.plt
+
+        ##### Set up the coordinates
+
+        rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+
+        rr = rt*numpy.sin(tt)
+        zz = rt*numpy.cos(tt)
+
+        ##### Make the dust density model for a protoplanetary disk.
+        
+        aturb = numpy.ones(rr.shape)*self.aturb*1.0e5
+        
+        return aturb
 
     def velocity(self, r, theta, phi, mstar=0.5):
         mstar *= M_sun
@@ -173,6 +200,13 @@ class UlrichEnvelope:
         self.cavpl = f['cavpl'].value
         self.cavrfact = f['cavrfact'].value
 
+        if 't0' in f:
+            self.t0 = f['t0'].value
+            self.tpl = f['tpl'].value
+
+        if 'aturb' in f:
+            self.aturb = f['aturb'].value
+
         if ('Dust' in f):
             self.dust = Dust()
             self.dust.set_properties_from_file(usefile=f['Dust'])
@@ -197,6 +231,13 @@ class UlrichEnvelope:
         f['rcent'] = self.rcent
         f['cavpl'] = self.cavpl
         f['cavrfact'] = self.cavrfact
+
+        if self.t0 != None:
+            f['t0'] = self.t0
+            f['plt'] = self.plt
+
+        if self.aturb != None:
+            f['aturb'] = self.aturb
 
         if hasattr(self, 'dust'):
             dust = f.create_group("Dust")

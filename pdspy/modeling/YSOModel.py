@@ -135,7 +135,7 @@ class YSOModel(Model):
 
     def add_envelope(self, mass=1.0e-3, rmin=0.1, rmax=1000, pl=1.5, \
             cavpl=1.0, cavrfact=0.2, t0=None, tpl=None, dust=None, gas=None, \
-            abundance=None, tmid0=None):
+            abundance=None, tmid0=None, aturb=None):
         self.envelope = Envelope(mass=mass, rmin=rmin, rmax=rmax, \
                 pl=pl, cavpl=cavpl, cavrfact=cavrfact, t0=t0, tpl=tpl, \
                 dust=dust)
@@ -170,9 +170,13 @@ class YSOModel(Model):
             self.grid.add_gas_temperature(self.envelope.gas_temperature( \
                     self.grid.r, self.grid.theta, self.grid.phi))
 
+        if aturb != None:
+            self.grid.add_microturbulence(self.disk.microturbulence( \
+                    self.grid.r, self.grid.theta, self.grid.phi))
+
     def add_ulrich_envelope(self, mass=1.0e-3, rmin=0.1, rmax=1000, rcent=300, \
             cavpl=1.0, cavrfact=0.2, t0=None, tpl=None, dust=None, gas=None, \
-            abundance=None, tmid0=None, rcent_ne_rdisk=False):
+            abundance=None, tmid0=None, rcent_ne_rdisk=False, aturb=None):
         if rcent_ne_rdisk:
             self.envelope = UlrichEnvelope(mass=mass, rmin=rmin, rmax=rmax, \
                     rcent=rcent, cavpl=cavpl, cavrfact=cavrfact, t0=t0, \
@@ -214,6 +218,10 @@ class YSOModel(Model):
                     self.grid.theta, self.grid.phi))
         if tmid0 != None:
             self.grid.add_gas_temperature(self.envelope.gas_temperature( \
+                    self.grid.r, self.grid.theta, self.grid.phi))
+
+        if aturb != None:
+            self.grid.add_microturbulence(self.disk.microturbulence( \
                     self.grid.r, self.grid.theta, self.grid.phi))
 
     def run_simple_dust_image(self, name=None, i=0., pa=0., npix=256, dx=1., \

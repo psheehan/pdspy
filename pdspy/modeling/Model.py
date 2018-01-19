@@ -324,22 +324,28 @@ class Model:
 
             nx, ny, nz = self.grid.number_density[0].shape
 
-            for i in range(nx):
-                for j in range(ny):
-                    for k in range(nz):
-                        index = numpy.where(number_density[:,i,j,k] == \
-                                number_density[:,i,j,k].max())[0][0]
-                        velocity[0,i,j,k] = vx[index,i,j,k]
-                        velocity[1,i,j,k] = vy[index,i,j,k]
-                        velocity[2,i,j,k] = vz[index,i,j,k]
+            velocity[0,:,:,:] = (number_density * vx).sum(axis=0) / \
+                    number_density.sum(axis=0)
+            velocity[1,:,:,:] = (number_density * vy).sum(axis=0) / \
+                    number_density.sum(axis=0)
+            velocity[2,:,:,:] = (number_density * vz).sum(axis=0) / \
+                    number_density.sum(axis=0)
 
             radmc3d.write.gas_velocity(velocity)
 
             if len(self.grid.gas_temperature) > 0:
-                radmc3d.write.gas_temperature(self.grid.gas_temperature[0])
+                gas_temperature = numpy.array(self.grid.gas_temperature)
+                gas_temperature = (number_density * gas_temperature).\
+                        sum(axis=0) / number_density.sum(axis=0)
+
+                radmc3d.write.gas_temperature(gas_temperature)
 
             if len(self.grid.microturbulence) > 0:
-                radmc3d.write.microturbulence(self.grid.microturbulence[0])
+                microturbulence = numpy.array(self.grid.microturbulence)
+                microturbulence = (number_density * microturbulence).\
+                        sum(axis=0) / number_density.sum(axis=0)
+
+                radmc3d.write.microturbulence(microturbulence)
 
     def read(self, filename=None, usefile=None):
         if (usefile == None):
