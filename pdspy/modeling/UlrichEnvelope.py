@@ -10,7 +10,7 @@ from ..gas import Gas
 class UlrichEnvelope:
 
     def __init__(self, mass=1.0e-3, rmin=0.1, rmax=1000, rcent=30, cavpl=1.0, \
-            cavrfact=0.2, t0=None, tpl=None, dust=None):
+            cavrfact=0.2, t0=None, tpl=None, dust=None, aturb=None):
         self.mass = mass
         self.rmin = rmin
         self.rmax= rmax
