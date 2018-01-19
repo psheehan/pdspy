@@ -170,6 +170,10 @@ class YSOModel(Model):
             self.grid.add_gas_temperature(self.envelope.gas_temperature( \
                     self.grid.r, self.grid.theta, self.grid.phi))
 
+        if aturb != None:
+            self.grid.add_microturbulence(self.disk.microturbulence( \
+                    self.grid.r, self.grid.theta, self.grid.phi))
+
     def add_ulrich_envelope(self, mass=1.0e-3, rmin=0.1, rmax=1000, rcent=300, \
             cavpl=1.0, cavrfact=0.2, t0=None, tpl=None, dust=None, gas=None, \
             abundance=None, tmid0=None, rcent_ne_rdisk=False):
