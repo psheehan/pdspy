@@ -192,8 +192,11 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
                     p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
                     p["delta_gap1"], p["delta_gap2"],p["delta_gap3"]])
 
-    m.add_ulrich_envelope(mass=p["M_env"], rmin=p["R_in"], rmax=p["R_env"], \
-            cavpl=p["ksi"], cavrfact=p["f_cav"], dust=edust)
+    if p["envelope_type"] == "ulrich":
+        m.add_ulrich_envelope(mass=p["M_env"], rmin=p["R_in"], rmax=p["R_env"],\
+                cavpl=p["ksi"], cavrfact=p["f_cav"], dust=edust)
+    else:
+        pass
 
     m.grid.set_wavelength_grid(0.1,1.0e5,500,log=True)
 
@@ -555,6 +558,12 @@ if not "disk_type" in parameters:
 
 if args.withexptaper:
     parameters["disk_type"]["value"] = "exptaper"
+
+# Make sure the code doesn't break if envelope_type isn't specified.
+
+if not "envelope_type" in parameters:
+    parameters["envelope_type"] = {"fixed":True, "value":"ulrich", \
+            "limits":[0.,0.]}
 
 ######################################
 # Read in the millimeter visibilities.

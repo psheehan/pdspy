@@ -163,8 +163,12 @@ def model(visibilities, params, parameters, plot=False):
 
     m = modeling.YSOModel()
     m.add_star(mass=p["M_star"], luminosity=p["L_star"],temperature=p["T_star"])
-    m.set_spherical_grid(p["R_in"], max(5*p["R_disk"],300), 100, 51, 2, \
-            code="radmc3d")
+
+    if p["envelope_type"] == "ulrich":
+        m.set_spherical_grid(p["R_in"], p["R_env"], 100, 51, 2, code="radmc3d")
+    else:
+        m.set_spherical_grid(p["R_in"], max(5*p["R_disk"],300), 100, 51, 2, \
+                code="radmc3d")
 
     if p["disk_type"] == "exptaper":
         m.add_pringle_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
@@ -176,6 +180,14 @@ def model(visibilities, params, parameters, plot=False):
                 plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
                 t0=p["T0"], plt=p["q"], gas=gases, abundance=abundance,\
                 aturb=p["a_turb"])
+
+    if p["envelope_type"] == "ulrich":
+        m.add_ulrich_envelope(mass=p["M_env"], rmin=p["R_in"], rmax=p["R_env"],\
+                cavpl=p["ksi"], cavrfact=p["f_cav"], dust=edust, \
+                t0=p["T0_env"], tpl=p["q_env"], gas=gases, abundance=abundance,\
+                aturb=p["a_turb_env"])
+    else:
+        pass
 
     m.grid.set_wavelength_grid(0.1,1.0e5,500,log=True)
 
@@ -439,6 +451,12 @@ if not "disk_type" in parameters:
 
 if args.withexptaper:
     parameters["disk_type"]["value"] = "exptaper"
+
+# Make sure the code doesn't break if envelope_type isn't specified.
+
+if not "envelope_type" in parameters:
+    parameters["envelope_type"] = {"fixed":True, "value":"none", \
+            "limits":[0.,0.]}
 
 # Decide whether to do continuum subtraction or not.
 

@@ -114,12 +114,17 @@ parameters = {
         "q":{"fixed":True, "value":0.25, "limits":[0.,1.5]},
         "loga_turb":{"fixed":True, "value":-1.0, "limits":[-3.,1.]},
         # Envelope parameters.
+        "envelope_type":{"fixed":True, "value":"ulrich", "limits":[0.,0.]},
         "logM_env":{"fixed":True, "value":-3., "limits":[-10., -2.]},
         "logR_in_env":{"fixed":True, "value":"logR_in", "limits":[-1., 4.]},
         "logR_env":{"fixed":True, "value":3., "limits": [2.,5.]},
         "logR_c":{"fixed":True, "value":"logR_disk", "limits":[-1.,4.]},
         "f_cav":{"fixed":True, "value":0.5, "limits":[0.,1.]},
         "ksi":{"fixed":True, "value":1.0, "limits":[0.5,1.5]},
+        # Disk temperature parameters.
+        "logT0_env":{"fixed":True, "value":2.5, "limits":[1.,3.5]},
+        "q_env":{"fixed":True, "value":0.25, "limits":[0.,1.5]},
+        "loga_turb_env":{"fixed":True, "value":-1.0, "limits":[-3.,1.]},
         # Dust parameters.
         "loga_max":{"fixed":True, "value":0., "limits":[0.,5.]},
         "p":{"fixed":True, "value":3.5, "limits":[2.5,4.5]},
