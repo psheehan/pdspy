@@ -1017,7 +1017,7 @@ while nsteps < max_nsteps:
     ax[0,2].axis([0.1,1.0e4,1e-6,1e3])
 
     ax[0,2].set_xscale("log", nonposx='clip')
-    ax[0,2].set_yscale("log", nonposx='clip')
+    ax[0,2].set_yscale("log", nonposy='clip')
 
     ax[0,2].set_xlabel("$\lambda$ [$\mu$]")
     ax[0,2].set_ylabel(r"$F_{\nu}$ [Jy]")
