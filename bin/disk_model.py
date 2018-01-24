@@ -431,6 +431,13 @@ def lnprior(params, parameters):
     else:
         return -numpy.inf
 
+    # Check that we aren't allowing any absurdly dense models.
+
+    if params["logR_env"] < 0.5 * params["logM_env"] + 4.:
+        return -numpy.inf
+    else:
+        pass
+
     # Check that the cavity actually falls within the disk.
 
     if not parameters["logR_cav"]["fixed"]:
@@ -688,8 +695,10 @@ if args.resume:
 else:
     pos = []
     for j in range(nwalkers):
-        r_env = numpy.random.uniform(parameters["logR_env"]["limits"][0],\
-                parameters["logR_env"]["limits"][1],1)[0]
+        m_env = numpy.random.uniform(-6., parameters[key]["limits"][1],1)[0]
+
+        r_env = numpy.random.uniform(max(parameters["logR_env"]["limits"][0],\
+                0.5*m_env+4.), parameters["logR_env"]["limits"][1],1)[0]
         r_disk = numpy.random.uniform(numpy.log10(30.),\
                 min(r_env, parameters["logR_disk"]["limits"][1]),1)[0]
         r_in = numpy.random.uniform(parameters["logR_in"]["limits"][0],\
@@ -714,8 +723,7 @@ else:
                 temp_pos.append(numpy.random.uniform(-6.,\
                         parameters[key]["limits"][1],1)[0])
             elif key == "logM_env":
-                temp_pos.append(numpy.random.uniform(-6.,\
-                        parameters[key]["limits"][1],1)[0])
+                temp_pos.append(m_env)
             elif key == "h_0":
                 temp_pos.append(numpy.random.uniform(\
                         parameters[key]["limits"][0], 0.2, 1)[0])
