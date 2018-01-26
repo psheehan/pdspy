@@ -112,12 +112,6 @@ def model(visibilities, params, parameters, plot=False):
     p["beta"] = 0.5 * (3 - p["q"])
     p["alpha"] = p["gamma"] + p["beta"]
 
-    # Shift the wavelengths by the velocities.
-
-    b = p["v_sys"]*1.0e5 / c
-    lam = c / visibilities["data"][0].freq / 1.0e-4
-    wave = lam * numpy.sqrt((1. - b) / (1. + b))
-
     # Set up the dust.
 
     dustopac = "pollack_new.hdf5"
@@ -194,6 +188,14 @@ def model(visibilities, params, parameters, plot=False):
     # Run the images/visibilities/SEDs.
 
     for j in range(len(visibilities["file"])):
+        # Shift the wavelengths by the velocities.
+
+        b = p["v_sys"]*1.0e5 / c
+        lam = c / visibilities["data"][j].freq / 1.0e-4
+        wave = lam * numpy.sqrt((1. - b) / (1. + b))
+
+        # Set the wavelengths for RADMC3D to use.
+
         m.set_camera_wavelength(wave)
 
         if p["docontsub"]:
@@ -230,7 +232,7 @@ def model(visibilities, params, parameters, plot=False):
                 nthreads=ncpus)
 
         if plot:
-            lam = c / visibilities["image"][0].freq / 1.0e-4
+            lam = c / visibilities["image"][j].freq / 1.0e-4
             wave = lam * numpy.sqrt((1. - b) / (1. + b))
 
             m.set_camera_wavelength(wave)
