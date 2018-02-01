@@ -259,19 +259,21 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
                 new_weights[j[k],i[k],l] += weights[k,l]
     
     good_data = new_weights != 0.0
-    good_data = numpy.all(good_data, axis=2)
+
+    new_real[good_data] = new_real[good_data] / new_weights[good_data]
+    new_imag[good_data] = new_imag[good_data] / new_weights[good_data]
+
+    good_data = numpy.any(good_data, axis=2)
     good_data = numpy.dstack([good_data for m in range(nchannels)])
     new_u = new_u[good_data[:,:,0]]
     new_v = new_v[good_data[:,:,0]]
-    
+
     if mode == "continuum":
         freq = numpy.array([data.freq.sum()/data.freq.size])
     
-    return Visibilities(new_u,new_v,freq,\
-            (new_real[good_data] / new_weights[good_data]).reshape(\
-            (new_u.size,nchannels)),\
-            (new_imag[good_data] / new_weights[good_data]).reshape(\
-            (new_u.size,nchannels)), \
+    return Visibilities(new_u, new_v, freq, \
+            new_real[good_data].reshape((new_u.size,nchannels)),\
+            new_imag[good_data].reshape((new_u.size,nchannels)), \
             new_weights[good_data].reshape((new_u.size,nchannels)))
 
 @cython.boundscheck(False)
