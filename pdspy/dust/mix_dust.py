@@ -3,7 +3,7 @@ import scipy
 from .Dust import Dust
 from ..constants.math import pi
 
-def mix_dust(dust, abundance, medium=None, rule="Bruggeman"):
+def mix_dust(dust, abundance, medium=None, rule="Bruggeman", filling=1.):
 
     if rule == "Bruggeman":
         meff = numpy.zeros(dust[0].lam.size,dtype=complex)
@@ -18,16 +18,25 @@ def mix_dust(dust, abundance, medium=None, rule="Bruggeman"):
             rho += dust[i].rho*abundance[i]
     
     elif rule == "MaxGarn":
-        sigma = 0.0+1j*0.0
+        numerator = 0.0+1j*0.0
+        denominator = 0.0+1j*0.0
         rho = 0.0
         
         for i in range(len(dust)):
-            sigma += abundance[i]*(dust[i].m**2-medium.m**2)/ \
-                    (dust[i].m**2+2*medium.m**2)
+            gamma = 3. / (dust[i].m**2 + 2)
+
+            numerator += abundance[i] * gamma * dust[i].m**2
+            denominator += abundance[i] * gamma
 
             rho += dust[i].rho*abundance[i]
+
+        mmix = numpy.sqrt(numerator / denominator)
         
-        meff = numpy.sqrt(medium.m**2*(1+3*sigma/(1-sigma)))
+        F = (mmix**2 - 1.) / (mmix**2 + 2.)
+
+        meff = numpy.sqrt((1. + 2.*filling*F) / (1. - filling*F))
+
+        rho *= filling
 
     new = Dust()
     new.set_density(rho)
