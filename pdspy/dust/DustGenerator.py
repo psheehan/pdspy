@@ -25,7 +25,7 @@ class DustGenerator:
 
                 for a in self.amax:
                     dust.calculate_size_distribution_opacity(0.005e-4, a, p, \
-                            coat_volume_fraction=0.0, nang=2)
+                            coat_volume_fraction=0.0, nang=1)
 
                     kabs_temp.append(dust.kabs)
                     ksca_temp.append(dust.ksca)
