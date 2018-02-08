@@ -25,17 +25,28 @@ class Dust:
         self.m = self.n + 1j*self.k
 
     def calculate_size_distribution_opacity(self, amin, amax, p, \
-            coat_volume_fraction=0.0, nang=1000):
+            coat_volume_fraction=0.0, nang=1000, with_dhs=False, fmax=0.8, \
+            nf=50):
+        if with_dhs:
+            from .mix_dust import mix_dust
+
         na = int(round(numpy.log10(amax) - numpy.log10(amin))*100+1)
         a = numpy.logspace(numpy.log10(amin),numpy.log10(amax),na)
         kabsgrid = numpy.zeros((self.lam.size,na))
         kscagrid = numpy.zeros((self.lam.size,na))
         
         normfunc = a**(3-p)
+
+        if with_dhs:
+            d = [mix_dust([self], [1.], filling=(1. - f)) for f in \
+                    numpy.linspace(0., fmax, nf)]
         
         for i in range(na):
-            self.calculate_opacity(a[i], \
-                    coat_volume_fraction=coat_volume_fraction, nang=nang)
+            if with_dhs:
+                self.calculate_dhs_opacity(a[i], fmax=fmax, nf=nf, nang=nang, d=d)
+            else:
+                self.calculate_opacity(a[i], \
+                        coat_volume_fraction=coat_volume_fraction, nang=nang)
             
             kabsgrid[:,i] = self.kabs*normfunc[i]
             kscagrid[:,i] = self.ksca*normfunc[i]
@@ -81,6 +92,34 @@ class Dust:
                 self.kabs[i] = pi*a_coat**2*Qabs/mdust
                 self.ksca[i] = pi*a_coat**2*Qsca/mdust
 
+        self.kext = self.kabs + self.ksca
+        self.albedo = self.ksca / self.kext
+
+    def calculate_dhs_opacity(self, a, fmax=0.8, nf=50, nang=1000, d=None):
+        from .mix_dust import mix_dust
+
+        self.kabs = numpy.zeros(self.lam.size)
+        self.ksca = numpy.zeros(self.lam.size)
+        
+        if d == None:
+            d = [mix_dust([self], [1.], filling=(1. - f)) for f in \
+                    numpy.linspace(0., fmax, nf)]
+        
+        for i in range(self.lam.size):
+            for j, f in enumerate(numpy.linspace(0., fmax, nf)):
+                x = 2*pi*a*(1.-f)**(-2./3)/self.lam[i]
+
+                S1,S2,Qext,Qsca,Qback,gsca=bhmie(x,d[j].m[i],nang)
+                
+                Qabs = Qext - Qsca
+                
+                mdust = 4*pi*a**3/3*self.rho
+
+                self.kabs[i] += pi*a**2*(1.-f)**(-2./3)*Qabs/mdust * \
+                        1./fmax * fmax/nf
+                self.ksca[i] += pi*a**2*(1.-f)**(-2./3)*Qsca/mdust * \
+                        1./fmax * fmax/nf
+    
         self.kext = self.kabs + self.ksca
         self.albedo = self.ksca / self.kext
 
