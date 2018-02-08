@@ -26,7 +26,7 @@ silicates.set_density(3.3)
 silicates.calculate_optical_constants_on_wavelength_grid(water_ice.lam)
 
 species = [silicates,graphite_parallel,graphite_perpendicular]
-abundances = numpy.array([65.,35.*1./3,35.*2./3])
+abundances = numpy.array([0.65,0.35*1./3,0.35*2./3])
 print(abundances)
 
 dust = mix_dust(species, abundances)
