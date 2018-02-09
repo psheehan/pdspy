@@ -5,6 +5,7 @@ from ..constants.physics import c
 from ..constants.math import pi
 from .bhmie import bhmie
 from .bhcoat import bhcoat
+from .dmilay import dmilay
 
 class Dust:
 
@@ -27,9 +28,6 @@ class Dust:
     def calculate_size_distribution_opacity(self, amin, amax, p, \
             coat_volume_fraction=0.0, nang=1000, with_dhs=False, fmax=0.8, \
             nf=50):
-        if with_dhs:
-            from .mix_dust import mix_dust
-
         na = int(round(numpy.log10(amax) - numpy.log10(amin))*100+1)
         a = numpy.logspace(numpy.log10(amin),numpy.log10(amax),na)
         kabsgrid = numpy.zeros((self.lam.size,na))
@@ -37,13 +35,9 @@ class Dust:
         
         normfunc = a**(3-p)
 
-        if with_dhs:
-            d = [mix_dust([self], [1.], filling=(1. - f)) for f in \
-                    numpy.linspace(0., fmax, nf)]
-        
         for i in range(na):
             if with_dhs:
-                self.calculate_dhs_opacity(a[i], fmax=fmax, nf=nf, nang=nang, d=d)
+                self.calculate_dhs_opacity(a[i], fmax=fmax, nf=nf, nang=nang)
             else:
                 self.calculate_opacity(a[i], \
                         coat_volume_fraction=coat_volume_fraction, nang=nang)
@@ -95,30 +89,29 @@ class Dust:
         self.kext = self.kabs + self.ksca
         self.albedo = self.ksca / self.kext
 
-    def calculate_dhs_opacity(self, a, fmax=0.8, nf=50, nang=1000, d=None):
-        from .mix_dust import mix_dust
+    def calculate_dhs_opacity(self, a, fmax=0.8, nf=50, nang=1000):
 
         self.kabs = numpy.zeros(self.lam.size)
         self.ksca = numpy.zeros(self.lam.size)
         
-        if d == None:
-            d = [mix_dust([self], [1.], filling=(1. - f)) for f in \
-                    numpy.linspace(0., fmax, nf)]
-        
         for i in range(self.lam.size):
             for j, f in enumerate(numpy.linspace(0., fmax, nf)):
-                x = 2*pi*a*(1.-f)**(-2./3)/self.lam[i]
+                x = 2*pi*a*f**(1./3)/self.lam[i]
+                y = 2*pi*a/self.lam[i]
 
-                S1,S2,Qext,Qsca,Qback,gsca=bhmie(x,d[j].m[i],nang)
+                if f == 0:
+                    S1,S2,Qext,Qsca,Qback,gsca=bhmie(y,self.m[i],nang)
+                else:
+                    Qext, Qsca, Qback, g, M1, M2, S21, D21 = dmilay(\
+                            a*f**(1./3), a, 2*pi/self.lam[i], self.m[i].real - \
+                            1j*self.m[i].imag, 1.0+1j*0.0, [0.], 1., 1)
                 
                 Qabs = Qext - Qsca
                 
-                mdust = 4*pi*a**3/3*self.rho
+                mdust = 4*pi*a**3*(1.-f)/3*self.rho
 
-                self.kabs[i] += pi*a**2*(1.-f)**(-2./3)*Qabs/mdust * \
-                        1./fmax * fmax/nf
-                self.ksca[i] += pi*a**2*(1.-f)**(-2./3)*Qsca/mdust * \
-                        1./fmax * fmax/nf
+                self.kabs[i] += pi*a**2*Qabs/mdust * 1./fmax * fmax/nf
+                self.ksca[i] += pi*a**2*Qsca/mdust * 1./fmax * fmax/nf
     
         self.kext = self.kabs + self.ksca
         self.albedo = self.ksca / self.kext
