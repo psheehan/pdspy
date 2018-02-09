@@ -12,6 +12,8 @@ bhmie = Extension('pdspy.dust.bhmie', sources=['pdspy/dust/bhmie.f90'])
 
 bhcoat = Extension('pdspy.dust.bhcoat', sources=['pdspy/dust/bhcoat.f90'])
 
+dmilay = Extension('pdspy.dust.dmilay', sources=['pdspy/dust/DMiLay.f90'])
+
 read = cythonize([Extension('pdspy.radmc3d.read',["pdspy/radmc3d/read.pyx"],libraries=[],extra_compile_args=[])])[0]
 
-setup(ext_modules=[libinterferometry, libimaging, bhmie, bhcoat, read])
+setup(ext_modules=[libinterferometry, libimaging, bhmie, bhcoat, dmilay, read])
