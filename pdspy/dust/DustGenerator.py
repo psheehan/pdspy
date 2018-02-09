@@ -4,7 +4,7 @@ import h5py
 from .Dust import Dust
 
 class DustGenerator:
-    def __init__(self, dust):
+    def __init__(self, dust, with_dhs=False, fmax=0.8, nf=50):
         if type(dust) == str:
             self.read(dust)
         else:
@@ -25,7 +25,8 @@ class DustGenerator:
 
                 for a in self.amax:
                     dust.calculate_size_distribution_opacity(0.005e-4, a, p, \
-                            coat_volume_fraction=0.0, nang=1)
+                            coat_volume_fraction=0.0, nang=1, \
+                            with_dhs=with_dhs, fmax=fmax, nf=nf)
 
                     kabs_temp.append(dust.kabs)
                     ksca_temp.append(dust.ksca)
