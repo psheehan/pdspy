@@ -40,7 +40,7 @@ c **********************************************************************
 
 c     .. Parameters ..
 
-      INTEGER, PARAMETER :: MXANG=200, LL=200000
+      INTEGER, PARAMETER :: MXANG=200, LL=20000000
       REAL(kind=8), PARAMETER :: ZERO=0.0D0, ONE=1.0D0, TWO=2.0D0
 c     ..
 c     .. Scalar Arguments ..
