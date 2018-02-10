@@ -15,7 +15,6 @@ def run_opacity_tool(amin=0.05, amax=3000., apow=3.5, na=50, fcarbon=0.13, \
                 "-fcarbon {4:f} -Vcarbon {5:f} -porosity {6:f} -fmax {7:f} "\
                 "-lmin {8:f} -lmax {9:f} -nlam {10:d}".format(amin, amax, apow,\
                 na, fcarbon, Vcarbon, porosity, fmax, lmin, lmax, nlam)
-        print(command)
 
         if not verbose:
             os.system(command + " > log.txt")

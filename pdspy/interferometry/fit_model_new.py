@@ -23,8 +23,8 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
 
     print("Doing coarse grid search.")
 
-    x = numpy.arange(-5,5,0.1)
-    y = numpy.arange(-5,5,0.1)
+    x = numpy.arange(-10,10,0.1)
+    y = numpy.arange(-10,10,0.1)
 
     params = numpy.array([])
 
@@ -153,7 +153,7 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
                             pa0+pa_range,1)[0], \
                             numpy.random.uniform(flux0,1.0e-4,1)[0]])
             elif funct[0] == 'ring':
-                ndim, nwalkers = 6, 250
+                ndim, nwalkers = 7, 250
 
                 pos = []
                 for i in range(nwalkers):
