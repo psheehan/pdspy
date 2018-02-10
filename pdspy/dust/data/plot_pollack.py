@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 #species_list = ["pollack_1um.hdf5", "pollack_10um.hdf5", "pollack_100um.hdf5", \
 #        "pollack_1mm.hdf5", "pollack_1cm.hdf5", "pollack_10cm.hdf5"]
 species_list = ["pollack_1um.hdf5", "pollack_10um.hdf5", "pollack_100um.hdf5", \
-        "pollack_1mm.hdf5"]
+        "pollack_1mm.hdf5", "pollack_1cm.hdf5", "pollack_10cm.hdf5"]
 
 # Maximum dust grain sizes.
 
@@ -37,7 +37,7 @@ for i, species in enumerate(species_list):
 
     # Get the dust generator properties.
 
-    dust1 = dust_gen(a_max[i] / 1.0e4, 3.5)
+    dust1 = dust_gen(a_max[i] / 1.0e4, 2.5)
 
     # Make a label for each line.
 
