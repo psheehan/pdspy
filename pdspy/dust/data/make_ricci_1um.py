@@ -3,19 +3,19 @@
 from pdspy.dust import *
 import numpy
 
-organics = Dust()
-organics.set_optical_constants_from_henn("optical_constants/amorphous_carbon_zubko1996_truncated.txt")
-organics.set_density(2.24)
-
 water_ice = Dust()
 water_ice.set_optical_constants_from_henn("optical_constants/water_ice.txt")
 water_ice.set_density(0.92)
-water_ice.calculate_optical_constants_on_wavelength_grid(organics.lam)
+
+organics = Dust()
+organics.set_optical_constants_from_henn("optical_constants/amorphous_carbon_zubko1996_extrapolated.txt")
+organics.set_density(2.24)
+organics.calculate_optical_constants_on_wavelength_grid(water_ice.lam)
 
 silicates = Dust()
 silicates.set_optical_constants_from_draine("optical_constants/astronomical_silicates.txt")
 silicates.set_density(3.3)
-silicates.calculate_optical_constants_on_wavelength_grid(organics.lam)
+silicates.calculate_optical_constants_on_wavelength_grid(water_ice.lam)
 
 species = [silicates,organics,water_ice]
 mass_fraction = numpy.array([2.64e-3,3.53e-3,5.55e-3])
