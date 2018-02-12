@@ -118,7 +118,7 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
 
     # Set up the dust.
 
-    dustopac = "pollack_new.hdf5"
+    dustopac = p["dust_file"]
 
     dust_gen = dust.DustGenerator(dust.__path__[0]+"/data/"+dustopac)
 
@@ -570,6 +570,12 @@ if args.withexptaper:
 
 if not "envelope_type" in parameters:
     parameters["envelope_type"] = {"fixed":True, "value":"ulrich", \
+            "limits":[0.,0.]}
+
+# Make sure the code doesn't break if dust_type isn't specified.
+
+if not "dust_file" in parameters:
+    parameters["dust_file"] = {"fixed":True, "value":"pollack_new.hdf5", \
             "limits":[0.,0.]}
 
 ######################################

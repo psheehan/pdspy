@@ -114,7 +114,7 @@ def model(visibilities, params, parameters, plot=False):
 
     # Set up the dust.
 
-    dustopac = "pollack_new.hdf5"
+    dustopac = p["dust_file"]
 
     dust_gen = dust.DustGenerator(dust.__path__[0]+"/data/"+dustopac)
 
@@ -474,6 +474,12 @@ if args.withcontsub:
 if "gas_file" in parameters:
     parameters["gas_file1"] = parameters["gas_file"]
     parameters["logabundance1"] = parameters["logabundance"]
+
+# Make sure the code doesn't break if dust_type isn't specified.
+
+if not "dust_file" in parameters:
+    parameters["dust_file"] = {"fixed":True, "value":"pollack_new.hdf5", \
+            "limits":[0.,0.]}
 
 ######################################
 # Read in the millimeter visibilities.

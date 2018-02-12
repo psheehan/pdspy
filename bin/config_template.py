@@ -126,6 +126,7 @@ parameters = {
         "q_env":{"fixed":True, "value":0.25, "limits":[0.,1.5]},
         "loga_turb_env":{"fixed":True, "value":-1.0, "limits":[-1.5,1.]},
         # Dust parameters.
+        "dust_file":{"fixed":True, "value":"pollack_new.hdf5", "limits":[0.,0.]},
         "loga_max":{"fixed":True, "value":0., "limits":[0.,5.]},
         "p":{"fixed":True, "value":3.5, "limits":[2.5,4.5]},
         # Gas parameters.
