@@ -15,7 +15,7 @@ p = numpy.linspace(2.5, 4.5, 10)
 
 # Read in the dust generator class.
 
-dust_gen = DustGenerator("pollack_new.hdf5")
+dust_gen = DustGenerator("diana_wice.hdf5")
 
 # Change a few of the parameters to make the plot look nice.
 
