@@ -17,21 +17,38 @@ class DustGenerator:
             self.kext = []
             self.albedo = []
 
+            a = numpy.logspace(numpy.log10(0.05e-4),1.,500)
+            kabsgrid = numpy.zeros((self.lam.size, a.size))
+            kscagrid = numpy.zeros((self.lam.size, a.size))
+
+            for i in range(a.size):
+                if with_dhs:
+                    dust.calculate_dhs_opacity(a[i], fmax=fmax, nf=nf, nang=1)
+                else:
+                    dust.calculate_opacity(a[i], coat_volume_fraction=0.0, \
+                            nang=1)
+
+                kabsgrid[:,i] = dust.kabs
+                kscagrid[:,i] = dust.ksca
+
             for p in self.p:
                 kabs_temp = []
                 ksca_temp = []
                 kext_temp = []
                 albedo_temp = []
 
-                for a in self.amax:
-                    dust.calculate_size_distribution_opacity(0.005e-4, a, p, \
-                            coat_volume_fraction=0.0, nang=1, \
-                            with_dhs=with_dhs, fmax=fmax, nf=nf)
+                for amax in self.amax:
+                    normfunc = a**(3-p)
+                    normfunc[a > amax] = 0.
 
-                    kabs_temp.append(dust.kabs)
-                    ksca_temp.append(dust.ksca)
-                    kext_temp.append(dust.kext)
-                    albedo_temp.append(dust.albedo)
+                    norm = scipy.integrate.trapz(normfunc, x=a)
+
+                    kabs_temp.append(scipy.integrate.trapz(kabsgrid*normfunc,\
+                            x=a, axis=1)/norm)
+                    ksca_temp.append(scipy.integrate.trapz(kscagrid*normfunc,\
+                            x=a, axis=1)/norm)
+                    kext_temp.append(kabs_temp[-1] + ksca_temp[-1])
+                    albedo_temp.append( ksca_temp[-1] / kext_temp[-1])
 
                 self.kabs.append(kabs_temp)
                 self.ksca.append(ksca_temp)
