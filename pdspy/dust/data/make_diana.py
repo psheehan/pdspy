@@ -24,11 +24,6 @@ abundances = numpy.array([0.8,0.2])
 
 dust = mix_dust(species, abundances, filling=0.75)
 
-amin = 0.05e-4
-amax = 1.000e1
-pl = 3.5
+dust_gen = DustGenerator(dust, with_dhs=True)
 
-dust.calculate_size_distribution_opacity(amin, amax, pl, with_dhs=True, \
-        coat_volume_fraction=0.0, nang=1)
-
-dust.write('diana_10cm.hdf5')
+dust_gen.write('diana.hdf5')

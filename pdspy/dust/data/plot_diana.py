@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-from pdspy.dust import Dust, DustGenerator
-import pdspy.dust as dust
+import pdspy.dust
 import matplotlib
 import matplotlib.pyplot as plt
 
@@ -16,9 +15,7 @@ a_max = [1., 10., 100., 1000., 10000., 100000.]
 
 # Read in the dust generator class.
 
-"""
-dust_gen = DustGenerator("diana.hdf5")
-"""
+dust_gen = pdspy.dust.DustGenerator("diana.hdf5")
 
 # Change a few of the parameters to make the plot look nice.
 
@@ -33,15 +30,15 @@ matplotlib.rcParams["legend.fontsize"] = 14
 fig, ax = plt.subplots(nrows=2, ncols=2)
 
 for i, species in enumerate(species_list):
-    dust = Dust()
+    dust = pdspy.dust.Dust()
     dust.set_properties_from_file(species)
 
     # Get the dust generator properties.
 
-    """
     dust1 = dust_gen(a_max[i] / 1.0e4, 3.5)
     """
-    dust1 = dust.run_opacity_tool(amax=a_max[i])
+    dust1 = pdspy.dust.run_opacity_tool(amax=a_max[i], fmax=0.8)
+    """
 
     # Make a label for each line.
 
@@ -60,10 +57,10 @@ for i, species in enumerate(species_list):
     ax[1,0].loglog(dust.lam*1e4, dust.kext)
     ax[1,1].semilogx(dust.lam*1e4, dust.albedo)
 
-    ax[0,0].loglog(dust1.lam, dust1.kabs, '--')
-    ax[0,1].loglog(dust1.lam, dust1.ksca, '--')
-    ax[1,0].loglog(dust1.lam, dust1.kext, '--')
-    ax[1,1].semilogx(dust1.lam, dust1.albedo, '--')
+    ax[0,0].loglog(dust1.lam*1e4, dust1.kabs, '--')
+    ax[0,1].loglog(dust1.lam*1e4, dust1.ksca, '--')
+    ax[1,0].loglog(dust1.lam*1e4, dust1.kext, '--')
+    ax[1,1].semilogx(dust1.lam*1e4, dust1.albedo, '--')
 
 ax[0,0].set_xlabel(r"$\lambda$ [$\upmu$m]")
 ax[0,0].set_ylabel("$\kappa_{abs}$ [cm$^2$ g$^{-1}$]")
