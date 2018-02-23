@@ -701,7 +701,7 @@ if args.resume:
 else:
     pos = []
     for j in range(nwalkers):
-        m_env = numpy.random.uniform(-6., parameters["logR_env"]["limits"][1],1)[0]
+        m_env = numpy.random.uniform(-6., parameters["logM_env"]["limits"][1],1)[0]
 
         r_env = numpy.random.uniform(max(parameters["logR_env"]["limits"][0],\
                 0.5*m_env+4.), parameters["logR_env"]["limits"][1],1)[0]
