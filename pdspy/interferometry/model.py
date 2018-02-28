@@ -34,6 +34,7 @@ def model(u, v, params, return_type="complex", funct="gauss", freq=230):
         index = 0
         for j in range(i):
             index += nparams[j]
+        index = int(index)
         
         par = params.copy()
         par[index+0] *= arcsec
