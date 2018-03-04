@@ -1,3 +1,4 @@
+from ..constants.astronomy import arcsec
 import numpy
 import emcee
 import matplotlib.pyplot as plt
@@ -60,7 +61,18 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
         xmin.append(x[numpy.where(chisq == chisq.min())[0][0]])
         ymin.append(y[numpy.where(chisq == chisq.min())[1][0]])
 
-        params = numpy.concatenate((params, [xmin[-1], ymin[-1], flux0]))
+        if (funct[k] == 'point'):
+            params = numpy.concatenate((params, numpy.array([xmin[-1], \
+                    ymin[-1], flux0])))
+        elif (funct[k] == 'gauss'):
+            params = numpy.concatenate((params, numpy.array([xmin[-1], \
+                    ymin[-1], 0.1, 0.1, 0.0, flux0])))
+        elif (funct[k] == 'circle'):
+            params = numpy.concatenate((params, numpy.array([xmin[-1], \
+                    ymin[-1], 0.1, 0.0, 0.0, flux0])))
+        elif (funct[k] == 'ring'):
+            params = numpy.concatenate((params, numpy.array([xmin[-1], \
+                    ymin[-1], 0.1, 0.2, 0.0, 0.0, flux0])))
 
     # Next do a few iterations of MCMC to get the correct solution.
 
@@ -95,32 +107,34 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
 
             ind = 0
 
+            r_max = 1. / data.uvdist[data.uvdist > 0].min() / arcsec
+
             for i in range(funct.size):
                 if funct[i] == 'point':
                     if 0. < p[int(ind+2)]:
-                        continue
+                        pass
                     else:
                         return -numpy.inf
                 elif funct[i] == 'gauss':
                     if 0 < p[int(ind+2)] and 0 < p[int(ind+3)] <= p[int(ind+2)]\
-                            and pa0[i]-pa_range[i]<= p[int(ind+4)] <= \
+                            < r_max and pa0[i]-pa_range[i]<= p[int(ind+4)] <= \
                             pa0[i]+pa_range[i] and 0. < p[int(ind+5)]:
-                        continue
+                        pass
                     else:
                         return -numpy.inf
                 elif funct[i] == 'circle':
-                    if 0. < p[int(ind+2)] and 0. <= p[int(ind+3)] <= numpy.pi/2\
-                            and pa0[i]-pa_range[i] <= p[int(ind+4)] <= \
-                            pa0[i]+pa_range[i] and 0. < p[int(ind+5)]:
-                        continue
+                    if 0. < p[int(ind+2)] < r_max and 0. <= p[int(ind+3)] <= \
+                            numpy.pi/2 and pa0[i]-pa_range[i] <= p[int(ind+4)] \
+                            <= pa0[i]+pa_range[i] and 0. < p[int(ind+5)]:
+                        pass
                     else:
                         return -numpy.inf
                 elif funct[i] == 'ring':
-                    if 0. < p[int(ind+2)] and p[int(ind+2)] < p[int(ind+3)] and\
-                            0.0 <= p[int(ind+4)] <= numpy.pi/2 and \
+                    if 0. < p[int(ind+2)] and p[int(ind+2)] < p[int(ind+3)] < \
+                            r_max and 0.0 <= p[int(ind+4)] <= numpy.pi/2 and \
                             pa0[i]-pa_range[i] <= p[int(ind+5)] <= \
                             pa0[i]+pa_range[i] and 0. < p[int(ind+6)]:
-                        continue
+                        pass
                     else:
                         return -numpy.inf
 
@@ -156,6 +170,8 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
 
             # Now set the positions of the walkers.
 
+            r_max = 1. / data.uvdist[data.uvdist > 0].min() / arcsec
+
             pos = []
             for i in range(nwalkers):
                 tmp_pos = []
@@ -165,22 +181,22 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
                                 numpy.random.normal(ymin[j],0.1,1)[0], \
                                 numpy.random.uniform(0.0001,1.0,1)[0]]
                     elif funct[j] == 'gauss':
-                        sigma_x = numpy.random.uniform(0.01,10.0,1)[0]
+                        sigma_x = numpy.random.uniform(0.01,r_max,1)[0]
 
-                        tmp_pos += [numpy.random.normal(xmin[j],1.0e-4,1)[0], \
-                                numpy.random.normal(ymin[j],1.0e-4,1)[0], \
+                        tmp_pos += [numpy.random.normal(xmin[j],0.1,1)[0], \
+                                numpy.random.normal(ymin[j],0.1,1)[0], \
                                 sigma_x, \
                                 numpy.random.uniform(0.01,sigma_x,1)[0], \
-                                numpy.random.uniform(pa0-pa_range,\
-                                pa0+pa_range,1)[0],\
+                                numpy.random.uniform(pa0[j]-pa_range[j],\
+                                pa0[j]+pa_range[j],1)[0],\
                                 numpy.random.normal(flux0,1.0e-4,1)[0]]
                     elif funct[j] == 'circle':
-                        tmp_pos += [numpy.random.normal(xmin[j],1.0e-4,1)[0], \
-                                numpy.random.normal(ymin[j],1.0e-4,1)[0], \
-                                numpy.random.uniform(0.01,10.0,1)[0], \
-                                numpy.random.uniform(0,numpy.pi/2,1)[0], \
-                                numpy.random.uniform(pa0-pa_range,\
-                                pa0+pa_range,1)[0], \
+                        tmp_pos += [numpy.random.normal(xmin[j],0.1,1)[0], \
+                                numpy.random.normal(ymin[j],0.1,1)[0], \
+                                numpy.random.uniform(0.01,r_max,1)[0], \
+                                numpy.random.uniform(0,numpy.pi[j]/2,1)[0], \
+                                numpy.random.uniform(pa0[j]-pa_range[j],\
+                                pa0[j]+pa_range[j],1)[0], \
                                 numpy.random.uniform(flux0,1.0e-4,1)[0]]
                     elif funct[j] == 'ring':
                         r_min = numpy.random.uniform(0.01,1.0,1)[0]
@@ -188,10 +204,10 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
                         tmp_pos += [numpy.random.normal(xmin[j],0.1,1)[0], \
                                 numpy.random.normal(ymin[j],0.1,1)[0], \
                                 r_min, \
-                                numpy.random.uniform(r_min,1.0,1)[0], \
+                                numpy.random.uniform(r_min,r_max,1)[0], \
                                 numpy.random.uniform(0,numpy.pi/2,1)[0], \
-                                numpy.random.uniform(pa0-pa_range,\
-                                pa0+pa_range,1)[0], \
+                                numpy.random.uniform(pa0[j]-pa_range[j],\
+                                pa0[j]+pa_range[j],1)[0], \
                                 numpy.random.uniform(0.0001,1.0,1)[0]]
 
                 pos.append(tmp_pos)
@@ -204,9 +220,9 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
         # Run a frew burner steps.
 
         if count == 0:
-            pos, prob, state = sampler.run_mcmc(pos, 250)
+            pos, prob, state = sampler.run_mcmc(pos, 500*(ndim/3)**2)
         else:
-            pos, prob, state = sampler.run_mcmc(pos, 50)
+            pos, prob, state = sampler.run_mcmc(pos, 100*(ndim/3)**2)
 
         # Make a plot of the steps.
 
@@ -225,15 +241,26 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
         # Because of the bimodality of p.a. we need to fix where the p.a. 
         # window is centered on.
 
+        nparams = numpy.zeros(funct.size)
+        for i in range(funct.size):
+            if funct[i] == "point":
+                nparams[i] = 3
+            elif funct[i] == "gauss":
+                nparams[i] = 6
+            elif funct[i] == "circle":
+                nparams[i] = 6
+            elif funct[i] == "ring":
+                nparams[i] = 7
+
         for i in range(len(funct)):
             if funct[i] == "point":
                 pass
             else:
                 if count == 0:
                     if funct[i] == "gauss" or funct[i] == "circle":
-                        ind = 4 + sum([nparams[j] for j in range(i)])
+                        ind = int(4 + sum([nparams[j] for j in range(i)]))
                     elif funct[i] == "ring":
-                        ind = 5 + sum([nparams[j] for j in range(i)])
+                        ind = int(5 + sum([nparams[j] for j in range(i)]))
 
                     samples = sampler.chain.reshape((-1,ndim))[:,ind]
                     pa_hist, bins = numpy.histogram(samples, 20)
