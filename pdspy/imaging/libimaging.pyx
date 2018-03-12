@@ -54,7 +54,7 @@ class Image(ImageObject):
             hdu = astropy.io.fits.PrimaryHDU(self.image[:,:,channel,0].astype(\
                     numpy.float32))
 
-            if hasattr(self, "header"):
+            if type(self.header) != type(None):
                 hdu.header = self.header[channel]
 
             hdulist.append(hdu)
@@ -64,7 +64,7 @@ class Image(ImageObject):
                 hdu = astropy.io.fits.PrimaryHDU(self.image[:,:,i,0].astype(\
                         numpy.float32))
 
-                if hasattr(self, "header"):
+                if type(self.header) != type(None):
                     hdu.header = self.header[i]
 
                 hdulist.append(hdu)
