@@ -4,10 +4,12 @@ import h5py
 from .Dust import Dust
 
 class DustGenerator:
-    def __init__(self, dust, with_dhs=False, fmax=0.8, nf=50):
+    def __init__(self, dust, with_dhs=False, fmax=0.8, nf=50, singlesize=False):
         if type(dust) == str:
             self.read(dust)
         else:
+            self.rho = dust.rho
+
             self.amax = numpy.logspace(-4.,1.,60)
             self.p = numpy.linspace(2.5,4.5,11)
             self.lam = dust.lam
@@ -18,6 +20,8 @@ class DustGenerator:
             self.albedo = []
 
             a = numpy.logspace(numpy.log10(0.05e-4),1.,500)
+            if singlesize:
+                self.amax = a
             kabsgrid = numpy.zeros((self.lam.size, a.size))
             kscagrid = numpy.zeros((self.lam.size, a.size))
 
@@ -38,8 +42,12 @@ class DustGenerator:
                 albedo_temp = []
 
                 for amax in self.amax:
-                    normfunc = a**(3-p)
-                    normfunc[a > amax] = 0.
+                    if singlesize:
+                        normfunc = numpy.zeros(a.size)
+                        normfunc[a == amax]
+                    else:
+                        normfunc = a**(3-p)
+                        normfunc[a > amax] = 0.
 
                     norm = scipy.integrate.trapz(normfunc, x=a)
 
