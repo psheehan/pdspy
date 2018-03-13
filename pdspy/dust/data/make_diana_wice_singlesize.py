@@ -27,4 +27,4 @@ dust = mix_dust(species, abundances, filling=0.75)
 
 dust_gen = DustGenerator(dust, with_dhs=True, singlesize=True)
 
-dust_gen.write('diana_wice.hdf5')
+dust_gen.write('diana_wice_singlesize.hdf5')
