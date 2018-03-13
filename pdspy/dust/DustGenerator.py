@@ -44,7 +44,7 @@ class DustGenerator:
                 for amax in self.amax:
                     if singlesize:
                         normfunc = numpy.zeros(a.size)
-                        normfunc[a == amax]
+                        normfunc[a == amax] = 1.
                     else:
                         normfunc = a**(3-p)
                         normfunc[a > amax] = 0.
