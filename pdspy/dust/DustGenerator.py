@@ -119,6 +119,9 @@ class DustGenerator:
             self.kext = self.kabs + self.ksca
             self.albedo = self.ksca / self.kext
 
+        if ('rho' in f):
+            self.rho = f['rho'].value[0]
+
         if (usefile == None):
             f.close()
 
@@ -147,6 +150,10 @@ class DustGenerator:
         if hasattr(self, 'g'):
             g_dset = f.create_dataset("g", self.g.shape, dtype='f')
             g_dset[...] = self.g
+
+        if hasattr(self, 'rho'):
+            rho_dset = f.create_dataset("rho", (1,), dtype='f')
+            rho_dset[...] = [self.rho]
 
         if (usefile == None):
             f.close()
