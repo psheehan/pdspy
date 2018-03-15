@@ -175,6 +175,16 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
                     gap_rout=[p["R_cav"],p["R_out_gap1"],p["R_out_gap2"],\
                     p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
                     p["delta_gap1"], p["delta_gap2"],p["delta_gap3"]])
+    elif p["disk_type"] == "settled":
+        m.add_settled_disk(mass=p["M_disk"]*p["f_M_large"], rmin=p["R_in"], \
+                rmax=p["R_disk"], plrho=p["alpha_large"], \
+                h0=p["h_0"]*p["f_h_large"], plh=p["beta_large"], dust=ddust, \
+                gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"],\
+                p["R_in_gap3"]], gap_rout=[p["R_cav"],p["R_out_gap1"],\
+                p["R_out_gap2"],p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
+                p["delta_gap1"],p["delta_gap2"],p["delta_gap3"]], \
+                amin=p["a_min"], amax=p["a_max"], pla=p["p"], na=p["na"], \
+                alpha_settle=p["alpha_settle"])
     else:
         m.add_disk(mass=p["M_disk"]*p["f_M_large"], rmin=p["R_in"], \
                 rmax=p["R_disk"], plrho=p["alpha_large"], \
@@ -565,6 +575,15 @@ if not "disk_type" in parameters:
 
 if args.withexptaper:
     parameters["disk_type"]["value"] = "exptaper"
+
+# Make sure all of the appropriate values are set for a Settled Disk.
+
+if parameters["disk_type"] == "settled":
+    for value in ["loga_min","na","logalpha_settled"]:
+        if value not in parameters:
+            print("ERROR: The parameter '"+value+"' must be included in the "
+                    "parameters dictionary in config.py")
+            sys.exit(0)
 
 # Make sure the code doesn't break if envelope_type isn't specified.
 
