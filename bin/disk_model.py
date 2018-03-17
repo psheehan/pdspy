@@ -119,11 +119,13 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
     # Set up the dust.
 
     dustopac = p["dust_file"]
-
     dust_gen = dust.DustGenerator(dust.__path__[0]+"/data/"+dustopac)
+    if not p["disk_type"] in ["settled"]:
+        ddust = dust_gen(p["a_max"] / 1e4, p["p"])
 
-    ddust = dust_gen(p["a_max"] / 1e4, p["p"])
-    edust = dust_gen(1.0e-4, 3.5)
+    dustopac_env = p["envelope_dust"]
+    env_dust_gen = dust.DustGenerator(dust.__path__[0]+"/data/"+dustopac_env)
+    edust = env_dust_gen(1.0e-4, 3.5)
 
     # Make sure we are in a temp directory to not overwrite anything.
 
@@ -178,7 +180,7 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
     elif p["disk_type"] == "settled":
         m.add_settled_disk(mass=p["M_disk"]*p["f_M_large"], rmin=p["R_in"], \
                 rmax=p["R_disk"], plrho=p["alpha_large"], \
-                h0=p["h_0"]*p["f_h_large"], plh=p["beta_large"], dust=ddust, \
+                h0=p["h_0"]*p["f_h_large"], plh=p["beta_large"], dust=dust_gen,\
                 gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"],\
                 p["R_in_gap3"]], gap_rout=[p["R_cav"],p["R_out_gap1"],\
                 p["R_out_gap2"],p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
@@ -584,6 +586,12 @@ if parameters["disk_type"] == "settled":
             print("ERROR: The parameter '"+value+"' must be included in the "
                     "parameters dictionary in config.py")
             sys.exit(0)
+
+# Make sure that the envelope dust is the same as the disk dust, if it is not 
+# specified.
+
+if not "envelope_dust" in parameters:
+    parameters["envelope_dust"] = parameters["dust_file"]
 
 # Make sure the code doesn't break if envelope_type isn't specified.
 

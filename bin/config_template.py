@@ -132,6 +132,7 @@ parameters = {
         "loga_max":{"fixed":True, "value":0., "limits":[0.,5.]},
         "p":{"fixed":True, "value":3.5, "limits":[2.5,4.5]},
         "na":{"fixed":True, "value":100, "limits":[0,1000]},
+        "envelope_dust":{"fixed":True, "value":"pollack_new.hdf5", "limits":[0.,0.]},
         # Gas parameters.
         "gas_file1":{"fixed":True, "value":"co.dat", "limits":[0.,0.]},
         "logabundance1":{"fixed":True, "value":-4., "limits":[-6.,-2.]},
