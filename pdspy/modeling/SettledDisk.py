@@ -269,6 +269,11 @@ class SettledDisk:
         self.h0 = f['h0'].value
         self.plh = f['plh'].value
 
+        self.amin = f['amin'].value
+        self.amax = f['amax'].value
+        self.pla = f['pla'].value
+        self.alpha_settle = f['alpha_settle'].value
+
         if 't0' in f:
             self.t0 = f['t0'].value
             self.plt = f['plt'].value
@@ -322,6 +327,11 @@ class SettledDisk:
 
         if self.aturb != None:
             f['aturb'] = self.aturb
+
+        f['amin'] = self.amin
+        f['amax'] = self.amax
+        f['pla'] = self.pla
+        f['alpha_settle'] = self.alpha_settle
 
         if hasattr(self, 'dust'):
             dust = f.create_group("Dust")
