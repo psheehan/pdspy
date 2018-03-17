@@ -98,7 +98,21 @@ class SettledDisk:
         return a, rho
 
     def number_density(self, r, theta, phi, gas=0):
-        rho = self.density(r, theta, phi)
+        ##### Set up the coordinates
+
+        rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+
+        rr = rt*numpy.sin(tt)
+        zz = rt*numpy.cos(tt)
+
+        # Get the surface density and scale height.
+
+        Sigma = self.surface_density(rr/AU)
+        h_g = self.scale_height(rr/AU)
+
+        # Now calculate the density.
+
+        rho = Sigma / (numpy.sqrt(2*numpy.pi)*h_g) * numpy.exp(-0.5*(zz/h_g)**2)
 
         rho_gas = rho * 100
 
