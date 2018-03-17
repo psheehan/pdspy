@@ -104,7 +104,7 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
 
     # If we're using a Pringle disk, make sure the scale height is set correctly
 
-    if p["disk_type"] == "exptaper":
+    if p["disk_type"] in ["exptaper","settledexptaper"]:
         p["h_0"] *= p["R_disk"]**p["beta"]
 
     # Get the needed values of the gaps.
@@ -120,7 +120,7 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
 
     dustopac = p["dust_file"]
     dust_gen = dust.DustGenerator(dust.__path__[0]+"/data/"+dustopac)
-    if not p["disk_type"] in ["settled"]:
+    if not p["disk_type"] in ["settled","settledexptaper"]:
         ddust = dust_gen(p["a_max"] / 1e4, p["p"])
 
     dustopac_env = p["envelope_dust"]
@@ -178,10 +178,18 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
                     p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
                     p["delta_gap1"], p["delta_gap2"],p["delta_gap3"]])
     elif p["disk_type"] == "settled":
-        m.add_settled_disk(mass=p["M_disk"]*p["f_M_large"], rmin=p["R_in"], \
-                rmax=p["R_disk"], plrho=p["alpha_large"], \
-                h0=p["h_0"]*p["f_h_large"], plh=p["beta_large"], dust=dust_gen,\
+        m.add_settled_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
+                plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=dust_gen,\
                 gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"],\
+                p["R_in_gap3"]], gap_rout=[p["R_cav"],p["R_out_gap1"],\
+                p["R_out_gap2"],p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
+                p["delta_gap1"],p["delta_gap2"],p["delta_gap3"]], \
+                amin=p["a_min"], amax=p["a_max"], pla=p["p"], na=p["na"], \
+                alpha_settle=p["alpha_settle"])
+    elif p["disk_type"] == "settledexptaper":
+        m.add_settled_pringle_disk(mass=p["M_disk"], rmin=p["R_in"], \
+                rmax=p["R_disk"], plrho=p["alpha"], h0=p["h_0"], plh=p["beta"],\
+                dust=dust_gen,gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"],\
                 p["R_in_gap3"]], gap_rout=[p["R_cav"],p["R_out_gap1"],\
                 p["R_out_gap2"],p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
                 p["delta_gap1"],p["delta_gap2"],p["delta_gap3"]], \
@@ -587,12 +595,6 @@ if parameters["disk_type"] == "settled":
                     "parameters dictionary in config.py")
             sys.exit(0)
 
-# Make sure that the envelope dust is the same as the disk dust, if it is not 
-# specified.
-
-if not "envelope_dust" in parameters:
-    parameters["envelope_dust"] = parameters["dust_file"]
-
 # Make sure the code doesn't break if envelope_type isn't specified.
 
 if not "envelope_type" in parameters:
@@ -604,6 +606,12 @@ if not "envelope_type" in parameters:
 if not "dust_file" in parameters:
     parameters["dust_file"] = {"fixed":True, "value":"pollack_new.hdf5", \
             "limits":[0.,0.]}
+
+# Make sure that the envelope dust is the same as the disk dust, if it is not 
+# specified.
+
+if not "envelope_dust" in parameters:
+    parameters["envelope_dust"] = parameters["dust_file"]
 
 ######################################
 # Read in the millimeter visibilities.
