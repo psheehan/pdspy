@@ -412,7 +412,7 @@ def lnlike(params, visibilities, images, spectra, parameters, plot):
 
     if "total" in spectra:
         chisq.append(-0.5 * (numpy.sum((spectra["total"].flux - \
-                m.spectra["SED"].flux) / spectra["total"].unc**2)))
+                m.spectra["SED"].flux)**2 / spectra["total"].unc**2)))
 
     # Return the sum of the chisq.
 
