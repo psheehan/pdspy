@@ -347,7 +347,9 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
         x, y = numpy.meshgrid(numpy.linspace(-256,255,512), \
                 numpy.linspace(-256,255,512))
 
-        beam = misc.gaussian2d(x, y, 0., 0., 1., 1., 0., 1.0)
+        beam = misc.gaussian2d(x, y, 0., 0., images["bmaj"][j]/2.355/\
+                images["pixelsize"][j], images["bmin"][j]/2.355/\
+                image["pixelsize"][j], (90-images["bpa"][j])*numpy.pi/180., 1.0)
 
         m.images[images["lam"][j]].image = scipy.signal.fftconvolve(\
                 m.images[images["lam"][j]].image[:,:,0,0], beam, mode="same").\
