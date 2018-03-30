@@ -406,7 +406,8 @@ def lnlike(params, visibilities, images, spectra, parameters, plot):
 
     for j in range(len(images["file"])):
         chisq.append(-0.5 * (numpy.sum((images["data"][j].image - \
-                m.images[images["lam"][j]].image) / images["data"][j].unc**2)))
+                m.images[images["lam"][j]].image)**2 / \
+                images["data"][j].unc**2)))
 
     # Calculate the chisq for the SED.
 
