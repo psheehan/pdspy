@@ -368,8 +368,15 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
                 camera_scatsrc_allfreq=True, mc_scat_maxtauabs=5, \
                 verbose=False, setthreads=nprocesses)
 
+        # Redden the SED based on the reddening.
+
         m.spectra["SED"].flux = dust.redden(m.spectra["SED"].wave, \
                 m.spectra["SED"].flux, p["Ak"], law="mcclure")
+
+        # Now take the log of the SED.
+
+        if not plot:
+            m.spectra["SED"].flux = numpy.log10(m.spectra["SED"].flux)
 
     # Clean up everything and return.
 
