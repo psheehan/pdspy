@@ -201,9 +201,33 @@ def spectrum(filename=None,ext=None):
 #                    READ THE AMR GRID INFORMATION
 #--------------------------------------------------------------------------
 
-def dust_temperature(filename=None, ext=None):
+# Read in the dust temperature.
 
-    f = open("dust_temperature.dat","r")
+def amr_grid(filename=None, ext=None):
+
+    f = open("amr_grid.inp","r")
+
+    f.readline()
+    f.readline()
+
+    coordsystem = int(f.readline())
+    gridinfo = int(f.readline())
+    incl_x, incl_y, incl_z = tuple(f.readline().replace("\t","").\
+            replace("\n","").split())
+    nx, ny, nz = tuple(array(f.readline().replace("\t"," ").\
+            replace("\n","").split(), dtype=int))
+
+    x = array(f.readline().replace("\n","").split(), dtype=float)
+    y = array(f.readline().replace("\n","").split(), dtype=float)
+    z = array(f.readline().replace("\n","").split(), dtype=float)
+
+    return coordsystem, gridinfo, incl_x, incl_y, incl_z, nx, ny, nz, x, y, z
+
+# Read in the dust density.
+
+def dust_density(filename=None, ext=None):
+
+    f = open("dust_density.inp","r")
 
     f.readline()
 
@@ -216,6 +240,55 @@ def dust_temperature(filename=None, ext=None):
 
         for j in range(ncells):
             temp[j] = float(f.readline())
+
+        temperature.append(temp)
+
+    f.close()
+
+    return temperature
+
+# Read in the dust temperature.
+
+def dust_temperature(filename=None, ext=None, binary=False):
+
+    if (filename == None):
+        if (ext == None):
+            if binary:
+                filename = "dust_temperature.bdat"
+            else:
+                filename = "dust_temperature.dat"
+        else:
+            if binary:
+                filename = "dust_temperature_"+str(ext)+".bdat"
+            else:
+                filename = "dust_temperature_"+str(ext)+".dat"
+
+    if binary:
+        f = open(filename, "rb")
+        data = fromfile(filename)
+    else:
+        f = open(filename,"r")
+
+    if binary:
+        int.from_bytes(f.read(8), byteorder="little")
+        int.from_bytes(f.read(8), byteorder="little")
+        ncells = int.from_bytes(f.read(8), byteorder="little")
+        nspecies = int.from_bytes(f.read(8), byteorder="little")
+    else:
+        f.readline()
+        ncells = int(f.readline())
+        nspecies = int(f.readline())
+
+    temperature = []
+    index = 3
+    for i in range(nspecies):
+        temp = empty((ncells,))
+
+        for j in range(ncells):
+            if binary:
+                temp[j] = data[index+i]
+            else:
+                temp[j] = float(f.readline())
 
         temperature.append(temp)
 
