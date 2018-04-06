@@ -286,7 +286,7 @@ def dust_temperature(filename=None, ext=None, binary=False):
 
         for j in range(ncells):
             if binary:
-                temp[j] = data[index+i]
+                temp[j] = data[index+j]
             else:
                 temp[j] = float(f.readline())
 
