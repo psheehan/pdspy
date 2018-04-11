@@ -60,14 +60,13 @@ class Image(ImageObject):
             hdulist.append(hdu)
 
         else:
-            for i in range(self.image[0,0,:,0].size):
-                hdu = astropy.io.fits.PrimaryHDU(self.image[:,:,i,0].astype(\
-                        numpy.float32))
+            hdu = astropy.io.fits.PrimaryHDU(numpy.transpose(\
+                    self.image[:,:,:,0].astype(numpy.float32), axes=[2,1,0]))
 
-                if type(self.header) != type(None):
-                    hdu.header = self.header[i]
+            if type(self.header) != type(None):
+                hdu.header = self.header
 
-                hdulist.append(hdu)
+            hdulist.append(hdu)
 
         return hdulist
 
