@@ -746,12 +746,14 @@ if args.resume:
 else:
     pos = []
     for j in range(nwalkers):
-        m_env = numpy.random.uniform(-6., parameters["logM_env"]["limits"][1],1)[0]
+        m_env = numpy.random.uniform(-6., \
+                parameters["logM_env"]["limits"][1],1)[0]
 
         r_env = numpy.random.uniform(max(parameters["logR_env"]["limits"][0],\
                 0.5*m_env+4.), parameters["logR_env"]["limits"][1],1)[0]
-        r_disk = numpy.random.uniform(numpy.log10(30.),\
-                min(r_env, parameters["logR_disk"]["limits"][1]),1)[0]
+        r_disk = numpy.random.uniform(numpy.log10(5.),\
+                min(numpy.log10(500.), r_env, \
+                parameters["logR_disk"]["limits"][1]),1)[0]
         r_in = numpy.random.uniform(parameters["logR_in"]["limits"][0],\
                 numpy.log10((10.**r_disk)/2),1)[0]
 
