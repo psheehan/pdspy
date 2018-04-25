@@ -973,11 +973,11 @@ while nsteps < max_nsteps:
 
         if "x0" in params:
             xmin, xmax = int(round(visibilities["image_npix"][j]/2 + \
-                    visibilities["x0"][j]/visibilities["image_pixelsize"][j]+ \
+                    visibilities["x0"][j]/visibilities["image_pixelsize"][j]- \
                     params["x0"]/visibilities["image_pixelsize"][j]+ \
                     ticks[0]/visibilities["image_pixelsize"][j])), \
                     int(round(visibilities["image_npix"][j]/2+\
-                    visibilities["x0"][j]/visibilities["image_pixelsize"][j]+ \
+                    visibilities["x0"][j]/visibilities["image_pixelsize"][j]- \
                     params["x0"]/visibilities["image_pixelsize"][j]+ \
                     ticks[-1]/visibilities["image_pixelsize"][j]))
         else:
@@ -991,11 +991,11 @@ while nsteps < max_nsteps:
                     ticks[-1]/visibilities["image_pixelsize"][j]))
         if "y0" in params:
             ymin, ymax = int(round(visibilities["image_npix"][j]/2-\
-                    visibilities["y0"][j]/visibilities["image_pixelsize"][j]- \
+                    visibilities["y0"][j]/visibilities["image_pixelsize"][j]+ \
                     params["y0"]/visibilities["image_pixelsize"][j]+ \
                     ticks[0]/visibilities["image_pixelsize"][j])), \
                     int(round(visibilities["image_npix"][j]/2-\
-                    visibilities["y0"][j]/visibilities["image_pixelsize"][j]- \
+                    visibilities["y0"][j]/visibilities["image_pixelsize"][j]+ \
                     params["y0"]/visibilities["image_pixelsize"][j]+ \
                     ticks[-1]/visibilities["image_pixelsize"][j]))
         else:
