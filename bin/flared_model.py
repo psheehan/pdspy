@@ -169,13 +169,13 @@ def model(visibilities, params, parameters, plot=False):
                 plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
                 t0=p["T0"], plt=p["q"], gas=gases, abundance=abundance,\
                 aturb=p["a_turb"])
-    if p["disk_type"] == "dartois-exptaper":
+    elif p["disk_type"] == "dartois-exptaper":
         m.add_pringle_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
                 plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
                 tmid0=p["tmid0"], tatm0=p["tatm0"], zq0=p["zq0"], \
                 pltgas=p["pltgas"], delta=p["delta"], gas=gases, \
                 abundance=abundance, aturb=p["a_turb"])
-    if p["disk_type"] == "dartois-truncated":
+    elif p["disk_type"] == "dartois-truncated":
         m.add_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
                 plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
                 tmid0=p["tmid0"], tatm0=p["tatm0"], zq0=p["zq0"], \
