@@ -102,7 +102,7 @@ def model(visibilities, params, parameters, plot=False):
 
     # Make sure alpha and beta are defined.
 
-    if p["disk_type"] == "exptaper":
+    if p["disk_type"] in ["exptaper","dartois-exptaper"]:
         t_rdisk = p["T0"] * (p["R_disk"] / 1.)**-p["q"]
         p["h_0"] = ((k_b*(p["R_disk"]*AU)**3*t_rdisk) / (G*p["M_star"]*M_sun * \
                 2.37*m_p))**0.5 / AU
@@ -169,6 +169,18 @@ def model(visibilities, params, parameters, plot=False):
                 plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
                 t0=p["T0"], plt=p["q"], gas=gases, abundance=abundance,\
                 aturb=p["a_turb"])
+    if p["disk_type"] == "dartois-exptaper":
+        m.add_pringle_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
+                plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
+                tmid0=p["tmid0"], tatm0=p["tatm0"], zq0=p["zq0"], \
+                pltgas=p["pltgas"], delta=p["delta"], gas=gases, \
+                abundance=abundance, aturb=p["a_turb"])
+    if p["disk_type"] == "dartois-truncated":
+        m.add_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
+                plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
+                tmid0=p["tmid0"], tatm0=p["tatm0"], zq0=p["zq0"], \
+                pltgas=p["pltgas"], delta=p["delta"], gas=gases, \
+                abundance=abundance, aturb=p["a_turb"])
     else:
         m.add_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
                 plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
@@ -362,6 +374,23 @@ def lnprior(params, parameters):
         else:
             return -numpy.inf
 
+    # Check that the midplane temperature is below the atmosphere temperature.
+
+    if "logTmid0" in params:
+        Tmid0 = 10.**params["logTmid0"]
+    else:
+        Tmid0 = 10.**parameters["logTmid0"]["value"]
+
+    if "logTatm0" in params:
+        Tatm0 = 10.**params["logTatm0"]
+    else:
+        Tatm0 = 10.**parameters["logTatm0"]["value"]
+
+    if Tmid0 < Tatm0:
+        pass
+    else:
+        return -numpy.inf
+
     # Everything was correct, so continue on.
 
     return 0.0
@@ -551,6 +580,11 @@ else:
 
         r_cav = numpy.random.uniform(r_in, numpy.log10(0.75*10.**r_disk),1)[0]
 
+        tatm0 = numpy.random.uniform(parameters["logTatm0"]["limits"][0],\
+                parameters["logTatm0"]["limits"][1],1)[0]
+        tmid0 = numpy.random.uniform(parameters["logTmid0"]["limits"][0],\
+                min(parameters["logTatm0"]["limits"][1], tatm0),1)[0]
+
         temp_pos = []
 
         for key in sorted(parameters.keys()):
@@ -564,6 +598,10 @@ else:
                 temp_pos.append(r_env)
             elif key == "logR_cav":
                 temp_pos.append(r_cav)
+            elif key == "logTatm0":
+                temp_pos.append(tatm0)
+            elif key == "logTmid0":
+                temp_pos.append(tmid0)
             else:
                 temp_pos.append(numpy.random.uniform(\
                         parameters[key]["limits"][0], \

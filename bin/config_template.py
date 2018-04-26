@@ -114,6 +114,12 @@ parameters = {
         "logT0":{"fixed":True, "value":2.5, "limits":[1.,3.]},
         "q":{"fixed":True, "value":0.25, "limits":[0.,1.]},
         "loga_turb":{"fixed":True, "value":-1.0, "limits":[-1.5,1.]},
+        # Dartois temperature properties.
+        "logTmid0":{"fixed":True, "value":2.0, "limits":[1.,3.]}, 
+        "logTatm0":{"fixed":True, "value":2.5, "limits":[1.,3.]}, 
+        "zq0":{"fixed":True, "value":0.1, "limits":[0.01,0.5]},
+        "pltgas":{"fixed":True, "value":0.5, "limits":[0.,1.]},
+        "delta":{"fixed":True, "value":1.0, "limits":[0.5,1.5]},
         # Envelope parameters.
         "envelope_type":{"fixed":True, "value":"ulrich", "limits":[0.,0.]},
         "logM_env":{"fixed":True, "value":-3., "limits":[-10., -2.]},
