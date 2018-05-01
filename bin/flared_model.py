@@ -580,10 +580,11 @@ else:
 
         r_cav = numpy.random.uniform(r_in, numpy.log10(0.75*10.**r_disk),1)[0]
 
-        tatm0 = numpy.random.uniform(parameters["logTatm0"]["limits"][0],\
-                parameters["logTatm0"]["limits"][1],1)[0]
-        tmid0 = numpy.random.uniform(parameters["logTmid0"]["limits"][0],\
-                min(parameters["logTatm0"]["limits"][1], tatm0),1)[0]
+        if "logTatm0" in parameters:
+            tatm0 = numpy.random.uniform(parameters["logTatm0"]["limits"][0],\
+                    parameters["logTatm0"]["limits"][1],1)[0]
+            tmid0 = numpy.random.uniform(parameters["logTmid0"]["limits"][0],\
+                    min(parameters["logTatm0"]["limits"][1], tatm0),1)[0]
 
         temp_pos = []
 
