@@ -376,20 +376,21 @@ def lnprior(params, parameters):
 
     # Check that the midplane temperature is below the atmosphere temperature.
 
-    if "logTmid0" in params:
-        Tmid0 = 10.**params["logTmid0"]
-    else:
-        Tmid0 = 10.**parameters["logTmid0"]["value"]
+    if ("logTmid0" in params) or ("logTmid0" in parameters):
+        if "logTmid0" in params:
+            Tmid0 = 10.**params["logTmid0"]
+        else:
+            Tmid0 = 10.**parameters["logTmid0"]["value"]
 
-    if "logTatm0" in params:
-        Tatm0 = 10.**params["logTatm0"]
-    else:
-        Tatm0 = 10.**parameters["logTatm0"]["value"]
+        if "logTatm0" in params:
+            Tatm0 = 10.**params["logTatm0"]
+        else:
+            Tatm0 = 10.**parameters["logTatm0"]["value"]
 
-    if Tmid0 < Tatm0:
-        pass
-    else:
-        return -numpy.inf
+        if Tmid0 < Tatm0:
+            pass
+        else:
+            return -numpy.inf
 
     # Everything was correct, so continue on.
 
