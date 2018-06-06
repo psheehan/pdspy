@@ -1,3 +1,4 @@
+from ..constants.astronomy import arcsec
 from .libimaging import Image
 from astropy.utils.exceptions import AstropyWarning
 import astropy.io.fits as fits
@@ -26,6 +27,14 @@ def readimfits(filename):
     # is available.
 
     header = data[0].header
+
+    # Check whether there is a CASA beam table.
+
+    if len(data) > 1:
+        if data[1].columns[0].name == 'BMAJ':
+            header["BMAJ"] = data[1].data["BMAJ"].mean()*arcsec * 180./numpy.pi
+            header["BMIN"] = data[1].data["BMIN"].mean()*arcsec * 180./numpy.pi
+            header["BPA"] = data[1].data["BPA"].mean()
 
     # Turn off the WCS warnings that come from the PCX_Y values because they
     # are annoying...
