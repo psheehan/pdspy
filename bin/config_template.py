@@ -147,7 +147,7 @@ parameters = {
         "pa":{"fixed":True, "value":0., "limits":[0.,360.]},
         "x0":{"fixed":True, "value":0., "limits":[-0.1,0.1]},
         "y0":{"fixed":True, "value":0., "limits":[-0.1,0.1]},
-        "dpc":{"fixed":True, "value":140., "limits":[1.,1e6]},
+        "dpc":{"fixed":True, "value":140., "prior":"box", "sigma":0., "limits":[1.,1e6]},
         "Ak":{"fixed":True, "value":0., "limits":[0.,1.]},
         "v_sys":{"fixed":True, "value":5., "limits":[0.,10.]},
         "docontsub":{"fixed":True, "value":False, "limits":[0.,0.]},

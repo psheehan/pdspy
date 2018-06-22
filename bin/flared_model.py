@@ -394,7 +394,12 @@ def lnprior(params, parameters):
 
     # Everything was correct, so continue on.
 
-    return 0.0
+    if (not parameters["dpc"]["fixed"]) and \
+            (parameters["dpc"]["prior"] == "gaussian"):
+        return -0.5 * (params["dpc"] - parameters["dpc"]["value"])**2 / \
+                parameters["dpc"]["sigma"]**2
+    else:
+        return 0.0
 
 # Define a probability function.
 
