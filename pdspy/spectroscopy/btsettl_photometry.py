@@ -55,7 +55,7 @@ def btsettl_photometry(Teff=5770., Logg=4.4, Rstar=1.0, dpc=140., \
 
     mag = []
 
-    for filter in filters.split():
+    for filter in filters.split(','):
         data = numpy.array(table[filter]).reshape((teff.size, logg.size))
 
         # Now do the 2D interpolation.
