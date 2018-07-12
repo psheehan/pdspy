@@ -152,8 +152,13 @@ class YSOModel(Model):
                 aturb=aturb, gaussian_gaps=gaussian_gaps)
 
         if (dust != None):
-            self.grid.add_density(self.disk.density(self.grid.r, \
-                    self.grid.theta, self.grid.phi),dust)
+            if self.grid.coordsystem == "spherical":
+                self.grid.add_density(self.disk.density(self.grid.r, \
+                        self.grid.theta, self.grid.phi),dust)
+            elif self.grid.coordsystem == "cartesian":
+                self.grid.add_density(self.disk.density(self.grid.x, \
+                        self.grid.y, self.grid.z, \
+                        coordsys=self.grid.coordsystem),dust)
 
         if (gas != None):
             if (type(gas) == list):

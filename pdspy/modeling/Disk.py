@@ -41,13 +41,18 @@ class Disk:
         self.gas.append(gas)
         self.abundance.append(abundance)
 
-    def density(self, r, theta, phi):
+    def density(self, x1, x2, x3, coordsys="spherical"):
         ##### Set up the coordinates
 
-        rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+        if coordsys == "spherical":
+            rt, tt, pp = numpy.meshgrid(x1*AU, x2, x3, indexing='ij')
 
-        rr = rt*numpy.sin(tt)
-        zz = rt*numpy.cos(tt)
+            rr = rt*numpy.sin(tt)
+            zz = rt*numpy.cos(tt)
+        elif coordsys == "cartesian":
+            xx, yy, zz = numpy.meshgrid(x1*AU, x2*AU, x3*AU, indexing='ij')
+
+            rr = (xx**2 + yy**2)**0.5
 
         ##### Make the dust density model for a protoplanetary disk.
 
