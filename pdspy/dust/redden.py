@@ -24,7 +24,7 @@ def redden(wave, flux, Av, law="steenman", Rv='3.1', magnitudes=False):
                     usecols=(0,3))
 
             data = data[::-1,:]
-            data[:,1] /= data[682,1]
+            data[:,1] /= data[605,1]
 
         elif Rv == '4.0':
             data = numpy.loadtxt(os.path.dirname(__file__)+ \
@@ -32,7 +32,7 @@ def redden(wave, flux, Av, law="steenman", Rv='3.1', magnitudes=False):
                     usecols=(0,3))
 
             data = data[::-1,:]
-            data[:,1] /= data[682,1]
+            data[:,1] /= data[605,1]
 
         elif Rv == '5.1':
             data = numpy.loadtxt(os.path.dirname(__file__)+ \
@@ -40,7 +40,7 @@ def redden(wave, flux, Av, law="steenman", Rv='3.1', magnitudes=False):
                     usecols=(0,3))
 
             data = data[::-1,:]
-            data[:,1] /= data[682,1]
+            data[:,1] /= data[605,1]
 
     waves = data[:,0]
     coeffs = data[:,1]
