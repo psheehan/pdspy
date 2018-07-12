@@ -3,7 +3,7 @@ from scipy.interpolate import interp1d
 import numpy
 import os
 
-def redden(wave, flux, Av, law="steenman", Rv='3.1'):
+def redden(wave, flux, Av, law="steenman", Rv='3.1', magnitudes=False):
 
     # Read in the extinction coefficients.
 
@@ -22,10 +22,18 @@ def redden(wave, flux, Av, law="steenman", Rv='3.1'):
             data = numpy.loadtxt(os.path.dirname(__file__)+ \
                     "/reddening/draine_3.1.dat", skiprows=80, \
                     usecols=(0,3))
+
+            data = data[::-1,:]
+            data[:,1] /= data[682,1]
+
         elif Rv == '4.0':
             data = numpy.loadtxt(os.path.dirname(__file__)+ \
                     "/reddening/draine_4.0.dat", skiprows=80, \
                     usecols=(0,3))
+
+            data = data[::-1,:]
+            data[:,1] /= data[682,1]
+
         elif Rv == '5.1':
             data = numpy.loadtxt(os.path.dirname(__file__)+ \
                     "/reddening/draine_5.1.dat", skiprows=80, \
@@ -42,8 +50,11 @@ def redden(wave, flux, Av, law="steenman", Rv='3.1'):
     coeffs = interp1d(numpy.log10(waves), numpy.log10(coeffs), \
             fill_value="extrapolate")
 
-    coeff = 10.**coeffs(numpy.log10(wave))
+    if magnitudes:
+        return flux + Av * 10.**coeffs(numpy.log10(wave))
+    else:
+        coeff = 10.**coeffs(numpy.log10(wave))
 
-    # Now adjust the provided flux.
+        # Now adjust the provided flux.
 
-    return flux / 10.**(Av * coeff / 2.5)
+        return flux / 10.**(Av * coeff / 2.5)
