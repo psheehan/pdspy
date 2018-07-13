@@ -29,7 +29,11 @@ def pms_get_mstar(temperature=None, luminosity=None, tracks="BHAC15"):
 
     # Finally, get the stellar mass.
 
-    return scipy.interpolate.bisplev(temperature, luminosity, tck)
+    if type(temperature) == float:
+        return scipy.interpolate.bisplev(temperature, luminosity, tck)
+    else:
+        return numpy.array([scipy.interpolate.bisplev(temperature[i], \
+                luminosity[i], tck) for i in range(len(temperature))])
 
 def pms_get_age(temperature=None, luminosity=None, tracks="BHAC15"):
 
@@ -58,4 +62,8 @@ def pms_get_age(temperature=None, luminosity=None, tracks="BHAC15"):
 
     # Finally, get the stellar mass.
 
-    return 10.**scipy.interpolate.bisplev(temperature, luminosity, tck)
+    if type(temperature) == float:
+        return 10.**scipy.interpolate.bisplev(temperature, luminosity, tck)
+    else:
+        return numpy.array([10.**scipy.interpolate.bisplev(temperature[i], \
+                luminosity[i], tck) for i in range(len(temperature))])
