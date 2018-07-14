@@ -37,9 +37,9 @@ def pms_get_mstar(temperature=None, luminosity=None, tracks="BHAC15"):
     # Finally, get the stellar mass.
 
     if isinstance(temperature,float) and isinstance(luminosity,float):
-        xi = numpy.array([[temperature, luminosity]])
+        xi = numpy.array([[temperature, numpy.log10(luminosity)]])
     else:
-        xi = numpy.array([[temperature[i],luminosity[i]] for i in \
+        xi = numpy.array([[temperature[i],numpy.log10(luminosity[i])] for i in \
                 range(len(temperature))])
 
     return Mstar(xi)
@@ -78,9 +78,9 @@ def pms_get_age(temperature=None, luminosity=None, tracks="BHAC15"):
     # Finally, get the stellar mass.
 
     if isinstance(temperature,float) and isinstance(luminosity,float):
-        xi = numpy.array([[temperature, luminosity]])
+        xi = numpy.array([[temperature, numpy.log10(luminosity)]])
     else:
-        xi = numpy.array([[temperature[i],luminosity[i]] for i in \
+        xi = numpy.array([[temperature[i],numpy.log10(luminosity[i])] for i in \
                 range(len(temperature))])
 
     return 10.**Age(xi)
