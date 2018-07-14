@@ -1,6 +1,7 @@
 import scipy.interpolate
 import astropy.table
 import numpy
+import time
 
 ############################################################################
 #
@@ -30,16 +31,18 @@ def pms_get_mstar(temperature=None, luminosity=None, tracks="BHAC15"):
 
     # Now do the 2D interpolation.
 
-    tck = scipy.interpolate.bisplrep(table["Teff"], table["L/Ls"], \
-            table["M/Ms"], kx=5, ky=5)
+    Mstar = scipy.interpolate.LinearNDInterpolator((table["Teff"], \
+            table["L/Ls"]), table["M/Ms"])
 
     # Finally, get the stellar mass.
 
-    if isinstance(temperature,float):
-        return scipy.interpolate.bisplev(temperature, luminosity, tck)
+    if isinstance(temperature,float) and isinstance(luminosity,float):
+        xi = numpy.array([[temperature, luminosity]])
     else:
-        return numpy.array([scipy.interpolate.bisplev(temperature[i], \
-                luminosity[i], tck) for i in range(len(temperature))])
+        xi = numpy.array([[temperature[i],luminosity[i]] for i in \
+                range(len(temperature))])
+
+    return Mstar(xi)
 
 ############################################################################
 #
@@ -69,16 +72,18 @@ def pms_get_age(temperature=None, luminosity=None, tracks="BHAC15"):
 
     # Now do the 2D interpolation.
 
-    tck = scipy.interpolate.bisplrep(table["Teff"], table["L/Ls"], \
-            table["log_t(yr)"], kx=5, ky=5)
+    Age = scipy.interpolate.LinearNDInterpolator((table["Teff"], \
+            table["L/Ls"]), table["log_t(yr)"])
 
     # Finally, get the stellar mass.
 
-    if isinstance(temperature,float):
-        return 10.**scipy.interpolate.bisplev(temperature, luminosity, tck)
+    if isinstance(temperature,float) and isinstance(luminosity,float):
+        xi = numpy.array([[temperature, luminosity]])
     else:
-        return numpy.array([10.**scipy.interpolate.bisplev(temperature[i], \
-                luminosity[i], tck) for i in range(len(temperature))])
+        xi = numpy.array([[temperature[i],luminosity[i]] for i in \
+                range(len(temperature))])
+
+    return 10.**Age(xi)
 
 ############################################################################
 #
@@ -108,19 +113,19 @@ def pms_get_teff(mass=1.0, age=1.0e6, tracks="BHAC15"):
 
     # Now do the 2D interpolation.
 
-    tck = scipy.interpolate.bisplrep(table["M/Ms"], table["log_t(yr)"], \
-            table["Teff"], kx=5, ky=5, s=0)
+    Teff = scipy.interpolate.LinearNDInterpolator((table["M/Ms"], \
+            table["log_t(yr)"]), table["Teff"])
 
     # Finally, get the stellar mass.
 
     if isinstance(age,float) and isinstance(mass,float):
-        return scipy.interpolate.bisplev(mass, numpy.log10(age), tck)
+        xi = numpy.array([[mass, numpy.log10(age)]])
     elif isinstance(age,float):
-        return numpy.array([scipy.interpolate.bisplev(mass[i], \
-                numpy.log10(age), tck) for i in range(len(mass))])
+        xi = numpy.array([[mass[i],numpy.log10(age)] for i in range(len(mass))])
     else:
-        return numpy.array([scipy.interpolate.bisplev(mass, \
-                numpy.log10(age[i]), tck) for i in range(len(age))])
+        xi = numpy.array([[mass,numpy.log10(age[i])] for i in range(len(age))])
+
+    return Teff(xi)
 
 ############################################################################
 #
@@ -150,16 +155,16 @@ def pms_get_luminosity(mass=1.0, age=1.0e6, tracks="BHAC15"):
 
     # Now do the 2D interpolation.
 
-    tck = scipy.interpolate.bisplrep(table["M/Ms"], table["log_t(yr)"], \
-            table["L/Ls"], kx=5, ky=5, s=0)
+    Lstar = scipy.interpolate.LinearNDInterpolator((table["M/Ms"],\
+            table["log_t(yr)"]), table["L/Ls"])
 
     # Finally, get the stellar mass.
 
     if isinstance(age,float) and isinstance(mass,float):
-        return 10.**scipy.interpolate.bisplev(mass, numpy.log10(age), tck)
+        xi = numpy.array([[mass, numpy.log10(age)]])
     elif isinstance(age,float):
-        return numpy.array([10.**scipy.interpolate.bisplev(mass[i], \
-                numpy.log10(age), tck) for i in range(len(mass))])
+        xi = numpy.array([[mass[i],numpy.log10(age)] for i in range(len(mass))])
     else:
-        return numpy.array([10.**scipy.interpolate.bisplev(mass, \
-                numpy.log10(age[i]), tck) for i in range(len(age))])
+        xi = numpy.array([[mass,numpy.log10(age[i])] for i in range(len(age))])
+
+    return 10.**Lstar(xi)
