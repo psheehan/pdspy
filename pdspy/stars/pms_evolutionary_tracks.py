@@ -32,7 +32,7 @@ def pms_get_mstar(temperature=None, luminosity=None, tracks="BHAC15"):
     # Now do the 2D interpolation.
 
     Mstar = scipy.interpolate.LinearNDInterpolator((table["Teff"], \
-            table["L/Ls"]), table["M/Ms"])
+            table["L/Ls"]), table["M/Ms"], rescale=True)
 
     # Finally, get the stellar mass.
 
@@ -73,7 +73,7 @@ def pms_get_age(temperature=None, luminosity=None, tracks="BHAC15"):
     # Now do the 2D interpolation.
 
     Age = scipy.interpolate.LinearNDInterpolator((table["Teff"], \
-            table["L/Ls"]), table["log_t(yr)"])
+            table["L/Ls"]), table["log_t(yr)"], rescale=True)
 
     # Finally, get the stellar mass.
 
