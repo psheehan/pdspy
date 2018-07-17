@@ -2,14 +2,15 @@ import scipy.interpolate
 import astropy.table
 import numpy
 import time
+import glob
 
 ############################################################################
 #
-# Get Mass from Teff and Lstar
+# Read the data files into a table.
 #
 ############################################################################
 
-def pms_get_mstar(temperature=None, luminosity=None, tracks="BHAC15"):
+def read_pms_data(tracks="BHAC15"):
 
     # Load in the data for the appropriate set of evolutionary tracks.
 
@@ -24,10 +25,52 @@ def pms_get_mstar(temperature=None, luminosity=None, tracks="BHAC15"):
 
         data = numpy.loadtxt(path+"BHAC15_tracks+structure.txt", comments="!", \
                 skiprows=45)
+    elif tracks == "Siess2000":
+        f = open(path+"siess_2000/m0.13z02.hrd")
+        lines = f.readlines()
+        f.close()
+
+        line1 = lines[0].replace(" (","_(").replace("log g","logg").\
+                replace("#","").replace("_(Lo)","/Ls").replace("age_","log_t").\
+                split()
+        line2 = lines[1].replace(" (","_(").replace("log g","logg").\
+                replace("#","").replace("_(Mo)","/Ms").split()
+
+        colnames = line1 + line2
+        colnames[0::2] = line1
+        colnames[1::2] = line2
+
+        files = glob.glob(path+"siess_2000/*.hrd")
+        for file in files:
+            try:
+                data = numpy.concatenate((data, numpy.loadtxt(file)))
+            except:
+                data = numpy.loadtxt(file)
+
+        # Fix the stellar luminosity.
+
+        data[:,2] = numpy.log10(data[:,2])
+        data[:,-1] = numpy.log10(data[:,-1])
 
     # Make the data into a table.
 
     table = astropy.table.Table(data, names=colnames)
+
+    # Return the table now.
+
+    return table
+
+############################################################################
+#
+# Get Mass from Teff and Lstar
+#
+############################################################################
+
+def pms_get_mstar(temperature=None, luminosity=None, tracks="BHAC15"):
+
+    # Load in the data for the appropriate set of evolutionary tracks.
+
+    table = read_pms_data(tracks=tracks)
 
     # Now do the 2D interpolation.
 
@@ -54,21 +97,7 @@ def pms_get_age(temperature=None, luminosity=None, tracks="BHAC15"):
 
     # Load in the data for the appropriate set of evolutionary tracks.
 
-    path = '/'.join(__file__.split("/")[0:-1])+"/evolutionary_tracks/"
-    
-    if tracks == "BHAC15":
-        f = open(path+"BHAC15_tracks+structure.txt","r")
-        lines = f.readlines()
-        f.close()
-
-        colnames = lines[46].split()[1:]
-
-        data = numpy.loadtxt(path+"BHAC15_tracks+structure.txt", comments="!", \
-                skiprows=45)
-
-    # Make the data into a table.
-
-    table = astropy.table.Table(data, names=colnames)
+    table = read_pms_data(tracks=tracks)
 
     # Now do the 2D interpolation.
 
@@ -95,21 +124,7 @@ def pms_get_teff(mass=1.0, age=1.0e6, tracks="BHAC15"):
 
     # Load in the data for the appropriate set of evolutionary tracks.
 
-    path = '/'.join(__file__.split("/")[0:-1])+"/evolutionary_tracks/"
-    
-    if tracks == "BHAC15":
-        f = open(path+"BHAC15_tracks+structure.txt","r")
-        lines = f.readlines()
-        f.close()
-
-        colnames = lines[46].split()[1:]
-
-        data = numpy.loadtxt(path+"BHAC15_tracks+structure.txt", comments="!", \
-                skiprows=45)
-
-    # Make the data into a table.
-
-    table = astropy.table.Table(data, names=colnames)
+    table = read_pms_data(tracks=tracks)
 
     # Now do the 2D interpolation.
 
@@ -137,21 +152,7 @@ def pms_get_luminosity(mass=1.0, age=1.0e6, tracks="BHAC15"):
 
     # Load in the data for the appropriate set of evolutionary tracks.
 
-    path = '/'.join(__file__.split("/")[0:-1])+"/evolutionary_tracks/"
-    
-    if tracks == "BHAC15":
-        f = open(path+"BHAC15_tracks+structure.txt","r")
-        lines = f.readlines()
-        f.close()
-
-        colnames = lines[46].split()[1:]
-
-        data = numpy.loadtxt(path+"BHAC15_tracks+structure.txt", comments="!", \
-                skiprows=45)
-
-    # Make the data into a table.
-
-    table = astropy.table.Table(data, names=colnames)
+    table = read_pms_data(tracks=tracks)
 
     # Now do the 2D interpolation.
 
