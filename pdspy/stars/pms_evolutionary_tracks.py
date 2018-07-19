@@ -81,10 +81,16 @@ def read_pms_data(tracks="BHAC15"):
             except:
                 data = new_data.copy()
 
+        # Get rid of ages more than ~50Myr.
+
+        good = data[:,1] < 50.0e6
+        data = data[good,:]
+
         # Fix some of the columns.
 
         data[:,1] = numpy.log10(data[:,1])
         data[:,2] = 10.**data[:,2]
+
     elif tracks == "Tognelli2011":
         f = open(path+"tognelli2011/Z0.02000_Y0.2700_XD2E5_ML1.68_AS05/"
                 "TRK_M0.20_Z0.02000_Y0.2700_XD2E5_ML1.68_AS05.DAT")
