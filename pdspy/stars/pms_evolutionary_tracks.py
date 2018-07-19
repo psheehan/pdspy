@@ -85,6 +85,41 @@ def read_pms_data(tracks="BHAC15"):
 
         data[:,1] = numpy.log10(data[:,1])
         data[:,2] = 10.**data[:,2]
+    elif tracks == "Tognelli2011":
+        f = open(path+"tognelli2011/Z0.02000_Y0.2700_XD2E5_ML1.68_AS05/"
+                "TRK_M0.20_Z0.02000_Y0.2700_XD2E5_ML1.68_AS05.DAT")
+        lines = f.readlines()
+        f.close()
+
+        # Get the column names.
+
+        colnames = ['M/Ms'] + lines[3].replace("LOG ","LOG_").\
+                replace("LOG_AGE","log_t(yr)").replace("LOG_L","L/Ls").\
+                replace("LOG_TE","Teff").split()[1:]
+
+        # Now read in the data files.
+
+        files = glob.glob(path+"tognelli2011/"
+                "Z0.02000_Y0.2700_XD2E5_ML1.68_AS05/*.DAT")
+        for file in files:
+            new_data = numpy.loadtxt(file)
+
+            # add a column with the mass of the star.
+
+            mass = float(file.split("/")[-1].split("_")[1][1:])
+            mass_arr = numpy.zeros((new_data.shape[0],1)) + mass
+            new_data = numpy.hstack((mass_arr, new_data))
+
+            # Merge with existing data.
+
+            try:
+                data = numpy.concatenate((data, new_data))
+            except:
+                data = new_data.copy()
+
+        # Fix some of the columns.
+
+        data[:,5] = 10.**data[:,5]
 
     # Make the data into a table.
 
