@@ -476,6 +476,14 @@ def lnprior(params, parameters):
         else:
             return -numpy.inf
 
+    # Check that the gap is reasonable.
+
+    if not parameters["logR_gap1"]:
+        if R_in <= 10.**params["logR_gap1"] - params["w_gap1"]/2:
+            pass
+        else:
+            return -numpy.inf
+
     # Everything was correct, so continue on.
 
     return 0.0
