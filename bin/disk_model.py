@@ -478,7 +478,7 @@ def lnprior(params, parameters):
 
     # Check that the gap is reasonable.
 
-    if not parameters["logR_gap1"]:
+    if not parameters["logR_gap1"]["fixed"]:
         if R_in <= 10.**params["logR_gap1"] - params["w_gap1"]/2:
             pass
         else:
