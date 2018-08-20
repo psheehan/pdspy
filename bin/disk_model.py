@@ -767,6 +767,14 @@ else:
 
         r_cav = numpy.random.uniform(r_in, numpy.log10(0.75*10.**r_disk),1)[0]
 
+        r_gap1 = numpy.random.uniform(10.**r_in+\
+                parameters["w_gap1"]["limits"][0], \
+                numpy.log10(0.75*10.**r_disk),1)[0]
+
+        w_gap1 = numpy.random.uniform(parameters["w_gap1"]["limits"][0], \
+                max(parameters["w_gap1"]["limits"][0],10.**r_gap1-10.**r_in), \
+                1)[0]
+
         temp_pos = []
 
         for key in sorted(parameters.keys()):
@@ -780,6 +788,8 @@ else:
                 temp_pos.append(r_env)
             elif key == "logR_cav":
                 temp_pos.append(r_cav)
+            elif key == "logR_gap1":
+                temp_pos.append(r_gap1)
             elif key == "logM_disk":
                 temp_pos.append(numpy.random.uniform(-6.,\
                         parameters[key]["limits"][1],1)[0])
