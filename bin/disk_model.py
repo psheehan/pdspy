@@ -938,11 +938,11 @@ while nsteps < max_nsteps:
 
         xmin, xmax = int(round(visibilities["npix"][j]/2+ticks[0]/\
                 (visibilities["binsize"][j]/1000))), \
-                int(round(visibilities["npix"][j]/2+ticks[6]/\
+                int(round(visibilities["npix"][j]/2+ticks[-1]/\
                 (visibilities["binsize"][j]/1000)))
         ymin, ymax = int(round(visibilities["npix"][j]/2+ticks[0]/\
                 (visibilities["binsize"][j]/1000))), \
-                int(round(visibilities["npix"][j]/2+ticks[6]/\
+                int(round(visibilities["npix"][j]/2+ticks[-1]/\
                 (visibilities["binsize"][j]/1000)))
 
         vmin = min(0, visibilities["data1d"][j].real.min())
