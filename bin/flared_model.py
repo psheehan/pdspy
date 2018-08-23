@@ -696,8 +696,9 @@ while nsteps < max_nsteps:
 
         # Plot histograms of the resulting parameters.
 
-        labels = ["$"+key.replace("_","_{").replace("log","\log ")+"}$" \
-                if key[0:3] == "log" else "$"+key+"$" for key in keys]
+        labels = ["$"+key.replace("T0","T_0").replace("_","_{").\
+                replace("log","\log ")+"}$" if key[0:3] == "log" else \
+                "$"+key+"$" for key in keys]
 
         fig = corner.corner(samples, labels=labels, truths=params)
 
