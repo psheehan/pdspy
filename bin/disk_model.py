@@ -284,6 +284,11 @@ def model(visibilities, images, spectra, params, parameters, plot=False):
                 pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                 mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses)
 
+        m.visibilities[visibilities["lam"][j]].real *= \
+                p["flux_unc{0:d}".format(j+1)]
+        m.visibilities[visibilities["lam"][j]].imag *= \
+                p["flux_unc{0:d}".format(j+1)]
+
         """NEW: Interpolate model to native baselines?
         m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
                 visibilities["data"].u, visibilities["data"].v, \
@@ -486,7 +491,20 @@ def lnprior(params, parameters):
 
     # Everything was correct, so continue on.
 
-    return 0.0
+    lnp = 0.0
+
+    # Add in the priors.
+
+    for i in range(len(visibilities["file"])):
+        if (not parameters["flux_unc{0:d}".format(i+1)]["fixed"]) and \
+                (parameters["flux_unc{0:d}".format(i+1)]["prior"] == "gaussian"):
+            lnp += -0.5 * (params["flux_unc{0:d}".format(i+1)] - \
+                    parameters["flux_unc{0:d}".format(i+1)]["value"])**2 / \
+                    parameters["flux_unc{0:d}".format(i+1)]["sigma"]**2
+
+    # Return
+
+    return lnp
 
 # Define a probability function.
 
@@ -630,6 +648,13 @@ if not "dust_file" in parameters:
 
 if not "envelope_dust" in parameters:
     parameters["envelope_dust"] = parameters["dust_file"]
+
+# Make sure that the flux_unc parameters are specified.
+
+for i in range(3):
+    if not "flux_unc{0:d}".format(i+1) in parameters:
+        parameters["flux_unc{0:d}".format(i+1)] = {"fixed":True, "value":1., \
+                "prior":"box", "sigma":0., "limits":[0.5,1.5]}
 
 ######################################
 # Read in the millimeter visibilities.
@@ -798,6 +823,9 @@ else:
             elif key == "h_0":
                 temp_pos.append(numpy.random.uniform(\
                         parameters[key]["limits"][0], 0.2, 1)[0])
+            elif key[0:8] == "flux_unc":
+                temp_pos.append(numpy.random.normal(\
+                        parameters[key]["value"], 0.001, 1)[0])
             else:
                 temp_pos.append(numpy.random.uniform(\
                         parameters[key]["limits"][0], \
