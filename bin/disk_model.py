@@ -792,8 +792,8 @@ else:
 
         r_cav = numpy.random.uniform(r_in, numpy.log10(0.75*10.**r_disk),1)[0]
 
-        r_gap1 = numpy.random.uniform(10.**r_in+\
-                parameters["w_gap1"]["limits"][0], \
+        r_gap1 = numpy.random.uniform(numpy.log10(10.**r_in+\
+                parameters["w_gap1"]["limits"][0]), \
                 numpy.log10(0.75*10.**r_disk),1)[0]
 
         w_gap1 = numpy.random.uniform(parameters["w_gap1"]["limits"][0], \
