@@ -793,12 +793,12 @@ else:
         r_cav = numpy.random.uniform(r_in, numpy.log10(0.75*10.**r_disk),1)[0]
 
         r_gap1 = numpy.random.uniform(numpy.log10(10.**r_in+\
-                parameters["w_gap1"]["limits"][0]), \
+                parameters["w_gap1"]["limits"][0]/2), \
                 numpy.log10(0.75*10.**r_disk),1)[0]
 
         w_gap1 = numpy.random.uniform(parameters["w_gap1"]["limits"][0], \
-                max(parameters["w_gap1"]["limits"][0],10.**r_gap1-10.**r_in), \
-                1)[0]
+                min(parameters["w_gap1"]["limits"][1],\
+                2*(10.**r_gap1-10.**r_in)), 1)[0]
 
         temp_pos = []
 
