@@ -815,6 +815,8 @@ else:
                 temp_pos.append(r_cav)
             elif key == "logR_gap1":
                 temp_pos.append(r_gap1)
+            elif key == "w_gap1":
+                temp_pos.append(w_gap1)
             elif key == "logM_disk":
                 temp_pos.append(numpy.random.uniform(-6.,\
                         parameters[key]["limits"][1],1)[0])
