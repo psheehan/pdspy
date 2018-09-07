@@ -237,6 +237,18 @@ def model(visibilities, params, parameters, plot=False):
                     code="radmc3d", verbose=False, writeimage_unformatted=True,\
                     setthreads=ncpus)
 
+        # Extinct the data, if included.
+
+        tau = -p["tau0"] * numpy.exp(-(m.images[visibilities["lam"][j]].freq - \
+                p["v_ext"])**2 / (2*p["sigma_vext"])**2)
+
+        extinction = numpy.exp(-tau)
+
+        for i in range(len(m.images[visibilities["lam"][j]].freq)):
+            m.images[visibilities["lam"][j]].image[:,:,i,:] *= extinction[i]
+
+        # Invert to get the visibilities.
+
         m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
                 visibilities["data"][j].u, visibilities["data"][j].v, \
                 visibilities["data"][j].freq, \
@@ -515,6 +527,15 @@ if "gas_file" in parameters:
 if not "dust_file" in parameters:
     parameters["dust_file"] = {"fixed":True, "value":"pollack_new.hdf5", \
             "limits":[0.,0.]}
+
+# Make sure the code doesn't break if dust extinction parameters aren't included
+
+if not "tau0" in parameters:
+    parameters["tau0"] = {"fixed":True, "value":0., "limits":[0.,10.]}
+if not "v_ext" in parameters:
+    parameters["v_ext"]:{"fixed":True, "value":4., "limits":[2.,6.]}
+if not "sigma_vext" in parameters:
+    parameters["sigma_vext"]:{"fixed":True, "value":1.0, "limits":[0.01,5.]}
 
 ######################################
 # Read in the millimeter visibilities.
