@@ -151,6 +151,10 @@ parameters = {
         "Ak":{"fixed":True, "value":0., "limits":[0.,1.]},
         "v_sys":{"fixed":True, "value":5., "limits":[0.,10.]},
         "docontsub":{"fixed":True, "value":False, "limits":[0.,0.]},
+        # Gas extinction parameters.
+        "tau0":{"fixed":True, "value":0., "limits":[0.,10.]},
+        "v_ext":{"fixed":True, "value":4., "limits":[2.,6.]},
+        "sigma_vext":{"fixed":True, "value":1.0, "limits":[0.01,5.]},
         # Nuisance parameters.
         "flux_unc1":{"fixed":True, "value":1., "prior":"box", "sigma":0., "limits":[0.5,1.5]},
         "flux_unc2":{"fixed":True, "value":1., "prior":"box", "sigma":0., "limits":[0.5,1.5]},
