@@ -41,30 +41,37 @@ def btsettl_photometry(Teff=5770., Logg=4.4, Rstar=1.0, dpc=140., \
 
     # Make sure we only include the Teff's with all the log(g)'s.
 
+    """
     teff = numpy.unique(table["Teff"])
     logg = numpy.unique(table["Logg"])
 
     for T in teff:
         if len(table["Teff"][table["Teff"] == T]) < len(logg):
             table.remove_rows(numpy.where(table["Teff"] == T)[0])
+    """
 
     # Now loop through the filters and get the photometry.
 
+    """
     teff = numpy.array(numpy.unique(table["Teff"]))
     logg = numpy.array(numpy.unique(table["Logg"]))
+    """
 
     mag = []
 
     for filter in filters.split(','):
-        data = numpy.array(table[filter]).reshape((teff.size, logg.size))
+        #data = numpy.array(table[filter]).reshape((teff.size, logg.size))
 
         # Now do the 2D interpolation.
 
-        f = scipy.interpolate.interp2d(logg, teff, data)
+        #f = scipy.interpolate.interp2d(logg, teff, data)
+
+        f = scipy.interpolate.LinearNDInterpolator((table["Teff"], \
+                table["Logg"]), table[filter], rescale=False)
 
         # Calculate the photometry now.
 
-        mag.append(f(Logg, Teff)[0])
+        mag.append(f([[Teff,Logg]])[0])
 
     # Turn the photometry into an array.
 
