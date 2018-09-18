@@ -443,7 +443,7 @@ def lnlike(params, visibilities, images, spectra, parameters, plot):
 
 # Define a prior function.
 
-def lnprior(params, parameters):
+def lnprior(params, parameters, visibilities):
     for key in parameters:
         if not parameters[key]["fixed"]:
             if parameters[key]["limits"][0] <= params[key] <= \
@@ -525,7 +525,7 @@ def lnprob(p, visibilities, images, spectra, parameters, plot):
 
     params = dict(zip(keys, p))
 
-    lp = lnprior(params, parameters)
+    lp = lnprior(params, parameters, visibilities)
 
     if not numpy.isfinite(lp):
         return -numpy.inf
