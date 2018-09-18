@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import scipy.signal
 from .model import model
 
-def fit_model(data, funct='point', nsteps=1e3, niter=3):
+def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=None):
 
     if type(funct) == str:
         funct = numpy.array([funct])
@@ -107,7 +107,10 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
 
             ind = 0
 
-            r_max = 1. / data.uvdist[data.uvdist > 0].min() / arcsec
+            if max_size == None:
+                r_max = 1. / data.uvdist[data.uvdist > 0].min() / arcsec
+            else:
+                r_max = max_size
 
             for i in range(funct.size):
                 if funct[i] == 'point':
@@ -170,7 +173,10 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3):
 
             # Now set the positions of the walkers.
 
-            r_max = 1. / data.uvdist[data.uvdist > 0].min() / arcsec
+            if max_size == None:
+                r_max = 1. / data.uvdist[data.uvdist > 0].min() / arcsec
+            else:
+                r_max = max_size
 
             pos = []
             for i in range(nwalkers):
