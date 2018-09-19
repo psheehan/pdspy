@@ -45,6 +45,7 @@ parser.add_argument('-n', '--ncpus', type=int, default=1)
 parser.add_argument('-e', '--withexptaper', action='store_true')
 parser.add_argument('-v', '--plot_vis', action='store_true')
 parser.add_argument('-c', '--withcontsub', action='store_true')
+parser.add_argument('-b', '--trim', type=str, default="")
 args = parser.parse_args()
 
 # Check whether we are using MPI.
@@ -71,6 +72,13 @@ if args.action not in ['run','plot']:
 
 if args.action == 'plot':
     args.resume = True
+
+# Get the items we want to trim.
+
+if args.trim == "":
+    trim = []
+else:
+    trim = args.trim.split(",")
 
 ################################################################################
 #
@@ -717,33 +725,49 @@ while nsteps < max_nsteps:
 
     samples = chain[:,-nplot:,:].reshape((-1, ndim))
 
+    # Make the cuts specified by the user.
+
+    keys = []
+    for key in sorted(parameters.keys()):
+        if not parameters[key]["fixed"]:
+            keys.append(key)
+
+    for command in trim:
+        command = command.split(" ")
+
+        for i, key in enumerate(keys):
+            if key == command[0]:
+                if command[1] == '<':
+                    good = samples[:,i] > float(command[2])
+                else:
+                    good = samples[:,i] < float(command[2])
+
+                samples = samples[good,:]
+
     params = numpy.median(samples, axis=0)
     sigma = samples.std(axis=0)
 
     # Write out the results.
 
-    if args.action == "run":
-        # Write out the results.
+    f = open("fit.txt", "w")
+    f.write("Best fit parameters:\n\n")
+    for j in range(len(keys)):
+        f.write("{0:s} = {1:f} +/- {2:f}\n".format(keys[j], params[j], \
+                sigma[j]))
+    f.write("\n")
+    f.close()
 
-        f = open("fit.txt", "w")
-        f.write("Best fit parameters:\n\n")
-        for j in range(len(keys)):
-            f.write("{0:s} = {1:f} +/- {2:f}\n".format(keys[j], params[j], \
-                    sigma[j]))
-        f.write("\n")
-        f.close()
+    os.system("cat fit.txt")
 
-        os.system("cat fit.txt")
+    # Plot histograms of the resulting parameters.
 
-        # Plot histograms of the resulting parameters.
+    labels = ["$"+key.replace("T0","T_0").replace("_","_{").\
+            replace("log","\log ")+"}$" if key[0:3] == "log" else \
+            "$"+key+"$" for key in keys]
 
-        labels = ["$"+key.replace("T0","T_0").replace("_","_{").\
-                replace("log","\log ")+"}$" if key[0:3] == "log" else \
-                "$"+key+"$" for key in keys]
+    fig = corner.corner(samples, labels=labels, truths=params)
 
-        fig = corner.corner(samples, labels=labels, truths=params)
-
-        plt.savefig("fit.pdf")
+    plt.savefig("fit.pdf")
 
     # Make a dictionary of the best fit parameters.
 
