@@ -239,8 +239,12 @@ def model(visibilities, params, parameters, plot=False):
 
         # Extinct the data, if included.
 
-        tau = -p["tau0"] * numpy.exp(-(m.images[visibilities["lam"][j]].freq - \
-                p["v_ext"])**2 / (2*p["sigma_vext"])**2)
+        velocity = c * (float(visibilities["freq"][j])*1.0e9 - \
+                visibilities["data"][j].freq)/(float(visibilities["freq"][j])*\
+                1.0e9) / 1.0e5
+
+        tau = p["tau0"] * numpy.exp(-(velocity - p["v_ext"])**2 / \
+                (2*p["sigma_vext"]**2))
 
         extinction = numpy.exp(-tau)
 
@@ -287,6 +291,22 @@ def model(visibilities, params, parameters, plot=False):
                         incl_dust=False, incl_lines=True, loadlambda=True, \
                         incl=p["i"], pa=-p["pa"], dpc=p["dpc"], code="radmc3d",\
                         verbose=False, setthreads=ncpus)
+
+            # Extinct the data, if included.
+
+            velocity = c * (float(visibilities["freq"][j])*1.0e9 - \
+                    visibilities["image"][j].freq) / \
+                    (float(visibilities["freq"][j])*1.0e9) / 1.0e5
+
+            tau = p["tau0"] * numpy.exp(-(velocity - p["v_ext"])**2 / \
+                    (2*p["sigma_vext"]**2))
+
+            extinction = numpy.exp(-tau)
+
+            for i in range(len(m.images[visibilities["lam"][j]].freq)):
+                m.images[visibilities["lam"][j]].image[:,:,i,:] *= extinction[i]
+
+            # Now convolve with the beam.
 
             x, y = numpy.meshgrid(numpy.linspace(-256,255,512), \
                     numpy.linspace(-256,255,512))
