@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 import scipy.signal
 from .model import model
 
-def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=None):
+def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=None, \
+        xmax=10., ymax=10.):
 
     if type(funct) == str:
         funct = numpy.array([funct])
@@ -24,8 +25,8 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=None):
 
     print("Doing coarse grid search.")
 
-    x = numpy.arange(-10,10,0.1)
-    y = numpy.arange(-10,10,0.1)
+    x = numpy.arange(-xmax,xmax,0.1)
+    y = numpy.arange(-ymax,ymax,0.1)
 
     params = numpy.array([])
 
