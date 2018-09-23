@@ -127,6 +127,78 @@ def read_pms_data(tracks="BHAC15"):
 
         data[:,5] = 10.**data[:,5]
 
+    elif tracks == "Feiden2016":
+        f = open(path+"feiden2016/m1700_GS98_p000_p0_y28_mlt1.884_mag08kG.ntrk")
+        lines = f.readlines()
+        f.close()
+
+        # Get the column names.
+
+        colnames = ['M/Ms'] + lines[8].replace("conv. ","conv.").\
+                replace("AGE","log_t(yr)").replace("log(Teff)","Teff").\
+                replace("log(L/Lsun)","L/Ls").replace("Model #","Model#").\
+                replace("M He core","M_He_core").replace(",","").split()[1:]
+
+        # Now read in the data files.
+
+        files = glob.glob(path+"feiden2016/*.ntrk")
+        for file in files:
+            new_data = numpy.loadtxt(file,usecols=tuple([i for i in range(12)]))
+
+            # add a column with the mass of the star.
+
+            mass = float(file.split("/")[-1][1:5])/1000.
+            mass_arr = numpy.zeros((new_data.shape[0],1)) + mass
+            new_data = numpy.hstack((mass_arr, new_data))
+
+            # Merge with existing data.
+
+            try:
+                data = numpy.concatenate((data, new_data))
+            except:
+                data = new_data.copy()
+
+        # Fix some of the columns.
+
+        data[:,3] = numpy.log10(data[:,3]*1.0e9)
+        data[:,7] = 10.**data[:,7]
+
+    elif tracks == "Bressan2012":
+        f = open(path+"bressan2012/Z0.014Y0.273/"
+                "Z0.014Y0.273OUTA1.77_F7_M000.700.DAT")
+        lines = f.readlines()
+        f.close()
+
+        # Get the column names.
+
+        colnames = lines[0].replace("LOG ","LOG_").\
+                replace("AGE","log_t(yr)").replace("LOG_L","L/Ls").\
+                replace("LOG_TE","Teff").replace("MASS","M/Ms").split()
+
+        # Now read in the data files.
+
+        files = glob.glob(path+"bressan2012/Z0.014Y0.273/*.DAT")
+
+        for file in files:
+            new_data = numpy.loadtxt(file, skiprows=2)
+
+            # Merge with existing data.
+
+            try:
+                data = numpy.concatenate((data, new_data))
+            except:
+                data = new_data.copy()
+
+        # Get rid of ages more than ~50Myr.
+
+        good = data[:,2] < 50.0e6
+        data = data[good,:]
+
+        # Fix some of the columns.
+
+        data[:,2] = numpy.log10(data[:,2])
+        data[:,4] = 10.**data[:,4]
+
     # Make the data into a table.
 
     table = astropy.table.Table(data, names=colnames)
