@@ -163,9 +163,9 @@ def read_pms_data(tracks="BHAC15"):
         data[:,3] = numpy.log10(data[:,3]*1.0e9)
         data[:,7] = 10.**data[:,7]
 
-    elif tracks == "Bressan2012":
-        f = open(path+"bressan2012/Z0.014Y0.273/"
-                "Z0.014Y0.273OUTA1.77_F7_M000.700.DAT")
+    elif tracks == "Chen2014":
+        f = open(path+"bressan2012/Z0.017Y0.279/"
+                "Z0.017Y0.279OUTA1.77_F7_M000.700.DAT")
         lines = f.readlines()
         f.close()
 
@@ -177,7 +177,7 @@ def read_pms_data(tracks="BHAC15"):
 
         # Now read in the data files.
 
-        files = glob.glob(path+"bressan2012/Z0.014Y0.273/*.DAT")
+        files = glob.glob(path+"bressan2012/Z0.017Y0.279/*.DAT")
 
         for file in files:
             new_data = numpy.loadtxt(file, skiprows=2)
@@ -198,6 +198,25 @@ def read_pms_data(tracks="BHAC15"):
 
         data[:,2] = numpy.log10(data[:,2])
         data[:,4] = 10.**data[:,4]
+
+    elif tracks == "Bressan2012":
+        f = open(path+"bressan2012/bressan2012.dat")
+        lines = f.readlines()
+        f.close()
+
+        # Get the column names.
+
+        colnames = lines[13].replace("log(age/yr)","log_t(yr)").\
+                replace("logL/Lo","L/Ls").replace("logTe","Teff").\
+                replace("M_act","M/Ms").split()[1:]
+
+        # Now read in the data files.
+
+        data = numpy.loadtxt(path+"bressan2012/bressan2012.dat")
+
+        # Fix some of the columns.
+
+        data[:,5] = 10.**data[:,5]
 
     # Make the data into a table.
 
