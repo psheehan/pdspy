@@ -561,9 +561,9 @@ if not "dust_file" in parameters:
 if not "tau0" in parameters:
     parameters["tau0"] = {"fixed":True, "value":0., "limits":[0.,10.]}
 if not "v_ext" in parameters:
-    parameters["v_ext"]:{"fixed":True, "value":4., "limits":[2.,6.]}
+    parameters["v_ext"] = {"fixed":True, "value":4., "limits":[2.,6.]}
 if not "sigma_vext" in parameters:
-    parameters["sigma_vext"]:{"fixed":True, "value":1.0, "limits":[0.01,5.]}
+    parameters["sigma_vext"] = {"fixed":True, "value":1.0, "limits":[0.01,5.]}
 
 ######################################
 # Read in the millimeter visibilities.
