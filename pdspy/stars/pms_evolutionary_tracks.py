@@ -128,7 +128,49 @@ def read_pms_data(tracks="BHAC15"):
         data[:,5] = 10.**data[:,5]
 
     elif tracks == "Feiden2016":
-        f = open(path+"feiden2016/m1700_GS98_p000_p0_y28_mlt1.884_mag08kG.ntrk")
+        f = open(path+"feiden2016/std/"
+                "m0090_GS98_p000_p0_y28_mlt1.884.trk")
+        lines = f.readlines()
+        f.close()
+
+        # Get the column names.
+
+        colnames = ['M/Ms'] + lines[3].replace("Log ","Log").\
+                replace("Age ","log_t").replace("LogT","Teff").\
+                replace("LogL","L/Ls").replace("yrs","yr").split()[1:6]
+
+        # Now read in the data files.
+
+        files = glob.glob(path+"feiden2016/std/*.trk")
+        for file in files:
+            new_data = numpy.loadtxt(file, usecols=(0,1,2,3,4))
+
+            # add a column with the mass of the star.
+
+            mass = float(file.split("/")[-1][1:5])/1000.
+            mass_arr = numpy.zeros((new_data.shape[0],1)) + mass
+            new_data = numpy.hstack((mass_arr, new_data))
+
+            # Merge with existing data.
+
+            try:
+                data = numpy.concatenate((data, new_data))
+            except:
+                data = new_data.copy()
+
+        # Get rid of ages more than ~50Myr.
+
+        good = data[:,1] < 50.0e6
+        data = data[good,:]
+
+        # Fix some of the columns.
+
+        data[:,1] = numpy.log10(data[:,1])
+        data[:,2] = 10.**data[:,2]
+
+    elif tracks == "Feiden2016mag":
+        f = open(path+"feiden2016/mag/"
+                "m1700_GS98_p000_p0_y28_mlt1.884_mag08kG.ntrk")
         lines = f.readlines()
         f.close()
 
@@ -141,7 +183,7 @@ def read_pms_data(tracks="BHAC15"):
 
         # Now read in the data files.
 
-        files = glob.glob(path+"feiden2016/*.ntrk")
+        files = glob.glob(path+"feiden2016/mag/*.ntrk")
         for file in files:
             new_data = numpy.loadtxt(file,usecols=tuple([i for i in range(12)]))
 
