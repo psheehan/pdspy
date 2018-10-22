@@ -594,6 +594,11 @@ for i in range(len(visibilities["file"])):
     visibilities["binsize"].append(1./(visibilities["npix"][i]*\
             visibilities["pixelsize"][i]*arcsec))
 
+# Make sure the spectra dictionary has a "weight" entry.
+
+if not "weight" in spectra:
+    spectra["weight"] = [1. for i in range(len(spectra["file"]))]
+
 # Set up the places where we will put all of the data.
 
 visibilities["data"] = []
@@ -691,6 +696,10 @@ for j in range(len(spectra["file"])):
     spectra["data"].append(sp.Spectrum())
     spectra["data"][j].read(spectra["file"][j])
 
+    # Adjust the weight of the SED, as necessary.
+
+    spectra["data"][j].unc /= spectra["weight"][j]**0.5
+
     # Merge the SED with the binned Spitzer spectrum.
 
     if spectra["bin?"]:
@@ -722,8 +731,6 @@ for j in range(len(spectra["file"])):
         spectra["total"] = sp.Spectrum(spectra["binned"][j].wave, \
                 numpy.log10(spectra["binned"][j].flux), \
                 numpy.repeat(0.1, spectra["binned"][j].wave.size))
-
-    # Adjust the weight of the SED, as necessary.
 
 #####################
 # Read in the images.
