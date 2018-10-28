@@ -65,6 +65,10 @@ spectra = {
 
 nwalkers = 6
 
+# The number of temperatures to use, if running a PTSampler generation.
+
+ntemps = 5
+
 # The number of steps to do at one time.
 
 steps_per_iter = 5
