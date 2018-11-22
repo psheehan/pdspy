@@ -375,7 +375,7 @@ def lnlike(params, visibilities, parameters, plot):
 
 # Define a prior function.
 
-def lnprior(params, parameters):
+def lnprior(params, parameters, priors):
     for key in parameters:
         if not parameters[key]["fixed"]:
             if parameters[key]["limits"][0] <= params[key] <= \
@@ -432,18 +432,37 @@ def lnprior(params, parameters):
         else:
             return -numpy.inf
 
-    # Everything was correct, so continue on.
+    # Everything was correct, so continue on and check the priors.
 
-    if (not parameters["dpc"]["fixed"]) and \
-            (parameters["dpc"]["prior"] == "gaussian"):
-        return -0.5 * (params["dpc"] - parameters["dpc"]["value"])**2 / \
-                parameters["dpc"]["sigma"]**2
-    else:
-        return 0.0
+    lnprior = 0.
+
+    # The prior on parallax (distance).
+
+    if (not parameters["dpc"]["fixed"]) and ("parallax" in priors):
+        parallax_mas = 1. / params["dpc"] * 1000
+
+        lnprior += -0.5 * (parallax_mas - priors["parallax"]["value"])**2 / \
+                priors["parallax"]["sigma"]**2
+
+    # A prior on stellar mass from the IMF.
+
+    if (not parameters["logM_star"]["fixed"]) and ("Mstar" in priors):
+        Mstar = 10.**params["logM_star"]
+
+        if priors["Mstar"]["value"] == "chabrier":
+            if Mstar <= 1.:
+                lnprior += numpy.log(0.158 * 1./(numpy.log(10.) * Mstar) * \
+                        numpy.exp(-(numpy.log10(Mstar) - numpy.log10(0.08))**2/\
+                        (2*0.69**2)))
+            else:
+                lnprior += numpy.log(4.43e-2 * Mstar**-1.3 * \
+                        1./(numpy.log(10.) * Mstar))
+
+    return lnprior
 
 # Define a probability function.
 
-def lnprob(p, visibilities, parameters, plot):
+def lnprob(p, visibilities, parameters, priors, plot):
 
     keys = []
     for key in sorted(parameters.keys()):
@@ -452,7 +471,7 @@ def lnprob(p, visibilities, parameters, plot):
 
     params = dict(zip(keys, p))
 
-    lp = lnprior(params, parameters)
+    lp = lnprior(params, parameters, priors)
 
     if not numpy.isfinite(lp):
         return -numpy.inf
@@ -565,6 +584,9 @@ if not "v_ext" in parameters:
 if not "sigma_vext" in parameters:
     parameters["sigma_vext"] = {"fixed":True, "value":1.0, "limits":[0.01,5.]}
 
+if not 'priors' in globals():
+    priors = {}
+
 ######################################
 # Read in the millimeter visibilities.
 ######################################
@@ -674,7 +696,7 @@ else:
 
 if args.action == "run":
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, \
-            args=(visibilities, parameters, False), pool=pool)
+            args=(visibilities, parameters, priors, False), pool=pool)
 
 # If we are plotting, make sure that nsteps < max_nsteps.
 
