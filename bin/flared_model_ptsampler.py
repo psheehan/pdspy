@@ -351,7 +351,15 @@ def model(visibilities, params, parameters, plot=False):
 
 # Define a likelihood function.
 
-def lnlike(params, visibilities, parameters, plot):
+def lnlike(p, visibilities, parameters, plot):
+    keys = []
+    for key in sorted(parameters.keys()):
+        if not parameters[key]["fixed"]:
+            keys.append(key)
+
+    params = dict(zip(keys, p))
+
+    # Generate a model.
 
     m = model(visibilities, params, parameters, plot)
 
@@ -375,7 +383,14 @@ def lnlike(params, visibilities, parameters, plot):
 
 # Define a prior function.
 
-def lnprior(params, parameters, priors):
+def lnprior(p, parameters):
+    keys = []
+    for key in sorted(parameters.keys()):
+        if not parameters[key]["fixed"]:
+            keys.append(key)
+
+    params = dict(zip(keys, p))
+
     for key in parameters:
         if not parameters[key]["fixed"]:
             if parameters[key]["limits"][0] <= params[key] <= \
@@ -432,37 +447,18 @@ def lnprior(params, parameters, priors):
         else:
             return -numpy.inf
 
-    # Everything was correct, so continue on and check the priors.
+    # Everything was correct, so continue on.
 
-    lnprior = 0.
-
-    # The prior on parallax (distance).
-
-    if (not parameters["dpc"]["fixed"]) and ("parallax" in priors):
-        parallax_mas = 1. / params["dpc"] * 1000
-
-        lnprior += -0.5 * (parallax_mas - priors["parallax"]["value"])**2 / \
-                priors["parallax"]["sigma"]**2
-
-    # A prior on stellar mass from the IMF.
-
-    if (not parameters["logM_star"]["fixed"]) and ("Mstar" in priors):
-        Mstar = 10.**params["logM_star"]
-
-        if priors["Mstar"]["value"] == "chabrier":
-            if Mstar <= 1.:
-                lnprior += numpy.log(0.158 * 1./(numpy.log(10.) * Mstar) * \
-                        numpy.exp(-(numpy.log10(Mstar) - numpy.log10(0.08))**2/\
-                        (2*0.69**2)))
-            else:
-                lnprior += numpy.log(4.43e-2 * Mstar**-1.3 * \
-                        1./(numpy.log(10.) * Mstar))
-
-    return lnprior
+    if (not parameters["dpc"]["fixed"]) and \
+            (parameters["dpc"]["prior"] == "gaussian"):
+        return -0.5 * (params["dpc"] - parameters["dpc"]["value"])**2 / \
+                parameters["dpc"]["sigma"]**2
+    else:
+        return 0.0
 
 # Define a probability function.
 
-def lnprob(p, visibilities, parameters, priors, plot):
+def lnprob(p, visibilities, parameters, plot):
 
     keys = []
     for key in sorted(parameters.keys()):
@@ -471,7 +467,7 @@ def lnprob(p, visibilities, parameters, priors, plot):
 
     params = dict(zip(keys, p))
 
-    lp = lnprior(params, parameters, priors)
+    lp = lnprior(params, parameters)
 
     if not numpy.isfinite(lp):
         return -numpy.inf
@@ -584,9 +580,6 @@ if not "v_ext" in parameters:
 if not "sigma_vext" in parameters:
     parameters["sigma_vext"] = {"fixed":True, "value":1.0, "limits":[0.01,5.]}
 
-if not 'priors' in globals():
-    priors = {}
-
 ######################################
 # Read in the millimeter visibilities.
 ######################################
@@ -639,7 +632,7 @@ if args.resume:
     pos = numpy.load("pos.npy")
     chain = numpy.load("chain.npy")
     state = None
-    nsteps = chain[0,:,0].size
+    nsteps = chain[0,0,:,0].size
 
     if args.resetprob:
         prob = None
@@ -647,56 +640,64 @@ if args.resume:
         prob = numpy.load("prob.npy")
 else:
     pos = []
-    for j in range(nwalkers):
-        r_env = numpy.random.uniform(parameters["logR_env"]["limits"][0],\
-                parameters["logR_env"]["limits"][1],1)[0]
-        r_disk = numpy.random.uniform(numpy.log10(5.),\
-                min(r_env, parameters["logR_disk"]["limits"][1]),1)[0]
-        r_in = numpy.random.uniform(parameters["logR_in"]["limits"][0],\
-                numpy.log10((10.**r_disk)/2),1)[0]
-
-        r_cav = numpy.random.uniform(r_in, numpy.log10(0.75*10.**r_disk),1)[0]
-
-        if "logTatm0" in parameters:
-            tatm0 = numpy.random.uniform(parameters["logTatm0"]["limits"][0],\
-                    parameters["logTatm0"]["limits"][1],1)[0]
-            tmid0 = numpy.random.uniform(parameters["logTmid0"]["limits"][0],\
-                    min(parameters["logTatm0"]["limits"][1], tatm0),1)[0]
-
+    for i in range(ntemps):
         temp_pos = []
+        for j in range(nwalkers):
+            r_env = numpy.random.uniform(parameters["logR_env"]["limits"][0],\
+                    parameters["logR_env"]["limits"][1],1)[0]
+            r_disk = numpy.random.uniform(numpy.log10(5.),\
+                    min(r_env, parameters["logR_disk"]["limits"][1]),1)[0]
+            r_in = numpy.random.uniform(parameters["logR_in"]["limits"][0],\
+                    numpy.log10((10.**r_disk)/2),1)[0]
 
-        for key in sorted(parameters.keys()):
-            if parameters[key]["fixed"]:
-                pass
-            elif key == "logR_in":
-                temp_pos.append(r_in)
-            elif key == "logR_disk":
-                temp_pos.append(r_disk)
-            elif key == "logR_env":
-                temp_pos.append(r_env)
-            elif key == "logR_cav":
-                temp_pos.append(r_cav)
-            elif key == "logTatm0":
-                temp_pos.append(tatm0)
-            elif key == "logTmid0":
-                temp_pos.append(tmid0)
-            else:
-                temp_pos.append(numpy.random.uniform(\
-                        parameters[key]["limits"][0], \
-                        parameters[key]["limits"][1], 1)[0])
+            r_cav = numpy.random.uniform(r_in, numpy.log10(0.75*10.**r_disk),\
+                    1)[0]
+
+            if "logTatm0" in parameters:
+                tatm0 = numpy.random.uniform(\
+                        parameters["logTatm0"]["limits"][0],\
+                        parameters["logTatm0"]["limits"][1],1)[0]
+                tmid0 = numpy.random.uniform(\
+                        parameters["logTmid0"]["limits"][0],\
+                        min(parameters["logTatm0"]["limits"][1], tatm0),1)[0]
+
+            temp_pos.append([])
+
+            for key in sorted(parameters.keys()):
+                if parameters[key]["fixed"]:
+                    pass
+                elif key == "logR_in":
+                    temp_pos[-1].append(r_in)
+                elif key == "logR_disk":
+                    temp_pos[-1].append(r_disk)
+                elif key == "logR_env":
+                    temp_pos[-1].append(r_env)
+                elif key == "logR_cav":
+                    temp_pos[-1].append(r_cav)
+                elif key == "logTatm0":
+                    temp_pos[-1].append(tatm0)
+                elif key == "logTmid0":
+                    temp_pos[-1].append(tmid0)
+                else:
+                    temp_pos[-1].append(numpy.random.uniform(\
+                            parameters[key]["limits"][0], \
+                            parameters[key]["limits"][1], 1)[0])
 
         pos.append(temp_pos)
 
+    print(numpy.array(pos).shape)
+
     prob = None
-    chain = numpy.empty((nwalkers, 0, ndim))
+    chain = numpy.empty((ntemps, nwalkers, 0, ndim))
     state = None
     nsteps = 0
 
 # Set up the MCMC simulation.
 
 if args.action == "run":
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, \
-            args=(visibilities, parameters, priors, False), pool=pool)
+    sampler = emcee.PTSampler(ntemps, nwalkers, ndim, lnlike, lnprior, \
+            loglargs=(visibilities, parameters, False), logpargs=(parameters,),\
+            pool=pool)
 
 # If we are plotting, make sure that nsteps < max_nsteps.
 
@@ -710,7 +711,7 @@ while nsteps < max_nsteps:
         pos, prob, state = sampler.run_mcmc(pos, steps_per_iter, lnprob0=prob, \
                 rstate0=state)
 
-        chain = numpy.concatenate((chain, sampler.chain), axis=1)
+        chain = numpy.concatenate((chain, sampler.chain), axis=2)
 
         # Get keys of the parameters that are varying.
 
@@ -724,8 +725,9 @@ while nsteps < max_nsteps:
         for j in range(ndim):
             fig, ax = plt.subplots(nrows=1, ncols=1)
 
-            for k in range(nwalkers):
-                ax.plot(chain[k,:,j])
+            for i in range(ntemps):
+                for k in range(nwalkers):
+                    ax.plot(chain[i,k,:,j])
 
             plt.savefig("steps_{0:s}.pdf".format(keys[j]))
 
@@ -745,7 +747,7 @@ while nsteps < max_nsteps:
 
     # Get the best fit parameters and uncertainties.
 
-    samples = chain[:,-nplot:,:].reshape((-1, ndim))
+    samples = chain[:,:,-nplot:,:].reshape((-1, ndim))
 
     # Make the cuts specified by the user.
 

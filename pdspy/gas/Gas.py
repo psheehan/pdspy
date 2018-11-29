@@ -115,7 +115,7 @@ class Gas:
 
         f['mass'] = self.mass
 
-        J_dset = f.create_dataset("J", (self.J.size,), dtype='s')
+        J_dset = f.create_dataset("J", (self.J.size,), dtype=h5py.special_dtype(vlen=str))
         J_dset[...] = self.J
         E_dset = f.create_dataset("E", (self.E.size,), dtype='f')
         E_dset[...] = self.E

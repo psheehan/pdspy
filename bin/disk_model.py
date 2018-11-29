@@ -612,6 +612,11 @@ for i in range(len(visibilities["file"])):
     visibilities["binsize"].append(1./(visibilities["npix"][i]*\
             visibilities["pixelsize"][i]*arcsec))
 
+# Make sure the spectra dictionary has a "weight" entry.
+
+if not "weight" in spectra:
+    spectra["weight"] = [1. for i in range(len(spectra["file"]))]
+
 # Set up the places where we will put all of the data.
 
 visibilities["data"] = []
@@ -716,6 +721,10 @@ for j in range(len(spectra["file"])):
     spectra["data"].append(sp.Spectrum())
     spectra["data"][j].read(spectra["file"][j])
 
+    # Adjust the weight of the SED, as necessary.
+
+    spectra["data"][j].unc /= spectra["weight"][j]**0.5
+
     # Merge the SED with the binned Spitzer spectrum.
 
     if spectra["bin?"]:
@@ -747,8 +756,6 @@ for j in range(len(spectra["file"])):
         spectra["total"] = sp.Spectrum(spectra["binned"][j].wave, \
                 numpy.log10(spectra["binned"][j].flux), \
                 numpy.repeat(0.1, spectra["binned"][j].wave.size))
-
-    # Adjust the weight of the SED, as necessary.
 
 #####################
 # Read in the images.
@@ -983,7 +990,7 @@ while nsteps < max_nsteps:
         ax[2*j,0].errorbar(visibilities["data1d"][j].uvdist/1000, \
                 visibilities["data1d"][j].amp, \
                 yerr=numpy.sqrt(1./visibilities["data1d"][j].weights),\
-                fmt="bo", markersize=8, markeredgecolor="b")
+                fmt="ko", markersize=8, markeredgecolor="k")
 
         # Plot the best fit model
 
@@ -1008,10 +1015,10 @@ while nsteps < max_nsteps:
         ax[2*j+1,0].imshow(visibilities["data"][j].real.reshape(\
                 (visibilities["npix"][j],visibilities["npix"][j]))\
                 [xmin:xmax,xmin:xmax][:,::-1], origin="lower", \
-                interpolation="nearest", vmin=vmin, vmax=vmax)
+                interpolation="nearest", vmin=vmin, vmax=vmax, cmap="jet")
         ax[2*j+1,0].contour(m.visibilities[visibilities["lam"][j]].real.\
                 reshape((visibilities["npix"][j],visibilities["npix"][j]))\
-                [xmin:xmax,xmin:xmax][:,::-1])
+                [xmin:xmax,xmin:xmax][:,::-1], cmap="jet")
 
         vmin = -visibilities["data1d"][j].real.max()
         vmax =  visibilities["data1d"][j].real.max()
@@ -1088,7 +1095,7 @@ while nsteps < max_nsteps:
 
         ax[2*j,1].imshow(visibilities["image"][j].image\
                 [ymin:ymax,xmin:xmax,0,0], origin="lower", \
-                interpolation="nearest")
+                interpolation="nearest", cmap="jet")
 
         xmin, xmax = int(round(visibilities["image_npix"][j]/2+1 + \
                 ticks[0]/visibilities["image_pixelsize"][j])), \
@@ -1099,7 +1106,8 @@ while nsteps < max_nsteps:
                 int(round(visibilities["image_npix"][j]/2+1 + \
                 ticks[-1]/visibilities["image_pixelsize"][j]))
 
-        ax[2*j,1].contour(model_image.image[ymin:ymax,xmin:xmax,0,0])
+        ax[2*j,1].contour(model_image.image[ymin:ymax,xmin:xmax,0,0], \
+                cmap="jet")
 
         transform = ticker.FuncFormatter(Transform(xmin, xmax, \
                 visibilities["image_pixelsize"][j], '%.1f"'))
@@ -1115,10 +1123,10 @@ while nsteps < max_nsteps:
 
     for j in range(len(spectra["file"])):
         if spectra["bin?"][j]:
-            ax[0,2].plot(spectra["data"][j].wave, spectra["data"][j].flux, "b-")
+            ax[0,2].plot(spectra["data"][j].wave, spectra["data"][j].flux, "k-")
         else:
             ax[0,2].errorbar(spectra["data"][j].wave, spectra["data"][j].flux, \
-                    fmt="bo", yerr=spectra["data"][j].unc, markeredgecolor="b")
+                    fmt="ko", yerr=spectra["data"][j].unc, markeredgecolor="k")
 
     ax[0,2].plot(m.spectra["SED"].wave, m.spectra["SED"].flux, "g-")
 
@@ -1158,7 +1166,7 @@ while nsteps < max_nsteps:
     ax[0,2].set_xscale("log", nonposx='clip')
     ax[0,2].set_yscale("log", nonposy='clip')
 
-    ax[0,2].set_xlabel("$\lambda$ [$\mu$]")
+    ax[0,2].set_xlabel("$\lambda$ [$\mu$m]")
     ax[0,2].set_ylabel(r"$F_{\nu}$ [Jy]")
 
     for j in range(len(visibilities["file"])):
