@@ -52,6 +52,7 @@ spectra = {
         "file":["path/to/file1"],
         "bin?":[False],
         "nbins":[25],
+        "weight":[1.],
         }
 
 ################################################################################
@@ -63,6 +64,10 @@ spectra = {
 # The number of walkers to use.
 
 nwalkers = 6
+
+# The number of temperatures to use, if running a PTSampler generation.
+
+ntemps = 5
 
 # The number of steps to do at one time.
 
@@ -155,4 +160,15 @@ parameters = {
         "tau0":{"fixed":True, "value":0., "limits":[0.,10.]},
         "v_ext":{"fixed":True, "value":4., "limits":[2.,6.]},
         "sigma_vext":{"fixed":True, "value":1.0, "limits":[0.01,5.]},
+        }
+
+################################################################################
+#
+# Set up the priors.
+#
+################################################################################
+
+priors = {
+        "parallax":{"value":140., "sigma":0.},
+        "Mstar":{"value":"chabrier"},
         }
