@@ -998,10 +998,10 @@ while nsteps < max_nsteps:
         ax[2*j+1,1].imshow(visibilities["data"][j].imag.reshape(\
                 (visibilities["npix"][j],visibilities["npix"][j]))\
                 [xmin:xmax,xmin:xmax][:,::-1], origin="lower", \
-                interpolation="nearest", vmin=vmin, vmax=vmax)
+                interpolation="nearest", vmin=vmin, vmax=vmax, cmap="jet")
         ax[2*j+1,1].contour(m.visibilities[visibilities["lam"][j]].imag.\
                 reshape((visibilities["npix"][j],visibilities["npix"][j]))\
-                [xmin:xmax,xmin:xmax][:,::-1])
+                [xmin:xmax,xmin:xmax][:,::-1], cmap="jet")
 
         transform1 = ticker.FuncFormatter(Transform(xmin, xmax, \
                 visibilities["binsize"][j]/1000, '%.0f'))
