@@ -1108,7 +1108,8 @@ while nsteps < max_nsteps:
             ax[0,2].errorbar(spectra["data"][j].wave, spectra["data"][j].flux, \
                     fmt="ko", yerr=spectra["data"][j].unc, markeredgecolor="k")
 
-    ax[0,2].plot(m.spectra["SED"].wave, m.spectra["SED"].flux, "g-")
+    if len(spectra["file"]) > 0:
+        ax[0,2].plot(m.spectra["SED"].wave, m.spectra["SED"].flux, "g-")
 
     # Plot the scattered light image.
 
