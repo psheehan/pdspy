@@ -263,6 +263,10 @@ visibilities["data"] = []
 visibilities["data1d"] = []
 visibilities["image"] = []
 
+# Check that all of the parameters are correct.
+
+parameters = modeling.check_parameters(parameters)
+
 # Make sure "fmt" is in the visibilities dictionary.
 
 if not "fmt" in visibilities:
@@ -270,48 +274,15 @@ if not "fmt" in visibilities:
 
 # Decide whether to use an exponentially tapered 
 
-if not "disk_type" in parameters:
-    parameters["disk_type"] = {"fixed":True, "value":"truncated", \
-            "limits":[0.,0.]}
-
 if args.withexptaper:
     parameters["disk_type"]["value"] = "exptaper"
 
-# Make sure the code doesn't break if envelope_type isn't specified.
-
-if not "envelope_type" in parameters:
-    parameters["envelope_type"] = {"fixed":True, "value":"none", \
-            "limits":[0.,0.]}
-
 # Decide whether to do continuum subtraction or not.
-
-if not "docontsub" in parameters:
-    parameters["docontsub"] = {"fixed":True, "value":False, "limits":[0.,0.]}
 
 if args.withcontsub:
     parameters["docontsub"]["value"] = True
 
-# Make sure the code is backwards compatible to a time when only a single gas
-# file was being supplied.
-
-if "gas_file" in parameters:
-    parameters["gas_file1"] = parameters["gas_file"]
-    parameters["logabundance1"] = parameters["logabundance"]
-
-# Make sure the code doesn't break if dust_type isn't specified.
-
-if not "dust_file" in parameters:
-    parameters["dust_file"] = {"fixed":True, "value":"pollack_new.hdf5", \
-            "limits":[0.,0.]}
-
-# Make sure the code doesn't break if dust extinction parameters aren't included
-
-if not "tau0" in parameters:
-    parameters["tau0"] = {"fixed":True, "value":0., "limits":[0.,10.]}
-if not "v_ext" in parameters:
-    parameters["v_ext"] = {"fixed":True, "value":4., "limits":[2.,6.]}
-if not "sigma_vext" in parameters:
-    parameters["sigma_vext"] = {"fixed":True, "value":1.0, "limits":[0.01,5.]}
+# Define the priors as an empty dictionary, if no priors were specified.
 
 if not 'priors' in globals():
     priors = {}

@@ -292,41 +292,14 @@ spectra["data"] = []
 spectra["binned"] = []
 images["data"] = []
 
-# Decide whether to use an exponentially tapered 
+# Check that all of the parameters are correct.
 
-if not "disk_type" in parameters:
-    parameters["disk_type"] = {"fixed":True, "value":"truncated", \
-            "limits":[0.,0.]}
+parameters = modeling.check_parameters(parameters)
+
+# Decide whether to use an exponentially tapered 
 
 if args.withexptaper:
     parameters["disk_type"]["value"] = "exptaper"
-
-# Make sure all of the appropriate values are set for a Settled Disk.
-
-if parameters["disk_type"] == "settled":
-    for value in ["loga_min","na","logalpha_settled"]:
-        if value not in parameters:
-            print("ERROR: The parameter '"+value+"' must be included in the "
-                    "parameters dictionary in config.py")
-            sys.exit(0)
-
-# Make sure the code doesn't break if envelope_type isn't specified.
-
-if not "envelope_type" in parameters:
-    parameters["envelope_type"] = {"fixed":True, "value":"ulrich", \
-            "limits":[0.,0.]}
-
-# Make sure the code doesn't break if dust_type isn't specified.
-
-if not "dust_file" in parameters:
-    parameters["dust_file"] = {"fixed":True, "value":"pollack_new.hdf5", \
-            "limits":[0.,0.]}
-
-# Make sure that the envelope dust is the same as the disk dust, if it is not 
-# specified.
-
-if not "envelope_dust" in parameters:
-    parameters["envelope_dust"] = parameters["dust_file"]
 
 ######################################
 # Read in the millimeter visibilities.
