@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pdspy.interferometry as uv
-import pdspy.modeling as modeling
-import pdspy.misc as misc
-import pdspy.dust as dust
+from .YSOModel import YSOModel
+from .. import interferometry as uv
+from .. import misc
+from .. import dust
 import scipy.signal
 import subprocess
 import argparse
@@ -105,7 +105,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         code = "radmc3d"
         nprocesses = ncpus
 
-    m = modeling.YSOModel()
+    m = YSOModel()
     m.add_star(mass=p["M_star"],luminosity=p["L_star"],temperature=p["T_star"])
     m.set_spherical_grid(p["R_in"], p["R_env"], 100, nphi, 2, code=code)
 

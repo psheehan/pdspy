@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
-from pdspy.constants.physics import c, m_p, G
-from pdspy.constants.physics import k as k_b
-from pdspy.constants.astronomy import M_sun, AU
-import pdspy.interferometry as uv
-import pdspy.spectroscopy as sp
-import pdspy.modeling as modeling
-import pdspy.misc as misc
-import pdspy.dust as dust
-import pdspy.gas as gas
+from ..constants.physics import c, m_p, G
+from ..constants.physics import k as k_b
+from ..constants.astronomy import M_sun, AU
+from .YSOModel import YSOModel
+from .. import interferometry as uv
+from .. import spectroscopy as sp
+from .. import misc
+from .. import dust
+from .. import gas
 import scipy.signal
 import numpy
 import time
@@ -101,7 +101,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
 
     # Set up the model. 
 
-    m = modeling.YSOModel()
+    m = YSOModel()
     m.add_star(mass=p["M_star"], luminosity=p["L_star"],temperature=p["T_star"])
 
     if p["envelope_type"] == "ulrich":
