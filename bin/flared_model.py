@@ -525,9 +525,14 @@ while nsteps < max_nsteps:
 
         # Calculate the velocity for each image.
 
-        v = c * (float(visibilities["freq"][j])*1.0e9 - \
-                visibilities["image"][j].freq)/(float(visibilities["freq"][j])*\
-                1.0e9)
+        if args.plot_vis:
+            v = c * (float(visibilities["freq"][j])*1.0e9 - \
+                    visibilities["data"][j].freq)/ \
+                    (float(visibilities["freq"][j])*1.0e9)
+        else:
+            v = c * (float(visibilities["freq"][j])*1.0e9 - \
+                    visibilities["image"][j].freq)/ \
+                    (float(visibilities["freq"][j])*1.0e9)
 
         # Plot the image.
 
