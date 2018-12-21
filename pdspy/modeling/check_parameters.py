@@ -11,7 +11,7 @@ def check_parameters(parameters):
     # Make sure that the envelope dust is the same as the disk dust, if it is 
     # not specified.
 
-    if "disk_dust" in parameters and not "envelope_dust" in parameters:
+    if "dust_file" in parameters and not "envelope_dust" in parameters:
         parameters["envelope_dust"] = parameters["dust_file"]
 
     # Now loop through and make sure all of the parameters are present and 
