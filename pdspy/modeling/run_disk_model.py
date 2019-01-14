@@ -232,6 +232,11 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                 pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                 mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses)
 
+        m.visibilities[visibilities["lam"][j]].real *= \
+                p["flux_unc{0:d}".format(j+1)]
+        m.visibilities[visibilities["lam"][j]].imag *= \
+                p["flux_unc{0:d}".format(j+1)]
+
         """NEW: Interpolate model to native baselines?
         m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
                 visibilities["data"].u, visibilities["data"].v, \
