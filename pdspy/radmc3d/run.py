@@ -3,9 +3,12 @@ from subprocess import STDOUT, run
 
 def thermal(noscat=None, nphot_therm=None, nphot_scat=None, setthreads=1, \
         inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None, \
-        verbose=True, timelimit=7200):
+        verbose=True, timelimit=7200, nice=None):
 
-    command="radmc3d mctherm"
+    if nice != None:
+        command="nice -{0:d} radmc3d mctherm".format(nice)
+    else:
+        command="radmc3d mctherm"
 
     if (noscat == True):
         command += " noscat"
@@ -36,9 +39,12 @@ def sed(nrrefine=None, fluxcons=None, norefine=None, nofluxcons=None, \
         noapert=None, nphot_scat=None, inclstar=None, nostar=None, \
         inclline=None, noline=None, incldust=None, nodust=None, \
         inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None, \
-        loadlambda=None, verbose=True):
+        loadlambda=None, verbose=True, nice=None):
 
-    command="radmc3d sed "
+    if nice != None:
+        command="nice -{0:d} radmc3d sed ".format(nice)
+    else:
+        command="radmc3d sed "
 
     if (nrrefine != None):
         command += "nrrefine {0:i} ".format(nrrefine)
@@ -125,9 +131,12 @@ def image(lam=None, npix=None, npixx=None, npixy=None, nrrefine=None, \
         inclline=None, noline=None, incldust=None, nodust=None, \
         inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None, \
         widthkms=None, vkms=None, linenlam=None, iline=None, imolspec=None, \
-        doppcatch=None, verbose=True):
+        doppcatch=None, verbose=True, nice=None):
 
-    command="radmc3d image "
+    if nice != None:
+        command="nice -{0:d} radmc3d image ".format(nice)
+    else:
+        command="radmc3d image "
 
     if (lam != None):
         command += "lambda "+lam+" "

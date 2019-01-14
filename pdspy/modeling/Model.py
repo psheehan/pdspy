@@ -118,10 +118,10 @@ class Model:
         os.system("rm temp.rtin temp.rtout temp.log")
 
     def run_thermal_radmc3d(self, nphot=1e6, verbose=True, timelimit=7200, \
-            **keywords):
+            nice=None, **keywords):
         self.write_radmc3d(nphot_therm=nphot, **keywords)
 
-        radmc3d.run.thermal(verbose=verbose, timelimit=timelimit)
+        radmc3d.run.thermal(verbose=verbose, timelimit=timelimit, nice=nice)
 
         self.grid.temperature = radmc3d.read.dust_temperature()
         for i in range(len(self.grid.temperature)):
@@ -144,7 +144,7 @@ class Model:
     def run_image_radmc3d(self, name=None, nphot=1e6, npix=256, pixelsize=1.0, \
             lam="1300", loadlambda=False, imolspec=None, iline=None,  \
             widthkms=None, vkms=None, linenlam=None, doppcatch=False, \
-            incl=0, pa=0, phi=0, dpc=1, verbose=True, **keywords):
+            incl=0, pa=0, phi=0, dpc=1, verbose=True, nice=None, **keywords):
         self.write_radmc3d(nphot_scat=nphot, **keywords)
 
         if npix%2 == 0:
@@ -158,7 +158,7 @@ class Model:
                 loadlambda=loadlambda, imolspec=imolspec, iline=iline, \
                 widthkms=widthkms, vkms=vkms, linenlam=linenlam, \
                 doppcatch=doppcatch, incl=incl, posang=pa, phi=phi, \
-                verbose=verbose)
+                verbose=verbose, nice=nice)
 
         if 'writeimage_unformatted' in keywords:
             image, x, y, lam = radmc3d.read.image(\
@@ -189,11 +189,12 @@ class Model:
         return
 
     def run_sed_radmc3d(self, name=None, nphot=1e6, incl=0, pa=0, \
-            phi=0, dpc=1, loadlambda=False, verbose=True, **keywords):
+            phi=0, dpc=1, loadlambda=False, verbose=True, nice=None, \
+            **keywords):
         self.write_radmc3d(nphot_spec=nphot, **keywords)
 
         radmc3d.run.sed(incl=incl, posang=pa, phi=phi, noline=True, \
-                loadlambda=loadlambda, verbose=verbose)
+                loadlambda=loadlambda, verbose=verbose, nice=nice)
 
         flux, lam = radmc3d.read.spectrum()
 
@@ -217,7 +218,7 @@ class Model:
             pixelsize=1.0, lam="1300", loadlambda=False, imolspec=None, \
             iline=None,  widthkms=None, vkms=None, linenlam=None, \
             doppcatch=False, incl=0, pa=0, phi=0, dpc=1, verbose=True, \
-            **keywords):
+            nice=None, **keywords):
         self.write_radmc3d(nphot_scat=nphot, **keywords)
 
         if npix%2 == 0:
@@ -231,7 +232,7 @@ class Model:
                 loadlambda=loadlambda, imolspec=imolspec, iline=iline, \
                 widthkms=widthkms, vkms=vkms, linenlam=linenlam, \
                 doppcatch=doppcatch, incl=incl, posang=pa, phi=phi, \
-                verbose=verbose)
+                verbose=verbose, nice=nice)
 
         if 'writeimage_unformatted' in keywords:
             image, x, y, lam = radmc3d.read.image(\

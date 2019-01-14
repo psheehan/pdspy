@@ -24,7 +24,7 @@ comm = MPI.COMM_WORLD
 ################################################################################
 
 def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
-        source="flared", plot_vis=False):
+        source="flared", plot_vis=False, nice=None):
 
     # Set the values of all of the parameters.
 
@@ -163,7 +163,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                     scattering_mode_max=0, incl_dust=True, incl_lines=True, \
                     loadlambda=True, incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
                     code="radmc3d", verbose=False, writeimage_unformatted=True,\
-                    setthreads=ncpus)
+                    setthreads=ncpus, nice=nice)
 
             m.run_image(name="cont", nphot=1e5, \
                     npix=visibilities["npix"][j], lam=None, \
@@ -171,7 +171,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                     scattering_mode_max=0, incl_dust=True, incl_lines=False, \
                     loadlambda=True, incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
                     code="radmc3d", verbose=False, writeimage_unformatted=True,\
-                    setthreads=ncpus)
+                    setthreads=ncpus, nice=nice)
 
             m.images[visibilities["lam"][j]].image -= m.images["cont"].image
         else:
@@ -181,7 +181,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                     scattering_mode_max=0, incl_dust=False, incl_lines=True, \
                     loadlambda=True, incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
                     code="radmc3d", verbose=False, writeimage_unformatted=True,\
-                    setthreads=ncpus)
+                    setthreads=ncpus, nice=nice)
 
         # Extinct the data, if included.
 
@@ -218,7 +218,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                         tgas_eq_tdust=True, scattering_mode_max=0, \
                         incl_dust=True, incl_lines=True, loadlambda=True, \
                         incl=p["i"], pa=-p["pa"], dpc=p["dpc"], code="radmc3d",\
-                        verbose=False, setthreads=ncpus)
+                        verbose=False, setthreads=ncpus, nice=nice)
 
                 m.run_image(name="cont", nphot=1e5, \
                         npix=visibilities["image_npix"][j], lam=None, \
@@ -226,7 +226,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                         tgas_eq_tdust=True, scattering_mode_max=0, \
                         incl_dust=True, incl_lines=False, loadlambda=True, \
                         incl=p["i"], pa=-p["pa"], dpc=p["dpc"], code="radmc3d",\
-                        verbose=False, setthreads=ncpus)
+                        verbose=False, setthreads=ncpus, nice=nice)
 
                 m.images[visibilities["lam"][j]].image -= m.images["cont"].image
             else:
@@ -236,7 +236,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                         tgas_eq_tdust=True, scattering_mode_max=0, \
                         incl_dust=False, incl_lines=True, loadlambda=True, \
                         incl=p["i"], pa=-p["pa"], dpc=p["dpc"], code="radmc3d",\
-                        verbose=False, setthreads=ncpus)
+                        verbose=False, setthreads=ncpus, nice=nice)
 
             # Extinct the data, if included.
 

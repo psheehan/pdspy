@@ -23,7 +23,7 @@ comm = MPI.COMM_WORLD
 
 def run_disk_model(visibilities, images, spectra, params, parameters, \
         plot=False, ncpus=1, ncpus_highmass=1, with_hyperion=False, \
-        timelimit=3600, source="disk"):
+        timelimit=3600, source="disk", nice=None):
 
     # Set the values of all of the parameters.
 
@@ -185,7 +185,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
             m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
                     mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
                     verbose=False, setthreads=nprocesses, \
-                    timelimit=timelimit)
+                    timelimit=timelimit, nice=nice)
             t2 = time.time()
             f = open(original_dir + "/times.txt", "a")
             f.write("{0:f}\n".format(t2-t1))
@@ -212,7 +212,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
             m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
                     mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
                     verbose=False, setthreads=nprocesses, \
-                    timelimit=timelimit)
+                    timelimit=timelimit, nice=nice)
             t2 = time.time()
             f = open(original_dir + "/times.txt", "a")
             f.write("{0:f}\n".format(t2-t1))
@@ -230,7 +230,8 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                 pixelsize=visibilities["pixelsize"][j], \
                 lam=visibilities["lam"][j], incl=p["i"], \
                 pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
-                mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses)
+                mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses, \
+                nice=nice)
 
         m.visibilities[visibilities["lam"][j]].real *= \
                 p["flux_unc{0:d}".format(j+1)]
@@ -255,7 +256,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                     npix=2048, pixelsize=0.05, lam=visibilities["lam"][j], \
                     incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
                     code="radmc3d", mc_scat_maxtauabs=5, verbose=False, \
-                    setthreads=nprocesses)
+                    setthreads=nprocesses, nice=nice)
 
             m.visibilities[visibilities["lam"][j]+"_high"] = uv.center(\
                     m.visibilities[visibilities["lam"][j]+"_high"], \
@@ -268,7 +269,8 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                     pixelsize=visibilities["image_pixelsize"][j], \
                     lam=visibilities["lam"][j], incl=p["i"], \
                     pa=-p["pa"], dpc=p["dpc"], code="radmc3d", \
-                    mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses)
+                    mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses, \
+                    nice=nice)
 
             x, y = numpy.meshgrid(numpy.linspace(-256,255,512), \
                     numpy.linspace(-256,255,512))
@@ -293,7 +295,8 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                 npix=images["npix"][j], pixelsize=images["pixelsize"][j], \
                 lam=images["lam"][j], incl=p["i"], \
                 pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
-                mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses)
+                mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses, \
+                nice=nice)
 
         # Convolve with the beam.
 
@@ -319,7 +322,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         m.run_sed(name="SED", nphot=1e4, loadlambda=True, incl=p["i"],\
                 pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                 camera_scatsrc_allfreq=True, mc_scat_maxtauabs=5, \
-                verbose=False, setthreads=nprocesses)
+                verbose=False, setthreads=nprocesses, nice=nice)
 
         # Redden the SED based on the reddening.
 
