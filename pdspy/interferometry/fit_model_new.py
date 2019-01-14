@@ -113,38 +113,48 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=None, \
             else:
                 r_max = max_size
 
+            lnp = 0.
+
             for i in range(funct.size):
                 if funct[i] == 'point':
-                    if 0. < p[int(ind+2)]:
+                    if -xmax < p[int(ind+0)] < xmax and -ymax < p[int(ind+1)] <\
+                            ymax and 0. < p[int(ind+2)]:
                         pass
                     else:
                         return -numpy.inf
                 elif funct[i] == 'gauss':
-                    if 0 < p[int(ind+2)] and 0 < p[int(ind+3)] <= p[int(ind+2)]\
-                            < r_max and pa0[i]-pa_range[i]<= p[int(ind+4)] <= \
-                            pa0[i]+pa_range[i] and 0. < p[int(ind+5)]:
-                        pass
+                    if -xmax < p[int(ind+0)] < xmax and -ymax < p[int(ind+1)] <\
+                            ymax and 0 < p[int(ind+2)] and 0 < p[int(ind+3)] <=\
+                            p[int(ind+2)] < r_max and pa0[i]-pa_range[i]<= \
+                            p[int(ind+4)] <= pa0[i]+pa_range[i] and 0. < \
+                            p[int(ind+5)]:
+                        #pass
+                        lnp += -0.5 * (p[int(ind+0)] - xmin[i])**2 / 0.1**2 + \
+                                -0.5 * (p[int(ind+1)] - ymin[i])**2 / 0.1**2
                     else:
                         return -numpy.inf
                 elif funct[i] == 'circle':
-                    if 0. < p[int(ind+2)] < r_max and 0. <= p[int(ind+3)] <= \
-                            numpy.pi/2 and pa0[i]-pa_range[i] <= p[int(ind+4)] \
-                            <= pa0[i]+pa_range[i] and 0. < p[int(ind+5)]:
+                    if -xmax < p[int(ind+0)] < xmax and -ymax < p[int(ind+1)] <\
+                            ymax and 0. < p[int(ind+2)] < r_max and 0. <= \
+                            p[int(ind+3)] <= numpy.pi/2 and pa0[i]-pa_range[i] \
+                            <= p[int(ind+4)] <= pa0[i]+pa_range[i] and 0. < \
+                            p[int(ind+5)]:
                         pass
                     else:
                         return -numpy.inf
                 elif funct[i] == 'ring':
-                    if 0. < p[int(ind+2)] and p[int(ind+2)] < p[int(ind+3)] < \
-                            r_max and 0.0 <= p[int(ind+4)] <= numpy.pi/2 and \
-                            pa0[i]-pa_range[i] <= p[int(ind+5)] <= \
-                            pa0[i]+pa_range[i] and 0. < p[int(ind+6)]:
+                    if -xmax < p[int(ind+0)] < xmax and -ymax < p[int(ind+1)] <\
+                            ymax and 0. < p[int(ind+2)] and p[int(ind+2)] < \
+                            p[int(ind+3)] < r_max and 0.0 <= p[int(ind+4)] <= \
+                            numpy.pi/2 and pa0[i]-pa_range[i] <= p[int(ind+5)] \
+                            <= pa0[i]+pa_range[i] and 0. < p[int(ind+6)]:
                         pass
                     else:
                         return -numpy.inf
 
                 ind += nparams[i]
 
-            return 0.
+            return lnp
 
         def lnprob(p, x, y, z, zerr, funct):
             lp = lnprior(p, funct)
