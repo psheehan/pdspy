@@ -5,18 +5,10 @@ import pdspy.interferometry as uv
 import pdspy.spectroscopy as sp
 import pdspy.modeling as modeling
 import pdspy.imaging as im
-import pdspy.misc as misc
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-import pdspy.table
-import pdspy.dust as dust
-import pdspy.mcmc as mc
-import scipy.signal
-import subprocess
 import argparse
-import signal
 import numpy
-import time
 import sys
 import os
 import emcee
@@ -83,327 +75,14 @@ else:
 #
 ################################################################################
 
-def model(visibilities, images, spectra, params, parameters, plot=False):
-
-    # Set the values of all of the parameters.
-
-    p = {}
-    for key in parameters:
-        if parameters[key]["fixed"]:
-            if parameters[key]["value"] in parameters.keys():
-                if parameters[parameters[key]["value"]]["fixed"]:
-                    value = parameters[parameters[key]["value"]]["value"]
-                else:
-                    value = params[parameters[key]["value"]]
-            else:
-                value = parameters[key]["value"]
-        else:
-            value = params[key]
-
-        if key[0:3] == "log":
-            p[key[3:]] = 10.**value
-        else:
-            p[key] = value
-
-    # Make sure alpha is defined.
-
-    p["alpha"] = p["gamma"] + p["beta"]
-    p["alpha_large"] = p["gamma"] + p["beta_large"]
-
-    # If we're using a Pringle disk, make sure the scale height is set correctly
-
-    if p["disk_type"] in ["exptaper","settledexptaper"]:
-        p["h_0"] *= p["R_disk"]**p["beta"]
-
-    # Get the needed values of the gaps.
-
-    p["R_in_gap1"] = p["R_gap1"] - p["w_gap1"]/2
-    p["R_out_gap1"] = p["R_gap1"] + p["w_gap1"]/2
-    p["R_in_gap2"] = p["R_gap2"] - p["w_gap2"]/2
-    p["R_out_gap2"] = p["R_gap2"] + p["w_gap2"]/2
-    p["R_in_gap3"] = p["R_gap3"] - p["w_gap3"]/2
-    p["R_out_gap3"] = p["R_gap3"] + p["w_gap3"]/2
-
-    # Set up the dust.
-
-    dustopac = p["dust_file"]
-    dust_gen = dust.DustGenerator(dust.__path__[0]+"/data/"+dustopac)
-    if not p["disk_type"] in ["settled","settledexptaper"]:
-        ddust = dust_gen(p["a_max"] / 1e4, p["p"])
-
-    dustopac_env = p["envelope_dust"]
-    env_dust_gen = dust.DustGenerator(dust.__path__[0]+"/data/"+dustopac_env)
-    edust = env_dust_gen(1.0e-4, 3.5)
-
-    # Make sure we are in a temp directory to not overwrite anything.
-
-    original_dir = os.environ["PWD"]
-    os.mkdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
-    os.chdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
-
-    # Write the parameters to a text file so it is easy to keep track of them.
-
-    f = open("params.txt","w")
-    for key in p:
-        f.write("{0:s} = {1}\n".format(key, p[key]))
-    f.close()
-
-    # Set up the model and run the thermal simulation.
-
-    if p["M_disk"] > 0.001 or p["R_disk"] < 50 or p["M_env"] > 0.001 or \
-            p["R_env"] < 500 or p["h_0"] > 0.25:
-        if args.withhyperion:
-            nphi = 201
-            code = "hyperion"
-            nprocesses = ncpus_highmass
-        else:
-            nphi = 101
-            code = "radmc3d"
-            nprocesses = ncpus_highmass
-    else:
-        nphi = 101
-        code = "radmc3d"
-        nprocesses = ncpus
-
-    m = modeling.YSOModel()
-    m.add_star(mass=p["M_star"],luminosity=p["L_star"],temperature=p["T_star"])
-    m.set_spherical_grid(p["R_in"], p["R_env"], 100, nphi, 2, code=code)
-
-    if p["disk_type"] == "exptaper":
-        m.add_pringle_disk(mass=p["M_disk"]*p["f_M_large"], rmin=p["R_in"], \
-                rmax=p["R_disk"], plrho=p["alpha_large"], \
-                h0=p["h_0"]*p["f_h_large"], plh=p["beta_large"], dust=ddust, \
-                gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"],\
-                p["R_in_gap3"]], gap_rout=[p["R_cav"],p["R_out_gap1"],\
-                p["R_out_gap2"],p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
-                p["delta_gap1"],p["delta_gap2"],p["delta_gap3"]])
-        if p["f_M_large"] < 1:
-            m.add_pringle_disk(mass=p["M_disk"]*(1-p["f_M_large"]), \
-                    rmin=p["R_in"], rmax=p["R_disk"], plrho=p["alpha"], \
-                    h0=p["h_0"], plh=p["beta"], dust=edust, gap_rin=[p["R_in"],\
-                    p["R_in_gap1"],p["R_in_gap2"],p["R_in_gap3"]], \
-                    gap_rout=[p["R_cav"],p["R_out_gap1"],p["R_out_gap2"],\
-                    p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
-                    p["delta_gap1"], p["delta_gap2"],p["delta_gap3"]])
-    elif p["disk_type"] == "settled":
-        m.add_settled_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
-                plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=dust_gen,\
-                gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"],\
-                p["R_in_gap3"]], gap_rout=[p["R_cav"],p["R_out_gap1"],\
-                p["R_out_gap2"],p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
-                p["delta_gap1"],p["delta_gap2"],p["delta_gap3"]], \
-                amin=p["a_min"], amax=p["a_max"], pla=p["p"], na=p["na"], \
-                alpha_settle=p["alpha_settle"])
-    elif p["disk_type"] == "settledexptaper":
-        m.add_settled_pringle_disk(mass=p["M_disk"], rmin=p["R_in"], \
-                rmax=p["R_disk"], plrho=p["alpha"], h0=p["h_0"], plh=p["beta"],\
-                dust=dust_gen,gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"],\
-                p["R_in_gap3"]], gap_rout=[p["R_cav"],p["R_out_gap1"],\
-                p["R_out_gap2"],p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
-                p["delta_gap1"],p["delta_gap2"],p["delta_gap3"]], \
-                amin=p["a_min"], amax=p["a_max"], pla=p["p"], na=p["na"], \
-                alpha_settle=p["alpha_settle"])
-    else:
-        m.add_disk(mass=p["M_disk"]*p["f_M_large"], rmin=p["R_in"], \
-                rmax=p["R_disk"], plrho=p["alpha_large"], \
-                h0=p["h_0"]*p["f_h_large"], plh=p["beta_large"], dust=ddust, \
-                gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"],\
-                p["R_in_gap3"]], gap_rout=[p["R_cav"],p["R_out_gap1"],\
-                p["R_out_gap2"],p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
-                p["delta_gap1"],p["delta_gap2"],p["delta_gap3"]])
-        if p["f_M_large"] < 1:
-            m.add_disk(mass=p["M_disk"]*(1-p["f_M_large"]), rmin=p["R_in"], \
-                    rmax=p["R_disk"], plrho=p["alpha"], h0=p["h_0"], \
-                    plh=p["beta"], dust=edust, gap_rin=[p["R_in"],\
-                    p["R_in_gap1"],p["R_in_gap2"],p["R_in_gap3"]], \
-                    gap_rout=[p["R_cav"],p["R_out_gap1"],p["R_out_gap2"],\
-                    p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
-                    p["delta_gap1"], p["delta_gap2"],p["delta_gap3"]])
-
-    if p["envelope_type"] == "ulrich":
-        m.add_ulrich_envelope(mass=p["M_env"], rmin=p["R_in"], rmax=p["R_env"],\
-                cavpl=p["ksi"], cavrfact=p["f_cav"], dust=edust)
-    else:
-        pass
-
-    m.grid.set_wavelength_grid(0.1,1.0e5,500,log=True)
-
-    # Run the thermal simulation.
-
-    if code == "hyperion":
-        m.run_thermal(code="hyperion", nphot=2e5, mrw=True, pda=True, \
-                niterations=20, mpi=True, nprocesses=nprocesses, verbose=False)
-
-        # Convert model to radmc-3d format.
-
-        m.make_hyperion_symmetric()
-
-        m.convert_hyperion_to_radmc3d()
-    else:
-        try:
-            t1 = time.time()
-            m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
-                    mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
-                    verbose=False, setthreads=nprocesses, \
-                    timelimit=args.timelimit)
-            t2 = time.time()
-            f = open(original_dir + "/times.txt", "a")
-            f.write("{0:f}\n".format(t2-t1))
-            f.close()
-        # Catch a timeout error from models running for too long...
-        except subprocess.TimeoutExpired:
-            t2 = time.time()
-            f = open(original_dir + "/times.txt", "a")
-            f.write("{0:f}\n".format(t2-t1))
-            f.close()
-
-            os.system("mv params.txt {0:s}/params_timeout_{1:s}".format(\
-                    original_dir, time.strftime("%Y-%m-%d-%H:%M:%S", \
-                    time.gmtime())))
-            os.system("rm *.inp *.out *.dat *.uinp")
-            os.chdir(original_dir)
-            os.rmdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
-
-            return 0.
-        # Catch a strange RADMC3D error and re-run. Not an ideal fix, but 
-        # perhaps the simplest option.
-        except:
-            t1 = time.time()
-            m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
-                    mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
-                    verbose=False, setthreads=nprocesses, \
-                    timelimit=args.timelimit)
-            t2 = time.time()
-            f = open(original_dir + "/times.txt", "a")
-            f.write("{0:f}\n".format(t2-t1))
-            f.close()
-
-    # Run the images/visibilities/SEDs. If plot == "concat" then we are doing
-    # a fit and we need less. Otherwise we are making a plot of the best fit 
-    # model so we need to generate a few extra things.
-
-    # Run the visibilities.
-
-    for j in range(len(visibilities["file"])):
-        m.run_visibilities(name=visibilities["lam"][j], nphot=1e5, \
-                npix=visibilities["npix"][j], \
-                pixelsize=visibilities["pixelsize"][j], \
-                lam=visibilities["lam"][j], incl=p["i"], \
-                pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
-                mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses)
-
-        m.visibilities[visibilities["lam"][j]].real *= \
-                p["flux_unc{0:d}".format(j+1)]
-        m.visibilities[visibilities["lam"][j]].imag *= \
-                p["flux_unc{0:d}".format(j+1)]
-
-        """NEW: Interpolate model to native baselines?
-        m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
-                visibilities["data"].u, visibilities["data"].v, \
-                visibilities["data"].freq, \
-                m.visibilities[visibilities["lam"][j]])
-        """
-
-        m.visibilities[visibilities["lam"][j]] = uv.center(\
-                m.visibilities[visibilities["lam"][j]], [p["x0"], \
-                p["y0"], 1.])
-
-        if plot:
-            # Run a high resolution version of the visibilities.
-
-            m.run_visibilities(name=visibilities["lam"][j]+"_high", nphot=1e5, \
-                    npix=2048, pixelsize=0.05, lam=visibilities["lam"][j], \
-                    incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
-                    code="radmc3d", mc_scat_maxtauabs=5, verbose=False, \
-                    setthreads=nprocesses)
-
-            m.visibilities[visibilities["lam"][j]+"_high"] = uv.center(\
-                    m.visibilities[visibilities["lam"][j]+"_high"], \
-                    [p["x0"], p["y0"], 1.])
-
-            # Run a millimeter image.
-
-            m.run_image(name=visibilities["lam"][j], nphot=1e5, \
-                    npix=visibilities["image_npix"][j], \
-                    pixelsize=visibilities["image_pixelsize"][j], \
-                    lam=visibilities["lam"][j], incl=p["i"], \
-                    pa=-p["pa"], dpc=p["dpc"], code="radmc3d", \
-                    mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses)
-
-            x, y = numpy.meshgrid(numpy.linspace(-256,255,512), \
-                    numpy.linspace(-256,255,512))
-
-            beam = misc.gaussian2d(x, y, 0., 0., \
-                    visibilities["image"][j].header["BMAJ"]/2.355/\
-                    visibilities["image"][j].header["CDELT2"], \
-                    visibilities["image"][j].header["BMIN"]/2.355/\
-                    visibilities["image"][j].header["CDELT2"], \
-                    (90-visibilities["image"][j].header["BPA"])*numpy.pi/180., \
-                    1.0)
-
-            m.images[visibilities["lam"][j]].image = scipy.signal.fftconvolve(\
-                    m.images[visibilities["lam"][j]].image[:,:,0,0], beam, \
-                    mode="same").reshape(m.images[visibilities["lam"][j]].\
-                    image.shape)
-
-    # Run the images.
-
-    for j in range(len(images["file"])):
-        m.run_image(name=images["lam"][j], nphot=1e5, \
-                npix=images["npix"][j], pixelsize=images["pixelsize"][j], \
-                lam=images["lam"][j], incl=p["i"], \
-                pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
-                mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses)
-
-        # Convolve with the beam.
-
-        x, y = numpy.meshgrid(numpy.linspace(-256,255,512), \
-                numpy.linspace(-256,255,512))
-
-        beam = misc.gaussian2d(x, y, 0., 0., images["bmaj"][j]/2.355/\
-                images["pixelsize"][j], images["bmin"][j]/2.355/\
-                image["pixelsize"][j], (90-images["bpa"][j])*numpy.pi/180., 1.0)
-
-        m.images[images["lam"][j]].image = scipy.signal.fftconvolve(\
-                m.images[images["lam"][j]].image[:,:,0,0], beam, mode="same").\
-                reshape(m.images[images["lam"][j]].image.shape)
-
-    # Run the SED.
-
-    if "total" in spectra:
-        if plot:
-            m.set_camera_wavelength(numpy.logspace(-1,4,50))
-        else:
-            m.set_camera_wavelength(spectra["total"].wave)
-
-        m.run_sed(name="SED", nphot=1e4, loadlambda=True, incl=p["i"],\
-                pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
-                camera_scatsrc_allfreq=True, mc_scat_maxtauabs=5, \
-                verbose=False, setthreads=nprocesses)
-
-        # Redden the SED based on the reddening.
-
-        m.spectra["SED"].flux = dust.redden(m.spectra["SED"].wave, \
-                m.spectra["SED"].flux, p["Ak"], law="mcclure")
-
-        # Now take the log of the SED.
-
-        if not plot:
-            m.spectra["SED"].flux = numpy.log10(m.spectra["SED"].flux)
-
-    # Clean up everything and return.
-
-    os.system("rm params.txt")
-    os.chdir(original_dir)
-    os.rmdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
-
-    return m
-
 # Define a likelihood function.
 
 def lnlike(params, visibilities, images, spectra, parameters, plot):
 
-    m = model(visibilities, images, spectra, params, parameters, plot)
+    m = modeling.run_disk_model(visibilities, images, spectra, params, \
+            parameters, plot, ncpus=ncpus, ncpus_highmass=ncpus_highmass, \
+            with_hyperion=args.withhyperion, timelimit=args.timelimit, \
+            source=source)
 
     # Catch whether the model timed out.
 
@@ -626,48 +305,14 @@ spectra["data"] = []
 spectra["binned"] = []
 images["data"] = []
 
-# Decide whether to use an exponentially tapered 
+# Check that all of the parameters are correct.
 
-if not "disk_type" in parameters:
-    parameters["disk_type"] = {"fixed":True, "value":"truncated", \
-            "limits":[0.,0.]}
+parameters = modeling.check_parameters(parameters)
+
+# Decide whether to use an exponentially tapered 
 
 if args.withexptaper:
     parameters["disk_type"]["value"] = "exptaper"
-
-# Make sure all of the appropriate values are set for a Settled Disk.
-
-if parameters["disk_type"] == "settled":
-    for value in ["loga_min","na","logalpha_settled"]:
-        if value not in parameters:
-            print("ERROR: The parameter '"+value+"' must be included in the "
-                    "parameters dictionary in config.py")
-            sys.exit(0)
-
-# Make sure the code doesn't break if envelope_type isn't specified.
-
-if not "envelope_type" in parameters:
-    parameters["envelope_type"] = {"fixed":True, "value":"ulrich", \
-            "limits":[0.,0.]}
-
-# Make sure the code doesn't break if dust_type isn't specified.
-
-if not "dust_file" in parameters:
-    parameters["dust_file"] = {"fixed":True, "value":"pollack_new.hdf5", \
-            "limits":[0.,0.]}
-
-# Make sure that the envelope dust is the same as the disk dust, if it is not 
-# specified.
-
-if not "envelope_dust" in parameters:
-    parameters["envelope_dust"] = parameters["dust_file"]
-
-# Make sure that the flux_unc parameters are specified.
-
-for i in range(3):
-    if not "flux_unc{0:d}".format(i+1) in parameters:
-        parameters["flux_unc{0:d}".format(i+1)] = {"fixed":True, "value":1., \
-                "prior":"box", "sigma":0., "limits":[0.5,1.5]}
 
 ######################################
 # Read in the millimeter visibilities.
@@ -975,7 +620,10 @@ while nsteps < max_nsteps:
 
     # Create a high resolution model for averaging.
 
-    m = model(visibilities, images, spectra, params, parameters, plot=True)
+    m = modeling.run_disk_model(visibilities, images, spectra, params, \
+            parameters, plot=True, ncpus=ncpus, ncpus_highmass=ncpus_highmass, \
+            with_hyperion=args.withhyperion, timelimit=args.timelimit, \
+            source=source)
 
     # Plot the millimeter data/models.
 
