@@ -225,42 +225,41 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
     # Run the visibilities.
 
     for j in range(len(visibilities["file"])):
-        m.run_visibilities(name=visibilities["lam"][j], nphot=1e5, \
+        m.run_image(name=visibilities["lam"][j], nphot=1e5, \
                 npix=visibilities["npix"][j], \
                 pixelsize=visibilities["pixelsize"][j], \
                 lam=visibilities["lam"][j], incl=p["i"], \
                 pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                 mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses, \
-                nice=nice)
+                writeimage_unformatted=True, nice=nice)
 
-        m.visibilities[visibilities["lam"][j]].real *= \
-                p["flux_unc{0:d}".format(j+1)]
-        m.visibilities[visibilities["lam"][j]].imag *= \
-                p["flux_unc{0:d}".format(j+1)]
+        m.images[visibilities["lam"][j]].image *= p["flux_unc{0:d}".format(j+1)]
 
-        """NEW: Interpolate model to native baselines?
         m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
-                visibilities["data"].u, visibilities["data"].v, \
-                visibilities["data"].freq, \
-                m.visibilities[visibilities["lam"][j]])
-        """
-
-        m.visibilities[visibilities["lam"][j]] = uv.center(\
-                m.visibilities[visibilities["lam"][j]], [p["x0"], \
-                p["y0"], 1.])
+                visibilities["data"][j].u, visibilities["data"][j].v, \
+                visibilities["data"][j].freq, m.images[visibilities["lam"][j]],\
+                dRA=-p["x0"], dDec=-p["y0"], nthreads=nprocesses)
 
         if plot:
-            # Run a high resolution version of the visibilities.
+            # Make high resolution visibilities. 
 
-            m.run_visibilities(name=visibilities["lam"][j]+"_high", nphot=1e5, \
-                    npix=2048, pixelsize=0.05, lam=visibilities["lam"][j], \
-                    incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
-                    code="radmc3d", mc_scat_maxtauabs=5, verbose=False, \
-                    setthreads=nprocesses, nice=nice)
+            u, v = numpy.meshgrid(numpy.linspace(-2.0e6, 2.0e6, 2001), \
+                    numpy.linspace(-2.0e6, 2.0e6, 2001))
+            u, v = u.reshape((u.size,)), v.reshape((v.size,))
 
-            m.visibilities[visibilities["lam"][j]+"_high"] = uv.center(\
-                    m.visibilities[visibilities["lam"][j]+"_high"], \
-                    [p["x0"], p["y0"], 1.])
+            m.visibilities[visibilities["lam"][j]+"_high"] = \
+                    uv.interpolate_model(u, v, visibilities["data2d"][j].freq, \
+                    m.images[visibilities["lam"][j]], dRA=-p["x0"], \
+                    dDec=-p["y0"], nthreads=nprocesses)
+
+            # Run the 2D visibilities.
+
+            m.visibilities[visibilities["lam"][j]+"_2d"] = \
+                    uv.interpolate_model(visibilities["data2d"][j].u, \
+                    visibilities["data2d"][j].v, \
+                    visibilities["data2d"][j].freq, \
+                    m.images[visibilities["lam"][j]], dRA=-p["x0"], \
+                    dDec=-p["y0"], nthreads=nprocesses)
 
             # Run a millimeter image.
 

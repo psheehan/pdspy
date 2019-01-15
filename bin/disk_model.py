@@ -311,6 +311,7 @@ if not "weight" in spectra:
 
 visibilities["data"] = []
 visibilities["data1d"] = []
+visibilities["data2d"] = []
 visibilities["image"] = []
 spectra["data"] = []
 spectra["binned"] = []
@@ -339,17 +340,9 @@ for j in range(len(visibilities["file"])):
 
     data = uv.center(data, [visibilities["x0"][j], visibilities["y0"][j], 1.])
 
-    """NEW: interpolate model to baselines instead of averaging the data to the
-            model grid?
+    # Add the data to the dictionary structure.
 
     visibilities["data"].append(data)
-    """
-
-    # Average the data to a more manageable size.
-
-    visibilities["data"].append(uv.grid(data, \
-            gridsize=visibilities["gridsize"][j], \
-            binsize=visibilities["binsize"][j]))
 
     # Scale the weights of the visibilities to force them to be fit well.
 
@@ -361,9 +354,11 @@ for j in range(len(visibilities["file"])):
             log=True, logmin=data.uvdist[numpy.nonzero(data.uvdist)].min()*\
             0.95, logmax=data.uvdist.max()*1.05))
 
-    # Clean up the data because we don't need it any more.
-
-    del data
+    # Average the data into a 2D grid.
+ 
+    visibilities["data2d"].append(uv.grid(data, \
+            gridsize=visibilities["gridsize"][j], \
+            binsize=visibilities["binsize"][j]))
 
     # Read in the image.
 
@@ -671,22 +666,22 @@ while nsteps < max_nsteps:
         vmin = min(0, visibilities["data1d"][j].real.min())
         vmax = visibilities["data1d"][j].real.max()
 
-        ax[2*j+1,0].imshow(visibilities["data"][j].real.reshape(\
+        ax[2*j+1,0].imshow(visibilities["data2d"][j].real.reshape(\
                 (visibilities["npix"][j],visibilities["npix"][j]))\
                 [xmin:xmax,xmin:xmax][:,::-1], origin="lower", \
                 interpolation="nearest", vmin=vmin, vmax=vmax, cmap="jet")
-        ax[2*j+1,0].contour(m.visibilities[visibilities["lam"][j]].real.\
+        ax[2*j+1,0].contour(m.visibilities[visibilities["lam"][j]+"_2d"].real.\
                 reshape((visibilities["npix"][j],visibilities["npix"][j]))\
                 [xmin:xmax,xmin:xmax][:,::-1], cmap="jet")
 
         vmin = -visibilities["data1d"][j].real.max()
         vmax =  visibilities["data1d"][j].real.max()
 
-        ax[2*j+1,1].imshow(visibilities["data"][j].imag.reshape(\
+        ax[2*j+1,1].imshow(visibilities["data2d"][j].imag.reshape(\
                 (visibilities["npix"][j],visibilities["npix"][j]))\
                 [xmin:xmax,xmin:xmax][:,::-1], origin="lower", \
                 interpolation="nearest", vmin=vmin, vmax=vmax, cmap="jet")
-        ax[2*j+1,1].contour(m.visibilities[visibilities["lam"][j]].imag.\
+        ax[2*j+1,1].contour(m.visibilities[visibilities["lam"][j]+"_2d"].imag.\
                 reshape((visibilities["npix"][j],visibilities["npix"][j]))\
                 [xmin:xmax,xmin:xmax][:,::-1], cmap="jet")
 
