@@ -729,7 +729,7 @@ while nsteps < max_nsteps:
                 for k in range(nwalkers):
                     ax.plot(chain[i,k,:,j])
 
-            plt.savefig("steps_{0:s}.pdf".format(keys[j]))
+            plt.savefig("steps_{0:s}.png".format(keys[j]))
 
             plt.close(fig)
 
