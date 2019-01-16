@@ -1,5 +1,18 @@
 from os import system
-from subprocess import STDOUT, run
+
+import sys
+if sys.version_info.major > 2:
+    from subprocess import STDOUT, run
+else:
+    from subprocess import STDOUT, PIPE, Popen
+
+    def run(command, stderr=PIPE, stdout=PIPE, timeout=None):
+        process = Popen(command, stderr=stderr, stdout=stdout)
+        try:
+            stdout, stderr = process.communicate(timeout=timeout)
+        except TimeoutExpired:
+            process.kill()
+            stdout, stderr = process.communicate()
 
 def thermal(noscat=None, nphot_therm=None, nphot_scat=None, setthreads=1, \
         inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None, \
