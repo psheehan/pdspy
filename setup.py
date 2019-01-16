@@ -3,9 +3,6 @@ from Cython.Build import cythonize
 
 libinterferometry = cythonize([Extension('pdspy.interferometry.libinterferometry',["pdspy/interferometry/libinterferometry.pyx"],libraries=["m"],extra_compile_args=['-ffast-math'])])[0]
 
-#libinterferometry = cythonize("pdspy/interferometry/libinterferometry.pyx")[0]
-#libimaging = cythonize("pdspy/imaging/libimaging.pyx")[0]
-
 libimaging = cythonize([Extension('pdspy.imaging.libimaging',["pdspy/imaging/libimaging.pyx"],libraries=[],extra_compile_args=[])])[0]
 
 bhmie = Extension('pdspy.dust.bhmie', sources=['pdspy/dust/bhmie.f90'])
@@ -16,4 +13,34 @@ dmilay = Extension('pdspy.dust.dmilay', sources=['pdspy/dust/DMiLay.f90'])
 
 read = cythonize([Extension('pdspy.radmc3d.read',["pdspy/radmc3d/read.pyx"],libraries=[],extra_compile_args=[])])[0]
 
-setup(ext_modules=[libinterferometry, libimaging, bhmie, bhcoat, dmilay, read])
+setup(name="pdspy", version="1.0.0", packages=["pdspy","pdspy.constants", \
+        "pdspy.dust","pdspy.gas","pdspy.imaging","pdspy.interferometry", \
+        "pdspy.mcmc","pdspy.misc","pdspy.modeling","pdspy.plotting", \
+        "pdspy.radmc3d","pdspy.spectroscopy","pdspy.stars","pdspy.statistics", \
+        "pdspy.table"], package_dir={\
+        "pdspy.dust": 'pdspy/dust', \
+        "pdspy.gas": 'pdspy/gas', \
+        "pdspy.spectroscopy": 'pdspy/spectroscopy', \
+        "pdspy.stars": 'pdspy/stars'}, \
+        package_data={\
+        'pdspy.dust': ['data/*','reddening/*.dat'], \
+        'pdspy.gas': ['data/*.dat'], \
+        'pdspy.spectroscopy': ['btsettle_data/*.txt'], \
+        'pdspy.stars': ['evolutionary_tracks/*',\
+            'evolutionary_tracks/bressan2012/*',\
+            'evolutionary_tracks/bressan2012/Z0.014Y0.273/*',\
+            'evolutionary_tracks/bressan2012/Z0.017Y0.279/*',\
+            'evolutionary_tracks/dotter2008/*',\
+            'evolutionary_tracks/feiden2016/mag/*',\
+            'evolutionary_tracks/feiden2016/std/*',\
+            'evolutionary_tracks/siess_2000/*',\
+            'evolutionary_tracks/tognelli2011/Z0.02000_Y0.2700_XD2E5_ML1.68_AS05/*',\
+            'evolutionary_tracks/tognelli2011/Z0.02000_Y0.2700_XD4E5_ML1.68_AS05/*',\
+            'evolutionary_tracks/tognelli2011/Z0.02000_Y0.2880_XD2E5_ML1.68_AS05/*',\
+            'evolutionary_tracks/tognelli2011/Z0.02000_Y0.2880_XD4E5_ML1.68_AS05/*']}, \
+        
+        ext_modules=[libinterferometry, libimaging, bhmie, \
+        bhcoat, dmilay, read], \
+        scripts=['bin/config_template.py','bin/disk_model.py',\
+            'bin/disk_model_powerlaw.py','bin/flared_model.py',\
+            'bin/flared_model_ptsampler.py'])
