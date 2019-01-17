@@ -1,0 +1,36 @@
+package:
+  name: pdspy
+  version: "1.0.0"
+
+source:
+  path: ../pdspy
+
+requirements:
+  host:
+    - python
+    - setuptools
+    - numpy
+    - Cython
+
+  run:
+    - python
+    - numpy
+    - scipy
+    - matplotlib
+    - astropy
+    - h5py
+    - mpi4py
+    - emcee
+    - corner
+    - galario
+    - hyperion
+
+
+test:
+  imports:
+    - pdspy
+
+about:
+  home: https://github.com/psheehan/pdspy
+  license: GPL-3.0
+  license_file: LICENSE
