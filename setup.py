@@ -1,9 +1,16 @@
 from numpy.distutils.core import setup, Extension
 from Cython.Build import cythonize
 
-libinterferometry = cythonize([Extension('pdspy.interferometry.libinterferometry',["pdspy/interferometry/libinterferometry.pyx"],libraries=["m"],extra_compile_args=['-ffast-math'])])[0]
+# Set up the extension modules.
 
-libimaging = cythonize([Extension('pdspy.imaging.libimaging',["pdspy/imaging/libimaging.pyx"],libraries=[],extra_compile_args=[])])[0]
+libinterferometry = cythonize([\
+        Extension('pdspy.interferometry.libinterferometry',\
+            ["pdspy/interferometry/libinterferometry.pyx"],\
+            libraries=["m"], extra_compile_args=['-ffast-math'])])[0]
+
+libimaging = cythonize([Extension('pdspy.imaging.libimaging',\
+        ["pdspy/imaging/libimaging.pyx"], libraries=[], \
+        extra_compile_args=[])])[0]
 
 bhmie = Extension('pdspy.dust.bhmie', sources=['pdspy/dust/bhmie.f90'])
 
@@ -11,13 +18,29 @@ bhcoat = Extension('pdspy.dust.bhcoat', sources=['pdspy/dust/bhcoat.f90'])
 
 dmilay = Extension('pdspy.dust.dmilay', sources=['pdspy/dust/DMiLay.f90'])
 
-read = cythonize([Extension('pdspy.radmc3d.read',["pdspy/radmc3d/read.pyx"],libraries=[],extra_compile_args=[])])[0]
+read = cythonize([Extension('pdspy.radmc3d.read', ["pdspy/radmc3d/read.pyx"], \
+        libraries=[], extra_compile_args=[])])[0]
 
-setup(name="pdspy", version="1.0.0", packages=["pdspy","pdspy.constants", \
-        "pdspy.dust","pdspy.gas","pdspy.imaging","pdspy.interferometry", \
-        "pdspy.mcmc","pdspy.misc","pdspy.modeling","pdspy.plotting", \
-        "pdspy.radmc3d","pdspy.spectroscopy","pdspy.stars","pdspy.statistics", \
-        "pdspy.table"], package_dir={\
+# Now define the setup for the package.
+
+setup(name="pdspy", version="1.0.0", \
+        packages=[\
+        "pdspy",\
+        "pdspy.constants", \
+        "pdspy.dust",\
+        "pdspy.gas",\
+        "pdspy.imaging",\
+        "pdspy.interferometry", \
+        "pdspy.mcmc",\
+        "pdspy.misc",\
+        "pdspy.modeling",\
+        "pdspy.plotting", \
+        "pdspy.radmc3d",\
+        "pdspy.spectroscopy",\
+        "pdspy.stars",\
+        "pdspy.statistics", \
+        "pdspy.table"], \
+        package_dir={\
         "pdspy.dust": 'pdspy/dust', \
         "pdspy.gas": 'pdspy/gas', \
         "pdspy.spectroscopy": 'pdspy/spectroscopy', \
@@ -41,6 +64,9 @@ setup(name="pdspy", version="1.0.0", packages=["pdspy","pdspy.constants", \
         
         ext_modules=[libinterferometry, libimaging, bhmie, \
         bhcoat, dmilay, read], \
-        scripts=['bin/config_template.py','bin/disk_model.py',\
-            'bin/disk_model_powerlaw.py','bin/flared_model.py',\
-            'bin/flared_model_ptsampler.py'])
+        scripts=[\
+        'bin/config_template.py',\
+        'bin/disk_model.py',\
+        'bin/disk_model_powerlaw.py',\
+        'bin/flared_model.py',\
+        'bin/flared_model_ptsampler.py'])
