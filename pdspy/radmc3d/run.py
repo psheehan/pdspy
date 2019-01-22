@@ -1,5 +1,10 @@
 from os import system
-from subprocess import STDOUT, run
+
+import sys
+if sys.version_info.major > 2:
+    from subprocess import STDOUT, run
+else:
+    from subprocess32 import STDOUT, run
 
 def thermal(noscat=None, nphot_therm=None, nphot_scat=None, setthreads=1, \
         inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None, \

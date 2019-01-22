@@ -7,3 +7,4 @@ __pycache__
 pdspy/dust/reddening/*.py
 pdspy/dust/reddening/*.pdf
 test
+*.c
