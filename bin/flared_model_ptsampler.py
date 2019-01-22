@@ -93,7 +93,7 @@ def lnlike(p, visibilities, parameters, plot):
     # Run the model.
 
     m = modeling.run_flared_model(visibilities, params, parameters, plot, \
-            ncpus=ncpus, source=source, plot_vis=args.plot_vis, nice=nice)
+            ncpus=ncpus, source=source, plot_vis=args.plot_vis)
 
     # A list to put all of the chisq into.
 
@@ -543,7 +543,7 @@ while nsteps < max_nsteps:
     # Create a high resolution model for averaging.
 
     m = modeling.run_flared_model(visibilities, params, parameters, plot=True, \
-            ncpus=ncpus, source=source, plot_vis=args.plot_vis, nice=nice)
+            ncpus=ncpus, source=source, plot_vis=args.plot_vis)
 
     # Open up a pdf file to plot into.
 
