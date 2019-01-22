@@ -79,7 +79,18 @@ else:
 
 # Define a likelihood function.
 
-def lnlike(params, visibilities, parameters, plot):
+def lnlike(p, visibilities, parameters, plot):
+    
+    # Set up the params dictionary.
+
+    keys = []
+    for key in sorted(parameters.keys()):
+        if not parameters[key]["fixed"]:
+            keys.append(key)
+
+    params = dict(zip(keys, p))
+
+    # Run the model.
 
     m = modeling.run_flared_model(visibilities, params, parameters, plot, \
             ncpus=ncpus, source=source, plot_vis=args.plot_vis, nice=nice)
@@ -104,7 +115,19 @@ def lnlike(params, visibilities, parameters, plot):
 
 # Define a prior function.
 
-def lnprior(params, parameters, priors):
+def lnprior(p, parameters, priors):
+    
+    # Set up the params dictionary.
+
+    keys = []
+    for key in sorted(parameters.keys()):
+        if not parameters[key]["fixed"]:
+            keys.append(key)
+
+    params = dict(zip(keys, p))
+
+    # Check the parameter limits.
+
     for key in parameters:
         if not parameters[key]["fixed"]:
             if parameters[key]["limits"][0] <= params[key] <= \
@@ -191,6 +214,7 @@ def lnprior(params, parameters, priors):
 
 # Define a probability function.
 
+"""
 def lnprob(p, visibilities, parameters, priors, plot):
 
     keys = []
@@ -206,6 +230,7 @@ def lnprob(p, visibilities, parameters, priors, plot):
         return -numpy.inf
 
     return lp + lnlike(params, visibilities, parameters, plot)
+"""
 
 # Define a useful class for plotting.
 
@@ -403,8 +428,8 @@ else:
 
 if args.action == "run":
     sampler = emcee.PTSampler(ntemps, nwalkers, ndim, lnlike, lnprior, \
-            loglargs=(visibilities, parameters, False), logpargs=(parameters,),\
-            pool=pool)
+            loglargs=(visibilities, parameters, False), logpargs=(parameters, \
+            priors), pool=pool)
 
 # If we are plotting, make sure that nsteps < max_nsteps.
 
