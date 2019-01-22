@@ -13,6 +13,12 @@ import time
 import os
 from mpi4py import MPI
 
+import sys
+if sys.version_info.major > 2:
+    from subprocess import TimeoutExpired
+else:
+    from subprocess32 import TimeoutExpired
+
 comm = MPI.COMM_WORLD
 
 ################################################################################
@@ -191,7 +197,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
             f.write("{0:f}\n".format(t2-t1))
             f.close()
         # Catch a timeout error from models running for too long...
-        except subprocess.TimeoutExpired:
+        except TimeoutExpired:
             t2 = time.time()
             f = open(original_dir + "/times.txt", "a")
             f.write("{0:f}\n".format(t2-t1))
