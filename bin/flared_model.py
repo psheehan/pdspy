@@ -37,6 +37,8 @@ parser.add_argument('-e', '--withexptaper', action='store_true')
 parser.add_argument('-v', '--plot_vis', action='store_true')
 parser.add_argument('-c', '--withcontsub', action='store_true')
 parser.add_argument('-b', '--trim', type=str, default="")
+parser.add_argument('-i', '--nice', action='store_true')
+parser.add_argument('-l', '--nicelevel', type=int, default=19)
 args = parser.parse_args()
 
 # Check whether we are using MPI.
@@ -46,6 +48,13 @@ withmpi = comm.Get_size() > 1
 # Set the number of cpus to use.
 
 ncpus = args.ncpus
+
+# Set the nice level of the subprocesses.
+
+if args.nice:
+    nice = args.nicelevel
+else:
+    nice = None
 
 # Get the source name and check that it has been set correctly.
 
@@ -82,7 +91,7 @@ else:
 def lnlike(params, visibilities, parameters, plot):
 
     m = modeling.run_flared_model(visibilities, params, parameters, plot, \
-            ncpus=ncpus, source=source, plot_vis=args.plot_vis)
+            ncpus=ncpus, source=source, plot_vis=args.plot_vis, nice=nice)
 
     # A list to put all of the chisq into.
 
@@ -430,7 +439,7 @@ while nsteps < max_nsteps:
             for k in range(nwalkers):
                 ax.plot(chain[k,:,j])
 
-            plt.savefig("steps_{0:s}.pdf".format(keys[j]))
+            plt.savefig("steps_{0:s}.png".format(keys[j]))
 
             plt.close(fig)
 
@@ -512,7 +521,7 @@ while nsteps < max_nsteps:
     # Create a high resolution model for averaging.
 
     m = modeling.run_flared_model(visibilities, params, parameters, plot=True, \
-            ncpus=ncpus, source=source, plot_vis=args.plot_vis)
+            ncpus=ncpus, source=source, plot_vis=args.plot_vis, nice=nice)
 
     # Open up a pdf file to plot into.
 

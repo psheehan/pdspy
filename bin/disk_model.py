@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-from pdspy.constants.astronomy import arcsec
+from pdspy.constants.astronomy import arcsec, Jy
+from pdspy.constants.physics import c as c_l
 import pdspy.interferometry as uv
 import pdspy.spectroscopy as sp
 import pdspy.modeling as modeling
@@ -34,6 +35,9 @@ parser.add_argument('-m', '--ncpus_highmass', type=int, default=8)
 parser.add_argument('-e', '--withexptaper', action='store_true')
 parser.add_argument('-t', '--timelimit', type=int, default=7200)
 parser.add_argument('-b', '--trim', type=str, default="")
+parser.add_argument('-s', '--SED', action='store_true')
+parser.add_argument('-i', '--nice', action='store_true')
+parser.add_argument('-l', '--nicelevel', type=int, default=19)
 args = parser.parse_args()
 
 # Check whether we are using MPI.
@@ -44,6 +48,13 @@ withmpi = comm.Get_size() > 1
 
 ncpus = args.ncpus
 ncpus_highmass = args.ncpus_highmass
+
+# Set the nice level of the subprocesses.
+
+if args.nice:
+    nice = args.nicelevel
+else:
+    nice = None
 
 # Get the source name and check that it has been set correctly.
 
@@ -82,7 +93,7 @@ def lnlike(params, visibilities, images, spectra, parameters, plot):
     m = modeling.run_disk_model(visibilities, images, spectra, params, \
             parameters, plot, ncpus=ncpus, ncpus_highmass=ncpus_highmass, \
             with_hyperion=args.withhyperion, timelimit=args.timelimit, \
-            source=source)
+            source=source, nice=nice)
 
     # Catch whether the model timed out.
 
@@ -300,6 +311,7 @@ if not "weight" in spectra:
 
 visibilities["data"] = []
 visibilities["data1d"] = []
+visibilities["data2d"] = []
 visibilities["image"] = []
 spectra["data"] = []
 spectra["binned"] = []
@@ -328,17 +340,9 @@ for j in range(len(visibilities["file"])):
 
     data = uv.center(data, [visibilities["x0"][j], visibilities["y0"][j], 1.])
 
-    """NEW: interpolate model to baselines instead of averaging the data to the
-            model grid?
+    # Add the data to the dictionary structure.
 
     visibilities["data"].append(data)
-    """
-
-    # Average the data to a more manageable size.
-
-    visibilities["data"].append(uv.grid(data, \
-            gridsize=visibilities["gridsize"][j], \
-            binsize=visibilities["binsize"][j]))
 
     # Scale the weights of the visibilities to force them to be fit well.
 
@@ -350,9 +354,11 @@ for j in range(len(visibilities["file"])):
             log=True, logmin=data.uvdist[numpy.nonzero(data.uvdist)].min()*\
             0.95, logmax=data.uvdist.max()*1.05))
 
-    # Clean up the data because we don't need it any more.
-
-    del data
+    # Average the data into a 2D grid.
+ 
+    visibilities["data2d"].append(uv.grid(data, \
+            gridsize=visibilities["gridsize"][j], \
+            binsize=visibilities["binsize"][j]))
 
     # Read in the image.
 
@@ -532,7 +538,7 @@ while nsteps < max_nsteps:
                 for k in range(nwalkers):
                     ax.plot(chain[k,:,j])
 
-                plt.savefig("steps_{0:s}.pdf".format(keys[j]))
+                plt.savefig("steps_{0:s}.png".format(keys[j]))
 
                 plt.close(fig)
 
@@ -623,7 +629,7 @@ while nsteps < max_nsteps:
     m = modeling.run_disk_model(visibilities, images, spectra, params, \
             parameters, plot=True, ncpus=ncpus, ncpus_highmass=ncpus_highmass, \
             with_hyperion=args.withhyperion, timelimit=args.timelimit, \
-            source=source)
+            source=source, nice=nice)
 
     # Plot the millimeter data/models.
 
@@ -660,22 +666,22 @@ while nsteps < max_nsteps:
         vmin = min(0, visibilities["data1d"][j].real.min())
         vmax = visibilities["data1d"][j].real.max()
 
-        ax[2*j+1,0].imshow(visibilities["data"][j].real.reshape(\
+        ax[2*j+1,0].imshow(visibilities["data2d"][j].real.reshape(\
                 (visibilities["npix"][j],visibilities["npix"][j]))\
                 [xmin:xmax,xmin:xmax][:,::-1], origin="lower", \
                 interpolation="nearest", vmin=vmin, vmax=vmax, cmap="jet")
-        ax[2*j+1,0].contour(m.visibilities[visibilities["lam"][j]].real.\
+        ax[2*j+1,0].contour(m.visibilities[visibilities["lam"][j]+"_2d"].real.\
                 reshape((visibilities["npix"][j],visibilities["npix"][j]))\
                 [xmin:xmax,xmin:xmax][:,::-1], cmap="jet")
 
         vmin = -visibilities["data1d"][j].real.max()
         vmax =  visibilities["data1d"][j].real.max()
 
-        ax[2*j+1,1].imshow(visibilities["data"][j].imag.reshape(\
+        ax[2*j+1,1].imshow(visibilities["data2d"][j].imag.reshape(\
                 (visibilities["npix"][j],visibilities["npix"][j]))\
                 [xmin:xmax,xmin:xmax][:,::-1], origin="lower", \
                 interpolation="nearest", vmin=vmin, vmax=vmax, cmap="jet")
-        ax[2*j+1,1].contour(m.visibilities[visibilities["lam"][j]].imag.\
+        ax[2*j+1,1].contour(m.visibilities[visibilities["lam"][j]+"_2d"].imag.\
                 reshape((visibilities["npix"][j],visibilities["npix"][j]))\
                 [xmin:xmax,xmin:xmax][:,::-1], cmap="jet")
 
@@ -771,12 +777,30 @@ while nsteps < max_nsteps:
 
     for j in range(len(spectra["file"])):
         if spectra["bin?"][j]:
-            ax[0,2].plot(spectra["data"][j].wave, spectra["data"][j].flux, "k-")
+            if args.SED:
+                ax[0,2].plot(spectra["data"][j].wave, \
+                        c_l / spectra["data"][j].wave / 1.0e-4 * \
+                        spectra["data"][j].flux * Jy, "k-")
+            else:
+                ax[0,2].plot(spectra["data"][j].wave, spectra["data"][j].flux, \
+                        "k-")
         else:
-            ax[0,2].errorbar(spectra["data"][j].wave, spectra["data"][j].flux, \
-                    fmt="ko", yerr=spectra["data"][j].unc, markeredgecolor="k")
+            if args.SED:
+                ax[0,2].errorbar(spectra["data"][j].wave, \
+                        c_l / spectra["data"][j].wave / 1.0e-4 * \
+                        spectra["data"][j].flux * Jy, fmt="ko", \
+                        yerr=c_l / spectra["data"][j].wave / 1.0e-4 * \
+                        spectra["data"][j].unc * Jy, markeredgecolor="k")
+            else:
+                ax[0,2].errorbar(spectra["data"][j].wave, \
+                        spectra["data"][j].flux, fmt="ko", \
+                        yerr=spectra["data"][j].unc, markeredgecolor="k")
 
-    ax[0,2].plot(m.spectra["SED"].wave, m.spectra["SED"].flux, "g-")
+    if args.SED:
+        ax[0,2].plot(m.spectra["SED"].wave, c_l / m.spectra["SED"].wave / \
+                1.0e-4 * m.spectra["SED"].flux * Jy, "g-")
+    else:
+        ax[0,2].plot(m.spectra["SED"].wave, m.spectra["SED"].flux, "g-")
 
     # Plot the scattered light image.
 
@@ -809,13 +833,19 @@ while nsteps < max_nsteps:
 
     # Adjust the plot and save it.
 
-    ax[0,2].axis([0.1,1.0e4,1e-6,1e3])
+    if args.SED:
+        ax[0,2].axis([0.1,1.0e4,1e-13,1e-8])
+    else:
+        ax[0,2].axis([0.1,1.0e4,1e-6,1e3])
 
     ax[0,2].set_xscale("log", nonposx='clip')
     ax[0,2].set_yscale("log", nonposy='clip')
 
     ax[0,2].set_xlabel("$\lambda$ [$\mu$m]")
-    ax[0,2].set_ylabel(r"$F_{\nu}$ [Jy]")
+    if args.SED:
+        ax[0,2].set_ylabel(r"$\nu F_{\nu}$ [ergs s$^{-1}$ cm$^{-2}$]")
+    else:
+        ax[0,2].set_ylabel(r"$F_{\nu}$ [Jy]")
 
     for j in range(len(visibilities["file"])):
         ax[2*j,0].axis([1,visibilities["data1d"][j].uvdist.max()/1000*3,0,\

@@ -13,6 +13,12 @@ import time
 import os
 from mpi4py import MPI
 
+import sys
+if sys.version_info.major > 2:
+    from subprocess import TimeoutExpired
+else:
+    from subprocess32 import TimeoutExpired
+
 comm = MPI.COMM_WORLD
 
 ################################################################################
@@ -23,7 +29,7 @@ comm = MPI.COMM_WORLD
 
 def run_disk_model(visibilities, images, spectra, params, parameters, \
         plot=False, ncpus=1, ncpus_highmass=1, with_hyperion=False, \
-        timelimit=3600, source="disk"):
+        timelimit=3600, source="disk", nice=None):
 
     # Set the values of all of the parameters.
 
@@ -185,13 +191,13 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
             m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
                     mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
                     verbose=False, setthreads=nprocesses, \
-                    timelimit=timelimit)
+                    timelimit=timelimit, nice=nice)
             t2 = time.time()
             f = open(original_dir + "/times.txt", "a")
             f.write("{0:f}\n".format(t2-t1))
             f.close()
         # Catch a timeout error from models running for too long...
-        except subprocess.TimeoutExpired:
+        except TimeoutExpired:
             t2 = time.time()
             f = open(original_dir + "/times.txt", "a")
             f.write("{0:f}\n".format(t2-t1))
@@ -212,7 +218,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
             m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
                     mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
                     verbose=False, setthreads=nprocesses, \
-                    timelimit=timelimit)
+                    timelimit=timelimit, nice=nice)
             t2 = time.time()
             f = open(original_dir + "/times.txt", "a")
             f.write("{0:f}\n".format(t2-t1))
@@ -225,41 +231,41 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
     # Run the visibilities.
 
     for j in range(len(visibilities["file"])):
-        m.run_visibilities(name=visibilities["lam"][j], nphot=1e5, \
+        m.run_image(name=visibilities["lam"][j], nphot=1e5, \
                 npix=visibilities["npix"][j], \
                 pixelsize=visibilities["pixelsize"][j], \
                 lam=visibilities["lam"][j], incl=p["i"], \
                 pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
-                mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses)
+                mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses, \
+                writeimage_unformatted=True, nice=nice)
 
-        m.visibilities[visibilities["lam"][j]].real *= \
-                p["flux_unc{0:d}".format(j+1)]
-        m.visibilities[visibilities["lam"][j]].imag *= \
-                p["flux_unc{0:d}".format(j+1)]
+        m.images[visibilities["lam"][j]].image *= p["flux_unc{0:d}".format(j+1)]
 
-        """NEW: Interpolate model to native baselines?
         m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
-                visibilities["data"].u, visibilities["data"].v, \
-                visibilities["data"].freq, \
-                m.visibilities[visibilities["lam"][j]])
-        """
-
-        m.visibilities[visibilities["lam"][j]] = uv.center(\
-                m.visibilities[visibilities["lam"][j]], [p["x0"], \
-                p["y0"], 1.])
+                visibilities["data"][j].u, visibilities["data"][j].v, \
+                visibilities["data"][j].freq, m.images[visibilities["lam"][j]],\
+                dRA=-p["x0"], dDec=-p["y0"], nthreads=nprocesses)
 
         if plot:
-            # Run a high resolution version of the visibilities.
+            # Make high resolution visibilities. 
 
-            m.run_visibilities(name=visibilities["lam"][j]+"_high", nphot=1e5, \
-                    npix=2048, pixelsize=0.05, lam=visibilities["lam"][j], \
-                    incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
-                    code="radmc3d", mc_scat_maxtauabs=5, verbose=False, \
-                    setthreads=nprocesses)
+            u, v = numpy.meshgrid(numpy.linspace(-2.0e6, 2.0e6, 2001), \
+                    numpy.linspace(-2.0e6, 2.0e6, 2001))
+            u, v = u.reshape((u.size,)), v.reshape((v.size,))
 
-            m.visibilities[visibilities["lam"][j]+"_high"] = uv.center(\
-                    m.visibilities[visibilities["lam"][j]+"_high"], \
-                    [p["x0"], p["y0"], 1.])
+            m.visibilities[visibilities["lam"][j]+"_high"] = \
+                    uv.interpolate_model(u, v, visibilities["data2d"][j].freq, \
+                    m.images[visibilities["lam"][j]], dRA=-p["x0"], \
+                    dDec=-p["y0"], nthreads=nprocesses)
+
+            # Run the 2D visibilities.
+
+            m.visibilities[visibilities["lam"][j]+"_2d"] = \
+                    uv.interpolate_model(visibilities["data2d"][j].u, \
+                    visibilities["data2d"][j].v, \
+                    visibilities["data2d"][j].freq, \
+                    m.images[visibilities["lam"][j]], dRA=-p["x0"], \
+                    dDec=-p["y0"], nthreads=nprocesses)
 
             # Run a millimeter image.
 
@@ -268,7 +274,8 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                     pixelsize=visibilities["image_pixelsize"][j], \
                     lam=visibilities["lam"][j], incl=p["i"], \
                     pa=-p["pa"], dpc=p["dpc"], code="radmc3d", \
-                    mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses)
+                    mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses, \
+                    nice=nice)
 
             x, y = numpy.meshgrid(numpy.linspace(-256,255,512), \
                     numpy.linspace(-256,255,512))
@@ -293,7 +300,8 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                 npix=images["npix"][j], pixelsize=images["pixelsize"][j], \
                 lam=images["lam"][j], incl=p["i"], \
                 pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
-                mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses)
+                mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses, \
+                nice=nice)
 
         # Convolve with the beam.
 
@@ -319,7 +327,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         m.run_sed(name="SED", nphot=1e4, loadlambda=True, incl=p["i"],\
                 pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                 camera_scatsrc_allfreq=True, mc_scat_maxtauabs=5, \
-                verbose=False, setthreads=nprocesses)
+                verbose=False, setthreads=nprocesses, nice=nice)
 
         # Redden the SED based on the reddening.
 
