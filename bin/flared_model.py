@@ -172,6 +172,9 @@ def lnprior(params, parameters, priors):
 
         lnprior += -0.5 * (parallax_mas - priors["parallax"]["value"])**2 / \
                 priors["parallax"]["sigma"]**2
+    elif (not parameters["dpc"]["fixed"]) and ("dpc" in priors):
+        lnprior += -0.5 * (params["dpc"] - priors["dpc"]["value"])**2 / \
+                priors["dpc"]["sigma"]**2
 
     # A prior on stellar mass from the IMF.
 
