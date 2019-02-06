@@ -378,11 +378,16 @@ for j in range(len(spectra["file"])):
 
     # Merge the SED with the binned Spitzer spectrum.
 
-    if spectra["bin?"]:
+    if spectra["bin?"][j]:
         wave = numpy.linspace(spectra["data"][j].wave.min(), \
                 spectra["data"][j].wave.max(), spectra["nbins"][j])
         flux = numpy.interp(wave, spectra["data"][j].wave, \
                 spectra["data"][j].flux)
+
+        good = flux > 0.
+
+        wave = wave[good]
+        flux = flux[good]
 
         spectra["binned"].append(sp.Spectrum(wave, flux))
     else:
