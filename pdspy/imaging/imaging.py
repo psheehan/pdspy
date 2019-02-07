@@ -50,21 +50,21 @@ class Image:
             f = usefile
 
         if ('x' in f):
-            x = f['x'].value
-            y = f['y'].value
+            x = f['x'][...]
+            y = f['y'][...]
         else:
             x = None
             y = None
 
         if ('freq' in f):
-            freq = f['freq'].value
+            freq = f['freq'][...]
         else:
             freq = None
 
-        image = f['image'].value
+        image = f['image'][...]
 
         if ('unc' in f):
-            unc = f['unc'].value
+            unc = f['unc'][...]
         else:
             unc = None
 

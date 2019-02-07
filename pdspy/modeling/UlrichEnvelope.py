@@ -193,19 +193,19 @@ class UlrichEnvelope:
         else:
             f = usefile
 
-        self.mass = f['mass'].value
-        self.rmin = f['rmin'].value
-        self.rmax = f['rmax'].value
-        self.rcent = f['rcent'].value
-        self.cavpl = f['cavpl'].value
-        self.cavrfact = f['cavrfact'].value
+        self.mass = f['mass'][()]
+        self.rmin = f['rmin'][()]
+        self.rmax = f['rmax'][()]
+        self.rcent = f['rcent'][()]
+        self.cavpl = f['cavpl'][()]
+        self.cavrfact = f['cavrfact'][()]
 
         if 't0' in f:
-            self.t0 = f['t0'].value
-            self.tpl = f['tpl'].value
+            self.t0 = f['t0'][()]
+            self.tpl = f['tpl'][()]
 
         if 'aturb' in f:
-            self.aturb = f['aturb'].value
+            self.aturb = f['aturb'][()]
 
         if ('Dust' in f):
             self.dust = Dust()
@@ -213,7 +213,7 @@ class UlrichEnvelope:
 
         for name in f['Gas']:
             self.gas.append(Gas())
-            self.abundance.append(f['Gas'][name]['Abundance'].value)
+            self.abundance.append(f['Gas'][name]['Abundance'][()])
             self.gas[-1].set_properties_from_file(usefile=f['Gas'][name])
 
         if (usefile == None):

@@ -75,17 +75,17 @@ class Gas:
         else:
             f = usefile
 
-        self.mass = f['mass'].value
+        self.mass = f['mass'][()]
 
-        self.J = f["J"].value
-        self.E = f['E'].value
-        self.g = f['g'].value
+        self.J = f["J"][...]
+        self.E = f['E'][...]
+        self.g = f['g'][...]
 
-        self.J_u = f['J_u'].value
-        self.J_l = f['J_l'].value
-        self.A_ul = f['A_ul'].value
-        self.nu = f['nu'].value
-        self.E_u = f['E_u'].value
+        self.J_u = f['J_u'][...]
+        self.J_l = f['J_l'][...]
+        self.A_ul = f['A_ul'][...]
+        self.nu = f['nu'][...]
+        self.E_u = f['E_u'][...]
 
         self.B_ul = c**2 * self.A_ul / (2*h*self.nu**3)
 
@@ -97,12 +97,12 @@ class Gas:
         for name in f["CollisionalPartners"]:
             self.partners.append(name)
             self.temp.append(f["CollisionalPartners"][name] \
-                    ["Temperature"].value)
+                    ["Temperature"][...])
             self.J_u_coll.append(f["CollisionalPartners"][name] \
-                    ["J_u_coll"].value)
+                    ["J_u_coll"][...])
             self.J_l_coll.append(f["CollisionalPartners"][name] \
-                    ["J_l_coll"].value)
-            self.gamma.append(f["CollisionalPartners"][name]["Gamma"].value)
+                    ["J_l_coll"][...])
+            self.gamma.append(f["CollisionalPartners"][name]["Gamma"][...])
 
         if (usefile == None):
             f.close()

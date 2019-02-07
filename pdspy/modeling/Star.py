@@ -21,13 +21,13 @@ class Star:
         else:
             f = usefile
 
-        self.mass = f['mass'].value
-        self.luminosity = f['luminosity'].value
-        self.temperature = f['temperature'].value
-        self.radius = f['radius'].value
-        self.x = f['x'].value
-        self.y = f['y'].value
-        self.z = f['z'].value
+        self.mass = f['mass'][()]
+        self.luminosity = f['luminosity'][()]
+        self.temperature = f['temperature'][()]
+        self.radius = f['radius'][()]
+        self.x = f['x'][()]
+        self.y = f['y'][()]
+        self.z = f['z'][()]
 
         if (usefile == None):
             f.close()

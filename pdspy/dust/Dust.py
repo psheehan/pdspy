@@ -187,23 +187,23 @@ class Dust:
         else:
             f = usefile
 
-        self.lam = f['lam'].value
+        self.lam = f['lam'][...]
         self.nu = c / self.lam
 
         if ('n' in f):
-            self.n = f['n'].value
+            self.n = f['n'][...]
         if ('k' in f):
-            self.k = f['k'].value
+            self.k = f['k'][...]
         if (hasattr(self, 'n') and hasattr(self, 'k')):
             self.m = self.n + 1j*self.k
 
         if ('rho' in f):
-            self.rho = f['rho'].value[0]
+            self.rho = f['rho'][...][0]
 
         if ('kabs' in f):
-            self.kabs = f['kabs'].value
+            self.kabs = f['kabs'][...]
         if ('ksca' in f):
-            self.ksca = f['ksca'].value
+            self.ksca = f['ksca'][...]
         if (hasattr(self, 'kabs') and hasattr(self, 'ksca')):
             self.kext = self.kabs + self.ksca
             self.albedo = self.ksca / self.kext

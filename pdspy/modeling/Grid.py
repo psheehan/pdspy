@@ -86,10 +86,10 @@ class Grid:
         else:
             f = usefile
 
-        coordsystem = f['coordsystem'].value
-        w1 = f['w1'].value
-        w2 = f['w2'].value
-        w3 = f['w3'].value
+        coordsystem = f['coordsystem'][()]
+        w1 = f['w1'][...]
+        w2 = f['w2'][...]
+        w3 = f['w3'][...]
 
         if (coordsystem == 'cartesian'):
             self.set_cartesian_grid(w1, w2, w3)
@@ -100,7 +100,7 @@ class Grid:
 
         density = f['Density']
         for name in density:
-            self.density.append(density[name].value)
+            self.density.append(density[name][...])
 
         dust = f['Dust']
         for name in dust:
@@ -110,7 +110,7 @@ class Grid:
 
         temperature = f['Temperature']
         for name in temperature:
-            self.temperature.append(temperature[name].value)
+            self.temperature.append(temperature[name][...])
 
         stars = f['Stars']
         for name in stars:
@@ -120,17 +120,17 @@ class Grid:
 
         number_density = f['NumberDensity']
         for name in number_density:
-            self.number_density.append(number_density[name].value)
+            self.number_density.append(number_density[name][...])
 
         if 'GasTemperature' in f:
             gas_temperature = f['GasTemperature']
             for name in gas_temperature:
-                self.gas_temperature.append(gas_temperature[name].value)
+                self.gas_temperature.append(gas_temperature[name][...])
 
         if 'Microturbulence' in f:
             microturbulence = f['Microturbulence']
             for name in microturbulence:
-                self.microturbulence.append(microturbulence[name].value)
+                self.microturbulence.append(microturbulence[name][...])
 
         gas = f['Gas']
         for name in gas:
@@ -140,10 +140,10 @@ class Grid:
 
         velocity = f['Velocity']
         for name in velocity:
-            self.velocity.append(velocity[name].value)
+            self.velocity.append(velocity[name][...])
 
         if ('lam' in f):
-            self.lam = f['lam'].value
+            self.lam = f['lam'][...]
 
         if (usefile == None):
             f.close()

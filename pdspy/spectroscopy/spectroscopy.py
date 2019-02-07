@@ -31,9 +31,9 @@ class Spectrum:
         else:
             f = usefile
 
-        wave = f['wave'].value
-        flux = f['flux'].value
-        unc = f['unc'].value
+        wave = f['wave'][...]
+        flux = f['flux'][...]
+        unc = f['unc'][...]
 
         self.__init__(wave, flux, unc)
 
