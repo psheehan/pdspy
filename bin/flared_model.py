@@ -355,8 +355,12 @@ if args.resume:
 
     if args.resetprob:
         prob = None
+        prob_list = numpy.empty((nwalkers,0))
     else:
-        prob = numpy.load("prob.npy")
+        prob_list = numpy.load("prob.npy")
+        if len(prob_list.shape) == 1:
+            prob_list = prob_list.reshape((nwalkers,1))
+        prob = prob_list[:,-1]
 else:
     pos = []
     for j in range(nwalkers):
@@ -400,6 +404,7 @@ else:
         pos.append(temp_pos)
 
     prob = None
+    prob_list = numpy.empty((nwalkers, 0))
     chain = numpy.empty((nwalkers, 0, ndim))
     state = None
     nsteps = 0
@@ -419,41 +424,46 @@ if args.action == "plot":
 
 while nsteps < max_nsteps:
     if args.action == "run":
-        pos, prob, state = sampler.run_mcmc(pos, steps_per_iter, lnprob0=prob, \
-                rstate0=state)
+        for i in range(steps_per_iter):
+            pos, prob, state = sampler.run_mcmc(pos, 1, lnprob0=prob, \
+                    rstate0=state)
 
-        chain = numpy.concatenate((chain, sampler.chain), axis=1)
+            chain = numpy.concatenate((chain, sampler.chain), axis=1)
 
-        # Get keys of the parameters that are varying.
+            prob_list = numpy.concatenate((prob_list, prob.\
+                    reshape((nwalkers,1))), axis=1)
 
-        keys = []
-        for key in sorted(parameters.keys()):
-            if not parameters[key]["fixed"]:
-                keys.append(key)
+            # Get keys of the parameters that are varying.
 
-        # Plot the steps of the walkers.
+            keys = []
+            for key in sorted(parameters.keys()):
+                if not parameters[key]["fixed"]:
+                    keys.append(key)
 
-        for j in range(ndim):
-            fig, ax = plt.subplots(nrows=1, ncols=1)
+            # Plot the steps of the walkers.
 
-            for k in range(nwalkers):
-                ax.plot(chain[k,:,j])
+            for j in range(ndim):
+                fig, ax = plt.subplots(nrows=1, ncols=1)
 
-            plt.savefig("steps_{0:s}.png".format(keys[j]))
+                for k in range(nwalkers):
+                    ax.plot(chain[k,:,j])
 
-            plt.close(fig)
+                plt.savefig("steps_{0:s}.png".format(keys[j]))
 
-        # Save walker positions in case the code stps running for some reason.
+                plt.close(fig)
 
-        numpy.save("pos", pos)
-        numpy.save("prob", prob)
-        numpy.save("chain", chain)
+            # Save walker positions in case the code stps running for some 
+            # reason.
 
-        # Augment the nuber of steps and reset the sampler for the next run.
+            numpy.save("pos", pos)
+            numpy.save("prob", prob_list)
+            numpy.save("chain", chain)
 
-        nsteps += steps_per_iter
+            # Augment the nuber of steps and reset the sampler for the next run.
 
-        sampler.reset()
+            nsteps += 1
+
+            sampler.reset()
 
     # Get the best fit parameters and uncertainties.
 

@@ -772,8 +772,12 @@ if args.resume:
 
     if args.resetprob:
         prob = None
+        prob_list = numpy.empty((nwalkers,0))
     else:
-        prob = numpy.load("prob.npy")
+        prob_list = numpy.load("prob.npy")
+        if len(prob_list.shape) == 1:
+            prob_list = prob_list.reshape((nwalkers,1))
+        prob = prob_list[:,-1]
 else:
     pos = []
     for j in range(nwalkers):
@@ -831,6 +835,7 @@ else:
         pos.append(temp_pos)
 
     prob = None
+    prob_list = numpy.empty((nwalkers, 0))
     chain = numpy.empty((nwalkers, 0, ndim))
     state = None
     nsteps = 0
@@ -851,6 +856,9 @@ while nsteps < max_nsteps:
                     rstate0=state)
 
             chain = numpy.concatenate((chain, sampler.chain), axis=1)
+
+            prob_list = numpy.concatenate((prob_list, prob.\
+                    reshape((nwalkers,1))), axis=1)
 
             # Get keys of the parameters that are varying.
 
@@ -875,7 +883,7 @@ while nsteps < max_nsteps:
             # reason.
 
             numpy.save("pos", pos)
-            numpy.save("prob", prob)
+            numpy.save("prob", prob_list)
             numpy.save("chain", chain)
 
             # Augment the nuber of steps and reset the sampler for the next run.
