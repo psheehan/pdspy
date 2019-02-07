@@ -102,25 +102,25 @@ class DustGenerator:
         else:
             f = usefile
 
-        self.lam = f['lam'].value
-        self.amax = f['amax'].value
+        self.lam = f['lam'][...]
+        self.amax = f['amax'][...]
 
         if ('p' in f):
-            self.p = f['p'].value
+            self.p = f['p'][...]
             self.old = False
         else:
             self.old = True
 
         if ('kabs' in f):
-            self.kabs = f['kabs'].value
+            self.kabs = f['kabs'][...]
         if ('ksca' in f):
-            self.ksca = f['ksca'].value
+            self.ksca = f['ksca'][...]
         if (hasattr(self, 'kabs') and hasattr(self, 'ksca')):
             self.kext = self.kabs + self.ksca
             self.albedo = self.ksca / self.kext
 
         if ('rho' in f):
-            self.rho = f['rho'].value[0]
+            self.rho = f['rho'][...][0]
 
         if (usefile == None):
             f.close()

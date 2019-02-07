@@ -95,16 +95,16 @@ class Visibilities(VisibilitiesObject):
         u, v, freq, real, imag, weights = None, None, None, None, None, None
 
         if ('u' in f) and ('v' in f):
-            u = f['u'].value.astype(numpy.double)
-            v = f['v'].value.astype(numpy.double)
+            u = f['u'][...].astype(numpy.double)
+            v = f['v'][...].astype(numpy.double)
         if ('freq' in f):
-            freq = f['freq'].value.astype(numpy.double)
+            freq = f['freq'][...].astype(numpy.double)
         if ('real' in f) and ('imag' in f):
-            real = f['real'].value.astype(numpy.double)
-            imag = f['imag'].value.astype(numpy.double)
+            real = f['real'][...].astype(numpy.double)
+            imag = f['imag'][...].astype(numpy.double)
 
             if ('weights' in f):
-                weights = f['weights'].value.astype(numpy.double)
+                weights = f['weights'][...].astype(numpy.double)
             else:
                 weights = numpy.ones(real.shape)
 

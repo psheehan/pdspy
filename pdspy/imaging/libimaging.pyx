@@ -106,21 +106,21 @@ class Image(ImageObject):
             f = usefile
 
         if ('x' in f):
-            x = f['x'].value.astype(numpy.double)
-            y = f['y'].value.astype(numpy.double)
+            x = f['x'][...].astype(numpy.double)
+            y = f['y'][...].astype(numpy.double)
         else:
             x = None
             y = None
 
         if ('freq' in f):
-            freq = f['freq'].value.astype(numpy.double)
+            freq = f['freq'][...].astype(numpy.double)
         else:
             freq = None
 
-        image = f['image'].value.astype(numpy.double)
+        image = f['image'][...].astype(numpy.double)
 
         if ('unc' in f):
-            unc = f['unc'].value.astype(numpy.double)
+            unc = f['unc'][...].astype(numpy.double)
         else:
             unc = None
 

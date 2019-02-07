@@ -276,31 +276,31 @@ class SettledDisk:
         else:
             f = usefile
 
-        self.mass = f['mass'].value
-        self.rmin = f['rmin'].value
-        self.rmax = f['rmax'].value
-        self.plrho = f['plrho'].value
-        self.h0 = f['h0'].value
-        self.plh = f['plh'].value
+        self.mass = f['mass'][()]
+        self.rmin = f['rmin'][()]
+        self.rmax = f['rmax'][()]
+        self.plrho = f['plrho'][()]
+        self.h0 = f['h0'][()]
+        self.plh = f['plh'][()]
 
-        self.amin = f['amin'].value
-        self.amax = f['amax'].value
-        self.pla = f['pla'].value
-        self.alpha_settle = f['alpha_settle'].value
+        self.amin = f['amin'][()]
+        self.amax = f['amax'][()]
+        self.pla = f['pla'][()]
+        self.alpha_settle = f['alpha_settle'][()]
 
         if 't0' in f:
-            self.t0 = f['t0'].value
-            self.plt = f['plt'].value
+            self.t0 = f['t0'][()]
+            self.plt = f['plt'][()]
 
         if 'tmid0' in f:
-            self.tmid0 = f['tmid0'].value
-            self.tatm0 = f['tatm0'].value
-            self.zq0 = f['zq0'].value
-            self.pltgas = f['pltgas'].value
-            self.delta = f['delta'].value
+            self.tmid0 = f['tmid0'][()]
+            self.tatm0 = f['tatm0'][()]
+            self.zq0 = f['zq0'][()]
+            self.pltgas = f['pltgas'][()]
+            self.delta = f['delta'][()]
 
         if 'aturb' in f:
-            self.aturb = f['aturb'].value
+            self.aturb = f['aturb'][()]
 
         if ('Dust' in f):
             self.dust = Dust()
@@ -309,7 +309,7 @@ class SettledDisk:
         if ('Gas' in f):
             for name in f['Gas']:
                 self.gas.append(Gas())
-                self.abundance.append(f['Gas'][name]['Abundance'].value)
+                self.abundance.append(f['Gas'][name]['Abundance'][()])
                 self.gas[-1].set_properties_from_file(usefile=f['Gas'][name])
 
         if (usefile == None):

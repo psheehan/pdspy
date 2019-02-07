@@ -146,12 +146,12 @@ class Envelope:
         else:
             f = usefile
 
-        self.mass = f['mass'].value
-        self.rmin = f['rmin'].value
-        self.rmax = f['rmax'].value
-        self.pl = f['pl'].value
-        self.cavpl = f['cavpl'].value
-        self.cavrfact = f['cavrfact'].value
+        self.mass = f['mass'][()]
+        self.rmin = f['rmin'][()]
+        self.rmax = f['rmax'][()]
+        self.pl = f['pl'][()]
+        self.cavpl = f['cavpl'][()]
+        self.cavrfact = f['cavrfact'][()]
 
         if ('Dust' in f):
             self.dust = Dust()
@@ -159,7 +159,7 @@ class Envelope:
 
         for name in f['Gas']:
             self.gas.append(Gas())
-            self.abundance.append(f['Gas'][name]['Abundance'].value)
+            self.abundance.append(f['Gas'][name]['Abundance'][()])
             self.gas[-1].set_properties_from_file(usefile=f['Gas'][name])
 
         if (usefile == None):
