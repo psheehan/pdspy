@@ -319,7 +319,8 @@ images["data"] = []
 
 # Check that all of the parameters are correct.
 
-parameters = modeling.check_parameters(parameters)
+parameters = modeling.check_parameters(parameters, \
+        nvis=len(visibilities["file"]))
 
 # Decide whether to use an exponentially tapered 
 
