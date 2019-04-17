@@ -531,6 +531,9 @@ if args.action == "run":
 
 # Run a few burner steps.
 
+if args.action == "plot":
+    nsteps = max_nsteps-1
+
 while nsteps < max_nsteps:
     if args.action == "run":
         for i in range(steps_per_iter):
