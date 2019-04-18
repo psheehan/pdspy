@@ -26,6 +26,13 @@ class YSOModel(Model):
 
         self.grid.set_cartesian_grid(x, y, z)
 
+    def set_cylindrical_grid(self, rmin, rmax, nr, nz, nphi):
+        r = numpy.linspace(rmin, rmax, nr)
+        phi = numpy.linspace(0.0, 2*numpy.pi, nphi)
+        z = numpy.linspace(0.,rmax, nz)
+
+        self.grid.set_cylindrical_grid(r, phi, z)
+
     def set_spherical_grid(self, rmin, rmax, nr, ntheta, nphi, log=True, \
             code="radmc3d"):
         if log:
@@ -158,6 +165,10 @@ class YSOModel(Model):
             elif self.grid.coordsystem == "cartesian":
                 self.grid.add_density(self.disk.density(self.grid.x, \
                         self.grid.y, self.grid.z, \
+                        coordsys=self.grid.coordsystem),dust)
+            elif self.grid.coordsystem == "cylindrical":
+                self.grid.add_density(self.disk.density(self.grid.rho, \
+                        self.grid.phi, self.grid.z, \
                         coordsys=self.grid.coordsystem),dust)
 
         if (gas != None):
