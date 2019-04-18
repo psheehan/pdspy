@@ -53,6 +53,8 @@ class Disk:
             xx, yy, zz = numpy.meshgrid(x1*AU, x2*AU, x3*AU, indexing='ij')
 
             rr = (xx**2 + yy**2)**0.5
+        elif coordsys == "cylindrical":
+            rr, pp, zz = numpy.meshgrid(x1*AU, x2, x3*AU, indexing='ij')
 
         ##### Make the dust density model for a protoplanetary disk.
 
