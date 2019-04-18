@@ -76,6 +76,10 @@ class YSOModel(Model):
                     self.grid.add_velocity(self.disk.velocity(self.grid.r, \
                             self.grid.theta, self.grid.phi, \
                             mstar=self.grid.stars[0].mass))
+                    if aturb != None:
+                        self.grid.add_microturbulence(self.disk.\
+                                microturbulence(self.grid.r, self.grid.theta, \
+                                self.grid.phi))
             else:
                 self.disk.add_gas(gas, abundance)
                 self.grid.add_number_density(self.disk.number_density( \
@@ -84,16 +88,15 @@ class YSOModel(Model):
                 self.grid.add_velocity(self.disk.velocity(self.grid.r, \
                         self.grid.theta, self.grid.phi, \
                         mstar=self.grid.stars[0].mass))
+                if aturb != None:
+                    self.grid.add_microturbulence(self.disk.microturbulence(\
+                            self.grid.r, self.grid.theta, self.grid.phi))
 
         if t0 != None:
             self.grid.add_temperature(self.disk.temperature(self.grid.r, \
                     self.grid.theta, self.grid.phi))
         if tmid0 != None:
             self.grid.add_gas_temperature(self.disk.gas_temperature( \
-                    self.grid.r, self.grid.theta, self.grid.phi))
-
-        if aturb != None:
-            self.grid.add_microturbulence(self.disk.microturbulence( \
                     self.grid.r, self.grid.theta, self.grid.phi))
 
     def add_settled_disk(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, \
@@ -127,6 +130,10 @@ class YSOModel(Model):
                     self.grid.add_velocity(self.disk.velocity(self.grid.r, \
                             self.grid.theta, self.grid.phi, \
                             mstar=self.grid.stars[0].mass))
+                    if aturb != None:
+                        self.grid.add_microturbulence(self.disk.\
+                                microturbulence(self.grid.r, self.grid.theta, \
+                                self.grid.phi))
             else:
                 self.disk.add_gas(gas, abundance)
                 self.grid.add_number_density(self.disk.number_density( \
@@ -135,16 +142,15 @@ class YSOModel(Model):
                 self.grid.add_velocity(self.disk.velocity(self.grid.r, \
                         self.grid.theta, self.grid.phi, \
                         mstar=self.grid.stars[0].mass))
+                if aturb != None:
+                    self.grid.add_microturbulence(self.disk.microturbulence(\
+                            self.grid.r, self.grid.theta, self.grid.phi))
 
         if t0 != None:
             self.grid.add_temperature(self.disk.temperature(self.grid.r, \
                     self.grid.theta, self.grid.phi))
         if tmid0 != None:
             self.grid.add_gas_temperature(self.disk.gas_temperature( \
-                    self.grid.r, self.grid.theta, self.grid.phi))
-
-        if aturb != None:
-            self.grid.add_microturbulence(self.disk.microturbulence( \
                     self.grid.r, self.grid.theta, self.grid.phi))
 
     def add_pringle_disk(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, \
@@ -181,6 +187,10 @@ class YSOModel(Model):
                     self.grid.add_velocity(self.disk.velocity(self.grid.r, \
                             self.grid.theta, self.grid.phi, \
                             mstar=self.grid.stars[0].mass))
+                    if aturb != None:
+                        self.grid.add_microturbulence(self.disk.\
+                                microturbulence(self.grid.r, self.grid.theta, \
+                                self.grid.phi))
             else:
                 self.disk.add_gas(gas, abundance)
                 self.grid.add_number_density(self.disk.number_density( \
@@ -189,16 +199,15 @@ class YSOModel(Model):
                 self.grid.add_velocity(self.disk.velocity(self.grid.r, \
                         self.grid.theta, self.grid.phi, \
                         mstar=self.grid.stars[0].mass))
+                if aturb != None:
+                    self.grid.add_microturbulence(self.disk.microturbulence( \
+                            self.grid.r, self.grid.theta, self.grid.phi))
 
         if t0 != None:
             self.grid.add_temperature(self.disk.temperature(self.grid.r, \
                     self.grid.theta, self.grid.phi))
         if tmid0 != None:
             self.grid.add_gas_temperature(self.disk.gas_temperature( \
-                    self.grid.r, self.grid.theta, self.grid.phi))
-
-        if aturb != None:
-            self.grid.add_microturbulence(self.disk.microturbulence( \
                     self.grid.r, self.grid.theta, self.grid.phi))
 
     def add_settled_pringle_disk(self, mass=1.0e-3, rmin=0.1, rmax=300, \
@@ -232,6 +241,10 @@ class YSOModel(Model):
                     self.grid.add_velocity(self.disk.velocity(self.grid.r, \
                             self.grid.theta, self.grid.phi, \
                             mstar=self.grid.stars[0].mass))
+                    if aturb != None:
+                        self.grid.add_microturbulence(self.disk.\
+                                microturbulence(self.grid.r, self.grid.theta, \
+                                self.grid.phi))
             else:
                 self.disk.add_gas(gas, abundance)
                 self.grid.add_number_density(self.disk.number_density( \
@@ -240,16 +253,15 @@ class YSOModel(Model):
                 self.grid.add_velocity(self.disk.velocity(self.grid.r, \
                         self.grid.theta, self.grid.phi, \
                         mstar=self.grid.stars[0].mass))
+                if aturb != None:
+                    self.grid.add_microturbulence(self.disk.microturbulence( \
+                            self.grid.r, self.grid.theta, self.grid.phi))
 
         if t0 != None:
             self.grid.add_temperature(self.disk.temperature(self.grid.r, \
                     self.grid.theta, self.grid.phi))
         if tmid0 != None:
             self.grid.add_gas_temperature(self.disk.gas_temperature( \
-                    self.grid.r, self.grid.theta, self.grid.phi))
-
-        if aturb != None:
-            self.grid.add_microturbulence(self.disk.microturbulence( \
                     self.grid.r, self.grid.theta, self.grid.phi))
 
     def add_envelope(self, mass=1.0e-3, rmin=0.1, rmax=1000, pl=1.5, \
@@ -273,6 +285,10 @@ class YSOModel(Model):
                     self.grid.add_velocity(self.envelope.velocity(self.grid.r, \
                             self.grid.theta, self.grid.phi, \
                             mstar=self.grid.stars[0].mass))
+                    if aturb != None:
+                        self.grid.add_microturbulence(self.disk.\
+                                microturbulence(self.grid.r, self.grid.theta, \
+                                self.grid.phi))
             else:
                 self.envelope.add_gas(gas, abundance)
                 self.grid.add_number_density(self.envelope.number_density( \
@@ -282,15 +298,14 @@ class YSOModel(Model):
                         self.grid.theta, self.grid.phi, \
                         mstar=self.grid.stars[0].mass))
 
+                if aturb != None:
+                    self.grid.add_microturbulence(self.disk.microturbulence( \
+                            self.grid.r, self.grid.theta, self.grid.phi))
         if t0 != None:
             self.grid.add_temperature(self.envelope.temperature(self.grid.r, \
                     self.grid.theta, self.grid.phi))
         if tmid0 != None:
             self.grid.add_gas_temperature(self.envelope.gas_temperature( \
-                    self.grid.r, self.grid.theta, self.grid.phi))
-
-        if aturb != None:
-            self.grid.add_microturbulence(self.disk.microturbulence( \
                     self.grid.r, self.grid.theta, self.grid.phi))
 
     def add_ulrich_envelope(self, mass=1.0e-3, rmin=0.1, rmax=1000, rcent=300, \
@@ -323,6 +338,10 @@ class YSOModel(Model):
                     self.grid.add_velocity(self.envelope.velocity(self.grid.r, \
                             self.grid.theta, self.grid.phi, \
                             mstar=self.grid.stars[0].mass))
+                    if aturb != None:
+                        self.grid.add_microturbulence(self.disk.\
+                                microturbulence(self.grid.r, self.grid.theta, \
+                                self.grid.phi))
             else:
                 self.envelope.add_gas(gas, abundance)
                 self.grid.add_number_density(self.envelope.number_density( \
@@ -331,16 +350,15 @@ class YSOModel(Model):
                 self.grid.add_velocity(self.envelope.velocity(self.grid.r, \
                         self.grid.theta, self.grid.phi, \
                         mstar=self.grid.stars[0].mass))
+                if aturb != None:
+                    self.grid.add_microturbulence(self.disk.microturbulence( \
+                            self.grid.r, self.grid.theta, self.grid.phi))
 
         if t0 != None:
             self.grid.add_temperature(self.envelope.temperature(self.grid.r, \
                     self.grid.theta, self.grid.phi))
         if tmid0 != None:
             self.grid.add_gas_temperature(self.envelope.gas_temperature( \
-                    self.grid.r, self.grid.theta, self.grid.phi))
-
-        if aturb != None:
-            self.grid.add_microturbulence(self.disk.microturbulence( \
                     self.grid.r, self.grid.theta, self.grid.phi))
 
     def run_simple_dust_image(self, name=None, i=0., pa=0., npix=256, dx=1., \
