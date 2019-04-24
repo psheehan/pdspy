@@ -292,7 +292,14 @@ class Model:
 
         radmc3d.write.dust_density(self.grid.density)
         if len(self.grid.temperature) > 0:
-            radmc3d.write.dust_temperature(self.grid.temperature)
+            density = numpy.array(self.grid.density)
+            temperature = numpy.array(self.grid.temperature)
+
+            temperature = (density * temperature).sum(axis=0) / \
+                    density.sum(axis=0)
+            temperature = [temperature for i in range(len(self.grid.density))]
+
+            radmc3d.write.dust_temperature(temperature)
 
         dustopac = []
         for i in range(len(self.grid.dust)):

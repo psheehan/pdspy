@@ -216,11 +216,13 @@ class Disk:
         mstar *= M_sun
 
         rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+
         rr = rt*numpy.sin(tt)
+        zz = rt*numpy.cos(tt)
 
         v_r = numpy.zeros(rr.shape)
         v_theta = numpy.zeros(rr.shape)
-        v_phi = numpy.sqrt(G*mstar/rr)
+        v_phi = numpy.sqrt(G*mstar*rr**2/rt**3)
 
         return numpy.array((v_r, v_theta, v_phi))
 
