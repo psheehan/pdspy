@@ -166,10 +166,11 @@ def lnprior(params, parameters, visibilities):
 
     # Check that we aren't allowing any absurdly dense models.
 
-    if params["logR_env"] < 0.5 * params["logM_env"] + 4.:
-        return -numpy.inf
-    else:
-        pass
+    if "logR_env" in params and "logM_env" in params:
+        if params["logR_env"] < 0.5 * params["logM_env"] + 4.:
+            return -numpy.inf
+        else:
+            pass
 
     # Check that the cavity actually falls within the disk.
 
@@ -818,11 +819,12 @@ while nsteps < max_nsteps:
                         spectra["data"][j].flux, fmt="ko", \
                         yerr=spectra["data"][j].unc, markeredgecolor="k")
 
-    if args.SED:
-        ax[0,2].plot(m.spectra["SED"].wave, c_l / m.spectra["SED"].wave / \
-                1.0e-4 * m.spectra["SED"].flux * Jy, "g-")
-    else:
-        ax[0,2].plot(m.spectra["SED"].wave, m.spectra["SED"].flux, "g-")
+    if len(spectra["file"]) > 0:
+        if args.SED:
+            ax[0,2].plot(m.spectra["SED"].wave, c_l / m.spectra["SED"].wave / \
+                    1.0e-4 * m.spectra["SED"].flux * Jy, "g-")
+        else:
+            ax[0,2].plot(m.spectra["SED"].wave, m.spectra["SED"].flux, "g-")
 
     # Plot the scattered light image.
 
