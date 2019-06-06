@@ -137,7 +137,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
         m.add_ulrich_envelope(mass=p["M_env"], rmin=p["R_in"], rmax=p["R_env"],\
                 cavpl=p["ksi"], cavrfact=p["f_cav"], dust=edust, \
                 t0=p["T0_env"], tpl=p["q_env"], gas=gases, abundance=abundance,\
-                aturb=p["a_turb_env"])
+                aturb=p["a_turb_env"], rcent=p["R_c"])
     else:
         pass
 
