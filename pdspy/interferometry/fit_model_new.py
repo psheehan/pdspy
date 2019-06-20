@@ -2,6 +2,7 @@ from ..constants.astronomy import arcsec
 import numpy
 import emcee
 import matplotlib.pyplot as plt
+import scipy.optimize
 import scipy.signal
 from .model import model
 
