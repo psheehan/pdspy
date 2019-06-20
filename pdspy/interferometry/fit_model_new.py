@@ -4,10 +4,11 @@ import emcee
 import matplotlib.pyplot as plt
 import scipy.optimize
 import scipy.signal
+from scipy.stats import chi2
 from .model import model
 
 def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=None, \
-        xmax=10., ymax=10.):
+        xmax=10., ymax=10., step_size=0.1):
 
     if type(funct) == str:
         funct = numpy.array([funct])
@@ -26,8 +27,8 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=None, \
 
     print("Doing coarse grid search.")
 
-    x = numpy.arange(-xmax,xmax,0.1)
-    y = numpy.arange(-ymax,ymax,0.1)
+    x = numpy.arange(-xmax,xmax,step_size)
+    y = numpy.arange(-ymax,ymax,step_size)
 
     params = numpy.array([])
 
@@ -280,7 +281,10 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=None, \
                     elif funct[i] == "ring":
                         ind = int(5 + sum([nparams[j] for j in range(i)]))
 
-                    samples = sampler.chain.reshape((-1,ndim))[:,ind]
+                    good = 2*(prob - prob.max()) > -chi2.isf(0.01/\
+                            (sampler.chain.shape[1]*nwalkers), sum(nparams))
+                    samples = sampler.chain[good,:,:].reshape((-1,ndim))[:,ind]
+
                     pa_hist, bins = numpy.histogram(samples, 20)
 
                     bin_centers = (bins[0:-1] + bins[1:]) / 2.
@@ -314,11 +318,14 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=None, \
 
     # Run the real MCMC simulation.
 
-    sampler.run_mcmc(pos, 100)
+    pos, prob, state = sampler.run_mcmc(pos, 100)
 
     # Get the best fit parameters and uncertainties.
 
-    samples = sampler.chain.reshape((-1, ndim))
+    good = 2*(prob - prob.max()) > -chi2.isf(0.01/(sampler.chain.shape[1]*\
+            nwalkers), sum(nparams))
+
+    samples = sampler.chain[good,:,:].reshape((-1,ndim))
 
     params = numpy.median(samples,axis=0)
     sigma = samples.std(axis=0)
