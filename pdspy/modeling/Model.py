@@ -295,6 +295,8 @@ class Model:
             density = numpy.array(self.grid.density)
             temperature = numpy.array(self.grid.temperature)
 
+            density[density == 0] = 1.0e-50
+
             temperature = (density * temperature).sum(axis=0) / \
                     density.sum(axis=0)
             temperature = [temperature for i in range(len(self.grid.density))]
