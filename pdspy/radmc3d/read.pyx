@@ -11,6 +11,7 @@ cimport numpy
 
 from os.path import exists
 from numpy import array, empty, linspace, fromfile
+import sys
 
 #==========================================================================
 #                        ROUTINES FOR IMAGES
@@ -44,6 +45,11 @@ def image(filename=None,ext=None,binary=False):
                 filename = "image_"+str(ext)+".out"
 
     if (exists(filename) == False):
+        f = open("radmc3d.out","r")
+        lines = f.readlines()
+        f.close()
+        for line in lines:
+            sys.stdout.write(line)
         print("Sorry, cannot find {0:s}. Presumably radmc2d exited without success. See above for possible error messages of radmc3d!".format(filename))
         return
     else:
