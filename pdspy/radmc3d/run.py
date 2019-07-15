@@ -37,6 +37,35 @@ def thermal(noscat=None, nphot_therm=None, nphot_scat=None, setthreads=1, \
     else:
         output = run(command.split(" "), stderr=STDOUT, timeout=timelimit)
 
+def scattering(nphot_scat=None, setthreads=1, inclfreefree=None, \
+        nofreefree=None, inclgascont=None, nogascont=None, \
+        verbose=True, nice=None, loadlambda=None):
+
+    if nice != None:
+        command="nice -{0:d} radmc3d mcscat".format(nice)
+    else:
+        command="radmc3d mcscat "
+
+    if (nphot_scat != None):
+        command += " nphot_scat {0:d}".format(nphot_therm)
+    if (setthreads != 1):
+        command += " setthreads {0:d}".format(setthreads)
+    if (inclfreefree == True):
+        command += " inclfreefree"
+    if (nofreefree == True):
+        command += " nofreefree"
+    if (inclgascont == True):
+        command += " inclgascont"
+    if (nogascont == True):
+        command += " nogascont"
+    if (loadlambda == True):
+        command += "loadlambda "
+
+    if not verbose:
+        command += " > radmc3d.out"
+
+    system(command)
+
 def sed(nrrefine=None, fluxcons=None, norefine=None, nofluxcons=None, \
         noscat=None, sizeau=None, sizepc=None, zoomau=None, zoompc=None, \
         truepix=None, truezoom=None, pointau=None, pointpc=None, incl=None, \

@@ -301,3 +301,38 @@ def dust_temperature(filename=None, ext=None, binary=False):
     f.close()
 
     return temperature
+
+# Read in the scattering phase function.
+
+def scattering_phase(filename=None, binary=False):
+
+    if filename == None:
+        if binary:
+            filename = "scattering_phase.bout"
+        else:
+            filename = "scattering_phase.out"
+
+    if binary:
+        f = open(filename, "rb")
+        data = fromfile(filename)
+    else:
+        f = open(filename, "r")
+
+    f.readline()
+    ncells = int(f.readline())
+    nfreq = int(f.readline())
+
+    freq = array(f.readline().split(), dtype=float)
+
+    scattering_phase = []
+    for i in range(nfreq):
+        temp = empty((ncells,))
+
+        for j in range(ncells):
+            temp[j] = float(f.readline())
+
+        scattering_phase.append(temp)
+
+    f.close()
+
+    return freq, scattering_phase

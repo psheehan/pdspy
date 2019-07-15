@@ -132,6 +132,31 @@ class Model:
 
         os.system("rm *.out *.inp *.dat")
 
+    def run_scattering(self, nphot=1e6, code="radmc3d", **keywords):
+        if (code == "radmc3d"):
+            self.run_scattering_radmc3d(nphot=nphot, **keywords)
+        else:
+            print("Scattering phase function cannot be calculated in Hyperion!")
+
+    def run_scattering_radmc3d(self, nphot=1e6, verbose=True, nice=None, \
+            loadlambda=None, **keywords):
+        self.write_radmc3d(nphot_scat=nphot, **keywords)
+
+        radmc3d.run.scattering(verbose=verbose, nice=nice, \
+                loadlambda=loadlambda)
+
+        self.grid.scattering_phase_freq, self.grid.scattering_phase = \
+                radmc3d.read.scattering_phase()
+        for i in range(len(self.grid.scattering_phase)):
+            n1, n2, n3 = self.grid.density[0].shape
+            self.grid.scattering_phase[i] = numpy.transpose( \
+                    self.grid.scattering_phase[i].reshape((n3,n2,n1)), \
+                    axes=(2,1,0))
+
+        self.grid.scattering_phase = numpy.array(self.grid.scattering_phase)
+
+        os.system("rm *.out *.inp *.dat")
+
     def run_image(self, name=None, nphot=1e6, code="radmc3d", **keywords):
         if (code == "radmc3d"):
             self.run_image_radmc3d(name=name, nphot=nphot, **keywords)
