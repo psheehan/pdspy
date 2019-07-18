@@ -31,6 +31,8 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=None, \
     y = numpy.arange(-ymax,ymax,step_size)
 
     params = numpy.array([])
+    upper_bounds = []
+    lower_bounds = []
 
     xmin = []
     ymin = []
@@ -67,15 +69,48 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=None, \
         if (funct[k] == 'point'):
             params = numpy.concatenate((params, numpy.array([xmin[-1], \
                     ymin[-1], flux0])))
+
+            upper_bounds += [numpy.inf for i in range(3)]
+            lower_bounds += [-numpy.inf for i in range(3)]
         elif (funct[k] == 'gauss'):
             params = numpy.concatenate((params, numpy.array([xmin[-1], \
                     ymin[-1], 0.1, 0.1, 0.0, flux0])))
+
+            upper_bounds += [numpy.inf for i in range(6)]
+            lower_bounds += [-numpy.inf for i in range(6)]
+            upper_bounds[-4] = max_size
+            upper_bounds[-3] = max_size
+            lower_bounds[-4] = 0.
+            lower_bounds[-3] = 0.
         elif (funct[k] == 'circle'):
             params = numpy.concatenate((params, numpy.array([xmin[-1], \
                     ymin[-1], 0.1, 0.0, 0.0, flux0])))
+
+            upper_bounds += [numpy.inf for i in range(6)]
+            lower_bounds += [-numpy.inf for i in range(6)]
         elif (funct[k] == 'ring'):
             params = numpy.concatenate((params, numpy.array([xmin[-1], \
                     ymin[-1], 0.1, 0.2, 0.0, 0.0, flux0])))
+
+            upper_bounds += [numpy.inf for i in range(7)]
+            lower_bounds += [-numpy.inf for i in range(7)]
+
+        # Now try to refine the guess with a quick optimization.
+
+        def func(p, d, funct):
+            m = model(d.u, d.v, p, return_type='append', funct=funct)
+
+            data = numpy.concatenate((d.real, d.imag))[:,0]
+            weight = numpy.sqrt(numpy.concatenate((d.weights, d.weights))[:,0])
+
+            chi = (data - m)*weight
+
+            return chi
+
+        result = scipy.optimize.least_squares(func, params, \
+                args=(data,funct[0:k+1]), bounds=(lower_bounds,upper_bounds))
+
+        params = result.x
 
     # Next do a few iterations of MCMC to get the correct solution.
 
