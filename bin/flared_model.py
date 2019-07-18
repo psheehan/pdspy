@@ -700,7 +700,7 @@ while nsteps < max_nsteps:
                             width=bmaj, height=bmin, angle=(bpa+90), \
                             facecolor="white", edgecolor="black"))
 
-                    ax[k,l].set_adjustable('box-forced')
+                    ax[k,l].set_adjustable('box')
 
             if args.plot_vis:
                 ax[k,0].set_ylabel("Amplitude [Jy]")
