@@ -16,7 +16,7 @@ requirements:
     - python
     - numpy
     - scipy
-    - matplotlib
+    - matplotlib <= 3.0
     - astropy
     - h5py
     - mpi4py
