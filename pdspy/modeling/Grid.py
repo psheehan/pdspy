@@ -16,6 +16,8 @@ class Grid:
         self.gas = []
         self.velocity = []
         self.microturbulence = []
+        self.scattering_phase_freq = []
+        self.scattering_phase = []
 
     def add_density(self, density, dust):
         self.density.append(density)
@@ -39,6 +41,10 @@ class Grid:
 
     def add_microturbulence(self, microturbulence):
         self.microturbulence.append(microturbulence)
+
+    def add_scattering_phase(self, freq, scattering_phase):
+        self.scattering_phase_freq = freq
+        self.scattering_phase = scattering_phase
 
     def set_cartesian_grid(self, w1, w2, w3):
         self.coordsystem = "cartesian"
@@ -132,6 +138,12 @@ class Grid:
             for name in microturbulence:
                 self.microturbulence.append(microturbulence[name][...])
 
+        if "ScatteringPhase" in f:
+            scattering_phase = f["ScatteringPhase"]
+            self.scattering_phase = scattering_phase["ScatteringPhase"][...]
+            self.scattering_phase_freq = \
+                    scattering_phase["ScatteringPhaseFreq"][...]
+
         gas = f['Gas']
         for name in gas:
             g = Gas()
@@ -212,6 +224,16 @@ class Grid:
                     "Microturbulence{0:d}".format(i), \
                     self.microturbulence[i].shape, dtype='f'))
             microturbulence_dsets[i][...] = self.microturbulence[i]
+
+        scattering_phase = f.create_group("ScatteringPhase")
+        scattering_phase_dsets = []
+        scattering_phase_dsets.append(scattering_phase.create_dataset( \
+                "ScatteringPhase", self.scattering_phase.shape, dtype='f'))
+        scattering_phase_dsets[0][...] = self.scattering_phase
+        scattering_phase_dsets.append(scattering_phase.create_dataset( \
+                "ScatteringPhaseFreq", self.scattering_phase_freq.shape, \
+                dtype='f'))
+        scattering_phase_dsets[1][...] = self.scattering_phase_freq
 
         gas = f.create_group("Gas")
         gas_groups = []

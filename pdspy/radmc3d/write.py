@@ -477,3 +477,27 @@ def gas_velocity(v, gridstyle="normal"):
                             v[1][ix,iy,iz], v[2][ix,iy,iz]))
 
     f.close()
+
+def scattering_phase(scattering_phase, freq, gridstyle="normal"):
+
+    nfreq = freq.size
+
+    if (gridstyle == "normal"):
+        nx, ny, nz = scattering_phase[0].shape
+        ncells = nx*ny*nz
+
+    f = open("scattering_phase.out","w")
+    f.write("2\n")
+    f.write("{0:d}\n".format(ncells))
+    f.write("{0:d}\n".format(nspecies))
+
+    f.write("       ".join(freq)+"\n")
+
+    for ifreq in range(nfreq):
+        if (gridstyle == "normal"):
+            for iz in range(nz):
+                for iy in range(ny):
+                    for ix in range(nx):
+                        f.write("{0:e}\n".format(density[ifreq,ix,iy,iz]))
+
+    f.close()
