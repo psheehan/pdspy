@@ -58,7 +58,7 @@ def model(u, v, params, return_type="complex", funct="gauss", freq=230):
             model += ring_model(u, v, par[index+0], par[index+1], \
                 par[index+2], par[index+3], par[index+4], par[index+5], \
                 par[index+6])
-    
+
     real = model.real
     imag = model.imag
     
@@ -114,8 +114,8 @@ def ring_model(u, v, xcenter, ycenter, inradius, outradius, incline, theta, \
 
 def gaussian_model(u, v, xcenter, ycenter, usigma, vsigma, theta, flux):
 
-    if vsigma > usigma:
-        return numpy.repeat(numpy.inf, u.size)
+    #if vsigma > usigma:
+    #    return numpy.repeat(numpy.inf, u.size)
     
     urot = u * numpy.cos(theta) - v * numpy.sin(theta)
     vrot = u * numpy.sin(theta) + v * numpy.cos(theta)
