@@ -19,7 +19,7 @@ def readuvfits(filename, fmt="miriad", fast=False):
     if fmt == "casa":
         arr = data[0].data.field("data").astype(numpy.float)
 
-        for i in range(data[0].data.field("data").shape[5]):
+        for i in range(min(2,data[0].data.field("data").shape[5])):
             if i == 0:
                 real = [arr[:,0,0,j,:,0,0] for j in range(arr.shape[3])]
                 imag = [arr[:,0,0,j,:,0,1] for j in range(arr.shape[3])]
