@@ -225,15 +225,16 @@ class Grid:
                     self.microturbulence[i].shape, dtype='f'))
             microturbulence_dsets[i][...] = self.microturbulence[i]
 
-        scattering_phase = f.create_group("ScatteringPhase")
-        scattering_phase_dsets = []
-        scattering_phase_dsets.append(scattering_phase.create_dataset( \
-                "ScatteringPhase", self.scattering_phase.shape, dtype='f'))
-        scattering_phase_dsets[0][...] = self.scattering_phase
-        scattering_phase_dsets.append(scattering_phase.create_dataset( \
-                "ScatteringPhaseFreq", self.scattering_phase_freq.shape, \
-                dtype='f'))
-        scattering_phase_dsets[1][...] = self.scattering_phase_freq
+        if len(self.scattering_phase) > 0:
+            scattering_phase = f.create_group("ScatteringPhase")
+            scattering_phase_dsets = []
+            scattering_phase_dsets.append(scattering_phase.create_dataset( \
+                    "ScatteringPhase", self.scattering_phase.shape, dtype='f'))
+            scattering_phase_dsets[0][...] = self.scattering_phase
+            scattering_phase_dsets.append(scattering_phase.create_dataset( \
+                    "ScatteringPhaseFreq", self.scattering_phase_freq.shape, \
+                    dtype='f'))
+            scattering_phase_dsets[1][...] = self.scattering_phase_freq
 
         gas = f.create_group("Gas")
         gas_groups = []
