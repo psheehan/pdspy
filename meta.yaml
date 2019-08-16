@@ -24,7 +24,6 @@ requirements:
     - corner
     - galario
     - hyperion
-    - pvextractor
 
 
 test:
