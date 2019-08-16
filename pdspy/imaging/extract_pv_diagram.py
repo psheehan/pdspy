@@ -1,7 +1,10 @@
 from ..constants.astronomy import arcsec
 from ..constants.physics import c
 from . import Image
-import pvextractor
+try:
+    import pvextractor
+except:
+    pass
 import numpy
 
 def extract_pv_diagram(image, xy=(0.,0.), pa=0., length=100, width=1):
