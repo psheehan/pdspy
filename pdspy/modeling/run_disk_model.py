@@ -29,7 +29,7 @@ comm = MPI.COMM_WORLD
 
 def run_disk_model(visibilities, images, spectra, params, parameters, \
         plot=False, ncpus=1, ncpus_highmass=1, with_hyperion=False, \
-        timelimit=3600, source="disk", nice=None):
+        timelimit=3600, source="disk", nice=None, disk_vis=False):
 
     # Set the values of all of the parameters.
 
@@ -293,6 +293,27 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                     m.images[visibilities["lam"][j]].image[:,:,0,0], beam, \
                     mode="same").reshape(m.images[visibilities["lam"][j]].\
                     image.shape)
+
+            # Run visibilities that include only the contribution of the disk.
+
+            if disk_vis and parameters["envelope_type"]["value"] == "ulrich":
+                density_original = m.grid.density.copy()
+                temperature_original = m.grid.temperature.copy()
+                dust_original = m.grid.dust.copy()
+
+                del m.grid.density[-1]
+                del m.grid.temperature[-1]
+                del m.grid.dust[-1]
+
+                m.run_visibilities(name=visibilities["lam"][j]+"_disk", \
+                        nphot=1e5, npix=2048, pixelsize=0.05, \
+                        lam=visibilities["lam"][j], incl=p["i"], pa=p["pa"], \
+                        dpc=p["dpc"], code="radmc3d", mc_scat_maxtauabs=5, \
+                        verbose=False, setthreads=nprocesses, nice=nice)
+
+                m.grid.density = density_original
+                m.grid.temperature = temperature_original
+                m.grid.dust = dust_original
 
     # Run the images.
 
