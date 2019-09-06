@@ -506,7 +506,7 @@ while nsteps < max_nsteps:
     # Plot histograms of the resulting parameters.
 
     labels = ["$"+key.replace("T0_env","T_0,env").replace("T0","T_0").\
-            replace("turb_env","turb,env").\
+            replace("turb_env","turb,env").replace("in_env","in,env").\
             replace("_","_{").replace("log","\log ")+"}$" if key[0:3] == \
             "log" else "$"+key+"$" for key in keys]
 
