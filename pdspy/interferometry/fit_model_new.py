@@ -1,4 +1,5 @@
 from ..constants.astronomy import arcsec
+from ..constants.physics import c
 import numpy
 import emcee
 import matplotlib.pyplot as plt
@@ -8,7 +9,7 @@ from scipy.stats import chi2
 from .model import model
 
 def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=None, \
-        xmax=10., ymax=10., step_size=0.1):
+        xmax=10., ymax=10., step_size=0.1, primary_beam=None, image_rms=None):
 
     if type(funct) == str:
         funct = numpy.array([funct])
@@ -22,6 +23,15 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=None, \
 
     flux0 = data.amp[data.uvdist < min_baselines].mean() / funct.size
     fluxstd = data.amp[data.uvdist < min_baselines].std() / funct.size
+
+    # Check if we need to adjust the data weights based on a supplied 
+    # image_rms.
+
+    if image_rms != None:
+        sigma_tot = 1./numpy.sqrt(data.weights.sum())
+        ratio = sigma_tot / image_rms
+
+        data.weights *= ratio**2
 
     # First do a coarse grid search to find the location of the minimum.
 
@@ -362,6 +372,8 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=None, \
 
     samples = sampler.chain[good,:,:].reshape((-1,ndim))
 
+    # Get the best fit parameters.
+
     params = numpy.median(samples,axis=0)
     sigma = samples.std(axis=0)
 
@@ -384,6 +396,39 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=None, \
 
         params = numpy.median(samples, axis=0)
         sigma = samples.std(axis=0)
+
+    # If we were suplied with a primary beam shape, then calculate the flux
+    # correction factor.
+
+    if primary_beam != None:
+        nparams = numpy.zeros(funct.size)
+        for i in range(funct.size):
+            if funct[i] == "point":
+                nparams[i] = 3
+            elif funct[i] == "gauss":
+                nparams[i] = 6
+            elif funct[i] == "circle":
+                nparams[i] = 6
+            elif funct[i] == "ring":
+                nparams[i] = 7
+
+            index0 = int(nparams[0:i].sum())
+
+            r0 = (samples[:,index0+0]**2 + samples[:,index0+1]**2)**0.5
+
+            if primary_beam == "ALMA":
+                fwhm_pb = 1.13 * (c*1.0e-2 / data.freq.mean()) / 12 / arcsec
+            else:
+                fwhm_pb = 0.
+
+            sigma_pb = fwhm_pb / (2. * numpy.sqrt(2 * numpy.log(2.)))
+
+            pb = numpy.exp(-r0**2/(2*sigma_pb**2))
+
+            samples[:,int(index0 + nparams[i] - 1)] /= pb
+
+    params = numpy.median(samples, axis=0)
+    sigma = samples.std(axis=0)
 
     # Clip a few stragglers and re-calculate.
 
