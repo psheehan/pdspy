@@ -8,7 +8,7 @@ import scipy.signal
 from scipy.stats import chi2
 from .model import model
 
-def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=None, \
+def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=numpy.inf, \
         xmax=10., ymax=10., step_size=0.1, primary_beam=None, image_rms=None):
 
     if type(funct) == str:
@@ -155,7 +155,7 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=None, \
 
             ind = 0
 
-            if max_size == None:
+            if max_size == numpy.inf:
                 r_max = 1. / data.uvdist[data.uvdist > 0].min() / arcsec
             else:
                 r_max = max_size
@@ -231,7 +231,7 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=None, \
 
             # Now set the positions of the walkers.
 
-            if max_size == None:
+            if max_size == numpy.inf:
                 r_max = 1. / data.uvdist[data.uvdist > 0].min() / arcsec
             else:
                 r_max = max_size
