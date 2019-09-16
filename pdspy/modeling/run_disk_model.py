@@ -29,7 +29,8 @@ comm = MPI.COMM_WORLD
 
 def run_disk_model(visibilities, images, spectra, params, parameters, \
         plot=False, ncpus=1, ncpus_highmass=1, with_hyperion=False, \
-        timelimit=3600, source="disk", nice=None, disk_vis=False):
+        timelimit=3600, source="disk", nice=None, disk_vis=False, \
+        no_radiative_transfer=False):
 
     # Set the values of all of the parameters.
 
@@ -173,6 +174,15 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         pass
 
     m.grid.set_wavelength_grid(0.1,1.0e5,500,log=True)
+
+    # If we just want to generate the model, quit here.
+
+    if no_radiative_transfer:
+        os.system("rm params.txt")
+        os.chdir(original_dir)
+        os.rmdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
+
+        return m
 
     # Run the thermal simulation.
 
