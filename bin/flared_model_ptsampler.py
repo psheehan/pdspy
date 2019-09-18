@@ -37,6 +37,8 @@ parser.add_argument('-e', '--withexptaper', action='store_true')
 parser.add_argument('-v', '--plot_vis', action='store_true')
 parser.add_argument('-c', '--withcontsub', action='store_true')
 parser.add_argument('-b', '--trim', type=str, default="")
+parser.add_argument('-i', '--nice', action='store_true')
+parser.add_argument('-l', '--nicelevel', type=int, default=19)
 args = parser.parse_args()
 
 # Check whether we are using MPI.
@@ -46,6 +48,13 @@ withmpi = comm.Get_size() > 1
 # Set the number of cpus to use.
 
 ncpus = args.ncpus
+
+# Set the nice level of the subprocesses.
+
+if args.nice:
+    nice = args.nicelevel
+else:
+    nice = None
 
 # Get the source name and check that it has been set correctly.
 
@@ -93,7 +102,7 @@ def lnlike(p, visibilities, parameters, plot):
     # Run the model.
 
     m = modeling.run_flared_model(visibilities, params, parameters, plot, \
-            ncpus=ncpus, source=source, plot_vis=args.plot_vis)
+            ncpus=ncpus, source=source, plot_vis=args.plot_vis, nice=nice)
 
     # A list to put all of the chisq into.
 
@@ -214,26 +223,6 @@ def lnprior(p, parameters, priors):
                         1./(numpy.log(10.) * Mstar))
 
     return lnprior
-
-# Define a probability function.
-
-"""
-def lnprob(p, visibilities, parameters, priors, plot):
-
-    keys = []
-    for key in sorted(parameters.keys()):
-        if not parameters[key]["fixed"]:
-            keys.append(key)
-
-    params = dict(zip(keys, p))
-
-    lp = lnprior(params, parameters, priors)
-
-    if not numpy.isfinite(lp):
-        return -numpy.inf
-
-    return lp + lnlike(params, visibilities, parameters, plot)
-"""
 
 # Define a useful class for plotting.
 
@@ -371,8 +360,12 @@ if args.resume:
 
     if args.resetprob:
         prob = None
+        prob_list = numpy.empty((ntemps,nwalkers,0))
     else:
-        prob = numpy.load("prob.npy")
+        prob_list = numpy.load("prob.npy")
+        if len(prob_list.shape) == 2:
+            prob_list = prob_list.reshape((ntemps,nwalkers,1))
+        prob = prob_list[:,:,-1]
 else:
     pos = []
     for i in range(ntemps):
@@ -420,9 +413,8 @@ else:
 
         pos.append(temp_pos)
 
-    print(numpy.array(pos).shape)
-
     prob = None
+    prob_list = numpy.empty((ntemps, nwalkers, 0))
     chain = numpy.empty((ntemps, nwalkers, 0, ndim))
     state = None
     nsteps = 0
@@ -449,6 +441,9 @@ while nsteps < max_nsteps:
 
             chain = numpy.concatenate((chain, sampler.chain), axis=2)
 
+            prob_list = numpy.concatenate((prob_list, prob.\
+                    reshape((ntemps, nwalkers, 1))), axis=2)
+
             # Get keys of the parameters that are varying.
 
             keys = []
@@ -473,7 +468,7 @@ while nsteps < max_nsteps:
             # reason.
 
             numpy.save("pos", pos)
-            numpy.save("prob", prob)
+            numpy.save("prob", prob_list)
             numpy.save("chain", chain)
 
             # Augment the nuber of steps and reset the sampler for the next run.
@@ -549,7 +544,7 @@ while nsteps < max_nsteps:
     # Create a high resolution model for averaging.
 
     m = modeling.run_flared_model(visibilities, params, parameters, plot=True, \
-            ncpus=ncpus, source=source, plot_vis=args.plot_vis)
+            ncpus=ncpus, source=source, plot_vis=args.plot_vis, nice=nice)
 
     # Open up a pdf file to plot into.
 
