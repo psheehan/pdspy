@@ -454,13 +454,20 @@ while nsteps < max_nsteps:
             # Plot the steps of the walkers.
 
             for j in range(ndim):
-                fig, ax = plt.subplots(nrows=1, ncols=1)
+                nrows, ncols = ntemps//5+(ntemps%5>0), 5
+
+                fig, ax = plt.subplots(nrows=nrows, ncols=ncols, \
+                        figsize=(ncols*2, nrows*2))
 
                 for l in range(ntemps):
-                    for k in range(nwalkers):
-                        ax.plot(chain[l,k,:,j])
+                    indx, indy = l//5, l%5
 
-                plt.savefig("steps_{0:s}.png".format(keys[j]))
+                    for k in range(nwalkers):
+                        ax[indx,indy].plot(chain[l,k,:,j])
+
+                fig.tight_layout()
+
+                fig.savefig("steps_{0:s}.png".format(keys[j]))
 
                 plt.close(fig)
 
@@ -479,7 +486,7 @@ while nsteps < max_nsteps:
 
     # Get the best fit parameters and uncertainties.
 
-    samples = chain[:,:,-nplot:,:].reshape((-1, ndim))
+    samples = chain[0,:,-nplot:,:].reshape((-1, ndim))
 
     # Make the cuts specified by the user.
 
