@@ -161,16 +161,20 @@ def ptform(u, parameters, priors):
                         parameters[key]["limits"][0]
             # R_in has to be smaller than R_disk.
             elif key == "logR_in":
-                pparams[key] = uparams[key] * (pparams["logR_disk"] - \
+                pparams[key] = uparams[key] * (min(pparams["logR_disk"], \
+                        parameters[key]["limits"][1]) - \
                         parameters[key]["limits"][0]) + \
                         parameters[key]["limits"][0]
             # R_cav should be between R_in and R_disk.
             elif key == "logR_cav":
-                pparams[key] = uparams[key] * (pparams["logR_disk"] - \
-                        pparams["logR_in"]) + pparams["logR_in"]
+                pparams[key] = uparams[key] * (min(pparams["logR_disk"], \
+                        parameters[key]["limits"][1]) - \
+                        max(pparams["logR_in"],parameters[key]["limits"][0])) +\
+                        max(pparams["logR_in"],parameters[key]["limits"][0]
             # Tmid0 should be less than Tatm0.
             elif key == "logTmid0":
-                pparams[key] = uparams[key] * (pparams["logTatm0"] - \
+                pparams[key] = uparams[key] * (min(pparams["logTatm0"], \
+                        parameters[key]["limits"][1]) - \
                         parameters[key]["limits"][0]) + \
                         parameters[key]["limits"][0]
             # Make the position angle cyclic.
