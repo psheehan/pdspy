@@ -15,6 +15,8 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import matplotlib.patches as patches
 import matplotlib.patheffects as PathEffects
+import scipy.stats
+import scipy.integrate
 import argparse
 import pickle
 import numpy
@@ -149,10 +151,6 @@ def ptform(u, parameters, priors):
 
     # Now loop through the parameters and transform the ones that aren't fixed.
 
-    """
-    TODO: Draw from priors, when provided.
-    """
-
     for key in parameters:
         if not parameters[key]["fixed"]:
             # R_disk has to be smaller than R_env.
@@ -192,6 +190,10 @@ def ptform(u, parameters, priors):
                 pparams[key] = 1./parallax * 1000
             # If we have a prior on the stellar mass from the IMF.
             elif key == "logM_star" and "Mstar" in priors:
+                imf = imf_gen(a=10.**parameters[key]["limits"][0], \
+                        b=10.**parameters[key]["limits"][1])
+
+                pparams[key] = numpy.log10(imf.ppf(uparams[key]))
             # If we have a prior on a parameter, draw the parameter from a 
             # normal distribution.
             elif key in priors:
@@ -210,25 +212,30 @@ def ptform(u, parameters, priors):
                         parameters[key]["limits"][0]) + \
                         parameters[key]["limits"][0]
 
-    # A prior on stellar mass from the IMF.
-
-    if (not parameters["logM_star"]["fixed"]) and ("Mstar" in priors):
-        Mstar = 10.**params["logM_star"]
-
-        if priors["Mstar"]["value"] == "chabrier":
-            if Mstar <= 1.:
-                lnprior += numpy.log(0.158 * 1./(numpy.log(10.) * Mstar) * \
-                        numpy.exp(-(numpy.log10(Mstar) - numpy.log10(0.08))**2/\
-                        (2*0.69**2)))
-            else:
-                lnprior += numpy.log(4.43e-2 * Mstar**-1.3 * \
-                        1./(numpy.log(10.) * Mstar))
-
     # Now get the list of parameter values and return.
 
     p = [pparams[key] for key in sorted(keys)]
 
     return p
+
+# Define a few useful classes for generating samples from the IMF.
+
+def chabrier_imf(Mstar):
+    if Mstar <= 1.:
+        return 0.158 * 1./(numpy.log(10.) * Mstar) * \
+                numpy.exp(-(numpy.log10(Mstar)-numpy.log10(0.08))**2/ \
+                (2*0.69**2))
+    else:
+        return 4.43e-2 * Mstar**-1.3 * 1./(numpy.log(10.) * Mstar)
+
+class imf_gen(scipy.stats.rv_continuous):
+    def __init__(self, a=None, b=None):
+        self.norm = scipy.integrate.quad(chabrier_imf, a, b)[0]
+
+        super().__init__(a=a, b=b)
+
+    def _pdf(self, x):
+        return chabrier_imf(x) / self.norm
 
 # Define a useful class for plotting.
 
