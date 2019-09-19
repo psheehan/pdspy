@@ -95,7 +95,7 @@ else:
 
 # Define a likelihood function.
 
-def lnlike(u, visibilities, parameters, plot):
+def lnlike(p, visibilities, parameters, plot):
 
     # Set up the params dictionary.
 
@@ -146,7 +146,7 @@ def ptform(u, parameters, priors):
     # Get the correct order for setting parameters (as some depend on others
 
     ordered_keys, index = numpy.unique(["logR_env","logR_disk","logR_in", \
-            "logTmid0"]+list(parameters.keys()))
+            "logTmid0"]+list(parameters.keys()), return_index=True)
     ordered_keys = ordered_keys[numpy.argsort(index)]
 
     # Now loop through the parameters and transform the ones that aren't fixed.
@@ -155,22 +155,43 @@ def ptform(u, parameters, priors):
         if not parameters[key]["fixed"]:
             # R_disk has to be smaller than R_env.
             if key == "logR_disk":
-                pparams[key] = uparams[key] * (min(pparams["logR_env"], \
+                if "logR_env" in pparams:
+                    logR_env = pparams["logR_env"]
+                else:
+                    logR_env = parameters["logR_env"]["value"]
+
+                pparams[key] = uparams[key] * (min(logR_env, \
                         parameters[key]["limits"][1]) - \
                         parameters[key]["limits"][0]) + \
                         parameters[key]["limits"][0]
             # R_in has to be smaller than R_disk.
             elif key == "logR_in":
-                pparams[key] = uparams[key] * (min(pparams["logR_disk"], \
+                if "logR_disk" in pparams:
+                    logR_disk = pparams["logR_disk"]
+                else:
+                    logR_disk = parameters["logR_disk"]["value"]
+
+                pparams[key] = uparams[key] * (min(logR_disk, \
                         parameters[key]["limits"][1]) - \
                         parameters[key]["limits"][0]) + \
                         parameters[key]["limits"][0]
             # R_cav should be between R_in and R_disk.
             elif key == "logR_cav":
+                if "logR_disk" in pparams:
+                    logR_disk = pparams["logR_disk"]
+                else:
+                    logR_disk = parameters["logR_disk"]["value"]
+
+                if "logR_in" in pparams:
+                    logR_in = pparams["logR_in"]
+                else:
+                    logR_in = parameters["logR_in"]["value"]
+
+
                 pparams[key] = uparams[key] * (min(pparams["logR_disk"], \
                         parameters[key]["limits"][1]) - \
                         max(pparams["logR_in"],parameters[key]["limits"][0])) +\
-                        max(pparams["logR_in"],parameters[key]["limits"][0]
+                        max(pparams["logR_in"],parameters[key]["limits"][0])
             # Tmid0 should be less than Tatm0.
             elif key == "logTmid0":
                 pparams[key] = uparams[key] * (min(pparams["logTatm0"], \
@@ -364,13 +385,13 @@ ndim = 0
 periodic = []
 keys = []
 
-for i, key in enumerate(sorted(parameters.keys())):
+for key in sorted(parameters.keys()):
     if not parameters[key]["fixed"]:
         ndim += 1
         keys.append(key)
 
-    if key == "pa":
-        periodic.append(i)
+        if key == "pa":
+            periodic.append(ndim-1)
 
 # Make the labels nice with LaTeX.
 
