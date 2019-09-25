@@ -404,7 +404,11 @@ labels = ["$"+key.replace("T0_env","T_0,env").replace("T0","T_0").\
 
 if args.resume:
     sampler = pickle.load(open("sampler.p","rb"))
+
     sampler.rstate = numpy.random
+    sampler.pool = pool
+    sampler.M = pool.map
+    sampler.queue_size = pool.size
 else:
     sampler = dynesty.NestedSampler(lnlike, ptform, ndim, nlive=nlive, \
             logl_args=(visibilities, parameters, False), \
