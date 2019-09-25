@@ -419,9 +419,13 @@ else:
 
 if args.action == "run":
     for it, results in enumerate(sampler.sample(dlogz=dlogz)):
-        # Save the state of the sampler.
+        # Save the state of the sampler (delete the pool first).
 
+        sampler.pool = None
+        sampler.M = map
         pickle.dump(sampler, open("sampler.p","wb"))
+        sampler.pool = pool
+        sampler.M = pool.map
 
         # Print out the status of the sampler.
 
