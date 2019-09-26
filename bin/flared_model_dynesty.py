@@ -151,7 +151,7 @@ def ptform(u, parameters, priors):
 
     # Now loop through the parameters and transform the ones that aren't fixed.
 
-    for key in parameters:
+    for key in ordered_keys:
         if not parameters[key]["fixed"]:
             # R_disk has to be smaller than R_env.
             if key == "logR_disk":
