@@ -657,6 +657,15 @@ while nsteps < max_nsteps:
         m1d = uv.average(m.visibilities[visibilities["lam"][j]+"_high"], \
                 gridsize=10000, binsize=3500, radial=True)
 
+        m1d_high = uv.average(m.visibilities[visibilities["lam"][j]+"high"], \
+                gridsize=10000, binsize=3500, radial=True)
+
+        m1d_low = uv.average(m.visibilities[visibilities["lam"][j]+"low"], \
+                gridsize=10000, binsize=3500, radial=True)
+
+        m1d_test = uv.average(m.visibilities[visibilities["lam"][j]+"test"], \
+                gridsize=10000, binsize=3500, radial=True)
+
         # Plot the visibilities.
 
         ax[2*j,0].errorbar(visibilities["data1d"][j].uvdist/1000, \
@@ -666,6 +675,9 @@ while nsteps < max_nsteps:
 
         # Plot the best fit model
 
+        ax[2*j,0].plot(m1d_high.uvdist/1000, m1d_high.amp, "r-")
+        ax[2*j,0].plot(m1d_low.uvdist/1000, m1d_low.amp, "b-")
+        ax[2*j,0].plot(m1d_test.uvdist/1000, m1d_test.amp, "y-")
         ax[2*j,0].plot(m1d.uvdist/1000, m1d.amp, "g-")
 
         # Plot the 2D visibilities.
@@ -684,6 +696,7 @@ while nsteps < max_nsteps:
         vmin = min(0, visibilities["data1d"][j].real.min())
         vmax = visibilities["data1d"][j].real.max()
 
+        """
         ax[2*j+1,0].imshow(visibilities["data2d"][j].real.reshape(\
                 (visibilities["npix"][j],visibilities["npix"][j]))\
                 [xmin:xmax,xmin:xmax][:,::-1], origin="lower", \
@@ -691,10 +704,12 @@ while nsteps < max_nsteps:
         ax[2*j+1,0].contour(m.visibilities[visibilities["lam"][j]+"_2d"].real.\
                 reshape((visibilities["npix"][j],visibilities["npix"][j]))\
                 [xmin:xmax,xmin:xmax][:,::-1], cmap="jet")
+        """
 
         vmin = -visibilities["data1d"][j].real.max()
         vmax =  visibilities["data1d"][j].real.max()
 
+        """
         ax[2*j+1,1].imshow(visibilities["data2d"][j].imag.reshape(\
                 (visibilities["npix"][j],visibilities["npix"][j]))\
                 [xmin:xmax,xmin:xmax][:,::-1], origin="lower", \
@@ -702,10 +717,12 @@ while nsteps < max_nsteps:
         ax[2*j+1,1].contour(m.visibilities[visibilities["lam"][j]+"_2d"].imag.\
                 reshape((visibilities["npix"][j],visibilities["npix"][j]))\
                 [xmin:xmax,xmin:xmax][:,::-1], cmap="jet")
+        """
 
         transform1 = ticker.FuncFormatter(Transform(xmin, xmax, \
                 visibilities["binsize"][j]/1000, '%.0f'))
 
+        """
         ax[2*j+1,0].set_xticks(visibilities["npix"][j]/2+ticks[1:-1]/\
                 (visibilities["binsize"][j]/1000)-xmin)
         ax[2*j+1,0].set_yticks(visibilities["npix"][j]/2+ticks[1:-1]/\
@@ -719,6 +736,12 @@ while nsteps < max_nsteps:
                 (visibilities["binsize"][j]/1000)-ymin)
         ax[2*j+1,1].get_xaxis().set_major_formatter(transform1)
         ax[2*j+1,1].get_yaxis().set_major_formatter(transform1)
+        """
+
+        ax[2*j+1,0].imshow(m.visibilities[visibilities["lam"][j]+"diff"].real.\
+                reshape((2000,2000)))
+        ax[2*j+1,0].imshow(m.visibilities[visibilities["lam"][j]+"diff"].imag.\
+                reshape((2000,2000)))
 
         # Create a model image to contour over the image.
 
