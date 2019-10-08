@@ -31,7 +31,7 @@ comm = MPI.COMM_WORLD
 def run_disk_model(visibilities, images, spectra, params, parameters, \
         plot=False, ncpus=1, ncpus_highmass=1, with_hyperion=False, \
         timelimit=3600, source="disk", nice=None, disk_vis=False, \
-        no_radiative_transfer=False):
+        no_radiative_transfer=False, nlam_SED=50):
 
     # Set the values of all of the parameters.
 
@@ -435,7 +435,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
 
     if "total" in spectra:
         if plot:
-            m.set_camera_wavelength(numpy.logspace(-1,4,50))
+            m.set_camera_wavelength(numpy.logspace(-1,4,nlam_SED))
         else:
             m.set_camera_wavelength(spectra["total"].wave)
 
