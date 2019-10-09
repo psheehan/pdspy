@@ -405,10 +405,15 @@ labels = ["$"+key.replace("T0_env","T_0,env").replace("T0","T_0").\
 if args.resume:
     sampler = pickle.load(open("sampler.p","rb"))
 
+    res = sampler.results
+
     sampler.rstate = numpy.random
     sampler.pool = pool
-    sampler.M = pool.map
-    sampler.queue_size = pool.size
+    if pool != None:
+        sampler.M = pool.map
+        sampler.queue_size = pool.size
+    else:
+        sampler.M = map
 else:
     sampler = dynesty.NestedSampler(lnlike, ptform, ndim, nlive=nlive, \
             logl_args=(visibilities, parameters, False), \
@@ -425,7 +430,10 @@ if args.action == "run":
         sampler.M = map
         pickle.dump(sampler, open("sampler.p","wb"))
         sampler.pool = pool
-        sampler.M = pool.map
+        if pool != None:
+            sampler.M = pool.map
+        else:
+            sampler.M = map
 
         # Print out the status of the sampler.
 
@@ -440,7 +448,7 @@ if args.action == "run":
 
         # Every 1000 steps stop and make plots of the status.
 
-        if (sampler.it - 1) % 1000 == 0 or delta_logz < 0.05:
+        if (sampler.it - 1) % 1000 == 0 or delta_logz < dlogz:
             # Add the live points and get the results.
 
             sampler.add_final_live()
@@ -477,7 +485,7 @@ if args.action == "run":
             # If we haven't reached the stopping criteria yet, remove the live 
             # points.
 
-            if delta_logz > 0.05:
+            if delta_logz > dlogz:
                 sampler._remove_live_points()
 
 # If we are just plotting, a few minor things to do.
@@ -510,7 +518,7 @@ elif args.action == "plot":
 
 # Generate a plot of the weighted samples.
 
-fig, ax = plt.subplots(11, 11, figsize=(10,10))
+fig, ax = plt.subplots(ndim-1, ndim-1, figsize=(10,10))
 
 dyplot.cornerpoints(res, cmap="plasma", kde=False, fig=(fig,ax), labels=labels)
 
@@ -518,7 +526,7 @@ fig.savefig("cornerpoints.png")
 
 # Generate a corner plot from Dynesty.
 
-fig, ax = plt.subplots(12, 12, figsize=(15,15))
+fig, ax = plt.subplots(ndim, ndim, figsize=(15,15))
 
 dyplot.cornerplot(res, color="blue", show_titles=True, max_n_ticks=3, \
         quantiles=None, fig=(fig, ax), labels=labels)
@@ -534,7 +542,7 @@ samples = dyfunc.resample_equal(samples, weights)
 
 # Save pos, prob, chain.
 
-numpy.save("samples.npy")
+numpy.save("samples.npy", samples)
 
 # Make the cuts specified by the user.
 
