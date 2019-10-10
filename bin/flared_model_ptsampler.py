@@ -2,6 +2,7 @@
 
 from pdspy.constants.physics import c, m_p, G
 from matplotlib.backends.backend_pdf import PdfPages
+import pdspy.plotting as plotting
 import pdspy.modeling.mpi_pool
 import pdspy.interferometry as uv
 import pdspy.spectroscopy as sp
@@ -223,18 +224,6 @@ def lnprior(p, parameters, priors):
                         1./(numpy.log(10.) * Mstar))
 
     return lnprior
-
-# Define a useful class for plotting.
-
-class Transform:
-    def __init__(self, xmin, xmax, dx, fmt):
-        self.xmin = xmin
-        self.xmax = xmax
-        self.dx = dx
-        self.fmt = fmt
-
-    def __call__(self, x, p):
-        return self.fmt% ((x-(self.xmax-self.xmin+1)/2)*self.dx)
 
 ################################################################################
 #
@@ -565,169 +554,11 @@ while nsteps < max_nsteps:
         fig, ax = plt.subplots(nrows=visibilities["nrows"][j], \
                 ncols=visibilities["ncols"][j], sharex=True, sharey=True)
 
-        # Calculate the velocity for each image.
+        # Make a plot of the channel maps.
 
-        if args.plot_vis:
-            v = c * (float(visibilities["freq"][j])*1.0e9 - \
-                    visibilities["data"][j].freq)/ \
-                    (float(visibilities["freq"][j])*1.0e9)
-        else:
-            v = c * (float(visibilities["freq"][j])*1.0e9 - \
-                    visibilities["image"][j].freq)/ \
-                    (float(visibilities["freq"][j])*1.0e9)
-
-        # Plot the image.
-
-        vmin = numpy.nanmin(visibilities["image"][j].image)
-        vmax = numpy.nanmax(visibilities["image"][j].image)
-
-        for k in range(visibilities["nrows"][j]):
-            for l in range(visibilities["ncols"][j]):
-                ind = k*visibilities["ncols"][j] + l + visibilities["ind0"][j]
-
-                # Turn off the axis if ind >= nchannels
-
-                if ind >= v.size:
-                    ax[k,l].set_axis_off()
-                    continue
-
-                # Get the centroid position.
-
-                ticks = visibilities["image_ticks"][j]
-
-                if "x0" in params:
-                    xmin, xmax = int(round(visibilities["image_npix"][j]/2 + \
-                            visibilities["x0"][j]/\
-                            visibilities["image_pixelsize"][j]+ \
-                            params["x0"]/visibilities["image_pixelsize"][j]+ \
-                            ticks[0]/visibilities["image_pixelsize"][j])), \
-                            int(round(visibilities["image_npix"][j]/2+\
-                            visibilities["x0"][j]/\
-                            visibilities["image_pixelsize"][j]+ \
-                            params["x0"]/visibilities["image_pixelsize"][j]+ \
-                            ticks[-1]/visibilities["image_pixelsize"][j]))
-                else:
-                    xmin, xmax = int(round(visibilities["image_npix"][j]/2 + \
-                            visibilities["x0"][j]/\
-                            visibilities["image_pixelsize"][j]+ \
-                            parameters["x0"]["value"]/\
-                            visibilities["image_pixelsize"][j]+ \
-                            ticks[0]/visibilities["image_pixelsize"][j])), \
-                            int(round(visibilities["image_npix"][j]/2+\
-                            visibilities["x0"][j]/\
-                            visibilities["image_pixelsize"][j]+ \
-                            parameters["x0"]["value"]/\
-                            visibilities["image_pixelsize"][j]+ \
-                            ticks[-1]/visibilities["image_pixelsize"][j]))
-                if "y0" in params:
-                    ymin, ymax = int(round(visibilities["image_npix"][j]/2-\
-                            visibilities["y0"][j]/\
-                            visibilities["image_pixelsize"][j]- \
-                            params["y0"]/visibilities["image_pixelsize"][j]+ \
-                            ticks[0]/visibilities["image_pixelsize"][j])), \
-                            int(round(visibilities["image_npix"][j]/2-\
-                            visibilities["y0"][j]/\
-                            visibilities["image_pixelsize"][j]- \
-                            params["y0"]/visibilities["image_pixelsize"][j]+ \
-                            ticks[-1]/visibilities["image_pixelsize"][j]))
-                else:
-                    ymin, ymax = int(round(visibilities["image_npix"][j]/2-\
-                            visibilities["y0"][j]/\
-                            visibilities["image_pixelsize"][j]- \
-                            parameters["y0"]["value"]/\
-                            visibilities["image_pixelsize"][j]+ \
-                            ticks[0]/visibilities["image_pixelsize"][j])), \
-                            int(round(visibilities["image_npix"][j]/2-\
-                            visibilities["y0"][j]/\
-                            visibilities["image_pixelsize"][j]- \
-                            parameters["y0"]["value"]/\
-                            visibilities["image_pixelsize"][j]+ \
-                            ticks[-1]/visibilities["image_pixelsize"][j]))
-
-                # Plot the image.
-
-                if args.plot_vis:
-                    ax[k,l].errorbar(visibilities["data1d"][j].uvdist, \
-                            visibilities["data1d"][j].amp[:,ind], yerr=1./\
-                            visibilities["data1d"][j].weights[:,ind]**0.5, \
-                            fmt="bo")
-                else:
-                    ax[k,l].imshow(visibilities["image"][j].image[ymin:ymax,\
-                            xmin:xmax,ind,0], origin="lower", \
-                            interpolation="nearest", vmin=vmin, vmax=vmax)
-
-                # Now make the centroid the map center for the model.
-
-                xmin, xmax = int(round(visibilities["image_npix"][j]/2+1 + \
-                        ticks[0]/visibilities["image_pixelsize"][j])), \
-                        int(round(visibilities["image_npix"][j]/2+1 +\
-                        ticks[-1]/visibilities["image_pixelsize"][j]))
-                ymin, ymax = int(round(visibilities["image_npix"][j]/2+1 + \
-                        ticks[0]/visibilities["image_pixelsize"][j])), \
-                        int(round(visibilities["image_npix"][j]/2+1 + \
-                        ticks[-1]/visibilities["image_pixelsize"][j]))
-
-                # Plot the model image.
-
-                if args.plot_vis:
-                    ax[k,l].plot(m.visibilities[visibilities["lam"][j]].uvdist,\
-                            m.visibilities[visibilities["lam"][j]].amp[:,ind], \
-                            "g-")
-                else:
-                    levels = numpy.array([0.05, 0.25, 0.45, 0.65, 0.85, 0.95])*\
-                            m.images[visibilities["lam"][j]].image.max()
-
-                    ax[k,l].contour(m.images[visibilities["lam"][j]].\
-                            image[ymin:ymax,xmin:xmax,ind,0], levels=levels)
-
-                # Add the velocity to the map.
-
-                txt = ax[k,l].annotate(r"$v=%{0:s}$ km s$^{{-1}}$".format(\
-                        visibilities["fmt"][j]) % (v[ind]/1e5),\
-                        xy=(0.1,0.8), xycoords='axes fraction')
-
-                #txt.set_path_effects([PathEffects.withStroke(linewidth=2, \
-                #        foreground='w')])
-
-                # Fix the axes labels.
-
-                if args.plot_vis:
-                    ax[-1,l].set_xlabel("U-V Distance [k$\lambda$]")
-                else:
-                    transform = ticker.FuncFormatter(Transform(xmin, xmax, \
-                            visibilities["image_pixelsize"][j], '%.1f"'))
-
-                    ax[k,l].set_xticks(visibilities["image_npix"][j]/2+\
-                            ticks[1:-1]/visibilities["image_pixelsize"][j]-xmin)
-                    ax[k,l].set_yticks(visibilities["image_npix"][j]/2+\
-                            ticks[1:-1]/visibilities["image_pixelsize"][j]-ymin)
-
-                    ax[k,l].get_xaxis().set_major_formatter(transform)
-                    ax[k,l].get_yaxis().set_major_formatter(transform)
-
-                    ax[-1,l].set_xlabel("$\Delta$RA")
-
-                    # Show the size of the beam.
-
-                    bmaj = visibilities["image"][j].header["BMAJ"] / \
-                            abs(visibilities["image"][j].header["CDELT1"])
-                    bmin = visibilities["image"][j].header["BMIN"] / \
-                            abs(visibilities["image"][j].header["CDELT1"])
-                    bpa = visibilities["image"][j].header["BPA"]
-
-                    ax[k,l].add_artist(patches.Ellipse(xy=(12.5,17.5), \
-                            width=bmaj, height=bmin, angle=(bpa+90), \
-                            facecolor="white", edgecolor="black"))
-
-                    ax[k,l].set_adjustable('box')
-
-            if args.plot_vis:
-                ax[k,0].set_ylabel("Amplitude [Jy]")
-
-                ax[k,l].set_xscale("log", nonposx='clip')
-            else:
-                ax[k,0].set_ylabel("$\Delta$Dec")
-
+        plotting.plot_channel_maps(visibilities, m, parameters, params, \
+                index=j, plot_vis=args.plot_vis, fig=(fig,ax))
+        
         # Adjust the plot and save it.
 
         fig.set_size_inches((10,9))
