@@ -2,6 +2,7 @@
 
 from pdspy.constants.physics import c, m_p, G
 from matplotlib.backends.backend_pdf import PdfPages
+import pdspy.plotting as plotting
 import pdspy.modeling.mpi_pool
 import pdspy.interferometry as uv
 import pdspy.spectroscopy as sp
@@ -262,17 +263,85 @@ class imf_gen(scipy.stats.rv_continuous):
     def _pdf(self, x):
         return chabrier_imf(x) / self.norm
 
-# Define a useful class for plotting.
+# Functions for saving the state of the Dynesty Sampler and loading a saved 
+# state.
 
-class Transform:
-    def __init__(self, xmin, xmax, dx, fmt):
-        self.xmin = xmin
-        self.xmax = xmax
-        self.dx = dx
-        self.fmt = fmt
+def save_sampler(name, sampler, pool=None):
 
-    def __call__(self, x, p):
-        return self.fmt% ((x-(self.xmax-self.xmin+1)/2)*self.dx)
+    # Clear the random state, as it cannot be pickled.
+    sampler.rstate = None
+    sampler.sampler.rstate = None
+
+    # Clear the MPI pool, as it also cannot be pickled.
+    sampler.pool = None
+    sampler.M = map
+    sampler.sampler.pool = None
+    sampler.sampler.M = map
+
+    # Save
+    pickle.dump(sampler, open(name, "wb"))
+
+    # Restore everything to the way it was before.
+    sampler.rstate = numpy.random
+    sampler.sampler.rstate = numpy.random
+    sampler.pool = pool
+    sampler.sampler.pool = pool
+    if pool != None:
+        sampler.M = pool.map
+        sampler.sampler.M = pool.map
+    else:
+        sampler.M = map
+        sampler.sampler.M = map
+
+def load_sampler(name, pool=None):
+    # Load the sampler from the pickle file.
+    sampler = pickle.load(open("sampler.p","rb"))
+
+    # Add back in the random state.
+    sampler.rstate = numpy.random
+    sampler.sampler.rstate = numpy.random
+
+    # Add the pool correctly.
+    sampler.pool = pool
+    sampler.sampler.pool = pool
+    if pool != None:
+        sampler.M = pool.map
+        sampler.queue_size = pool.size
+        sampler.sampler.M = pool.map
+        sampler.sampler.queue_size = pool.size
+    else:
+        sampler.M = map
+        sampler.sampler.M = map
+
+    return sampler
+
+# A function to make useful plots as the sampling is running.
+
+def plot_status(res, labels=None, periodic=None):
+    # Generate a plot of the trace.
+
+    try:
+        fig, ax = dyplot.traceplot(res, show_titles=True, trace_cmap="viridis",\
+                connect=True, connect_highlight=range(5), labels=labels)
+    except:
+        # If it hasn't converged enough...
+        fig, ax = dyplot.traceplot(res, show_titles=True, trace_cmap="viridis",\
+                connect=True, connect_highlight=range(5), labels=labels, \
+                kde=False)
+
+    fig.savefig("traceplot.png")
+
+    plt.close(fig)
+
+    # Generate a bounds cornerplot.
+
+    fig, ax = dyplot.cornerbound(res, it=res.niter-1, periodic=periodic, \
+            prior_transform=sampler.prior_transform, show_live=True, \
+            labels=labels)
+
+    fig.savefig("boundplot.png")
+
+    plt.close(fig)
 
 ################################################################################
 #
@@ -403,19 +472,11 @@ labels = ["$"+key.replace("T0_env","T_0,env").replace("T0","T_0").\
 # Set up the MCMC simulation.
 
 if args.resume:
-    sampler = pickle.load(open("sampler.p","rb"))
+    sampler = load_sampler("sampler.p", pool=pool)
 
     res = sampler.results
-
-    sampler.rstate = numpy.random
-    sampler.pool = pool
-    if pool != None:
-        sampler.M = pool.map
-        sampler.queue_size = pool.size
-    else:
-        sampler.M = map
 else:
-    sampler = dynesty.NestedSampler(lnlike, ptform, ndim, nlive=nlive, \
+    sampler = dynesty.DynamicNestedSampler(lnlike, ptform, ndim, \
             logl_args=(visibilities, parameters, False), \
             ptform_args=(parameters, priors), periodic=periodic, pool=pool, \
             sample="rwalk", walks=walks)
@@ -423,98 +484,103 @@ else:
 # Run a few burner steps.
 
 if args.action == "run":
-    for it, results in enumerate(sampler.sample(dlogz=dlogz)):
-        # Save the state of the sampler (delete the pool first).
+    if not sampler.base:
+        for it, results in enumerate(sampler.sample_initial(dlogz=dlogz, \
+                nlive=nlive_init, save_samples=True, resume=args.resume)):
+            # Save the state of the sampler (delete the pool first).
 
-        sampler.pool = None
-        sampler.M = map
-        pickle.dump(sampler, open("sampler.p","wb"))
-        sampler.pool = pool
-        if pool != None:
-            sampler.M = pool.map
-        else:
-            sampler.M = map
+            save_sampler("sampler.p", sampler, pool=pool)
 
-        # Print out the status of the sampler.
+            # Print out the status of the sampler.
 
-        dyres.print_fn(results, sampler.it - 1, sampler.ncall, dlogz=dlogz, \
-                logl_max=numpy.inf)
+            dyres.print_fn(results, sampler.it - 1, sampler.ncall, dlogz=dlogz,\
+                    logl_max=numpy.inf)
 
-        # Manually calculate the stopping criterion.
+            # Manually calculate the stopping criterion.
 
-        logz_remain = numpy.max(sampler.live_logl) + sampler.saved_logvol[-1]
-        delta_logz = numpy.logaddexp(sampler.saved_logz[-1], logz_remain) - \
-                sampler.saved_logz[-1]
+            logz_remain = numpy.max(sampler.sampler.live_logl) + \
+                    sampler.sampler.saved_logvol[-1]
+            delta_logz = numpy.logaddexp(sampler.sampler.saved_logz[-1], \
+                    logz_remain) - sampler.sampler.saved_logz[-1]
 
-        # Every 1000 steps stop and make plots of the status.
+            # Every 1000 steps stop and make plots of the status.
 
-        if (sampler.it - 1) % 1000 == 0 or delta_logz < dlogz:
-            # Add the live points and get the results.
+            if (sampler.it - 1) % 1000 == 0 and delta_logz >= dlogz:
+                # Add the live points and get the results.
 
-            sampler.add_final_live()
+                sampler.sampler.add_final_live()
 
-            res = sampler.results
+                res = sampler.sampler.results
 
-            # Generate a plot of the trace.
+                # Make plots of the current status of the fit.
 
-            try:
-                fig, ax = dyplot.traceplot(res, show_titles=True, \
-                        trace_cmap="viridis", connect=True, \
-                        connect_highlight=range(5), labels=labels)
-            except:
-                # If it hasn't converged enough...
-                fig, ax = dyplot.traceplot(res, show_titles=True, \
-                        trace_cmap="viridis", connect=True, \
-                        connect_highlight=range(5), labels=labels, \
-                        kde=False)
+                plot_status(res, labels=labels, periodic=periodic)
 
-            fig.savefig("traceplot.png")
+                # If we haven't reached the stopping criteria yet, remove the 
+                # live points.
 
-            plt.close(fig)
+                sampler.sampler._remove_live_points()
 
-            # Generate a bounds cornerplot.
+        # Gather the results and make one final plot of the status.
 
-            fig, ax = dyplot.cornerbound(res, it=res.niter-1, periodic=[5,7], \
-                    prior_transform=sampler.prior_transform, show_live=True, \
-                    labels=labels)
+        res = sampler.results
 
-            fig.savefig("boundplot.png")
+        plot_status(res, labels=labels, periodic=periodic)
 
-            plt.close(fig)
+    for i in range(sampler.batch, maxbatch):
+        # Get the correct bounds to use for the batch.
 
-            # If we haven't reached the stopping criteria yet, remove the live 
-            # points.
+        logl_bounds = dynesty.dynamicsampler.weight_function(sampler.results)
+        lnz, lnzerr = sampler.results.logz[-1], sampler.results.logzerr[-1]
 
-            if delta_logz > dlogz:
-                sampler._remove_live_points()
+        # Sample the batch.
+
+        for results in sampler.sample_batch(logl_bounds=logl_bounds, \
+                nlive_new=nlive_batch):
+            # Print out the results.
+
+            (worst, ustar, vstar, loglstar, nc,
+                     worst_it, boundidx, bounditer, eff) = results
+
+            results = (worst, ustar, vstar, loglstar, numpy.nan, numpy.nan,
+                    lnz, lnzerr**2, numpy.nan, nc, worst_it, boundidx,
+                    bounditer, eff, numpy.nan)
+
+            dyres.print_fn(results, sampler.it - 1, sampler.ncall,\
+                    nbatch=sampler.batch+1, stop_val=5, \
+                    logl_min=logl_bounds[0], logl_max=logl_bounds[1])
+
+        # Merge the new samples in.
+
+        sampler.combine_runs()
+
+        # Save the status of the sampler after each batch.
+
+        save_sampler("sampler.p", sampler, pool=pool)
+
+        # Get the results.
+
+        res = sampler.results
+
+        # Make plots of the current status of the fit.
+
+        plot_status(res, labels=labels, periodic=periodic)
 
 # If we are just plotting, a few minor things to do.
 
 elif args.action == "plot":
-    # Add the final live points.
+    # Add the final live points if needed and get the results.
 
-    sampler.add_final_live()
+    if not sampler.base:
+        sampler.add_final_live()
 
-    # Get the results.
+        res = sampler.sampler.results
+    else:
+        res = sampler.results
 
-    res = sampler.results
+    # Make the traceplots and the bound plots.
 
-    # And make the traceplot one last time.
-
-    try:
-        fig, ax = dyplot.traceplot(res, show_titles=True, \
-                trace_cmap="viridis", connect=True, \
-                connect_highlight=range(5), labels=labels)
-    except:
-        # If it hasn't converged enough...
-        fig, ax = dyplot.traceplot(res, show_titles=True, \
-                trace_cmap="viridis", connect=True, \
-                connect_highlight=range(5), labels=labels, \
-                kde=False)
-
-    fig.savefig("traceplot.png")
-
-    plt.close(fig)
+    plot_status(res, labels=labels, periodic=periodic)
 
 # Generate a plot of the weighted samples.
 
@@ -613,169 +679,11 @@ for j in range(len(visibilities["file"])):
     fig, ax = plt.subplots(nrows=visibilities["nrows"][j], \
             ncols=visibilities["ncols"][j], sharex=True, sharey=True)
 
-    # Calculate the velocity for each image.
+    # Make a plot of the channel maps.
 
-    if args.plot_vis:
-        v = c * (float(visibilities["freq"][j])*1.0e9 - \
-                visibilities["data"][j].freq)/ \
-                (float(visibilities["freq"][j])*1.0e9)
-    else:
-        v = c * (float(visibilities["freq"][j])*1.0e9 - \
-                visibilities["image"][j].freq)/ \
-                (float(visibilities["freq"][j])*1.0e9)
-
-    # Plot the image.
-
-    vmin = numpy.nanmin(visibilities["image"][j].image)
-    vmax = numpy.nanmax(visibilities["image"][j].image)
-
-    for k in range(visibilities["nrows"][j]):
-        for l in range(visibilities["ncols"][j]):
-            ind = k*visibilities["ncols"][j] + l + visibilities["ind0"][j]
-
-            # Turn off the axis if ind >= nchannels
-
-            if ind >= v.size:
-                ax[k,l].set_axis_off()
-                continue
-
-            # Get the centroid position.
-
-            ticks = visibilities["image_ticks"][j]
-
-            if "x0" in params:
-                xmin, xmax = int(round(visibilities["image_npix"][j]/2 + \
-                        visibilities["x0"][j]/\
-                        visibilities["image_pixelsize"][j]+ \
-                        params["x0"]/visibilities["image_pixelsize"][j]+ \
-                        ticks[0]/visibilities["image_pixelsize"][j])), \
-                        int(round(visibilities["image_npix"][j]/2+\
-                        visibilities["x0"][j]/\
-                        visibilities["image_pixelsize"][j]+ \
-                        params["x0"]/visibilities["image_pixelsize"][j]+ \
-                        ticks[-1]/visibilities["image_pixelsize"][j]))
-            else:
-                xmin, xmax = int(round(visibilities["image_npix"][j]/2 + \
-                        visibilities["x0"][j]/\
-                        visibilities["image_pixelsize"][j]+ \
-                        parameters["x0"]["value"]/\
-                        visibilities["image_pixelsize"][j]+ \
-                        ticks[0]/visibilities["image_pixelsize"][j])), \
-                        int(round(visibilities["image_npix"][j]/2+\
-                        visibilities["x0"][j]/\
-                        visibilities["image_pixelsize"][j]+ \
-                        parameters["x0"]["value"]/\
-                        visibilities["image_pixelsize"][j]+ \
-                        ticks[-1]/visibilities["image_pixelsize"][j]))
-            if "y0" in params:
-                ymin, ymax = int(round(visibilities["image_npix"][j]/2-\
-                        visibilities["y0"][j]/\
-                        visibilities["image_pixelsize"][j]- \
-                        params["y0"]/visibilities["image_pixelsize"][j]+ \
-                        ticks[0]/visibilities["image_pixelsize"][j])), \
-                        int(round(visibilities["image_npix"][j]/2-\
-                        visibilities["y0"][j]/\
-                        visibilities["image_pixelsize"][j]- \
-                        params["y0"]/visibilities["image_pixelsize"][j]+ \
-                        ticks[-1]/visibilities["image_pixelsize"][j]))
-            else:
-                ymin, ymax = int(round(visibilities["image_npix"][j]/2-\
-                        visibilities["y0"][j]/\
-                        visibilities["image_pixelsize"][j]- \
-                        parameters["y0"]["value"]/\
-                        visibilities["image_pixelsize"][j]+ \
-                        ticks[0]/visibilities["image_pixelsize"][j])), \
-                        int(round(visibilities["image_npix"][j]/2-\
-                        visibilities["y0"][j]/\
-                        visibilities["image_pixelsize"][j]- \
-                        parameters["y0"]["value"]/\
-                        visibilities["image_pixelsize"][j]+ \
-                        ticks[-1]/visibilities["image_pixelsize"][j]))
-
-            # Plot the image.
-
-            if args.plot_vis:
-                ax[k,l].errorbar(visibilities["data1d"][j].uvdist, \
-                        visibilities["data1d"][j].amp[:,ind], yerr=1./\
-                        visibilities["data1d"][j].weights[:,ind]**0.5, \
-                        fmt="bo")
-            else:
-                ax[k,l].imshow(visibilities["image"][j].image[ymin:ymax,\
-                        xmin:xmax,ind,0], origin="lower", \
-                        interpolation="nearest", vmin=vmin, vmax=vmax)
-
-            # Now make the centroid the map center for the model.
-
-            xmin, xmax = int(round(visibilities["image_npix"][j]/2+1 + \
-                    ticks[0]/visibilities["image_pixelsize"][j])), \
-                    int(round(visibilities["image_npix"][j]/2+1 +\
-                    ticks[-1]/visibilities["image_pixelsize"][j]))
-            ymin, ymax = int(round(visibilities["image_npix"][j]/2+1 + \
-                    ticks[0]/visibilities["image_pixelsize"][j])), \
-                    int(round(visibilities["image_npix"][j]/2+1 + \
-                    ticks[-1]/visibilities["image_pixelsize"][j]))
-
-            # Plot the model image.
-
-            if args.plot_vis:
-                ax[k,l].plot(m.visibilities[visibilities["lam"][j]].uvdist,\
-                        m.visibilities[visibilities["lam"][j]].amp[:,ind], \
-                        "g-")
-            else:
-                levels = numpy.array([0.05, 0.25, 0.45, 0.65, 0.85, 0.95])*\
-                        m.images[visibilities["lam"][j]].image.max()
-
-                ax[k,l].contour(m.images[visibilities["lam"][j]].\
-                        image[ymin:ymax,xmin:xmax,ind,0], levels=levels)
-
-            # Add the velocity to the map.
-
-            txt = ax[k,l].annotate(r"$v=%{0:s}$ km s$^{{-1}}$".format(\
-                    visibilities["fmt"][j]) % (v[ind]/1e5),\
-                    xy=(0.1,0.8), xycoords='axes fraction')
-
-            #txt.set_path_effects([PathEffects.withStroke(linewidth=2, \
-            #        foreground='w')])
-
-            # Fix the axes labels.
-
-            if args.plot_vis:
-                ax[-1,l].set_xlabel("U-V Distance [k$\lambda$]")
-            else:
-                transform = ticker.FuncFormatter(Transform(xmin, xmax, \
-                        visibilities["image_pixelsize"][j], '%.1f"'))
-
-                ax[k,l].set_xticks(visibilities["image_npix"][j]/2+\
-                        ticks[1:-1]/visibilities["image_pixelsize"][j]-xmin)
-                ax[k,l].set_yticks(visibilities["image_npix"][j]/2+\
-                        ticks[1:-1]/visibilities["image_pixelsize"][j]-ymin)
-
-                ax[k,l].get_xaxis().set_major_formatter(transform)
-                ax[k,l].get_yaxis().set_major_formatter(transform)
-
-                ax[-1,l].set_xlabel("$\Delta$RA")
-
-                # Show the size of the beam.
-
-                bmaj = visibilities["image"][j].header["BMAJ"] / \
-                        abs(visibilities["image"][j].header["CDELT1"])
-                bmin = visibilities["image"][j].header["BMIN"] / \
-                        abs(visibilities["image"][j].header["CDELT1"])
-                bpa = visibilities["image"][j].header["BPA"]
-
-                ax[k,l].add_artist(patches.Ellipse(xy=(12.5,17.5), \
-                        width=bmaj, height=bmin, angle=(bpa+90), \
-                        facecolor="white", edgecolor="black"))
-
-                ax[k,l].set_adjustable('box')
-
-        if args.plot_vis:
-            ax[k,0].set_ylabel("Amplitude [Jy]")
-
-            ax[k,l].set_xscale("log", nonposx='clip')
-        else:
-            ax[k,0].set_ylabel("$\Delta$Dec")
-
+    plotting.plot_channel_maps(visibilities, m, parameters, params, \
+            index=j, plot_vis=args.plot_vis, fig=(fig,ax))
+    
     # Adjust the plot and save it.
 
     fig.set_size_inches((10,9))
