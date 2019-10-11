@@ -649,11 +649,6 @@ plt.savefig("fit.pdf")
 
 # Make a dictionary of the best fit parameters.
 
-keys = []
-for key in sorted(parameters.keys()):
-    if not parameters[key]["fixed"]:
-        keys.append(key)
-
 params = dict(zip(keys, params))
 
 ############################################################################
