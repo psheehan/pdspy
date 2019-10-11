@@ -3,20 +3,12 @@
 from pdspy.constants.astronomy import arcsec
 import pdspy.interferometry as uv
 import pdspy.spectroscopy as sp
-import pdspy.modeling as modeling
 import pdspy.imaging as im
-import pdspy.misc as misc
+import pdspy.modeling as modeling
+import pdspy.plotting as plotting
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
-import pdspy.table
-import pdspy.dust as dust
-import pdspy.mcmc as mc
-import scipy.signal
-import subprocess
 import argparse
-import signal
 import numpy
-import time
 import sys
 import os
 import emcee
@@ -42,6 +34,9 @@ parser.add_argument('-m', '--ncpus_highmass', type=int, default=8)
 parser.add_argument('-e', '--withexptaper', action='store_true')
 parser.add_argument('-t', '--timelimit', type=int, default=7200)
 parser.add_argument('-b', '--trim', type=str, default="")
+parser.add_argument('-s', '--SED', action='store_true')
+parser.add_argument('-i', '--nice', action='store_true')
+parser.add_argument('-l', '--nicelevel', type=int, default=19)
 args = parser.parse_args()
 
 # Check whether we are using MPI.
@@ -52,6 +47,13 @@ withmpi = comm.Get_size() > 1
 
 ncpus = args.ncpus
 ncpus_highmass = args.ncpus_highmass
+
+# Set the nice level of the subprocesses.
+
+if args.nice:
+    nice = args.nicelevel
+else:
+    nice = None
 
 # Get the source name and check that it has been set correctly.
 
@@ -130,7 +132,7 @@ def lnlike(params, visibilities, images, spectra, parameters, plot):
 
 # Define a prior function.
 
-def lnprior(params, parameters):
+def lnprior(params, parameters, visibilities):
     for key in parameters:
         if not parameters[key]["fixed"]:
             if parameters[key]["limits"][0] <= params[key] <= \
@@ -163,12 +165,11 @@ def lnprior(params, parameters):
 
     # Check that we aren't allowing any absurdly dense models.
 
-    """
-    if params["logR_env"] < 0.5 * params["logM_env"] + 4.:
-        return -numpy.inf
-    else:
-        pass
-    """
+    if "logR_env" in params and "logM_env" in params:
+        if params["logR_env"] < 0.5 * params["logM_env"] + 4.:
+            return -numpy.inf
+        else:
+            pass
 
     # Check that the cavity actually falls within the disk.
 
@@ -188,7 +189,20 @@ def lnprior(params, parameters):
 
     # Everything was correct, so continue on.
 
-    return 0.0
+    lnp = 0.0
+
+    # Add in the priors.
+
+    for i in range(len(visibilities["file"])):
+        if (not parameters["flux_unc{0:d}".format(i+1)]["fixed"]) and \
+                (parameters["flux_unc{0:d}".format(i+1)]["prior"] == "gaussian"):
+            lnp += -0.5 * (params["flux_unc{0:d}".format(i+1)] - \
+                    parameters["flux_unc{0:d}".format(i+1)]["value"])**2 / \
+                    parameters["flux_unc{0:d}".format(i+1)]["sigma"]**2
+
+    # Return
+
+    return lnp
 
 # Define a probability function.
 
@@ -201,7 +215,7 @@ def lnprob(p, visibilities, images, spectra, parameters, plot):
 
     params = dict(zip(keys, p))
 
-    lp = lnprior(params, parameters)
+    lp = lnprior(params, parameters, visibilities)
 
     if not numpy.isfinite(lp):
         return -numpy.inf
@@ -270,41 +284,15 @@ spectra["data"] = []
 spectra["binned"] = []
 images["data"] = []
 
-# Decide whether to use an exponentially tapered 
+# Check that all of the parameters are correct.
 
-if not "disk_type" in parameters:
-    parameters["disk_type"] = {"fixed":True, "value":"truncated", \
-            "limits":[0.,0.]}
+parameters = modeling.check_parameters(parameters, \
+        nvis=len(visibilities["file"]))
+
+# Decide whether to use an exponentially tapered 
 
 if args.withexptaper:
     parameters["disk_type"]["value"] = "exptaper"
-
-# Make sure all of the appropriate values are set for a Settled Disk.
-
-if parameters["disk_type"] == "settled":
-    for value in ["loga_min","na","logalpha_settled"]:
-        if value not in parameters:
-            print("ERROR: The parameter '"+value+"' must be included in the "
-                    "parameters dictionary in config.py")
-            sys.exit(0)
-
-# Make sure the code doesn't break if envelope_type isn't specified.
-
-if not "envelope_type" in parameters:
-    parameters["envelope_type"] = {"fixed":True, "value":"ulrich", \
-            "limits":[0.,0.]}
-
-# Make sure the code doesn't break if dust_type isn't specified.
-
-if not "dust_file" in parameters:
-    parameters["dust_file"] = {"fixed":True, "value":"pollack_new.hdf5", \
-            "limits":[0.,0.]}
-
-# Make sure that the envelope dust is the same as the disk dust, if it is not 
-# specified.
-
-if not "envelope_dust" in parameters:
-    parameters["envelope_dust"] = parameters["dust_file"]
 
 ######################################
 # Read in the millimeter visibilities.
@@ -364,11 +352,16 @@ for j in range(len(spectra["file"])):
 
     # Merge the SED with the binned Spitzer spectrum.
 
-    if spectra["bin?"]:
+    if spectra["bin?"][j]:
         wave = numpy.linspace(spectra["data"][j].wave.min(), \
                 spectra["data"][j].wave.max(), spectra["nbins"][j])
         flux = numpy.interp(wave, spectra["data"][j].wave, \
                 spectra["data"][j].flux)
+
+        good = flux > 0.
+
+        wave = wave[good]
+        flux = flux[good]
 
         spectra["binned"].append(sp.Spectrum(wave, flux))
     else:
@@ -481,6 +474,9 @@ else:
             elif key == "h_0":
                 temp_pos.append(numpy.random.uniform(\
                         parameters[key]["limits"][0], 0.2, 1)[0])
+            elif key[0:8] == "flux_unc":
+                temp_pos.append(numpy.random.normal(\
+                        parameters[key]["value"], 0.001, 1)[0])
             else:
                 temp_pos.append(numpy.random.uniform(\
                         parameters[key]["limits"][0], \
@@ -502,6 +498,9 @@ if args.action == "run":
             pool=pool)
 
 # Run a few burner steps.
+
+if args.action == "plot":
+    nsteps = max_nsteps-1
 
 while nsteps < max_nsteps:
     if args.action == "run":
@@ -616,8 +615,6 @@ while nsteps < max_nsteps:
     fig, ax = plt.subplots(nrows=2*len(visibilities["file"]), ncols=3)
 
     # Create a high resolution model for averaging.
-
-    m = model(visibilities, images, spectra, params, parameters, plot=True)
 
     m = modeling.run_disk_model(visibilities, images, spectra, params, \
             parameters, plot=True, ncpus=ncpus, ncpus_highmass=ncpus_highmass, \
