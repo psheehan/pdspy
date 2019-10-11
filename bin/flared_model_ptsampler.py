@@ -334,9 +334,19 @@ for j in range(len(visibilities["file"])):
 # Set up the emcee run.
 
 ndim = 0
-for key in parameters:
+keys = []
+
+for key in sorted(parameters.keys()):
     if not parameters[key]["fixed"]:
         ndim += 1
+        keys.append(key)
+
+# Make the labels nice with LaTeX.
+
+labels = ["$"+key.replace("T0_env","T_0,env").replace("T0","T_0").\
+        replace("turb_env","turb,env").replace("in_env","in,env").\
+        replace("_","_{").replace("log","\log ")+"}$" if key[0:3] == \
+        "log" else "$"+key+"$" for key in keys]
 
 # If we are resuming an MCMC simulation, read in the necessary info, otherwise
 # set up the info.
@@ -433,13 +443,6 @@ while nsteps < max_nsteps:
             prob_list = numpy.concatenate((prob_list, prob.\
                     reshape((ntemps, nwalkers, 1))), axis=2)
 
-            # Get keys of the parameters that are varying.
-
-            keys = []
-            for key in sorted(parameters.keys()):
-                if not parameters[key]["fixed"]:
-                    keys.append(key)
-
             # Plot the steps of the walkers.
 
             for j in range(ndim):
@@ -479,11 +482,6 @@ while nsteps < max_nsteps:
 
     # Make the cuts specified by the user.
 
-    keys = []
-    for key in sorted(parameters.keys()):
-        if not parameters[key]["fixed"]:
-            keys.append(key)
-
     for command in trim:
         command = command.split(" ")
 
@@ -513,21 +511,11 @@ while nsteps < max_nsteps:
 
     # Plot histograms of the resulting parameters.
 
-    labels = ["$"+key.replace("T0_env","T_0,env").replace("T0","T_0").\
-            replace("turb_env","turb,env").replace("in_env","in,env").\
-            replace("_","_{").replace("log","\log ")+"}$" if key[0:3] == \
-            "log" else "$"+key+"$" for key in keys]
-
     fig = corner.corner(samples, labels=labels, truths=params)
 
     plt.savefig("fit.pdf")
 
     # Make a dictionary of the best fit parameters.
-
-    keys = []
-    for key in sorted(parameters.keys()):
-        if not parameters[key]["fixed"]:
-            keys.append(key)
 
     params = dict(zip(keys, params))
 

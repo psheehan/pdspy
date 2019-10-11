@@ -31,7 +31,7 @@ comm = MPI.COMM_WORLD
 def run_disk_model(visibilities, images, spectra, params, parameters, \
         plot=False, ncpus=1, ncpus_highmass=1, with_hyperion=False, \
         timelimit=3600, source="disk", nice=None, disk_vis=False, \
-        no_radiative_transfer=False, nlam_SED=50):
+        no_radiative_transfer=False, nlam_SED=50, run_thermal=True):
 
     # Set the values of all of the parameters.
 
@@ -121,6 +121,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         m.add_pringle_disk(mass=p["M_disk"]*p["f_M_large"], rmin=p["R_in"], \
                 rmax=p["R_disk"], plrho=p["alpha_large"], \
                 h0=p["h_0"]*p["f_h_large"], plh=p["beta_large"], dust=ddust, \
+                t0=p["T0"], plt=p["q"], \
                 gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"],\
                 p["R_in_gap3"]], gap_rout=[p["R_cav"],p["R_out_gap1"],\
                 p["R_out_gap2"],p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
@@ -128,7 +129,8 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         if p["f_M_large"] < 1:
             m.add_pringle_disk(mass=p["M_disk"]*(1-p["f_M_large"]), \
                     rmin=p["R_in"], rmax=p["R_disk"], plrho=p["alpha"], \
-                    h0=p["h_0"], plh=p["beta"], dust=edust, gap_rin=[p["R_in"],\
+                    h0=p["h_0"], plh=p["beta"], dust=edust, \
+                    t0=p["T0"], plt=p["q"], gap_rin=[p["R_in"],\
                     p["R_in_gap1"],p["R_in_gap2"],p["R_in_gap3"]], \
                     gap_rout=[p["R_cav"],p["R_out_gap1"],p["R_out_gap2"],\
                     p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
@@ -155,6 +157,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         m.add_disk(mass=p["M_disk"]*p["f_M_large"], rmin=p["R_in"], \
                 rmax=p["R_disk"], plrho=p["alpha_large"], \
                 h0=p["h_0"]*p["f_h_large"], plh=p["beta_large"], dust=ddust, \
+                t0=p["T0"], plt=p["q"], \
                 gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"],\
                 p["R_in_gap3"]], gap_rout=[p["R_cav"],p["R_out_gap1"],\
                 p["R_out_gap2"],p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
@@ -162,7 +165,8 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         if p["f_M_large"] < 1:
             m.add_disk(mass=p["M_disk"]*(1-p["f_M_large"]), rmin=p["R_in"], \
                     rmax=p["R_disk"], plrho=p["alpha"], h0=p["h_0"], \
-                    plh=p["beta"], dust=edust, gap_rin=[p["R_in"],\
+                    plh=p["beta"], dust=edust, \
+                    t0=p["T0"], plt=p["q"], gap_rin=[p["R_in"],\
                     p["R_in_gap1"],p["R_in_gap2"],p["R_in_gap3"]], \
                     gap_rout=[p["R_cav"],p["R_out_gap1"],p["R_out_gap2"],\
                     p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
@@ -187,7 +191,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
 
     # Run the thermal simulation.
 
-    if code == "hyperion":
+    if code == "hyperion" and run_thermal:
         m.run_thermal(code="hyperion", nphot=2e5, mrw=True, pda=True, \
                 niterations=20, mpi=True, nprocesses=nprocesses, verbose=False)
 
@@ -196,7 +200,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         m.make_hyperion_symmetric()
 
         m.convert_hyperion_to_radmc3d()
-    else:
+    elif run_thermal:
         try:
             t1 = time.time()
             m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
