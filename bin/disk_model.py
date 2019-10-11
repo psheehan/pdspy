@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 
-from pdspy.constants.astronomy import arcsec, Jy
-from pdspy.constants.physics import c as c_l
+from pdspy.constants.astronomy import arcsec
 import pdspy.interferometry as uv
 import pdspy.spectroscopy as sp
-import pdspy.modeling as modeling
 import pdspy.imaging as im
+import pdspy.modeling as modeling
+import pdspy.plotting as plotting
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 import argparse
 import numpy
 import sys
@@ -223,38 +222,6 @@ def lnprob(p, visibilities, images, spectra, parameters, plot):
 
     return lp + lnlike(params, visibilities, images, spectra, parameters, \
             plot)
-
-# Define a useful class for plotting.
-
-class Transform:
-    def __init__(self, xmin, xmax, dx, fmt):
-        self.xmin = xmin
-        self.xmax = xmax
-        self.dx = dx
-        self.fmt = fmt
-
-    def __call__(self, x, p):
-        return self.fmt% ((x-(self.xmax-self.xmin)/2)*self.dx)
-
-# Define a function to scale an image to look nice.
-
-def scale_image(image, mode="linear"):
-    vmin = image.image.min()
-    vmax = numpy.percentile(image.image, 95)
-
-    a = 1000.
-    b = (image.image - vmin) / (vmax - vmin)
-
-    if mode == "linear":
-        c = b
-    elif mode == "arcsinh":
-        c = numpy.arcsinh(10*b)/3.
-    elif mode == "log":
-        c = numpy.log10(a*b+1)/numpy.log10(a)
-    else:
-        print("Not a valid mode!")
-
-    return c
 
 ################################################################################
 #
@@ -657,251 +624,48 @@ while nsteps < max_nsteps:
     # Plot the millimeter data/models.
 
     for j in range(len(visibilities["file"])):
-        # Create a high resolution model for averaging.
-
-        m1d = uv.average(m.visibilities[visibilities["lam"][j]+"_high"], \
-                gridsize=10000, binsize=3500, radial=True)
-
         # Plot the visibilities.
 
-        ax[2*j,0].errorbar(visibilities["data1d"][j].uvdist/1000, \
-                visibilities["data1d"][j].amp, \
-                yerr=numpy.sqrt(1./visibilities["data1d"][j].weights),\
-                fmt="ko", markersize=8, markeredgecolor="k")
-
-        # Plot the best fit model
-
-        ax[2*j,0].plot(m1d.uvdist/1000, m1d.amp, "g-")
+        plotting.plot_1D_visibilities(visibilities, m, parameters, params, \
+                index=j, fig=(fig, ax[2*j,0]))
 
         # Plot the 2D visibilities.
 
-        ticks = visibilities["ticks"][j]
+        plotting.plot_2D_visibilities(visibilities, m, parameters, params, \
+                index=j, fig=(fig, ax[2*j+1,0:2]))
 
-        xmin, xmax = int(round(visibilities["npix"][j]/2+ticks[0]/\
-                (visibilities["binsize"][j]/1000))), \
-                int(round(visibilities["npix"][j]/2+ticks[-1]/\
-                (visibilities["binsize"][j]/1000)))
-        ymin, ymax = int(round(visibilities["npix"][j]/2+ticks[0]/\
-                (visibilities["binsize"][j]/1000))), \
-                int(round(visibilities["npix"][j]/2+ticks[-1]/\
-                (visibilities["binsize"][j]/1000)))
+        # Plot the model image.
 
-        vmin = min(0, visibilities["data1d"][j].real.min())
-        vmax = visibilities["data1d"][j].real.max()
-
-        ax[2*j+1,0].imshow(visibilities["data"][j].real.reshape(\
-                (visibilities["npix"][j],visibilities["npix"][j]))\
-                [xmin:xmax,xmin:xmax][:,::-1], origin="lower", \
-                interpolation="nearest", vmin=vmin, vmax=vmax, cmap="jet")
-        ax[2*j+1,0].contour(m.visibilities[visibilities["lam"][j]].real.\
-                reshape((visibilities["npix"][j],visibilities["npix"][j]))\
-                [xmin:xmax,xmin:xmax][:,::-1], cmap="jet")
-
-        vmin = -visibilities["data1d"][j].real.max()
-        vmax =  visibilities["data1d"][j].real.max()
-
-        ax[2*j+1,1].imshow(visibilities["data"][j].imag.reshape(\
-                (visibilities["npix"][j],visibilities["npix"][j]))\
-                [xmin:xmax,xmin:xmax][:,::-1], origin="lower", \
-                interpolation="nearest", vmin=vmin, vmax=vmax, cmap="jet")
-        ax[2*j+1,1].contour(m.visibilities[visibilities["lam"][j]].imag.\
-                reshape((visibilities["npix"][j],visibilities["npix"][j]))\
-                [xmin:xmax,xmin:xmax][:,::-1], cmap="jet")
-
-        transform1 = ticker.FuncFormatter(Transform(xmin, xmax, \
-                visibilities["binsize"][j]/1000, '%.0f'))
-
-        ax[2*j+1,0].set_xticks(visibilities["npix"][j]/2+ticks[1:-1]/\
-                (visibilities["binsize"][j]/1000)-xmin)
-        ax[2*j+1,0].set_yticks(visibilities["npix"][j]/2+ticks[1:-1]/\
-                (visibilities["binsize"][j]/1000)-ymin)
-        ax[2*j+1,0].get_xaxis().set_major_formatter(transform1)
-        ax[2*j+1,0].get_yaxis().set_major_formatter(transform1)
-
-        ax[2*j+1,1].set_xticks(visibilities["npix"][j]/2+ticks[1:-1]/\
-                (visibilities["binsize"][j]/1000)-xmin)
-        ax[2*j+1,1].set_yticks(visibilities["npix"][j]/2+ticks[1:-1]/\
-                (visibilities["binsize"][j]/1000)-ymin)
-        ax[2*j+1,1].get_xaxis().set_major_formatter(transform1)
-        ax[2*j+1,1].get_yaxis().set_major_formatter(transform1)
-
-        # Create a model image to contour over the image.
-
-        model_image = m.images[visibilities["lam"][j]]
-
-        # Plot the image.
-
-        ticks = visibilities["image_ticks"][j]
-
-        if "x0" in params:
-            xmin, xmax = int(round(visibilities["image_npix"][j]/2 + \
-                    visibilities["x0"][j]/visibilities["image_pixelsize"][j]- \
-                    params["x0"]/visibilities["image_pixelsize"][j]+ \
-                    ticks[0]/visibilities["image_pixelsize"][j])), \
-                    int(round(visibilities["image_npix"][j]/2+\
-                    visibilities["x0"][j]/visibilities["image_pixelsize"][j]- \
-                    params["x0"]/visibilities["image_pixelsize"][j]+ \
-                    ticks[-1]/visibilities["image_pixelsize"][j]))
-        else:
-            xmin, xmax = int(round(visibilities["image_npix"][j]/2 + \
-                    visibilities["x0"][j]/visibilities["image_pixelsize"][j]+ \
-                    parameters["x0"]["value"]/visibilities["image_pixelsize"][j]+ \
-                    ticks[0]/visibilities["image_pixelsize"][j])), \
-                    int(round(visibilities["image_npix"][j]/2+\
-                    visibilities["x0"][j]/visibilities["image_pixelsize"][j]+ \
-                    parameters["x0"]["value"]/visibilities["image_pixelsize"][j]+ \
-                    ticks[-1]/visibilities["image_pixelsize"][j]))
-        if "y0" in params:
-            ymin, ymax = int(round(visibilities["image_npix"][j]/2-\
-                    visibilities["y0"][j]/visibilities["image_pixelsize"][j]+ \
-                    params["y0"]/visibilities["image_pixelsize"][j]+ \
-                    ticks[0]/visibilities["image_pixelsize"][j])), \
-                    int(round(visibilities["image_npix"][j]/2-\
-                    visibilities["y0"][j]/visibilities["image_pixelsize"][j]+ \
-                    params["y0"]/visibilities["image_pixelsize"][j]+ \
-                    ticks[-1]/visibilities["image_pixelsize"][j]))
-        else:
-            ymin, ymax = int(round(visibilities["image_npix"][j]/2-\
-                    visibilities["y0"][j]/visibilities["image_pixelsize"][j]- \
-                    parameters["y0"]["value"]/visibilities["image_pixelsize"][j]+ \
-                    ticks[0]/visibilities["image_pixelsize"][j])), \
-                    int(round(visibilities["image_npix"][j]/2-\
-                    visibilities["y0"][j]/visibilities["image_pixelsize"][j]- \
-                    parameters["y0"]["value"]/visibilities["image_pixelsize"][j]+ \
-                    ticks[-1]/visibilities["image_pixelsize"][j]))
-
-        ax[2*j,1].imshow(visibilities["image"][j].image\
-                [ymin:ymax,xmin:xmax,0,0], origin="lower", \
-                interpolation="nearest", cmap="jet")
-
-        xmin, xmax = int(round(visibilities["image_npix"][j]/2+1 + \
-                ticks[0]/visibilities["image_pixelsize"][j])), \
-                int(round(visibilities["image_npix"][j]/2+1 + \
-                ticks[-1]/visibilities["image_pixelsize"][j]))
-        ymin, ymax = int(round(visibilities["image_npix"][j]/2+1 + \
-                ticks[0]/visibilities["image_pixelsize"][j])), \
-                int(round(visibilities["image_npix"][j]/2+1 + \
-                ticks[-1]/visibilities["image_pixelsize"][j]))
-
-        ax[2*j,1].contour(model_image.image[ymin:ymax,xmin:xmax,0,0], \
-                cmap="jet")
-
-        transform = ticker.FuncFormatter(Transform(xmin, xmax, \
-                visibilities["image_pixelsize"][j], '%.1f"'))
-
-        ax[2*j,1].set_xticks(visibilities["image_npix"][j]/2+1+\
-                ticks[1:-1]/visibilities["image_pixelsize"][j]-xmin)
-        ax[2*j,1].set_yticks(visibilities["image_npix"][j]/2+1+\
-                ticks[1:-1]/visibilities["image_pixelsize"][j]-ymin)
-        ax[2*j,1].get_xaxis().set_major_formatter(transform)
-        ax[2*j,1].get_yaxis().set_major_formatter(transform)
+        plotting.plot_continuum_image(visibilities, m, parameters, params, \
+                index=j, fig=(fig, ax[2*j,1]))
 
     # Plot the SED.
 
-    for j in range(len(spectra["file"])):
-        if spectra["bin?"][j]:
-            if args.SED:
-                ax[0,2].plot(spectra["data"][j].wave, \
-                        c_l / spectra["data"][j].wave / 1.0e-4 * \
-                        spectra["data"][j].flux * Jy, "k-")
-            else:
-                ax[0,2].plot(spectra["data"][j].wave, spectra["data"][j].flux, \
-                        "k-")
-        else:
-            if args.SED:
-                ax[0,2].errorbar(spectra["data"][j].wave, \
-                        c_l / spectra["data"][j].wave / 1.0e-4 * \
-                        spectra["data"][j].flux * Jy, fmt="ko", \
-                        yerr=c_l / spectra["data"][j].wave / 1.0e-4 * \
-                        spectra["data"][j].unc * Jy, markeredgecolor="k")
-            else:
-                ax[0,2].errorbar(spectra["data"][j].wave, \
-                        spectra["data"][j].flux, fmt="ko", \
-                        yerr=spectra["data"][j].unc, markeredgecolor="k")
-
-    if len(spectra["file"]) > 0:
-        if args.SED:
-            ax[0,2].plot(m.spectra["SED"].wave, c_l / m.spectra["SED"].wave / \
-                    1.0e-4 * m.spectra["SED"].flux * Jy, "g-")
-        else:
-            ax[0,2].plot(m.spectra["SED"].wave, m.spectra["SED"].flux, "g-")
+    plotting.plot_SED(spectra, m, SED=args.SED, fig=(fig, ax[0,2]))
 
     # Plot the scattered light image.
 
     for j in range(len(images["file"])):
-        c = scale_image(images["data"][j], mode="arcsinh")
+        plotting.plot_scattered_light(visibilities, m, parameters, params, \
+                index=j, fig=(fig, ax[1,2]))
 
-        ax[1,2].imshow(c[:,:,0,0], origin="lower", interpolation="nearest", \
-                cmap="gray")
+    # Turn off axes when they aren't being used.
 
-        transform3 = ticker.FuncFormatter(Transform(0, images["npix"][j], \
-                images["pixelsize"][j], '%.1f"'))
-
-        ticks = images["ticks"][j]
-
-        ax[1,2].set_xticks(images["npix"][j]/2+ticks/images["pixelsize"][j])
-        ax[1,2].set_yticks(images["npix"][j]/2+ticks/images["pixelsize"][j])
-        ax[1,2].get_xaxis().set_major_formatter(transform3)
-        ax[1,2].get_yaxis().set_major_formatter(transform3)
-
-        # Create a model image to contour over the image.
-
-        c = scale_image(m.images[images["lam"][j]], mode=images["plot_mode"][j])
-
-        levels = numpy.array([0.05,0.25,0.45,0.65,0.85,1.0]) * \
-                (c.max() - c.min()) + c.min()
-
-        ax[1,2].contour(c[:,:,0,0], colors='gray', levels=levels)
     if len(images["file"]) == 0:
         ax[1,2].set_axis_off()
-
-    # Adjust the plot and save it.
-
-    if args.SED:
-        ax[0,2].axis([0.1,1.0e4,1e-13,1e-8])
-    else:
-        ax[0,2].axis([0.1,1.0e4,1e-6,1e3])
-
-    ax[0,2].set_xscale("log", nonposx='clip')
-    ax[0,2].set_yscale("log", nonposy='clip')
-
-    ax[0,2].set_xlabel("$\lambda$ [$\mu$m]")
-    if args.SED:
-        ax[0,2].set_ylabel(r"$\nu F_{\nu}$ [ergs s$^{-1}$ cm$^{-2}$]")
-    else:
-        ax[0,2].set_ylabel(r"$F_{\nu}$ [Jy]")
-
-    for j in range(len(visibilities["file"])):
-        ax[2*j,0].axis([1,visibilities["data1d"][j].uvdist.max()/1000*3,0,\
-                visibilities["data1d"][j].amp.max()*1.1])
-
-        ax[2*j,0].set_xscale("log", nonposx='clip')
-
-        ax[2*j,0].set_xlabel("U-V Distance [k$\lambda$]")
-        ax[2*j,0].set_ylabel("Amplitude [Jy]")
-
-        ax[2*j,1].set_xlabel("$\Delta$RA")
-        ax[2*j,1].set_ylabel("$\Delta$Dec")
-
-        ax[2*j+1,0].set_xlabel("U [k$\lambda$]")
-        ax[2*j+1,0].set_ylabel("V [k$\lambda$]")
-
-        ax[2*j+1,1].set_xlabel("U [k$\lambda$]")
-        ax[2*j+1,1].set_ylabel("V [k$\lambda$]")
-
-    ax[1,2].set_xlabel("$\Delta$RA")
-    ax[1,2].set_ylabel("$\Delta$Dec")
 
     for j in range(len(visibilities["file"])):
         if j > 0:
             ax[2*j,2].set_axis_off()
             ax[2*j+1,2].set_axis_off()
 
+    # Adjust the plot.
+
     fig.set_size_inches((12.5,8*len(visibilities["file"])))
     fig.subplots_adjust(left=0.07, right=0.98, top=0.95, bottom=0.08, \
             wspace=0.25, hspace=0.2)
 
-    # Adjust the figure and save.
+    # Save the figure.
 
     fig.savefig("model.pdf")
 
