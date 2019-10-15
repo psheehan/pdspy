@@ -12,3 +12,4 @@ from . import spectroscopy
 from . import stars
 from . import statistics
 from . import table
+from . import utils
