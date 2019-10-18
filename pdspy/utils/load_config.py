@@ -77,7 +77,8 @@ def load_config():
     # Make sure the spectra dictionary has a "weight" entry.
 
     if not "weight" in config.spectra:
-        spectra["weight"] = [1. for i in range(len(config.spectra["file"]))]
+        config.spectra["weight"] = [1. for i in range(len(\
+                config.spectra["file"]))]
 
     # Check that all of the parameters are correct.
 
