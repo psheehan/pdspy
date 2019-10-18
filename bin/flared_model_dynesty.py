@@ -8,6 +8,7 @@ import pdspy.interferometry as uv
 import pdspy.spectroscopy as sp
 import pdspy.modeling as modeling
 import pdspy.imaging as im
+import pdspy.utils as utils
 import dynesty.plotting as dyplot
 import dynesty.results as dyres
 import dynesty.utils as dyfunc
@@ -376,71 +377,21 @@ if args.action == "run":
 
 # Import the configuration file information.
 
-sys.path.insert(0, '')
-
-from config import *
-
-# Set up the places where we will put all of the data.
-
-visibilities["data"] = []
-visibilities["data1d"] = []
-visibilities["image"] = []
-
-# Check that all of the parameters are correct.
-
-parameters = modeling.check_parameters(parameters)
-
-# Make sure "fmt" is in the visibilities dictionary.
-
-if not "fmt" in visibilities:
-    visibilities["fmt"] = ['4.1f' for i in range(len(visibilities["file"]))]
+config = utils.load_config()
 
 # Decide whether to use an exponentially tapered 
 
 if args.withexptaper:
-    parameters["disk_type"]["value"] = "exptaper"
+    config.parameters["disk_type"]["value"] = "exptaper"
 
 # Decide whether to do continuum subtraction or not.
 
 if args.withcontsub:
-    parameters["docontsub"]["value"] = True
+    config.parameters["docontsub"]["value"] = True
 
-# Define the priors as an empty dictionary, if no priors were specified.
+# Read in the data.
 
-if not 'priors' in globals():
-    priors = {}
-
-######################################
-# Read in the millimeter visibilities.
-######################################
-
-for j in range(len(visibilities["file"])):
-    # Read the raw data.
-
-    data = uv.Visibilities()
-    data.read(visibilities["file"][j])
-
-    # Center the data. => need to update!
-
-    data = uv.center(data, [visibilities["x0"][j], visibilities["y0"][j], 1.])
-
-    # Add the data to the dictionary structure.
-
-    visibilities["data"].append(data)
-
-    # Scale the weights of the visibilities to force them to be fit well.
-
-    visibilities["data"][j].weights *= visibilities["weight"][j]
-
-    # Average the visibilities radially.
-
-    visibilities["data1d"].append(uv.average(data, gridsize=20, radial=True, \
-            log=True, logmin=data.uvdist[numpy.nonzero(data.uvdist)].min()*\
-            0.95, logmax=data.uvdist.max()*1.05, mode="spectralline"))
-
-    # Read in the image.
-
-    visibilities["image"].append(im.readimfits(visibilities["image_file"][j]))
+visibilities, images, spectra = utils.load_data(config, model="flared")
 
 ################################################################################
 #
@@ -454,8 +405,8 @@ ndim = 0
 periodic = []
 keys = []
 
-for key in sorted(parameters.keys()):
-    if not parameters[key]["fixed"]:
+for key in sorted(config.parameters.keys()):
+    if not config.parameters[key]["fixed"]:
         ndim += 1
         keys.append(key)
 
@@ -477,24 +428,25 @@ if args.resume:
     res = sampler.results
 else:
     sampler = dynesty.DynamicNestedSampler(lnlike, ptform, ndim, \
-            logl_args=(visibilities, parameters, False), \
-            ptform_args=(parameters, priors), periodic=periodic, pool=pool, \
-            sample="rwalk", walks=walks)
+            logl_args=(visibilities, config.parameters, False), \
+            ptform_args=(config.parameters, config.priors), periodic=periodic, \
+            pool=pool, sample="rwalk", walks=config.walks)
 
 # Run a few burner steps.
 
 if args.action == "run":
     if not sampler.base:
-        for it, results in enumerate(sampler.sample_initial(dlogz=dlogz, \
-                nlive=nlive_init, save_samples=True, resume=args.resume)):
+        for it, results in enumerate(sampler.sample_initial(dlogz=config.dlogz,\
+                nlive=config.nlive_init, save_samples=True, \
+                resume=args.resume)):
             # Save the state of the sampler (delete the pool first).
 
             save_sampler("sampler.p", sampler, pool=pool)
 
             # Print out the status of the sampler.
 
-            dyres.print_fn(results, sampler.it - 1, sampler.ncall, dlogz=dlogz,\
-                    logl_max=numpy.inf)
+            dyres.print_fn(results, sampler.it - 1, sampler.ncall, \
+                    dlogz=config.dlogz, logl_max=numpy.inf)
 
             # Manually calculate the stopping criterion.
 
@@ -505,7 +457,7 @@ if args.action == "run":
 
             # Every 1000 steps stop and make plots of the status.
 
-            if (sampler.it - 1) % 1000 == 0 and delta_logz >= dlogz:
+            if (sampler.it - 1) % 1000 == 0 and delta_logz >= config.dlogz:
                 # Add the live points and get the results.
 
                 sampler.sampler.add_final_live()
@@ -527,7 +479,7 @@ if args.action == "run":
 
         plot_status(res, labels=labels, periodic=periodic)
 
-    for i in range(sampler.batch, maxbatch):
+    for i in range(sampler.batch, config.maxbatch):
         # Get the correct bounds to use for the batch.
 
         logl_bounds = dynesty.dynamicsampler.weight_function(sampler.results)
@@ -536,7 +488,7 @@ if args.action == "run":
         # Sample the batch.
 
         for results in sampler.sample_batch(logl_bounds=logl_bounds, \
-                nlive_new=nlive_batch):
+                nlive_new=config.nlive_batch):
             # Print out the results.
 
             (worst, ustar, vstar, loglstar, nc,
@@ -659,8 +611,9 @@ params = dict(zip(keys, params))
 
 # Create a high resolution model for averaging.
 
-m = modeling.run_flared_model(visibilities, params, parameters, plot=True, \
-        ncpus=ncpus, source=source, plot_vis=args.plot_vis, nice=nice)
+m = modeling.run_flared_model(visibilities, params, config.parameters, \
+        plot=True, ncpus=ncpus, source=source, plot_vis=args.plot_vis, \
+        nice=nice)
 
 # Open up a pdf file to plot into.
 
@@ -676,7 +629,7 @@ for j in range(len(visibilities["file"])):
 
     # Make a plot of the channel maps.
 
-    plotting.plot_channel_maps(visibilities, m, parameters, params, \
+    plotting.plot_channel_maps(visibilities, m, config.parameters, params, \
             index=j, plot_vis=args.plot_vis, fig=(fig,ax))
     
     # Adjust the plot and save it.

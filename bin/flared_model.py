@@ -8,6 +8,7 @@ import pdspy.interferometry as uv
 import pdspy.spectroscopy as sp
 import pdspy.modeling as modeling
 import pdspy.imaging as im
+import pdspy.utils as utils
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import matplotlib.patches as patches
@@ -254,71 +255,21 @@ if args.action == "run":
 
 # Import the configuration file information.
 
-sys.path.insert(0, '')
-
-from config import *
-
-# Set up the places where we will put all of the data.
-
-visibilities["data"] = []
-visibilities["data1d"] = []
-visibilities["image"] = []
-
-# Check that all of the parameters are correct.
-
-parameters = modeling.check_parameters(parameters)
-
-# Make sure "fmt" is in the visibilities dictionary.
-
-if not "fmt" in visibilities:
-    visibilities["fmt"] = ['4.1f' for i in range(len(visibilities["file"]))]
+config = utils.load_config()
 
 # Decide whether to use an exponentially tapered 
 
 if args.withexptaper:
-    parameters["disk_type"]["value"] = "exptaper"
+    config.parameters["disk_type"]["value"] = "exptaper"
 
 # Decide whether to do continuum subtraction or not.
 
 if args.withcontsub:
-    parameters["docontsub"]["value"] = True
+    config.parameters["docontsub"]["value"] = True
 
-# Define the priors as an empty dictionary, if no priors were specified.
+# Read in the data.
 
-if not 'priors' in globals():
-    priors = {}
-
-######################################
-# Read in the millimeter visibilities.
-######################################
-
-for j in range(len(visibilities["file"])):
-    # Read the raw data.
-
-    data = uv.Visibilities()
-    data.read(visibilities["file"][j])
-
-    # Center the data. => need to update!
-
-    data = uv.center(data, [visibilities["x0"][j], visibilities["y0"][j], 1.])
-
-    # Add the data to the dictionary structure.
-
-    visibilities["data"].append(data)
-
-    # Scale the weights of the visibilities to force them to be fit well.
-
-    visibilities["data"][j].weights *= visibilities["weight"][j]
-
-    # Average the visibilities radially.
-
-    visibilities["data1d"].append(uv.average(data, gridsize=20, radial=True, \
-            log=True, logmin=data.uvdist[numpy.nonzero(data.uvdist)].min()*\
-            0.95, logmax=data.uvdist.max()*1.05, mode="spectralline"))
-
-    # Read in the image.
-
-    visibilities["image"].append(im.readimfits(visibilities["image_file"][j]))
+visibilities, images, spectra = utils.load_data(config, model="flared")
 
 ################################################################################
 #
@@ -331,8 +282,8 @@ for j in range(len(visibilities["file"])):
 ndim = 0
 keys = []
 
-for key in sorted(parameters.keys()):
-    if not parameters[key]["fixed"]:
+for key in sorted(config.parameters.keys()):
+    if not config.parameters[key]["fixed"]:
         ndim += 1
         keys.append(key)
 
@@ -354,34 +305,36 @@ if args.resume:
 
     if args.resetprob:
         prob = None
-        prob_list = numpy.empty((nwalkers,0))
+        prob_list = numpy.empty((config.nwalkers,0))
     else:
         prob_list = numpy.load("prob.npy")
         if len(prob_list.shape) == 1:
-            prob_list = prob_list.reshape((nwalkers,1))
+            prob_list = prob_list.reshape((config.nwalkers,1))
         prob = prob_list[:,-1]
 else:
     pos = []
-    for j in range(nwalkers):
-        r_env = numpy.random.uniform(parameters["logR_env"]["limits"][0],\
-                parameters["logR_env"]["limits"][1],1)[0]
+    for j in range(config.nwalkers):
+        r_env = numpy.random.uniform(config.parameters["logR_env"]["limits"][0]\
+                config.parameters["logR_env"]["limits"][1],1)[0]
         r_disk = numpy.random.uniform(numpy.log10(5.),\
-                min(r_env, parameters["logR_disk"]["limits"][1]),1)[0]
-        r_in = numpy.random.uniform(parameters["logR_in"]["limits"][0],\
+                min(r_env, config.parameters["logR_disk"]["limits"][1]),1)[0]
+        r_in = numpy.random.uniform(config.parameters["logR_in"]["limits"][0],\
                 numpy.log10((10.**r_disk)/2),1)[0]
 
         r_cav = numpy.random.uniform(r_in, numpy.log10(0.75*10.**r_disk),1)[0]
 
-        if "logTatm0" in parameters:
-            tatm0 = numpy.random.uniform(parameters["logTatm0"]["limits"][0],\
-                    parameters["logTatm0"]["limits"][1],1)[0]
-            tmid0 = numpy.random.uniform(parameters["logTmid0"]["limits"][0],\
-                    min(parameters["logTatm0"]["limits"][1], tatm0),1)[0]
+        if "logTatm0" in config.parameters:
+            tatm0 = numpy.random.uniform(config.parameters["logTatm0"]\
+                    ["limits"][0],config.parameters["logTatm0"]["limits"][1],1)\
+                    [0]
+            tmid0 = numpy.random.uniform(config.parameters["logTmid0"]\
+                    ["limits"][0],min(config.parameters["logTatm0"]\
+                    ["limits"][1], tatm0),1)[0]
 
         temp_pos = []
 
-        for key in sorted(parameters.keys()):
-            if parameters[key]["fixed"]:
+        for key in sorted(config.parameters.keys()):
+            if config.parameters[key]["fixed"]:
                 pass
             elif key == "logR_in":
                 temp_pos.append(r_in)
@@ -397,47 +350,48 @@ else:
                 temp_pos.append(tmid0)
             else:
                 temp_pos.append(numpy.random.uniform(\
-                        parameters[key]["limits"][0], \
-                        parameters[key]["limits"][1], 1)[0])
+                        config.parameters[key]["limits"][0], \
+                        config.parameters[key]["limits"][1], 1)[0])
 
         pos.append(temp_pos)
 
     prob = None
-    prob_list = numpy.empty((nwalkers, 0))
-    chain = numpy.empty((nwalkers, 0, ndim))
+    prob_list = numpy.empty((config.nwalkers, 0))
+    chain = numpy.empty((config.nwalkers, 0, ndim))
     state = None
     nsteps = 0
 
 # Set up the MCMC simulation.
 
 if args.action == "run":
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, \
-            args=(visibilities, parameters, priors, False), pool=pool)
+    sampler = emcee.EnsembleSampler(config.nwalkers, ndim, lnprob, \
+            args=(visibilities, config.parameters, config.priors, False), \
+            pool=pool)
 
 # If we are plotting, make sure that nsteps < max_nsteps.
 
 if args.action == "plot":
-    nsteps = max_nsteps - 1
+    nsteps = config.max_nsteps - 1
 
 # Run a few burner steps.
 
-while nsteps < max_nsteps:
+while nsteps < config.max_nsteps:
     if args.action == "run":
-        for i in range(steps_per_iter):
+        for i in range(config.steps_per_iter):
             pos, prob, state = sampler.run_mcmc(pos, 1, lnprob0=prob, \
                     rstate0=state)
 
             chain = numpy.concatenate((chain, sampler.chain), axis=1)
 
             prob_list = numpy.concatenate((prob_list, prob.\
-                    reshape((nwalkers,1))), axis=1)
+                    reshape((config.nwalkers,1))), axis=1)
 
             # Plot the steps of the walkers.
 
             for j in range(ndim):
                 fig, ax = plt.subplots(nrows=1, ncols=1)
 
-                for k in range(nwalkers):
+                for k in range(config.nwalkers):
                     ax.plot(chain[k,:,j])
 
                 plt.savefig("steps_{0:s}.png".format(keys[j]))
@@ -459,7 +413,7 @@ while nsteps < max_nsteps:
 
     # Get the best fit parameters and uncertainties.
 
-    samples = chain[:,-nplot:,:].reshape((-1, ndim))
+    samples = chain[:,-config.nplot:,:].reshape((-1, ndim))
 
     # Make the cuts specified by the user.
 
@@ -508,8 +462,9 @@ while nsteps < max_nsteps:
 
     # Create a high resolution model for averaging.
 
-    m = modeling.run_flared_model(visibilities, params, parameters, plot=True, \
-            ncpus=ncpus, source=source, plot_vis=args.plot_vis, nice=nice)
+    m = modeling.run_flared_model(visibilities, params, config.parameters, \
+            plot=True, ncpus=ncpus, source=source, plot_vis=args.plot_vis, \
+            nice=nice)
 
     # Open up a pdf file to plot into.
 
@@ -525,7 +480,7 @@ while nsteps < max_nsteps:
 
         # Make a plot of the channel maps.
 
-        plotting.plot_channel_maps(visibilities, m, parameters, params, \
+        plotting.plot_channel_maps(visibilities, m, config.parameters, params, \
                 index=j, plot_vis=args.plot_vis, fig=(fig,ax))
         
         # Adjust the plot and save it.
