@@ -314,46 +314,7 @@ if args.resume:
 else:
     pos = []
     for j in range(config.nwalkers):
-        r_env = numpy.random.uniform(config.parameters["logR_env"]["limits"][0]\
-                config.parameters["logR_env"]["limits"][1],1)[0]
-        r_disk = numpy.random.uniform(numpy.log10(5.),\
-                min(r_env, config.parameters["logR_disk"]["limits"][1]),1)[0]
-        r_in = numpy.random.uniform(config.parameters["logR_in"]["limits"][0],\
-                numpy.log10((10.**r_disk)/2),1)[0]
-
-        r_cav = numpy.random.uniform(r_in, numpy.log10(0.75*10.**r_disk),1)[0]
-
-        if "logTatm0" in config.parameters:
-            tatm0 = numpy.random.uniform(config.parameters["logTatm0"]\
-                    ["limits"][0],config.parameters["logTatm0"]["limits"][1],1)\
-                    [0]
-            tmid0 = numpy.random.uniform(config.parameters["logTmid0"]\
-                    ["limits"][0],min(config.parameters["logTatm0"]\
-                    ["limits"][1], tatm0),1)[0]
-
-        temp_pos = []
-
-        for key in sorted(config.parameters.keys()):
-            if config.parameters[key]["fixed"]:
-                pass
-            elif key == "logR_in":
-                temp_pos.append(r_in)
-            elif key == "logR_disk":
-                temp_pos.append(r_disk)
-            elif key == "logR_env":
-                temp_pos.append(r_env)
-            elif key == "logR_cav":
-                temp_pos.append(r_cav)
-            elif key == "logTatm0":
-                temp_pos.append(tatm0)
-            elif key == "logTmid0":
-                temp_pos.append(tmid0)
-            else:
-                temp_pos.append(numpy.random.uniform(\
-                        config.parameters[key]["limits"][0], \
-                        config.parameters[key]["limits"][1], 1)[0])
-
-        pos.append(temp_pos)
+        pos.append(utils.propose_point_emcee(config.parameters), model="flared")
 
     prob = None
     prob_list = numpy.empty((config.nwalkers, 0))
