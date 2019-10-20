@@ -310,62 +310,7 @@ if args.resume:
 else:
     pos = []
     for j in range(config.nwalkers):
-        m_env = numpy.random.uniform(-6., \
-                config.parameters["logM_env"]["limits"][1],1)[0]
-
-        r_env = numpy.random.uniform(max(config.parameters["logR_env"]\
-                ["limits"][0],0.5*m_env+4.), \
-                config.parameters["logR_env"]["limits"][1],1)[0]
-        r_disk = numpy.random.uniform(numpy.log10(5.),\
-                min(numpy.log10(500.), r_env, \
-                config.parameters["logR_disk"]["limits"][1]),1)[0]
-        r_in = numpy.random.uniform(config.parameters["logR_in"]["limits"][0],\
-                numpy.log10((10.**r_disk)/2),1)[0]
-
-        r_cav = numpy.random.uniform(r_in, numpy.log10(0.75*10.**r_disk),1)[0]
-
-        r_gap1 = numpy.random.uniform(numpy.log10(10.**r_in+\
-                config.parameters["w_gap1"]["limits"][0]/2), \
-                numpy.log10(0.75*10.**r_disk),1)[0]
-
-        w_gap1 = numpy.random.uniform(config.parameters["w_gap1"]["limits"][0],\
-                min(config.parameters["w_gap1"]["limits"][1],\
-                2*(10.**r_gap1-10.**r_in)), 1)[0]
-
-        temp_pos = []
-
-        for key in sorted(config.parameters.keys()):
-            if config.parameters[key]["fixed"]:
-                pass
-            elif key == "logR_in":
-                temp_pos.append(r_in)
-            elif key == "logR_disk":
-                temp_pos.append(r_disk)
-            elif key == "logR_env":
-                temp_pos.append(r_env)
-            elif key == "logR_cav":
-                temp_pos.append(r_cav)
-            elif key == "logR_gap1":
-                temp_pos.append(r_gap1)
-            elif key == "w_gap1":
-                temp_pos.append(w_gap1)
-            elif key == "logM_disk":
-                temp_pos.append(numpy.random.uniform(-6.,\
-                        config.parameters[key]["limits"][1],1)[0])
-            elif key == "logM_env":
-                temp_pos.append(m_env)
-            elif key == "h_0":
-                temp_pos.append(numpy.random.uniform(\
-                        config.parameters[key]["limits"][0], 0.2, 1)[0])
-            elif key[0:8] == "flux_unc":
-                temp_pos.append(numpy.random.normal(\
-                        config.parameters[key]["value"], 0.001, 1)[0])
-            else:
-                temp_pos.append(numpy.random.uniform(\
-                        config.parameters[key]["limits"][0], \
-                        config.parameters[key]["limits"][1], 1)[0])
-
-        pos.append(temp_pos)
+        pos.append(utils.propose_point_emcee(config.parameters))
 
     prob = None
     prob_list = numpy.empty((config.nwalkers, 0))
