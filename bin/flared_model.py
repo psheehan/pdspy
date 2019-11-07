@@ -314,7 +314,7 @@ if args.resume:
 else:
     pos = []
     for j in range(config.nwalkers):
-        pos.append(utils.propose_point_emcee(config.parameters), model="flared")
+        pos.append(utils.propose_point_emcee(config.parameters, model="flared"))
 
     prob = None
     prob_list = numpy.empty((config.nwalkers, 0))
