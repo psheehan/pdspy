@@ -39,10 +39,16 @@ def load_data(config, model="disk"):
 
         # Average the visibilities radially.
 
-        config.visibilities["data1d"].append(uv.average(data, gridsize=20, \
-                radial=True, log=True, \
-                logmin=data.uvdist[numpy.nonzero(data.uvdist)].min()*0.95, \
-                logmax=data.uvdist.max()*1.05))
+        if model == "disk":
+            config.visibilities["data1d"].append(uv.average(data, gridsize=20, \
+                    radial=True, log=True, \
+                    logmin=data.uvdist[numpy.nonzero(data.uvdist)].min()*0.95, \
+                    logmax=data.uvdist.max()*1.05))
+        elif model == "flared":
+            config.visibilities["data1d"].append(uv.average(data, gridsize=20, \
+                    radial=True, log=True, \
+                    logmin=data.uvdist[numpy.nonzero(data.uvdist)].min()*0.95, \
+                    logmax=data.uvdist.max()*1.05, mode="spectralline"))
 
         # Average the data into a 2D grid.
 
