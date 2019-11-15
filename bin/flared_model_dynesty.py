@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import matplotlib.patches as patches
 import matplotlib.patheffects as PathEffects
+import schwimmbad
 import scipy.stats
 import scipy.integrate
 import argparse
@@ -361,7 +362,7 @@ os.system("rm -r /tmp/temp_{0:s}_{1:d}".format(source, comm.Get_rank()))
 
 if args.action == "run":
     if withmpi:
-        pool = pdspy.modeling.mpi_pool.MPIPool(largedata=False)
+        pool = schwimmbad.MPIPool()
 
         if not pool.is_master():
             pool.wait()
