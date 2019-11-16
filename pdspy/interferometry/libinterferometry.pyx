@@ -159,13 +159,13 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
 
     if mfs:
         vis = freqcorrect(data)
-        u = vis.u.copy()
-        v = vis.v.copy()
-        uvdist = vis.uvdist.copy()
-        freq = vis.freq.copy()
-        real = vis.real.copy()
-        imag = vis.imag.copy()
-        weights = vis.weights.copy()
+        u = vis.u
+        v = vis.v
+        uvdist = vis.uvdist
+        freq = vis.freq
+        real = vis.real
+        imag = vis.imag
+        weights = vis.weights
     else:
         u = data.u.copy()
         v = data.v.copy()
@@ -173,7 +173,7 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
         freq = data.freq.copy()
         real = data.real.copy()
         imag = data.imag.copy()
-        weights = data.weights.copy()
+        weights = data.weights
     
     # Set the weights equal to 0 when the point is flagged (i.e. weight < 0)
     weights = numpy.where(weights < 0,0.0,weights)
@@ -248,15 +248,13 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
     
     for k in range(nuv):
         if mode == "continuum":
-            for l in range(nfreq):
-                new_real[j[k],i[k],0] += real[k,l]*weights[k,l]
-                new_imag[j[k],i[k],0] += imag[k,l]*weights[k,l]
-                new_weights[j[k],i[k],0] += weights[k,l]
+            new_real[j[k],i[k],0] += numpy.sum(real[k,:]*weights[k,:])
+            new_imag[j[k],i[k],0] += numpy.sum(imag[k,:]*weights[k,:])
+            new_weights[j[k],i[k],0] += numpy.sum(weights[k,:])
         elif mode == "spectralline":
-            for l in range(nfreq):
-                new_real[j[k],i[k],l] += real[k,l]*weights[k,l]
-                new_imag[j[k],i[k],l] += imag[k,l]*weights[k,l]
-                new_weights[j[k],i[k],l] += weights[k,l]
+            new_real[j[k],i[k],:] += real[k,:]*weights[k,:]
+            new_imag[j[k],i[k],:] += imag[k,:]*weights[k,:]
+            new_weights[j[k],i[k],:] += weights[k,:]
     
     good_data = new_weights != 0.0
 
@@ -291,26 +289,26 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
 
     if mfs:
         vis = freqcorrect(data)
-        u = vis.u.copy()
-        v = vis.v.copy()
-        freq = vis.freq.copy()
-        real = vis.real.copy()
-        imag = vis.imag.copy()
-        weights = vis.weights.copy()
+        u = vis.u
+        v = vis.v
+        freq = vis.freq
+        real = vis.real
+        imag = vis.imag
+        weights = vis.weights
     else:
-        u = data.u.copy()
-        v = data.v.copy()
+        u = data.u
+        v = data.v
         if channel != None:
             freq = numpy.array([data.freq[channel]])
-            real = data.real[:,channel].copy().reshape((data.real.shape[0],1))
-            imag = data.imag[:,channel].copy().reshape((data.real.shape[0],1))
-            weights = data.weights[:,channel].copy(). \
+            real = data.real[:,channel].reshape((data.real.shape[0],1))
+            imag = data.imag[:,channel].reshape((data.real.shape[0],1))
+            weights = data.weights[:,channel]. \
                     reshape((data.real.shape[0],1))
         else:
-            freq = data.freq.copy()
-            real = data.real.copy()
-            imag = data.imag.copy()
-            weights = data.weights.copy()
+            freq = data.freq
+            real = data.real
+            imag = data.imag
+            weights = data.weights
     
     # Set the weights equal to 0 when the point is flagged (i.e. weight < 0)
     weights = numpy.where(weights < 0, 0.0, weights)
@@ -358,18 +356,16 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
 
     if gridsize%2 == 0:
         for k in range(nuv):
-            for n in range(nfreq):
-                i[k,n] = numpy.round(u[k]*freq[n]*inv_freq/binsize+\
-                        gridsize/2.).astype(numpy.uint32)
-                j[k,n] = numpy.round(v[k]*freq[n]*inv_freq/binsize+\
-                        gridsize/2.).astype(numpy.uint32)
+            i[k, :] = numpy.array(u[k] * freq * inv_freq/binsize+
+                        gridsize/2., dtype=numpy.uint32)
+            j[k, :] = numpy.array(v[k]*freq*inv_freq/binsize+\
+                        gridsize/2., dtype=numpy.uint32)
     else:
         for k in range(nuv):
-            for n in range(nfreq):
-                i[k,n] = numpy.round(u[k]*freq[n]*inv_freq/binsize+ \
-                        (gridsize-1)/2.).astype(numpy.uint32)
-                j[k,n] = numpy.round(v[k]*freq[n]*inv_freq/binsize+ \
-                        (gridsize-1)/2.).astype(numpy.uint32)
+            i[k, :] = numpy.array(u[k]*freq*inv_freq/binsize+ \
+                        (gridsize-1)/2., dtype=numpy.uint32)
+            j[k, :] = numpy.array(v[k]*freq*inv_freq/binsize+ \
+                        (gridsize-1)/2., dtype=numpy.uint32)
     
     if convolution == "pillbox":
         convolve_func = ones
@@ -399,6 +395,7 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
 
             mmax = int_min(i[k,n]+ninclude_max+1, gridsize)
 
+            # TODO Probably can speed this up a good bit
             for l in range(lmin, lmax):
                 for m in range(mmin, mmax):
                     convolve = convolve_func( (u[k]*freq[n]*inv_freq-\
@@ -417,27 +414,25 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
     # If we have a special weighting scheme, fix the sums..
 
     if weighting == "uniform":
-        for l in range(gridsize):
-            for m in range(gridsize):
-                for n in range(nchannels):
-                    if new_weights[l,m,n] == 0:
-                        continue
-
-                    new_real[l,m,n] /= new_weights[l,m,n]
-                    new_imag[l,m,n] /= new_weights[l,m,n]
+        ind = numpy.where(new_weights == 0)
+        _nr = new_real[ind]
+        _ni = new_imag[ind]
+        new_real /= new_weights
+        new_imag /= new_weights
+        new_real[ind] = _nr
+        new_imag[ind] = _ni
 
     elif weighting == "robust":
         f = numpy.sqrt((5 * 10**(-robust))**2 / \
                 ((new_weights**2).sum()/weights.sum()))
 
-        for l in range(gridsize):
-            for m in range(gridsize):
-                for n in range(nchannels):
-                    if new_weights[l,m,n] == 0:
-                        continue
-
-                    new_real[l,m,n] /= (1+new_weights[l,m,n]*f**2)
-                    new_imag[l,m,n] /= (1+new_weights[l,m,n]*f**2)
+        ind = numpy.where(new_weights == 0)
+        _nr = new_real[ind]
+        _ni = new_imag[ind]
+        new_real /= (1 + new_weights*f**2)
+        new_imag /= (1 + new_weights*f**2)
+        new_real[ind] = _nr
+        new_imag[ind] = _ni
 
     if not imaging:
         good = new_weights > 0
