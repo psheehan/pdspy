@@ -8,6 +8,7 @@ import pdspy.modeling as modeling
 import pdspy.plotting as plotting
 import pdspy.utils as utils
 import matplotlib.pyplot as plt
+import schwimmbad
 import argparse
 import numpy
 import sys
@@ -241,7 +242,7 @@ os.system("rm -r /tmp/temp_{0:s}_{1:d}".format(source, comm.Get_rank()))
 
 if args.action == "run":
     if withmpi:
-        pool = emcee.utils.MPIPool(loadbalance=True)
+        pool = schwimmbad.MPIPool()
 
         if not pool.is_master():
             pool.wait()
