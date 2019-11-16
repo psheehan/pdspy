@@ -6,3 +6,4 @@ from .plot_scattered_light import plot_scattered_light
 from .plot_channel_maps import plot_channel_maps
 from . import colormaps
 from .Transform import Transform
+from .cubeshow import cubeshow
