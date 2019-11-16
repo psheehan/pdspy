@@ -21,9 +21,9 @@ def clean(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
             robust=robust, centering=centering, mode=mode, beam=True)
 
     # Now start the clean-ing by defining some variables.
-    
-    dirty = image.image[:,:,0,0]
-    dirty_beam = beam.image[:,:,0,0]
+
+    dirty = image.image[:,:,:,0]
+    dirty_beam = beam.image[:,:,:,0]
     wherezero = dirty == 0
     nonzero = dirty != 0
     
@@ -31,17 +31,22 @@ def clean(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
 
     # Calculate the size of the beam.
 
-    fitfunc = lambda p, x, y: numpy.exp(-(x * numpy.cos(p[2]) - \
-            y * numpy.sin(p[2]))**2 / (2*p[0]**2) - (x * numpy.sin(p[2]) + \
-            y * numpy.cos(p[2]))**2 / (2*p[1]**2))
-    errfunc = lambda p, x, y, z: numpy.ravel(fitfunc(p, x, y) - z)
-    p0 = [3.,3.,0.]
+    clean_beam = numpy.zeros(dirty.shape)
 
-    ny, nx = dirty.shape
+    ny, nx, nfreq = dirty.shape
     x, y = numpy.meshgrid(numpy.arange(nx) - nx/2, numpy.arange(ny) - ny/2)
 
-    p, success = leastsq(errfunc, p0, args=(x,y,dirty_beam))
+    for i in range(nfreq):
+        fitfunc = lambda p, x, y: numpy.exp(-(x * numpy.cos(p[2]) - \
+                y * numpy.sin(p[2]))**2 / (2*p[0]**2) - (x * numpy.sin(p[2]) + \
+                y * numpy.cos(p[2]))**2 / (2*p[1]**2))
+        errfunc = lambda p, x, y, z: numpy.ravel(fitfunc(p, x, y) - z)
+        p0 = [3.,3.,0.]
 
+        p, success = leastsq(errfunc, p0, args=(x,y,dirty_beam[:,:,i]))
+
+        clean_beam[:,:,i] = fitfunc(p, x, y)
+    
     # Generate a mask.
 
     mask = numpy.ones(dirty.shape)
@@ -67,7 +72,9 @@ def clean(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
         subtract = numpy.zeros(dirty.shape)
         subtract[maxval] = dirty[maxval]*gain
         
-        dirty = dirty - fftconvolve(subtract, dirty_beam, mode='same')
+        for i in range(nfreq):
+            dirty[:,:,i] = dirty[:,:,i] - fftconvolve(subtract[:,:,i], \
+                    dirty_beam[:,:,i], mode='same')
         dirty[wherezero] = 0.
         
         # Do we stop here?
@@ -77,13 +84,16 @@ def clean(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
         n = n + 1
 
     # Generate a clean beam and convolve with the model to make a cleaned image.
+
+    clean_image = numpy.zeros(dirty.shape)
+    for i in range(nfreq):
+        clean_image[:,:,i] = fftconvolve(model[:,:,i],clean_beam[:,:,i], \
+                mode='same')+dirty[:,:,i]
     
-    clean_beam = fitfunc(p, x, y)
-    
-    clean_image = fftconvolve(model,clean_beam,mode='same')+dirty
-    
-    model = Image(model.reshape((model.shape[0],model.shape[1],1,1)))
-    residuals = Image(dirty.reshape((dirty.shape[0],dirty.shape[1],1,1)))
+    model = Image(model.reshape((model.shape[0],model.shape[1],\
+            model.shape[2],1)))
+    residuals = Image(dirty.reshape((dirty.shape[0],dirty.shape[1],\
+            dirty.shape[2],1)))
     clean_beam = Image(clean_beam.reshape(model.image.shape))
     clean_image = Image(clean_image.reshape(model.image.shape))
     
