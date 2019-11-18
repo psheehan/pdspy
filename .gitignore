@@ -8,3 +8,4 @@ pdspy/dust/reddening/*.py
 pdspy/dust/reddening/*.pdf
 test
 *.c
+*.cover
