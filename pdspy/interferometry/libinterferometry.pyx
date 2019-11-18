@@ -541,17 +541,11 @@ def freqcorrect(data, freq=None):
     new_imag = numpy.empty((data.real.size, 1))
     new_weights = numpy.empty((data.real.size, 1))
 
-    cdef int nuv = data.u.size
-    cdef int nfreq = data.freq.size
-    cdef unsigned int i, j, index
     cdef double inv_freq = 1./new_freq[0]
     cdef numpy.ndarray[double, ndim=1] scale = data.freq * inv_freq
 
-    for i in range(nuv):
-        for j in range(nfreq):
-            index = <unsigned int>(j + i*nfreq)
-            new_u[index] = data.u[<unsigned int>i] * scale[<unsigned int>j]
-            new_v[index] = data.v[<unsigned int>i] * scale[<unsigned int>j]
+    new_u = (data.u.reshape((data.u.size,1))*scale).reshape((data.real.size,))
+    new_v = (data.v.reshape((data.v.size,1))*scale).reshape((data.real.size,))
 
     new_real = data.real.reshape((data.real.size,1))
     new_imag = data.imag.reshape((data.imag.size,1))
