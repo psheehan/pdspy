@@ -94,6 +94,8 @@ def load_data(config, model="disk"):
 
         # Merge all the spectra together in one big SED.
 
+        const_unc = 0.1 / config.spectra["weight"][j]**0.5
+
         try:
             config.spectra["total"].wave = numpy.concatenate((\
                     config.spectra["total"].wave, \
@@ -103,7 +105,8 @@ def load_data(config, model="disk"):
                     numpy.log10(config.spectra["binned"][j].flux)))
             config.spectra["total"].unc = numpy.concatenate((\
                     config.spectra["total"].unc, \
-                    numpy.repeat(0.1, config.spectra["binned"][j].wave.size)))
+                    numpy.repeat(const_unc, \
+                    config.spectra["binned"][j].wave.size)))
 
             order = numpy.argsort(config.spectra["total"].wave)
 
@@ -114,7 +117,8 @@ def load_data(config, model="disk"):
             config.spectra["total"] = sp.Spectrum(\
                     config.spectra["binned"][j].wave, \
                     numpy.log10(config.spectra["binned"][j].flux), \
-                    numpy.repeat(0.1, config.spectra["binned"][j].wave.size))
+                    numpy.repeat(const_unc, \
+                    config.spectra["binned"][j].wave.size))
 
     #####################
     # Read in the images.
