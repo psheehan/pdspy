@@ -39,6 +39,7 @@ parser.add_argument('-b', '--trim', type=str, default="")
 parser.add_argument('-s', '--SED', action='store_true')
 parser.add_argument('-i', '--nice', action='store_true')
 parser.add_argument('-l', '--nicelevel', type=int, default=19)
+parser.add_argument('-v', '--verbose', action='store_true')
 args = parser.parse_args()
 
 # Check whether we are using MPI.
@@ -94,7 +95,7 @@ def lnlike(params, visibilities, images, spectra, parameters, plot):
     m = modeling.run_disk_model(visibilities, images, spectra, params, \
             parameters, plot, ncpus=ncpus, ncpus_highmass=ncpus_highmass, \
             with_hyperion=args.withhyperion, timelimit=args.timelimit, \
-            source=source, nice=nice)
+            source=source, nice=nice, verbose=args.verbose)
 
     # Catch whether the model timed out.
 
