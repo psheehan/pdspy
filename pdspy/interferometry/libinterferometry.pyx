@@ -376,10 +376,14 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
         ninclude = 3
     elif convolution == "expsinc":
         convolve_func = exp_sinc
-        ninclude = 7
+        ninclude = 6
 
-    ninclude_min = numpy.uint32((ninclude-1)*0.5)
-    ninclude_max = numpy.uint32((ninclude-1)*0.5)
+    if ninclude%2 == 0:
+        ninclude_min = numpy.uint32(ninclude*0.5-1)
+        ninclude_max = numpy.uint32(ninclude*0.5)
+    else:
+        ninclude_min = numpy.uint32((ninclude-1)*0.5)
+        ninclude_max = numpy.uint32((ninclude-1)*0.5)
 
     # Now actually go through and calculate the new visibilities.
 
@@ -399,7 +403,6 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
 
             mmax = int_min(i[k,n]+ninclude_max+1, gridsize)
 
-            # TODO Probably can speed this up a good bit
             for l in range(lmin, lmax):
                 for m in range(mmin, mmax):
                     convolve = convolve_func( (u[k]*freq[n]*inv_freq-\
@@ -455,61 +458,27 @@ cdef inline int int_max(int a, int b): return a if a >= b else b
 cdef inline int int_min(int a, int b): return a if a <= b else b
 cdef inline double int_abs(double a): return -a if a < 0 else a
 
-def test(x):
-    return expsinc(x)
+cdef double sinc(double x):
 
-cdef unsigned int find_in_arr(double val, numpy.ndarray[double, ndim=1] arr, \
-        unsigned int n):
+    return 1. - x**2/6. + x**4/120. - x**6/5040.
 
-    cdef unsigned int lmin = 0
-    cdef unsigned int lmax = n-1
-    cdef int not_found = 1
-    cdef unsigned int l, ltest
+cdef double exp(double x):
 
-    while not_found:
-        ltest = <unsigned int>(lmax-lmin)/2+lmin
-
-        if ((val >= arr[ltest]) and (val <= arr[ltest+1])):
-            l = ltest
-            not_found = 0
-        else:
-            if (val < arr[ltest]):
-                lmax = ltest
-            else:
-                lmin = ltest
-
-    return l
-
-cdef numpy.ndarray x_arr = numpy.linspace(-10,10,301)
-cdef numpy.ndarray xx_arr = (x_arr[0:-1] + x_arr[1:])/2
-
-cdef numpy.ndarray expsinc_arr = numpy.exp(-(xx_arr/2.52)**2) * \
-        numpy.sinc(xx_arr/1.55)
-
-cdef double expsinc(double a):
-
-    cdef unsigned int i = find_in_arr(a, x_arr, 301)
-
-    return expsinc_arr[i]
+    return 1 + x + x**2/2. + x**3/6. + x**4/24. + x**5/120.
 
 cdef double exp_sinc(double u, double v):
     
     cdef double inv_alpha1 = 1. / 1.55
-    #cdef double inv_alpha1 = 0.6451612903225806
     cdef double inv_alpha2 = 1. / 2.52
-    #cdef double inv_alpha2 = 0.3968253968253968
     cdef int m = 6
     
     if (int_abs(u) >= m * 0.5) or (int_abs(v) >= m * 0.5):
         return 0.
 
-    """
-    cdef double arr = numpy.sinc(u * inv_alpha1) * \
-            numpy.sinc(v * inv_alpha1)* \
-            numpy.exp(-1 * (u * inv_alpha2)**2) * \
-            numpy.exp(-1 * (v * inv_alpha2)**2)
-    """
-    cdef double arr = expsinc(u) * expsinc(v)
+    cdef double arr = sinc(u * inv_alpha1) * \
+            sinc(v * inv_alpha1) * \
+            exp(-1 * (u * inv_alpha2)**2) * \
+            exp(-1 * (v * inv_alpha2)**2)
 
     return arr
 
