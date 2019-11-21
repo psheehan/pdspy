@@ -3,6 +3,7 @@ cimport numpy
 import h5py
 import astropy
 cimport cython
+import time
 
 @cython.auto_pickle(True)
 cdef class VisibilitiesObject:
@@ -146,17 +147,16 @@ class Visibilities(VisibilitiesObject):
         if (usefile == None):
             f.close()
 
+@cython.boundscheck(False)
 def average(data, gridsize=256, binsize=None, radial=False, log=False, \
         logmin=None, logmax=None, mfs=False, mode="continuum"):
 
-    cdef numpy.ndarray[double, ndim=3] new_real, new_imag, new_weights
-    cdef numpy.ndarray[unsigned int, ndim=1] i, j
-    cdef unsigned int k, l
-
-    
     cdef numpy.ndarray[double, ndim=1] u, v, freq, uvdist
     cdef numpy.ndarray[double, ndim=2] real, imag, weights
-
+    cdef numpy.ndarray[double, ndim=3] new_real, new_imag, new_weights
+    cdef numpy.ndarray[unsigned int, ndim=1] i, j
+    cdef unsigned int k, n
+    
     if mfs:
         vis = freqcorrect(data)
         u = vis.u
@@ -245,17 +245,18 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
         else:
             i = numpy.round(u/binsize+(gridsize-1)/2.).astype(numpy.uint32)
             j = numpy.round(v/binsize+(gridsize-1)/2.).astype(numpy.uint32)
-    
+
     for k in range(nuv):
-        if mode == "continuum":
-            new_real[j[k],i[k],0] += numpy.sum(real[k,:]*weights[k,:])
-            new_imag[j[k],i[k],0] += numpy.sum(imag[k,:]*weights[k,:])
-            new_weights[j[k],i[k],0] += numpy.sum(weights[k,:])
-        elif mode == "spectralline":
-            new_real[j[k],i[k],:] += real[k,:]*weights[k,:]
-            new_imag[j[k],i[k],:] += imag[k,:]*weights[k,:]
-            new_weights[j[k],i[k],:] += weights[k,:]
-    
+        for n in range(nfreq):
+            if mode == "continuum":
+                new_real[j[k],i[k],0] += real[k,n]*weights[k,n]
+                new_imag[j[k],i[k],0] += imag[k,n]*weights[k,n]
+                new_weights[j[k],i[k],0] += weights[k,n]
+            elif mode == "spectralline":
+                new_real[j[k],i[k],n] += real[k,n]*weights[k,n]
+                new_imag[j[k],i[k],n] += imag[k,n]*weights[k,n]
+                new_weights[j[k],i[k],n] += weights[k,n]
+
     good_data = new_weights != 0.0
 
     new_real[good_data] = new_real[good_data] / new_weights[good_data]
@@ -268,7 +269,7 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
 
     if mode == "continuum":
         freq = numpy.array([data.freq.sum()/data.freq.size])
-    
+
     return Visibilities(new_u, new_v, freq, \
             new_real[good_data].reshape((new_u.size,nchannels)),\
             new_imag[good_data].reshape((new_u.size,nchannels)), \
@@ -360,17 +361,15 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
     inv_freq = 1./mean_freq
 
     if gridsize%2 == 0:
-        for k in range(nuv):
-            i[k, :] = numpy.array(u[k] * freq * inv_freq/binsize+
-                        gridsize/2., dtype=numpy.uint32)
-            j[k, :] = numpy.array(v[k]*freq*inv_freq/binsize+\
-                        gridsize/2., dtype=numpy.uint32)
+        i = numpy.array(u.reshape((u.size,1))*freq*inv_freq/binsize+\
+                gridsize/2., dtype=numpy.uint32)
+        j = numpy.array(v.reshape((v.size,1))*freq*inv_freq/binsize+\
+                gridsize/2., dtype=numpy.uint32)
     else:
-        for k in range(nuv):
-            i[k, :] = numpy.array(u[k]*freq*inv_freq/binsize+ \
-                        (gridsize-1)/2., dtype=numpy.uint32)
-            j[k, :] = numpy.array(v[k]*freq*inv_freq/binsize+ \
-                        (gridsize-1)/2., dtype=numpy.uint32)
+        i = numpy.array(u.reshape((u.size,1))*freq*inv_freq/binsize+ \
+                    (gridsize-1)/2., dtype=numpy.uint32)
+        j = numpy.array(v.reshape((v.size,1))*freq*inv_freq/binsize+ \
+                    (gridsize-1)/2., dtype=numpy.uint32)
     
     if convolution == "pillbox":
         convolve_func = ones
@@ -534,12 +533,6 @@ def freqcorrect(data, freq=None):
         new_freq = numpy.array([freq])
     else:
         new_freq = numpy.array([data.freq.mean()])
-
-    new_u = numpy.empty((data.real.size,))
-    new_v = numpy.empty((data.real.size,))
-    new_real = numpy.empty((data.real.size, 1))
-    new_imag = numpy.empty((data.real.size, 1))
-    new_weights = numpy.empty((data.real.size, 1))
 
     cdef double inv_freq = 1./new_freq[0]
     cdef numpy.ndarray[double, ndim=1] scale = data.freq * inv_freq
