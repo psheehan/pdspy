@@ -31,7 +31,8 @@ comm = MPI.COMM_WORLD
 def run_disk_model(visibilities, images, spectra, params, parameters, \
         plot=False, ncpus=1, ncpus_highmass=1, with_hyperion=False, \
         timelimit=3600, source="disk", nice=None, disk_vis=False, \
-        no_radiative_transfer=False, nlam_SED=50, run_thermal=True):
+        no_radiative_transfer=False, nlam_SED=50, run_thermal=True, \
+        verbose=False):
 
     # Set the values of all of the parameters.
 
@@ -193,7 +194,8 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
 
     if code == "hyperion" and run_thermal:
         m.run_thermal(code="hyperion", nphot=2e5, mrw=True, pda=True, \
-                niterations=20, mpi=True, nprocesses=nprocesses, verbose=False)
+                niterations=20, mpi=True, nprocesses=nprocesses, \
+                verbose=verbose)
 
         # Convert model to radmc-3d format.
 
@@ -205,7 +207,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
             t1 = time.time()
             m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
                     mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
-                    verbose=False, setthreads=nprocesses, \
+                    verbose=verbose, setthreads=nprocesses, \
                     timelimit=timelimit, nice=nice)
             t2 = time.time()
             f = open(original_dir + "/times.txt", "a")
@@ -232,7 +234,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
             t1 = time.time()
             m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
                     mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
-                    verbose=False, setthreads=nprocesses, \
+                    verbose=verbose, setthreads=nprocesses, \
                     timelimit=timelimit, nice=nice)
             t2 = time.time()
             f = open(original_dir + "/times.txt", "a")
@@ -251,7 +253,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                 pixelsize=visibilities["pixelsize"][j], \
                 lam=visibilities["lam"][j], incl=p["i"], \
                 pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
-                mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses, \
+                mc_scat_maxtauabs=5, verbose=verbose, setthreads=nprocesses, \
                 writeimage_unformatted=True, nice=nice)
 
         m.images[visibilities["lam"][j]].image *= p["flux_unc{0:d}".format(j+1)]
@@ -372,8 +374,8 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                     pixelsize=visibilities["image_pixelsize"][j], \
                     lam=visibilities["lam"][j], incl=p["i"], \
                     pa=-p["pa"], dpc=p["dpc"], code="radmc3d", \
-                    mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses, \
-                    nice=nice)
+                    mc_scat_maxtauabs=5, verbose=verbose, \
+                    setthreads=nprocesses, nice=nice)
 
             x, y = numpy.meshgrid(numpy.linspace(-256,255,512), \
                     numpy.linspace(-256,255,512))
@@ -406,7 +408,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                         nphot=1e5, npix=2048, pixelsize=0.05, \
                         lam=visibilities["lam"][j], incl=p["i"], pa=p["pa"], \
                         dpc=p["dpc"], code="radmc3d", mc_scat_maxtauabs=5, \
-                        verbose=False, setthreads=nprocesses, nice=nice)
+                        verbose=verbose, setthreads=nprocesses, nice=nice)
 
                 m.grid.density = density_original
                 m.grid.temperature = temperature_original
@@ -419,7 +421,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                 npix=images["npix"][j], pixelsize=images["pixelsize"][j], \
                 lam=images["lam"][j], incl=p["i"], \
                 pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
-                mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses, \
+                mc_scat_maxtauabs=5, verbose=verbose, setthreads=nprocesses, \
                 nice=nice)
 
         # Convolve with the beam.
@@ -446,7 +448,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         m.run_sed(name="SED", nphot=1e4, loadlambda=True, incl=p["i"],\
                 pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                 camera_scatsrc_allfreq=True, mc_scat_maxtauabs=5, \
-                verbose=False, setthreads=nprocesses, nice=nice)
+                verbose=verbose, setthreads=nprocesses, nice=nice)
 
         # Redden the SED based on the reddening.
 
