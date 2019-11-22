@@ -317,11 +317,6 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
     # Set the weights equal to 0 when the real and imaginary parts are both 0
     weights[(real==0) & (imag==0)] = 0.0
 
-    # If we are making an image, normalize the weights.
-
-    if imaging:
-        weights /= weights.sum()
-
     # Set some parameter numbers for future use.
     
     cdef double convolve
@@ -418,6 +413,13 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
                         new_real[l,m,n] += real[k,n]*weights[k,n]*convolve
                         new_imag[l,m,n] += imag[k,n]*weights[k,n]*convolve
                         new_weights[l,m,n] += weights[k,n]*convolve
+
+    # If we are making an image, normalize the weights.
+
+    if imaging:
+        new_real /= new_weights.sum()
+        new_imag /= new_weights.sum()
+        new_weights /= new_weights.sum()
 
     # If we have a special weighting scheme, fix the sums..
 
