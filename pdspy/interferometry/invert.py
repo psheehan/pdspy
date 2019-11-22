@@ -66,7 +66,6 @@ def invert(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
 
         convolve = fftshift(ifft2(ifftshift(conv_func(u, v, binsize, \
                binsize)))).real
-        convolve /= convolve.max()
 
         image[:,:,i,0] = (im/convolve)[::-1,:]
 
@@ -102,5 +101,7 @@ def exp_sinc(u, v, delta_u, delta_v):
 
     arr[numpy.abs(u) >= m * delta_u / 2] = 0
     arr[numpy.abs(v) >= m * delta_v / 2] = 0
+
+    arr = arr/arr.sum() * arr.size
 
     return arr
