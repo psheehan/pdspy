@@ -4,6 +4,7 @@ import h5py
 import astropy
 cimport cython
 import time
+from libc.math cimport pi
 
 @cython.auto_pickle(True)
 cdef class VisibilitiesObject:
@@ -460,7 +461,11 @@ cdef inline double int_abs(double a): return -a if a < 0 else a
 
 cdef double sinc(double x):
 
-    return 1. - x**2/6. + x**4/120. - x**6/5040.
+    cdef double xp = x * pi
+
+    return 1. - xp**2/6. + xp**4/120. - xp**6/5040. + xp**8/362880. - \
+            xp**10/39916800. + xp**12/6227020800. - xp**14/1307674368000. + \
+            xp**16/355687428096000.
 
 cdef double exp(double x):
 

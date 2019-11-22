@@ -63,8 +63,10 @@ def invert(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
             conv_func = exp_sinc
 
         im = fftshift(ifft2(ifftshift(comp))).real * imsize**2
+
         convolve = fftshift(ifft2(ifftshift(conv_func(u, v, binsize, \
                binsize)))).real
+        convolve /= convolve.max()
 
         image[:,:,i,0] = (im/convolve)[::-1,:]
 
