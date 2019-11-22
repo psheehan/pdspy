@@ -477,6 +477,7 @@ cdef double exp_sinc(double u, double v):
     
     cdef double inv_alpha1 = 1. / 1.55
     cdef double inv_alpha2 = 1. / 2.52
+    cdef double norm = 2.350016262343186
     cdef int m = 6
     
     if (int_abs(u) >= m * 0.5) or (int_abs(v) >= m * 0.5):
@@ -485,7 +486,7 @@ cdef double exp_sinc(double u, double v):
     cdef double arr = sinc(u * inv_alpha1) * \
             sinc(v * inv_alpha1) * \
             exp(-1 * (u * inv_alpha2)**2) * \
-            exp(-1 * (v * inv_alpha2)**2)
+            exp(-1 * (v * inv_alpha2)**2) / norm
 
     return arr
 
