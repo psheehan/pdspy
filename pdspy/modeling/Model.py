@@ -1,9 +1,12 @@
 import numpy
 import h5py
 import os
-from hyperion.dust import IsotropicDust
-from hyperion.model import Model as HypModel
-from hyperion.model import ModelOutput
+try:
+    from hyperion.dust import IsotropicDust
+    from hyperion.model import Model as HypModel
+    from hyperion.model import ModelOutput
+except:
+    print("WARNING: Hyperion versions <= 0.9.10 will not work with astropy >= 4.0 because they depend on astropy.extern.six. Continuing without Hyperion.")
 from .. import radmc3d
 from .Grid import Grid
 from ..imaging import Image, imtovis
