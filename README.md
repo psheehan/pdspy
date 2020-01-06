@@ -58,7 +58,7 @@ Anaconda is probably the easiest way to install pdspy
 3. In a terminal, go to the directory where the code was downloaded, and into the code directory. Run:
 
    ```
-   ./compile --version=python
+   ./compile --version python3
    ```
 
    Check that this didn’t break somewhere.
