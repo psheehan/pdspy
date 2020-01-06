@@ -174,7 +174,8 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
 
     if p["envelope_type"] == "ulrich":
         m.add_ulrich_envelope(mass=p["M_env"], rmin=p["R_in"], rmax=p["R_env"],\
-                cavpl=p["ksi"], cavrfact=p["f_cav"], dust=edust)
+                cavpl=p["ksi"], cavrfact=p["f_cav"], t0=p["T0_env"], \
+                tpl=p["q_env"], aturb=p["a_turb_env"], dust=edust)
     else:
         pass
 
