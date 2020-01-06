@@ -57,7 +57,7 @@ Anaconda is probably the easiest way to install pdspy
 
 4. We need to add pdspy to your PYTHONPATH. I tend to think the easiest thing to do is to find your Python site-packages folder and symbolically link the pdspy/pdspy directory there. The other option would be to do something like:
 
-   ```
+   ```bash
    export PYTHONPATH=<path/to/pdspy/pdspy>:$PYTHONPATH
    ```
 
@@ -109,9 +109,7 @@ Once CASA6 is released, there will be functionality to read data directly from C
 
 2. Use the below code to turn the “.vis” files into HDF5 files. 
 
-   ```
-   #!/usr/bin/env python3  
-
+   ```python
    import pdspy.interferometry as uv  
    import glob  
 
