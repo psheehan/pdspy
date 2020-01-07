@@ -6,8 +6,8 @@ from ..constants.astronomy import arcsec
 from scipy.fftpack import ifft2, fftshift, ifftshift, fftfreq
 
 def invert(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
-        weighting="natural", robust=2, centering=None, mode='continuum', \
-        beam=False):
+        weighting="natural", robust=2, npixels=0, centering=None, \
+        mode='continuum', beam=False):
 
     # If we are calculating the beam, set all of the real values to 1 and the
     # imaginary data to 0.
@@ -24,7 +24,7 @@ def invert(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
     binsize = 1.0 / (pixel_size * imsize * arcsec)
     gridded_data = grid(data, gridsize=imsize, binsize=binsize, \
             convolution=convolution, mfs=mfs, imaging=True, \
-            weighting=weighting, robust=robust, mode=mode)
+            weighting=weighting, robust=robust, npixels=npixels, mode=mode)
 
     # If making an image of the beam, restore the data to what it was before.
 
