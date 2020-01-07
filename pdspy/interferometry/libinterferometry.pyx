@@ -390,7 +390,7 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
         npix = npixels
 
         if weighting == "superuniform":
-            npixels = 3
+            npix = 3
 
         for k in range(nuv):
             for n in range(nfreq):
