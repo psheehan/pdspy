@@ -287,7 +287,7 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
     cdef numpy.ndarray[double, ndim=3] binned_weights
     cdef numpy.ndarray[unsigned int, ndim=2] i, j
     cdef unsigned int k, l, m, n, ninclude_min, ninclude_max, lmin, lmax, \
-            mmin, mmax, ll, mm, ninclude
+            mmin, mmax, ll, mm, ninclude, npix
     cdef double mean_freq, inv_freq
 
     if mfs:
@@ -387,7 +387,7 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
     if weighting in ["uniform","superuniform","robust"]:
         binned_weights = numpy.ones((gridsize,gridsize,nchannels))
 
-        cdef unsigned int npix = npixels
+        npix = npixels
 
         if weighting == "superuniform":
             npixels = 3
@@ -469,9 +469,10 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
     # If we are making an image, normalize the weights.
 
     if imaging:
-        new_real /= new_weights.sum()
-        new_imag /= new_weights.sum()
-        new_weights /= new_weights.sum()
+        for n in range(nchannels):
+            new_real[:,:,n] /= new_weights[:,:,n].sum()
+            new_imag[:,:,n] /= new_weights[:,:,n].sum()
+            new_weights[:,:,n] /= new_weights[:,:,n].sum()
     else:
         good = new_weights > 0
         new_real[good] = new_real[good] / new_weights[good]
