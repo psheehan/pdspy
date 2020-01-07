@@ -5,20 +5,21 @@ from .invert import invert
 import numpy
 
 def clean(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
-        weighting="natural", robust=2, centering=None, mode='continuum', \
-        gain=0.1, maxiter=1000, threshold=0.001):
+        weighting="natural", robust=2, npixels=0, centering=None, \
+        mode='continuum', gain=0.1, maxiter=1000, threshold=0.001):
 
     # First make the image.
 
     image = invert(data, imsize=imsize, pixel_size=pixel_size, \
             convolution=convolution, mfs=mfs, weighting=weighting, \
-            robust=robust, centering=centering, mode=mode)
+            robust=robust, npixels=npixels, centering=centering, mode=mode)
 
     # Now, also make an image of the beam.
 
     beam = invert(data, imsize=imsize, pixel_size=pixel_size, \
             convolution=convolution, mfs=mfs, weighting=weighting, \
-            robust=robust, centering=centering, mode=mode, beam=True)
+            robust=robust, npixels=npixels, centering=centering, mode=mode, \
+            beam=True)
 
     # Now start the clean-ing by defining some variables.
 

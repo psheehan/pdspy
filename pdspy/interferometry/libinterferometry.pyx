@@ -279,11 +279,12 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
 @cython.boundscheck(False)
 def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
         mfs=False, channel=None, imaging=False, weighting="natural", \
-        robust=2, mode="continuum"):
+        robust=2, npixels=0, mode="continuum"):
     
     cdef numpy.ndarray[double, ndim=1] u, v, freq
     cdef numpy.ndarray[double, ndim=2] real, imag, weights, new_u, new_v
     cdef numpy.ndarray[double, ndim=3] new_real, new_imag, new_weights
+    cdef numpy.ndarray[double, ndim=3] binned_weights
     cdef numpy.ndarray[unsigned int, ndim=2] i, j
     cdef unsigned int k, l, m, n, ninclude_min, ninclude_max, lmin, lmax, \
             mmin, mmax, ll, mm, ninclude
@@ -381,6 +382,57 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
         ninclude_min = numpy.uint32((ninclude-1)*0.5)
         ninclude_max = numpy.uint32((ninclude-1)*0.5)
 
+    # If we are using a non-uniform weighting scheme, adjust the data weights.
+
+    if weighting in ["uniform","superuniform","robust"]:
+        binned_weights = numpy.ones((gridsize,gridsize,nchannels))
+
+        cdef unsigned int npix = npixels
+
+        if weighting == "superuniform":
+            npixels = 3
+
+        for k in range(nuv):
+            for n in range(nfreq):
+                if npix > j[k,n]:
+                    lmin = 0
+                else:
+                    lmin = j[k,n] - npix
+
+                lmax = int_min(j[k,n]+npix+1, gridsize)
+
+                if npix > i[k,n]:
+                    mmin = 0
+                else:
+                    mmin = i[k,n] - npix
+
+                mmax = int_min(i[k,n]+npix+1, gridsize)
+
+                for l in range(lmin, lmax):
+                    for m in range(mmin, mmax):
+                        if mode == "continuum":
+                            binned_weights[l,m,0] += weights[k,n]
+                        elif mode == "spectralline":
+                            binned_weights[l,m,n] += weights[k,n]
+
+        if weighting in ["uniform","superuniform"]:
+            for k in range(nuv):
+                for n in range(nfreq):
+                    l = j[k,n]
+                    m = i[k,n]
+
+                    weights[k,n] /= binned_weights[l,m]
+        elif weighting == "robust":
+            f2 = (5*10**(-robust))**2 / \
+                    ((binned_weights**2).sum() / weights.sum())
+
+            for k in range(nuv):
+                for n in range(nfreq):
+                    l = j[k,n]
+                    m = i[k,n]
+
+                    weights[k,n] /= (1 + f2 * binned_weights[l,m])
+
     # Now actually go through and calculate the new visibilities.
 
     for k in range(nuv):
@@ -420,31 +472,7 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
         new_real /= new_weights.sum()
         new_imag /= new_weights.sum()
         new_weights /= new_weights.sum()
-
-    # If we have a special weighting scheme, fix the sums..
-
-    if weighting == "uniform":
-        ind = numpy.where(new_weights == 0)
-        _nr = new_real[ind]
-        _ni = new_imag[ind]
-        new_real /= new_weights
-        new_imag /= new_weights
-        new_real[ind] = _nr
-        new_imag[ind] = _ni
-
-    elif weighting == "robust":
-        f = numpy.sqrt((5 * 10**(-robust))**2 / \
-                ((new_weights**2).sum()/weights.sum()))
-
-        ind = numpy.where(new_weights == 0)
-        _nr = new_real[ind]
-        _ni = new_imag[ind]
-        new_real /= (1 + new_weights*f**2)
-        new_imag /= (1 + new_weights*f**2)
-        new_real[ind] = _nr
-        new_imag[ind] = _ni
-
-    if not imaging:
+    else:
         good = new_weights > 0
         new_real[good] = new_real[good] / new_weights[good]
         new_imag[good] = new_imag[good] / new_weights[good]
