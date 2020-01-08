@@ -442,7 +442,8 @@ while nsteps < config.max_nsteps:
         # Make a plot of the channel maps.
 
         plotting.plot_channel_maps(visibilities, m, config.parameters, params, \
-                index=j, plot_vis=args.plot_vis, fig=(fig,ax))
+                index=j, plot_vis=args.plot_vis, fig=(fig,ax), image="data", \
+                contours="model")
         
         # Adjust the plot and save it.
 
