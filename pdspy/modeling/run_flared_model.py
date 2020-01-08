@@ -272,7 +272,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                         beam, mode="same")
 
             if plot_vis:
-                m.visibilities[visibilities["lam"][j]] = \
+                m.visibilities[visibilities["lam"][j]+"1D"] = \
                         uv.average(m.visibilities[visibilities["lam"][j]], \
                         gridsize=20, radial=True, log=True, \
                         logmin=m.visibilities[visibilities["lam"][j]].uvdist[\

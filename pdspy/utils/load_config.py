@@ -1,6 +1,7 @@
 from ..constants.astronomy import arcsec
 from ..modeling import check_parameters
 from ..modeling import base_parameters
+import importlib
 import sys
 
 def load_config():
@@ -9,6 +10,7 @@ def load_config():
     sys.path.insert(0, '')
 
     import config
+    importlib.reload(config)
 
     # If some set of information isn't supplied, provide it.
 
