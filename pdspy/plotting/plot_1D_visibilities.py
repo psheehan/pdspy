@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 import numpy
 
 def plot_1D_visibilities(visibilities, model, parameters, params, index=0, \
-        fig=None):
+        fig=None, plot_disk=False, color="k", markersize=8, linewidth=1, \
+        line_color="g", disk_only_color="gray"):
 
     # Generate a figure and axes if not provided.
 
@@ -17,16 +18,26 @@ def plot_1D_visibilities(visibilities, model, parameters, params, index=0, \
     m1d = uv.average(model.visibilities[visibilities["lam"][index]+"_high"], \
             gridsize=10000, binsize=3500, radial=True)
 
+    if plot_disk:
+        m1d_disk = uv.average(model.visibilities[visibilities["lam"][index]+\
+                "_disk"], gridsize=10000, binsize=3500, radial=True)
+
     # Plot the visibilities.
 
     ax.errorbar(visibilities["data1d"][index].uvdist/1000, \
-            visibilities["data1d"][index].amp, \
+            visibilities["data1d"][index].amp*1000, \
             yerr=numpy.sqrt(1./visibilities["data1d"][index].weights),\
-            fmt="ko", markersize=8, markeredgecolor="k")
+            fmt="o", markersize=markersize, markeredgecolor=color, \
+            markerfacecolor=color, ecolor=color)
 
     # Plot the best fit model
 
-    ax.plot(m1d.uvdist/1000, m1d.amp, "g-")
+    if plot_disk:
+        ax.plot(m1d_disk.uvdist/1000, m1d_disk.amp*1000, "--", \
+                color=disk_only_color, linewidth=linewidth)
+
+    ax.plot(m1d.uvdist/1000, m1d.amp*1000, "-", color=line_color, \
+            linewidth=linewidth)
 
     # Adjust the plot and add axes labels.
 
@@ -36,7 +47,7 @@ def plot_1D_visibilities(visibilities, model, parameters, params, index=0, \
     ax.set_xscale("log", nonposx='clip')
 
     ax.set_xlabel("Baseline [k$\lambda$]")
-    ax.set_ylabel("Amplitude [Jy]")
+    ax.set_ylabel("Amplitude [mJy]")
 
     # Return the figure and axes.
 
