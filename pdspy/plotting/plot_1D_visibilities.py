@@ -26,7 +26,7 @@ def plot_1D_visibilities(visibilities, model, parameters, params, index=0, \
 
     ax.errorbar(visibilities["data1d"][index].uvdist/1000, \
             visibilities["data1d"][index].amp*1000, \
-            yerr=1000*numpy.sqrt(1./visibilities["data1d"][index].weights),\
+            yerr=1000*numpy.sqrt(1/visibilities["data1d"][index].weights[:,0]),\
             fmt="o", markersize=markersize, markeredgecolor=color, \
             markerfacecolor=color, ecolor=color)
 
