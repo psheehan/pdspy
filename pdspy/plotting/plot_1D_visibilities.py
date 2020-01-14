@@ -4,7 +4,7 @@ import numpy
 
 def plot_1D_visibilities(visibilities, model, parameters, params, index=0, \
         fig=None, plot_disk=False, color="k", markersize=8, linewidth=1, \
-        line_color="g", disk_only_color="gray"):
+        line_color="g", disk_only_color="gray", fontsize="medium"):
 
     # Generate a figure and axes if not provided.
 
@@ -26,7 +26,7 @@ def plot_1D_visibilities(visibilities, model, parameters, params, index=0, \
 
     ax.errorbar(visibilities["data1d"][index].uvdist/1000, \
             visibilities["data1d"][index].amp*1000, \
-            yerr=numpy.sqrt(1./visibilities["data1d"][index].weights),\
+            yerr=1000*numpy.sqrt(1/visibilities["data1d"][index].weights[:,0]),\
             fmt="o", markersize=markersize, markeredgecolor=color, \
             markerfacecolor=color, ecolor=color)
 
@@ -46,8 +46,8 @@ def plot_1D_visibilities(visibilities, model, parameters, params, index=0, \
 
     ax.set_xscale("log", nonposx='clip')
 
-    ax.set_xlabel("Baseline [k$\lambda$]")
-    ax.set_ylabel("Amplitude [mJy]")
+    ax.set_xlabel("Baseline [k$\lambda$]", fontsize=fontsize)
+    ax.set_ylabel("Amplitude [mJy]", fontsize=fontsize)
 
     # Return the figure and axes.
 

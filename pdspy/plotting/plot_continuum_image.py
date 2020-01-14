@@ -1,8 +1,11 @@
+from ..interferometry import Visibilities, clean
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 
 def plot_continuum_image(visibilities, model, parameters, params, index=0, \
-        fig=None, cmap="jet"):
+        fig=None, cmap="jet", fontsize="medium", image="data", \
+        contours="model", model_image="beam-convolve", \
+        weighting="robust", robust=2, maxiter=200, threshold=0.001):
 
     # If no figure is provided, create one.
 
@@ -11,56 +14,110 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
     else:
         fig, ax = fig
 
-    # Calculate the minimum and maximum pixels to show of the image.
+    # Get the ticks.
 
     ticks = visibilities["image_ticks"][index]
 
-    if "x0" in params:
-        x0 = -params["x0"]/visibilities["image_pixelsize"][index]
-    else:
-        x0 = parameters["x0"]["value"]/visibilities["image_pixelsize"][index]
-    if "y0" in params:
-        y0 = params["y0"]/visibilities["image_pixelsize"][index]
-    else:
-        y0 = -parameters["y0"]["value"]/visibilities["image_pixelsize"][index]
+    # Make the plot.
 
-    xmin = int(round(x0 + visibilities["image_npix"][index]/2 + \
-            visibilities["x0"][index]/visibilities["image_pixelsize"][index]+ \
-            ticks[0]/visibilities["image_pixelsize"][index]))
-    xmax = int(round(x0 + visibilities["image_npix"][index]/2+\
-            visibilities["x0"][index]/visibilities["image_pixelsize"][index]+ \
-            ticks[-1]/visibilities["image_pixelsize"][index]))
+    for i in range(2):
+        # First pass through plot the image, second pass through, plot contours.
+        if i == 0:
+            plot_type = image
+        else:
+            plot_type = contours
 
-    ymin = int(round(y0 + visibilities["image_npix"][index]/2-\
-            visibilities["y0"][index]/visibilities["image_pixelsize"][index]+ \
-            ticks[0]/visibilities["image_pixelsize"][index]))
-    ymax = int(round(y0 + visibilities["image_npix"][index]/2-\
-            visibilities["y0"][index]/visibilities["image_pixelsize"][index]+ \
-            ticks[-1]/visibilities["image_pixelsize"][index]))
+            # If we don't want to plot contours, just skip the second round.
+            if plot_type == "none":
+                continue
 
-    # Plot the image.
+        # Get the appropriate image (data, model, residual) for plotting.
 
-    ax.imshow(visibilities["image"][index].image[ymin:ymax,xmin:xmax,0,0], \
-            origin="lower", interpolation="nearest", cmap=cmap)
+        if plot_type == "data":
+            plot_image = visibilities["image"][index]
+        elif plot_type == "model":
+            if model_image == "beam-convolve":
+                plot_image = model.images[visibilities["lam"][index]]
+            else:
+                model.visibilities[visibilities["lam"][index]].weights = \
+                    visibilities["data"][index].weights
 
-    # Get the model image to show.
+                plot_image = clean(\
+                        model.visibilities[visibilities["lam"][index]], \
+                        imsize=visibilities["image_npix"][index], \
+                        pixel_size=visibilities["image_pixelsize"][index], \
+                        weighting=weighting, robust=robust, \
+                        convolution="expsinc", mfs=False, mode="continuum", \
+                        maxiter=maxiter, threshold=threshold)[0]
+        elif plot_type == "residuals":
+            residuals = Visibilities(visibilities["data"][index].u, \
+                    visibilities["data"][index].v, \
+                    visibilities["data"][index].freq, \
+                    visibilities["data"][index].real.copy(), \
+                    visibilities["data"][index].imag.copy(),\
+                    visibilities["data"][index].weights)
 
-    model_image = model.images[visibilities["lam"][index]]
+            residuals.real -= model.visibilities[visibilities["lam"]\
+                    [index]].real
+            residuals.imag -= model.visibilities[visibilities["lam"]\
+                    [index]].imag
 
-    # Get the appropriate trim for the model.
+            plot_image = clean(residuals, \
+                    imsize=visibilities["image_npix"][index], \
+                    pixel_size=visibilities["image_pixelsize"][index], \
+                    weighting=weighting, robust=robust, convolution="expsinc", \
+                    mfs=False, mode="continuum", maxiter=0)[0]
 
-    xmin, xmax = int(round(visibilities["image_npix"][index]/2+1 + \
-            ticks[0]/visibilities["image_pixelsize"][index])), \
-            int(round(visibilities["image_npix"][index]/2+1 + \
-            ticks[-1]/visibilities["image_pixelsize"][index]))
-    ymin, ymax = int(round(visibilities["image_npix"][index]/2+1 + \
-            ticks[0]/visibilities["image_pixelsize"][index])), \
-            int(round(visibilities["image_npix"][index]/2+1 + \
-            ticks[-1]/visibilities["image_pixelsize"][index]))
+        # Get the right xmin, xmax, ymin, ymax.
 
-    # Contour the model over the data.
+        if plot_type == "data":
+            if "x0" in params:
+                x0 = -params["x0"]/visibilities["image_pixelsize"][index]
+            else:
+                x0 = parameters["x0"]["value"]/\
+                        visibilities["image_pixelsize"][index]
+            if "y0" in params:
+                y0 = params["y0"]/visibilities["image_pixelsize"][index]
+            else:
+                y0 = -parameters["y0"]["value"]/\
+                        visibilities["image_pixelsize"][index]
 
-    ax.contour(model_image.image[ymin:ymax,xmin:xmax,0,0], cmap=cmap)
+            xmin = int(round(x0 + visibilities["image_npix"][index]/2 + \
+                    visibilities["x0"][index]/\
+                    visibilities["image_pixelsize"][index]+ \
+                    ticks[0]/visibilities["image_pixelsize"][index]))
+            xmax = int(round(x0 + visibilities["image_npix"][index]/2+\
+                    visibilities["x0"][index]/\
+                    visibilities["image_pixelsize"][index]+ \
+                    ticks[-1]/visibilities["image_pixelsize"][index]))
+
+            ymin = int(round(y0 + visibilities["image_npix"][index]/2-\
+                    visibilities["y0"][index]/\
+                    visibilities["image_pixelsize"][index]+ \
+                    ticks[0]/visibilities["image_pixelsize"][index]))
+            ymax = int(round(y0 + visibilities["image_npix"][index]/2-\
+                    visibilities["y0"][index]/\
+                    visibilities["image_pixelsize"][index]+ \
+                    ticks[-1]/visibilities["image_pixelsize"][index]))
+        elif plot_type in ["model","residuals"]:
+            xmin, xmax = int(round(visibilities["image_npix"][index]/2+1 + \
+                    ticks[0]/visibilities["image_pixelsize"][index])), \
+                    int(round(visibilities["image_npix"][index]/2+1 + \
+                    ticks[-1]/visibilities["image_pixelsize"][index]))
+            ymin, ymax = int(round(visibilities["image_npix"][index]/2+1 + \
+                    ticks[0]/visibilities["image_pixelsize"][index])), \
+                    int(round(visibilities["image_npix"][index]/2+1 + \
+                    ticks[-1]/visibilities["image_pixelsize"][index]))
+
+        if i == 0:
+            # Plot the image.
+
+            ax.imshow(plot_image.image[ymin:ymax,xmin:xmax,0,0], \
+                    origin="lower", interpolation="nearest", cmap=cmap)
+        else:
+            # Contour the model over the data.
+
+            ax.contour(plot_image.image[ymin:ymax,xmin:xmax,0,0], cmap=cmap)
 
     # Transform the axes appropriately.
 
@@ -76,8 +133,8 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
 
     # Adjust the plot and save it.
 
-    ax.set_xlabel("$\Delta$RA")
-    ax.set_ylabel("$\Delta$Dec")
+    ax.set_xlabel("$\Delta$R.A.", fontsize=fontsize)
+    ax.set_ylabel("$\Delta$Dec.", fontsize=fontsize)
 
     # Return the figure and axes.
 
