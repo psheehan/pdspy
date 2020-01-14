@@ -2,7 +2,7 @@ import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 
 def plot_continuum_image(visibilities, model, parameters, params, index=0, \
-        fig=None):
+        fig=None, cmap="jet"):
 
     # If no figure is provided, create one.
 
@@ -41,7 +41,7 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
     # Plot the image.
 
     ax.imshow(visibilities["image"][index].image[ymin:ymax,xmin:xmax,0,0], \
-            origin="lower", interpolation="nearest", cmap="jet")
+            origin="lower", interpolation="nearest", cmap=cmap)
 
     # Get the model image to show.
 
@@ -60,7 +60,7 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
 
     # Contour the model over the data.
 
-    ax.contour(model_image.image[ymin:ymax,xmin:xmax,0,0], cmap="jet")
+    ax.contour(model_image.image[ymin:ymax,xmin:xmax,0,0], cmap=cmap)
 
     # Transform the axes appropriately.
 
@@ -93,4 +93,4 @@ class Transform:
         self.fmt = fmt
 
     def __call__(self, x, p):
-        return self.fmt% ((x-(self.xmax-self.xmin+1)/2)*self.dx)
+        return self.fmt% ((x-(self.xmax-self.xmin)/2)*self.dx)
