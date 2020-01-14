@@ -2,7 +2,8 @@ from pdspy.constants.astronomy import Jy
 from pdspy.constants.physics import c as c_l
 import matplotlib.pyplot as plt
 
-def plot_SED(spectra, model, SED=False, fig=None):
+def plot_SED(spectra, model, SED=False, fig=None, model_color="g", 
+        linewidth=1, fontsize="medium"):
 
     # If no axes are provided, create them.
 
@@ -37,9 +38,11 @@ def plot_SED(spectra, model, SED=False, fig=None):
     if len(spectra["file"]) > 0:
         if SED:
             ax.plot(model.spectra["SED"].wave, c_l/model.spectra["SED"].wave / \
-                    1.0e-4 * model.spectra["SED"].flux * Jy, "g-")
+                    1.0e-4 * model.spectra["SED"].flux * Jy, "-", \
+                    color=model_color, linewidth=linewidth)
         else:
-            ax.plot(model.spectra["SED"].wave, model.spectra["SED"].flux, "g-")
+            ax.plot(model.spectra["SED"].wave, model.spectra["SED"].flux, "-", \
+                    color=model_color, linewidth=linewidth)
 
     # Add axes labels and adjust the plot.
 
@@ -51,11 +54,12 @@ def plot_SED(spectra, model, SED=False, fig=None):
     ax.set_xscale("log", nonposx='clip')
     ax.set_yscale("log", nonposy='clip')
 
-    ax.set_xlabel("$\lambda$ [$\mu$m]")
+    ax.set_xlabel("$\lambda$ [$\mu$m]", fontsize=fontsize)
     if SED:
-        ax.set_ylabel(r"$\nu F_{\nu}$ [ergs s$^{-1}$ cm$^{-2}$]")
+        ax.set_ylabel(r"$\nu F_{\nu}$ [ergs s$^{-1}$ cm$^{-2}$]", \
+                fontsize=fontsize)
     else:
-        ax.set_ylabel(r"$F_{\nu}$ [Jy]")
+        ax.set_ylabel(r"$F_{\nu}$ [Jy]", fontsize=fontsize)
 
     # Return the figure and axes.
 
