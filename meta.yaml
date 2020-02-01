@@ -23,7 +23,6 @@ requirements:
     - emcee
     - corner
     - galario
-    - hyperion
     - schwimmbad
 
 
