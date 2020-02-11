@@ -37,7 +37,7 @@ base_parameters = {
         "pltgas":{"fixed":True, "value":0.5, "limits":[0.,1.]},
         "delta":{"fixed":True, "value":1.0, "limits":[0.5,1.5]},
         # Envelope parameters.
-        "envelope_type":{"fixed":True, "value":"ulrich", "limits":[0.,0.]},
+        "envelope_type":{"fixed":True, "value":"none", "limits":[0.,0.]},
         "logM_env":{"fixed":True, "value":-3., "limits":[-10., -2.]},
         "logR_in_env":{"fixed":True, "value":"logR_in", "limits":[-1., 4.]},
         "logR_env":{"fixed":True, "value":3., "limits": [2.,5.]},
