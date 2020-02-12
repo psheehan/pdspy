@@ -16,7 +16,7 @@ def readuvfits(filename, fmt="miriad", fast=False):
     u = u[order]
     v = v[order]
 
-    if fmt == "casa":
+    if fmt in ["casa","noema"]:
         arr = data[0].data.field("data").astype(numpy.float)
 
         for i in range(min(2,data[0].data.field("data").shape[5])):
@@ -73,10 +73,14 @@ def readuvfits(filename, fmt="miriad", fast=False):
     weights = numpy.concatenate((weights, weights))
     baseline = numpy.concatenate((baseline, baseline))
     
-    IF = data[1].data.field('if freq')[0]
+    if fmt == "casa":
+        IF = data[1].data.field('if freq')[0]
+        delta_freq = data[1].data.field('ch width')[0]
+    else:
+        IF = 0.
+        delta_freq = header["CDELT4"]
     freq0 = header["CRVAL4"]
     pix0 = header["CRPIX4"]
-    delta_freq = data[1].data.field('ch width')[0]
     nfreq = header["NAXIS4"]
 
     if isinstance(IF, float):
