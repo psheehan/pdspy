@@ -42,7 +42,7 @@ def plot_1D_visibilities(visibilities, model, parameters, params, index=0, \
     # Adjust the plot and add axes labels.
 
     ax.axis([1,visibilities["data1d"][index].uvdist.max()/1000*3,0,\
-            visibilities["data1d"][index].amp.max()*1.1])
+            visibilities["data1d"][index].amp.max()*1.1*1000])
 
     ax.set_xscale("log", nonposx='clip')
 
