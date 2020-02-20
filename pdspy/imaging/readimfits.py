@@ -48,7 +48,7 @@ def readimfits(filename):
     #x, y = numpy.meshgrid(numpy.linspace(0,nx-1,nx), numpy.linspace(0,ny-1,ny))
     x, y = None, None
 
-    if header["CTYPE3"] == "VELOCITY":
+    if header["CTYPE3"] in ["VELOCITY","VRAD"]:
         v0 = data[0].header["CRVAL3"]
         dv = data[0].header["CDELT3"]
         n0 = data[0].header["CRPIX3"]
