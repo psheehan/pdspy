@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 def plot_continuum_image(visibilities, model, parameters, params, index=0, \
         fig=None, cmap="jet", fontsize="medium", image="data", \
         contours="model", model_image="beam-convolve", \
-        weighting="robust", robust=2, maxiter=200, threshold=0.001):
+        weighting="robust", robust=2, maxiter=200, threshold=0.001, \
+        cmap_contours="none"):
 
     # If no figure is provided, create one.
 
@@ -13,6 +14,11 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
         fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(4.5,4))
     else:
         fig, ax = fig
+
+    # If no contours colormap is provided, use the same as image.
+
+    if cmap_contours == "none":
+        cmap_contours = cmap
 
     # Get the ticks.
 
@@ -117,7 +123,8 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
         else:
             # Contour the model over the data.
 
-            ax.contour(plot_image.image[ymin:ymax,xmin:xmax,0,0], cmap=cmap)
+            ax.contour(plot_image.image[ymin:ymax,xmin:xmax,0,0], \
+                    cmap=cmap_contours)
 
     # Transform the axes appropriately.
 
