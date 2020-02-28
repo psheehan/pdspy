@@ -39,7 +39,8 @@ setup(name="pdspy", version="1.0.0", \
         "pdspy.spectroscopy",\
         "pdspy.stars",\
         "pdspy.statistics", \
-        "pdspy.table"], \
+        "pdspy.table", \
+        "pdspy.utils"], \
         package_dir={\
         "pdspy.dust": 'pdspy/dust', \
         "pdspy.gas": 'pdspy/gas', \
