@@ -6,7 +6,7 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
         fig=None, cmap="jet", fontsize="medium", image="data", \
         contours="model", model_image="beam-convolve", \
         weighting="robust", robust=2, maxiter=200, threshold=0.001, \
-        cmap_contours="none"):
+        cmap_contours="none", colors_contours="none"):
 
     # If no figure is provided, create one.
 
@@ -17,8 +17,15 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
 
     # If no contours colormap is provided, use the same as image.
 
-    if cmap_contours == "none":
+    if cmap_contours == "none" and colors_contours == "none":
         cmap_contours = cmap
+        colors_contours = None
+    elif cmap_contours == "none" and colors_contours != "none":
+        cmap_contours = None
+    elif cmap_contours != "none" and colors_contours == "none":
+        colors_contours = None
+    elif cmap_contours != "none" and colors_contours != "none":
+        colors_contours = None
 
     # Get the ticks.
 
@@ -124,7 +131,7 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
             # Contour the model over the data.
 
             ax.contour(plot_image.image[ymin:ymax,xmin:xmax,0,0], \
-                    cmap=cmap_contours)
+                    cmap=cmap_contours, colors=colors_contours)
 
     # Transform the axes appropriately.
 
