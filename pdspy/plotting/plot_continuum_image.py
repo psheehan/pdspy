@@ -6,7 +6,8 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
         fig=None, cmap="jet", fontsize="medium", image="data", \
         contours="model", model_image="beam-convolve", \
         weighting="robust", robust=2, maxiter=200, threshold=0.001, \
-        cmap_contours="none", colors_contours="none"):
+        cmap_contours="none", colors_contours="none", levels=None, \
+        negative_levels=None):
 
     # If no figure is provided, create one.
 
@@ -81,6 +82,13 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
                     weighting=weighting, robust=robust, convolution="expsinc", \
                     mfs=False, mode="continuum", maxiter=0)[0]
 
+        # Get the contour levels if none are specified.
+
+        if i == 1:
+            if levels is None:
+                levels = numpy.array([0.05, 0.25, 0.45, 0.65, 0.85, 0.95])*\
+                        plot_image.image.max()
+
         # Get the right xmin, xmax, ymin, ymax.
 
         if plot_type == "data":
@@ -130,8 +138,19 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
         else:
             # Contour the model over the data.
 
-            ax.contour(plot_image.image[ymin:ymax,xmin:xmax,0,0], \
-                    cmap=cmap_contours, colors=colors_contours)
+            if len(numpy.where(plot_image.image[ymin:ymax,xmin:xmax,0,0] > \
+                    levels.min())[0]) > 0:
+                ax.contour(plot_image.image[ymin:ymax,xmin:xmax,0,0], \
+                        cmap=cmap_contours, colors=colors_contours, \
+                        levels=levels)
+
+            if negative_levels is not None:
+                if len(numpy.where(plot_image.image[ymin:ymax,xmin:xmax,0,0] < \
+                        negative_levels.max())[0]) > 0:
+                    ax.contour(plot_image.image[ymin:ymax,xmin:xmax,0,0], \
+                            cmap=cmap_contours, colors=colors_contours, \
+                            levels=negative_levels, linestyles="--")
+
 
     # Transform the axes appropriately.
 
