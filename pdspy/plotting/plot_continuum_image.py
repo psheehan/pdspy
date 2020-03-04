@@ -1,6 +1,7 @@
 from ..interferometry import Visibilities, clean
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
+import numpy
 
 def plot_continuum_image(visibilities, model, parameters, params, index=0, \
         fig=None, cmap="jet", fontsize="medium", image="data", \
