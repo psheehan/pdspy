@@ -15,13 +15,20 @@ def readimfits(filename):
     # Figure out the dimensions of each axis and create an array to put the data
     # into, and put the data into that array.
 
-    npol, nfreq, ny, nx = data[0].data.shape
+    try:
+        npol, nfreq, ny, nx = data[0].data.shape
+    except:
+        nfreq, ny, nx = data[0].data.shape
+        npol = 1
     
     image = numpy.zeros((ny,nx,nfreq,npol))
 
     for i in range(npol):
         for j in range(nfreq):
-            image[:,:,j,i] = data[0].data[i,j,:,:].reshape(ny,nx)
+            try:
+                image[:,:,j,i] = data[0].data[i,j,:,:].reshape(ny,nx)
+            except:
+                image[:,:,j,i] = data[0].data[j,:,:].reshape(ny,nx)
 
     # Read in the x and y coordinate information, including the WCS info if it
     # is available.
@@ -42,8 +49,11 @@ def readimfits(filename):
         warnings.simplefilter('ignore', category=AstropyWarning)
 
         w = wcs.WCS(header)
-        w = w.dropaxis(3)
         w = w.dropaxis(2)
+        try:
+            w = w.dropaxis(3)
+        except:
+            pass
 
     #x, y = numpy.meshgrid(numpy.linspace(0,nx-1,nx), numpy.linspace(0,ny-1,ny))
     x, y = None, None
