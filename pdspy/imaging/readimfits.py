@@ -1,3 +1,4 @@
+from ..constants.physics import c
 from ..constants.astronomy import arcsec
 from .libimaging import Image
 from astropy.utils.exceptions import AstropyWarning
@@ -64,7 +65,8 @@ def readimfits(filename):
         n0 = data[0].header["CRPIX3"]
         velocity = (numpy.arange(nfreq)-(n0-1))*dv/1000.+v0/1000.
 
-        freq = None
+        nu0 = data[0].header["RESTFREQ"]
+        freq = nu0 - velocity*1e5 * nu0 / c
     elif header["CTYPE3"] == "FREQ":
         nu0 = data[0].header["CRVAL3"]
         dnu = data[0].header["CDELT3"]
