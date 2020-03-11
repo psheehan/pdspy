@@ -1,4 +1,5 @@
 from .libimaging import Image
+from .libimaging import UnstructuredImage
 from .imtovis import imtovis
 from .readimfits import readimfits
 from .readpvfits import readpvfits

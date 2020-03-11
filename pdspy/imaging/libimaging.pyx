@@ -175,3 +175,105 @@ class Image(ImageObject):
 
         if (usefile == None):
             f.close()
+
+################################################################################
+#
+# Unstructured images.
+#
+################################################################################
+
+
+cdef class UnstructuredImageObject:
+    cdef public numpy.ndarray image, x, y, unc, velocity, freq, wave
+
+    def __init__(self, numpy.ndarray[double, ndim=2] image=None, \
+            numpy.ndarray[double, ndim=1] x=None, \
+            numpy.ndarray[double, ndim=1] y=None, \
+            numpy.ndarray[double, ndim=1] wave=None, \
+            numpy.ndarray[double, ndim=1] freq=None, \
+            numpy.ndarray[double, ndim=2] unc=None, \
+            numpy.ndarray[double, ndim=1] velocity=None):
+
+        self.image = image
+
+        self.x = x
+        self.y = y
+
+        self.unc = unc
+        self.velocity = velocity
+
+        if (type(wave) == type(None)) and (type(freq) != type(None)):
+            self.freq = freq
+            self.wave = c / freq
+        elif (type(wave) != type(None)) and (type(freq) == type(None)):
+            self.wave = wave
+            self.freq = c / wave
+        elif (type(wave) != type(None)) and (type(freq) != type(None)):
+            self.wave = wave
+            self.freq = freq
+
+    def __reduce__(self):
+        return (rebuild_unstructured, (self.image, self.x, self.y, self.wave, \
+                self.freq, self.unc, self.velocity))
+
+def rebuild_unstructured(image, x, y, wave, freq, unc, velocity):
+    return ImageObject(image, x, y, wave, freq, unc, velocity)
+
+class UnstructuredImage(UnstructuredImageObject):
+
+    def read(self, filename=None, usefile=None):
+        if (usefile == None):
+            f = h5py.File(filename, "r")
+        else:
+            f = usefile
+
+        if ('x' in f):
+            x = f['x'][...].astype(numpy.double)
+            y = f['y'][...].astype(numpy.double)
+        else:
+            x = None
+            y = None
+
+        if ('freq' in f):
+            freq = f['freq'][...].astype(numpy.double)
+        else:
+            freq = None
+
+        image = f['image'][...].astype(numpy.double)
+
+        if ('unc' in f):
+            unc = f['unc'][...].astype(numpy.double)
+        else:
+            unc = None
+
+        self.__init__(image, x=x, y=y, unc=unc, freq=freq)
+
+        if (usefile == None):
+            f.close()
+
+    def write(self, filename=None, usefile=None):
+        if (usefile == None):
+            f = h5py.File(filename, "w")
+        else:
+            f = usefile
+
+        if (type(self.x) != type(None)):
+            x_dset = f.create_dataset("x", self.x.shape, dtype='f')
+            x_dset[...] = self.x
+            y_dset = f.create_dataset("y", self.y.shape, dtype='f')
+            y_dset[...] = self.y
+
+        if (type(self.freq) != type(None)):
+            freq_dset = f.create_dataset("freq", self.freq.shape, dtype='f')
+            freq_dset[...] = self.freq
+
+        image_dset = f.create_dataset("image", self.image.shape, dtype='f')
+        image_dset[...] = self.image
+
+        if (type(self.unc) != type(None)):
+            unc_dset = f.create_dataset("unc", self.unc.shape, \
+                    dtype='f')
+            unc_dset[...] = self.unc
+
+        if (usefile == None):
+            f.close()
