@@ -10,7 +10,7 @@ cimport cython
 cimport numpy
 
 from os.path import exists
-from numpy import array, empty, linspace, fromfile
+from numpy import array, empty, linspace, fromfile, loadtxt
 import sys
 
 #==========================================================================
@@ -150,6 +150,21 @@ def image(filename=None,ext=None,binary=False):
     y = linspace(-(<int>ny-1)/2.,(<int>ny-1)/2.,<int>ny)*sizepix_y
     
     return image, x, y, lam
+
+#-----------------------------------------------------------------
+#              READ AN UNSTRUCTURED IMAGE
+#-----------------------------------------------------------------
+
+def unstructured_image(filename=None,ext=None,binary=False):
+    
+    data = loadtxt(filename)
+
+    x = data[:,0]
+    y = data[:,1]
+    
+    image = data[:,4:]
+
+    return image, x, y
 
 #==========================================================================
 #                        ROUTINES FOR SPECTRA

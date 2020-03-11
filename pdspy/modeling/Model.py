@@ -9,7 +9,7 @@ except:
     print("WARNING: Hyperion versions <= 0.9.10 will not work with astropy >= 4.0 because they depend on astropy.extern.six. Continuing without Hyperion.")
 from .. import radmc3d
 from .Grid import Grid
-from ..imaging import Image, imtovis
+from ..imaging import Image, UnstructuredImage, imtovis
 from ..interferometry import Visibilities
 from ..spectroscopy import Spectrum
 from ..constants.astronomy import AU, M_sun, R_sun, L_sun, Jy, arcsec, pc
@@ -172,7 +172,8 @@ class Model:
     def run_image_radmc3d(self, name=None, nphot=1e6, npix=256, pixelsize=1.0, \
             lam="1300", loadlambda=False, imolspec=None, iline=None,  \
             widthkms=None, vkms=None, linenlam=None, doppcatch=False, \
-            incl=0, pa=0, phi=0, dpc=1, verbose=True, nice=None, **keywords):
+            incl=0, pa=0, phi=0, dpc=1, verbose=True, nice=None, \
+            unstructured=False, **keywords):
         self.write_radmc3d(nphot_scat=nphot, **keywords)
 
         if npix%2 == 0:
@@ -186,7 +187,7 @@ class Model:
                 loadlambda=loadlambda, imolspec=imolspec, iline=iline, \
                 widthkms=widthkms, vkms=vkms, linenlam=linenlam, \
                 doppcatch=doppcatch, incl=incl, posang=pa, phi=phi, \
-                verbose=verbose, nice=nice)
+                verbose=verbose, nice=nice, unstructured=unstructured)
 
         if 'writeimage_unformatted' in keywords:
             image, x, y, lam = radmc3d.read.image(\
@@ -194,13 +195,27 @@ class Model:
         else:
             image, x, y, lam = radmc3d.read.image()
 
-        image = image / Jy * ((x[1] - x[0]) / (dpc * pc)) * \
-                ((y[1] - y[0]) / (dpc * pc))
+        if unstructured:
+            image, x, y = radmc3d.read.unstructured_image(\
+                    "subpixeling_diagnostics.out")
 
-        x = (x - x[int(npix/2)]) * pixelsize / (x[1] - x[0])
-        y = (y - y[int(npix/2)]) * pixelsize / (y[1] - y[0])
+            x = x * (1. + numpy.random.uniform(-0.001,0.001,x.size)) / \
+                    (dpc*pc) / arcsec
+            y = y * (1. + numpy.random.uniform(-0.001,0.001,x.size)) / \
+                    (dpc*pc) / arcsec
 
-        self.images[name] = Image(image, x=x, y=y, wave=lam*1.0e-4)
+            image = image / Jy
+
+            self.images[name] = UnstructuredImage(image, x=x, y=y, \
+                    wave=lam*1.0e-4)
+        else:
+            image = image / Jy * ((x[1] - x[0]) / (dpc * pc)) * \
+                    ((y[1] - y[0]) / (dpc * pc))
+
+            x = (x - x[int(npix/2)]) * pixelsize / (x[1] - x[0])
+            y = (y - y[int(npix/2)]) * pixelsize / (y[1] - y[0])
+
+            self.images[name] = Image(image, x=x, y=y, wave=lam*1.0e-4)
 
         os.system("rm *.out *.inp *.dat")
         if 'writeimage_unformatted' in keywords:

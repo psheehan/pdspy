@@ -165,7 +165,7 @@ def image(lam=None, npix=None, npixx=None, npixy=None, nrrefine=None, \
         inclline=None, noline=None, incldust=None, nodust=None, \
         inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None, \
         widthkms=None, vkms=None, linenlam=None, iline=None, imolspec=None, \
-        doppcatch=None, verbose=True, nice=None):
+        doppcatch=None, verbose=True, nice=None, unstructured=False):
 
     if nice != None:
         command="nice -{0:d} radmc3d image ".format(nice)
@@ -276,6 +276,9 @@ def image(lam=None, npix=None, npixx=None, npixy=None, nrrefine=None, \
         command += "inclgascont "
     if (nogascont == True):
         command += "nogascont "
+
+    if unstructured:
+        command += "diag_subpix "
 
     if not verbose:
         command += " > radmc3d.out"
