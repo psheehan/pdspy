@@ -158,10 +158,8 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
     transform = ticker.FuncFormatter(Transform(xmin, xmax, \
             visibilities["image_pixelsize"][index], '%.1f"'))
 
-    ax.set_xticks(visibilities["image_npix"][index]/2+1+\
-            ticks[1:-1]/visibilities["image_pixelsize"][index]-xmin)
-    ax.set_yticks(visibilities["image_npix"][index]/2+1+\
-            ticks[1:-1]/visibilities["image_pixelsize"][index]-ymin)
+    ax.set_xticks((ticks[1:-1]-ticks[0])/visibilities["image_pixelsize"][index])
+    ax.set_yticks((ticks[1:-1]-ticks[0])/visibilities["image_pixelsize"][index])
     ax.get_xaxis().set_major_formatter(transform)
     ax.get_yaxis().set_major_formatter(transform)
 
