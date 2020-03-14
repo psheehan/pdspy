@@ -264,56 +264,6 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                 visibilities["data"][j].freq, m.images[visibilities["lam"][j]],\
                 dRA=-p["x0"], dDec=-p["y0"], nthreads=nprocesses)
 
-        # Run a high resolution image.
-
-        m.run_image(name=visibilities["lam"][j]+"high", nphot=1e5, \
-                npix=256, \
-                pixelsize=0.02, \
-                lam=visibilities["lam"][j], incl=p["i"], \
-                pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
-                mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses, \
-                writeimage_unformatted=True, nice=nice)
-
-        # Run a low resolution image
-
-        m.run_image(name=visibilities["lam"][j]+"low", nphot=1e5, \
-                npix=256, \
-                pixelsize=0.2, \
-                lam=visibilities["lam"][j], incl=p["i"], \
-                pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
-                mc_scat_maxtauabs=5, verbose=False, setthreads=nprocesses, \
-                writeimage_unformatted=True, nice=nice)
-
-        # Combine into one visibility dataset.
-
-        m.visibilities[visibilities["lam"][j]+"high"] = uv.interpolate_model(\
-                visibilities["data"][j].u, visibilities["data"][j].v, \
-                visibilities["data"][j].freq, m.images[visibilities["lam"][j]+\
-                "high"], dRA=-p["x0"], dDec=-p["y0"], nthreads=nprocesses)
-
-        low = visibilities["data"][j].uvdist < 2 / (256*0.02*arcsec)
-
-        m.visibilities[visibilities["lam"][j]+"low"] = uv.interpolate_model(\
-                visibilities["data"][j].u[low], visibilities["data"][j].v[low],\
-                visibilities["data"][j].freq, m.images[visibilities["lam"][j]+\
-                "low"], dRA=-p["x0"], dDec=-p["y0"], nthreads=nprocesses)
-
-        # Combine the two.
-
-        m.visibilities[visibilities["lam"][j]+"test"] = uv.Visibilities(\
-                m.visibilities[visibilities["lam"][j]+"high"].u, \
-                m.visibilities[visibilities["lam"][j]+"high"].v, \
-                visibilities["data"][j].freq, \
-                m.visibilities[visibilities["lam"][j]+"high"].real.copy(), \
-                m.visibilities[visibilities["lam"][j]+"high"].imag.copy(), \
-                m.visibilities[visibilities["lam"][j]+"high"].weights)
-
-        m.visibilities[visibilities["lam"][j]+"test"].real[low] = \
-                m.visibilities[visibilities["lam"][j]+"low"].real.copy()
-        m.visibilities[visibilities["lam"][j]+"test"].imag[low] = \
-                m.visibilities[visibilities["lam"][j]+"low"].imag.copy()
-
-
         if plot:
             # Make high resolution visibilities. 
 
@@ -325,39 +275,6 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                     uv.interpolate_model(u, v, visibilities["data"][j].freq, \
                     m.images[visibilities["lam"][j]], dRA=-p["x0"], \
                     dDec=-p["y0"], nthreads=nprocesses)
-
-            m.visibilities[visibilities["lam"][j]+"high"] = \
-                    uv.interpolate_model(u, v, visibilities["data"][j].freq, \
-                    m.images[visibilities["lam"][j]+"high"], dRA=-p["x0"], \
-                    dDec=-p["y0"], nthreads=nprocesses)
-
-            low = m.visibilities[visibilities["lam"][j]+"high"].uvdist < \
-                    2 / (256*0.02*arcsec)
-
-            m.visibilities[visibilities["lam"][j]+"low"] = \
-                    uv.interpolate_model(u[low], v[low], \
-                    visibilities["data"][j].freq, \
-                    m.images[visibilities["lam"][j]+"low"], dRA=-p["x0"], \
-                    dDec=-p["y0"], nthreads=nprocesses)
-
-            m.visibilities[visibilities["lam"][j]+"test"] = \
-                    uv.Visibilities(u, v, visibilities["data"][j].freq, \
-                    m.visibilities[visibilities["lam"][j]+"high"].real.copy(), \
-                    m.visibilities[visibilities["lam"][j]+"high"].imag.copy(), \
-                    m.visibilities[visibilities["lam"][j]+"high"].weights)
-
-            m.visibilities[visibilities["lam"][j]+"test"].real[low] = \
-                    m.visibilities[visibilities["lam"][j]+"low"].real.copy()
-            m.visibilities[visibilities["lam"][j]+"test"].imag[low] = \
-                    m.visibilities[visibilities["lam"][j]+"low"].imag.copy()
-
-            m.visibilities[visibilities["lam"][j]+"diff"] = \
-                    uv.Visibilities(u, v, visibilities["data"][j].freq, \
-                    m.visibilities[visibilities["lam"][j]+"test"].real - \
-                    m.visibilities[visibilities["lam"][j]+"_high"].real, \
-                    m.visibilities[visibilities["lam"][j]+"test"].imag - \
-                    m.visibilities[visibilities["lam"][j]+"_high"].imag, \
-                    m.visibilities[visibilities["lam"][j]+"test"].weights)
 
             # Run the 2D visibilities.
 
