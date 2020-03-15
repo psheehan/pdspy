@@ -250,40 +250,42 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
 
     for j in range(len(visibilities["file"])):
         m.run_image(name=visibilities["lam"][j], nphot=1e5, \
-                npix=visibilities["npix"][j], \
-                pixelsize=visibilities["pixelsize"][j], \
+                npix=25, pixelsize=2*p["R_env"]*1.25/p["dpc"] / 25, \
                 lam=visibilities["lam"][j], incl=p["i"], \
                 pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                 mc_scat_maxtauabs=5, verbose=verbose, setthreads=nprocesses, \
-                writeimage_unformatted=True, nice=nice)
+                writeimage_unformatted=True, nice=nice, unstructured=True)
 
         m.images[visibilities["lam"][j]].image *= p["flux_unc{0:d}".format(j+1)]
 
         m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
                 visibilities["data"][j].u, visibilities["data"][j].v, \
                 visibilities["data"][j].freq, m.images[visibilities["lam"][j]],\
-                dRA=-p["x0"], dDec=-p["y0"], nthreads=nprocesses)
+                dRA=-p["x0"], dDec=-p["y0"], nthreads=nprocesses, code="trift")
 
         if plot:
             # Make high resolution visibilities. 
 
-            u, v = numpy.meshgrid(numpy.linspace(-2.0e6, 2.0e6, 2000), \
-                    numpy.linspace(-2.0e6, 2.0e6, 2000))
+            u, v = numpy.meshgrid(numpy.hstack((\
+                    -numpy.logspace(3.,7.,50)[::-1],numpy.logspace(3.,7.,50))),\
+                    numpy.hstack((-numpy.logspace(3.,7.,50)[::-1],\
+                    numpy.logspace(3.,7.,50))))
             u, v = u.reshape((u.size,)), v.reshape((v.size,))
 
             m.visibilities[visibilities["lam"][j]+"_high"] = \
                     uv.interpolate_model(u, v, visibilities["data"][j].freq, \
                     m.images[visibilities["lam"][j]], dRA=-p["x0"], \
-                    dDec=-p["y0"], nthreads=nprocesses)
+                    dDec=-p["y0"], nthreads=nprocesses, code="trift")
 
             # Run the 2D visibilities.
 
-            m.visibilities[visibilities["lam"][j]+"_2d"] = \
-                    uv.interpolate_model(visibilities["data2d"][j].u, \
-                    visibilities["data2d"][j].v, \
-                    visibilities["data2d"][j].freq, \
-                    m.images[visibilities["lam"][j]], dRA=-p["x0"], \
-                    dDec=-p["y0"], nthreads=nprocesses)
+            m.run_visibilities(name=visibilities["lam"][j]+"_2d", nphot=1e5, \
+                    npix=visibilities["npix"][j], \
+                    pixelsize=visibilities["pixelsize"][j], \
+                    lam=visibilities["lam"][j], incl=p["i"], \
+                    pa=-p["pa"], dpc=p["dpc"], code="radmc3d", \
+                    mc_scat_maxtauabs=5, verbose=verbose, \
+                    setthreads=nprocesses, nice=nice)
 
             # Run a millimeter image.
 
