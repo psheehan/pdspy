@@ -9,6 +9,7 @@ def load_data(config, model="disk"):
 
     config.visibilities["data"] = []
     config.visibilities["data1d"] = []
+    config.visibilities["data2d"] = []
     config.visibilities["image"] = []
     config.spectra["data"] = []
     config.spectra["binned"] = []
@@ -30,11 +31,15 @@ def load_data(config, model="disk"):
         # Average the data to a more manageable size.
 
         if model == "disk":
-            config.visibilities["data"].append(uv.grid(data, \
+            config.visibilities["data"].append(uv.average(data, \
                     gridsize=config.visibilities["gridsize"][j], \
-                    binsize=config.visibilities["binsize"][j]))
+                    binsize=config.visibilities["binsize"][j], \
+                    mode="continuum"))
         elif model == "flared":
-            config.visibilities["data"].append(data)
+            config.visibilities["data"].append(uv.average(data, \
+                    gridsize=config.visibilities["gridsize"][j], \
+                    binsize=config.visibilities["binsize"][j], \
+                    mode="spectralline"))
 
         # Scale the weights of the visibilities to force them to be fit well.
 
@@ -53,6 +58,13 @@ def load_data(config, model="disk"):
                     radial=True, log=True, \
                     logmin=data.uvdist[numpy.nonzero(data.uvdist)].min()*0.95, \
                     logmax=data.uvdist.max()*1.05, mode="spectralline"))
+
+        # Also average the data into a 2D grid, if disk model..
+
+        if model == "disk":
+            config.visibilities["data2d"].append(uv.grid(data, \
+                    gridsize=config.visibilities["gridsize"][j], \
+                    binsize=config.visibilities["binsize"][j]))
 
         # Read in the image.
 
