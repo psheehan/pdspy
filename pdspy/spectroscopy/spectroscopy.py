@@ -1,12 +1,14 @@
 import numpy
 import astropy
 import h5py
+from ..constants.physics import c
 
 class Spectrum:
 
     def __init__(self, wave=None, flux=None, unc=None):
         if (type(wave) != type(None)):
             self.wave = wave
+            self.freq = c / wave / 1.0e-4
             self.flux = flux
             if type(unc) == type(None):
                 unc = numpy.zeros(wave.size)

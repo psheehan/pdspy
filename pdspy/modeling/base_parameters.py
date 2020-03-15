@@ -71,6 +71,10 @@ base_parameters = {
         "tau0":{"fixed":True, "value":0., "limits":[0.,10.]},
         "v_ext":{"fixed":True, "value":4., "limits":[2.,6.]},
         "sigma_vext":{"fixed":True, "value":1.0, "limits":[0.01,5.]},
+        # Free-free emission.
+        "logF_nu_ff":{"fixed":True, "value":-20., "limits":[-30.,0.]},
+        "lognu_turn":{"fixed":True, "value":0., "limits":[-1.0,2.]},
+        "pl_turn":{"fixed":True, "value":0.6, "limits":[0.,2.]},
         # Nuisance parameters.
         "flux_unc1":{"fixed":True, "value":1., "prior":"box", "sigma":0., "limits":[0.5,1.5]},
         "flux_unc2":{"fixed":True, "value":1., "prior":"box", "sigma":0., "limits":[0.5,1.5]},
