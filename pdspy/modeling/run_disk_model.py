@@ -3,6 +3,7 @@
 from ..constants.astronomy import arcsec
 from .YSOModel import YSOModel
 from .. import interferometry as uv
+from .. import spectroscopy as sp
 from .. import misc
 from .. import dust
 import scipy.signal
@@ -256,12 +257,23 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                 mc_scat_maxtauabs=5, verbose=verbose, setthreads=nprocesses, \
                 writeimage_unformatted=True, nice=nice, unstructured=True)
 
+        # Account for the flux calibration uncertainties.
+
         m.images[visibilities["lam"][j]].image *= p["flux_unc{0:d}".format(j+1)]
 
         m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
                 visibilities["data"][j].u, visibilities["data"][j].v, \
                 visibilities["data"][j].freq, m.images[visibilities["lam"][j]],\
                 dRA=-p["x0"], dDec=-p["y0"], nthreads=nprocesses, code="trift")
+
+        # Add in free free emission.
+
+        m.visibilities[visibilities["lam"][j]].real += uv.model(\
+                m.visibilities[visibilities["lam"][j]].u, \
+                m.visibilities[visibilities["lam"][j]].v, \
+                [p["x0"],p["y0"],sp.freefree(m.visibilities[visibilities[\
+                "lam"][j]].freq.mean(), p["F_nu_ff"], p["nu_turn"]*1e9, \
+                p["pl_turn"])], return_type="data", funct="point").real
 
         if plot:
             # Make high resolution visibilities. 
@@ -276,6 +288,15 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                     uv.interpolate_model(u, v, visibilities["data"][j].freq, \
                     m.images[visibilities["lam"][j]], dRA=-p["x0"], \
                     dDec=-p["y0"], nthreads=nprocesses, code="trift")
+
+            # Add in free free emission.
+
+            m.visibilities[visibilities["lam"][j]+"_high"].real += uv.model(\
+                    m.visibilities[visibilities["lam"][j]+"_high"].u, \
+                    m.visibilities[visibilities["lam"][j]+"_high"].v, \
+                    [p["x0"],p["y0"],sp.freefree(m.visibilities[visibilities[\
+                    "lam"][j]].freq.mean(), p["F_nu_ff"], p["nu_turn"]*1e9, \
+                    p["pl_turn"])], return_type="data", funct="point").real
 
             # Run the 2D visibilities.
 
@@ -296,6 +317,12 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                     pa=-p["pa"], dpc=p["dpc"], code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=verbose, \
                     setthreads=nprocesses, nice=nice)
+
+            m.images[visibilities["lam"][j]].image[\
+                    int(visibilities["image_npix"][j]/2),
+                    int(visibilities["image_npix"][j]/2),0,0] += \
+                    sp.freefree(m.images[visibilities["lam"][j]].freq.mean(), \
+                    p["F_nu_ff"],p["nu_turn"]*1e9,p["pl_turn"])
 
             x, y = numpy.meshgrid(numpy.linspace(-256,255,512), \
                     numpy.linspace(-256,255,512))
@@ -369,6 +396,11 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                 pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                 camera_scatsrc_allfreq=True, mc_scat_maxtauabs=5, \
                 verbose=verbose, setthreads=nprocesses, nice=nice)
+
+        # Add in a contribution from free-free emission.
+
+        m.spectra["SED"].flux += sp.freefree(m.spectra["SED"].freq, \
+                p["F_nu_ff"], p["nu_turn"]*1e9, p["pl_turn"])
 
         # Redden the SED based on the reddening.
 
