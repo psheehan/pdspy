@@ -27,7 +27,7 @@ def interpolate_model(u, v, freq, model, nthreads=1, dRA=0., dDec=0., \
             imag.append(vis.imag.reshape((u.size,1)))
     elif code == "trift":
         vis = trift.trift_c(model.x*arcsec, model.y*arcsec, \
-                model.image[:,0], u, v)
+                model.image[:,0], u, v, dRA*arcsec, dDec*arcsec)
 
         real.append(vis.real.reshape((u.size,1)))
         imag.append(vis.imag.reshape((u.size,1)))
