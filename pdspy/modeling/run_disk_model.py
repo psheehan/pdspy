@@ -117,7 +117,12 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
 
     m = YSOModel()
     m.add_star(mass=p["M_star"],luminosity=p["L_star"],temperature=p["T_star"])
-    m.set_spherical_grid(p["R_in"], p["R_env"], 100, nphi, 2, code=code)
+
+    if p["envelope_type"] == "ulrich":
+        p["R_grid"] = p["R_env"]
+    else:
+        p["R_grid"] = max(5*p["R_disk"],300)
+    m.set_spherical_grid(p["R_in"], p["R_grid"], 100, nphi, 2, code=code)
 
     if p["disk_type"] == "exptaper":
         m.add_pringle_disk(mass=p["M_disk"]*p["f_M_large"], rmin=p["R_in"], \
@@ -251,7 +256,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
 
     for j in range(len(visibilities["file"])):
         m.run_image(name=visibilities["lam"][j], nphot=1e5, \
-                npix=25, pixelsize=2*p["R_env"]*1.25/p["dpc"] / 25, \
+                npix=25, pixelsize=2*p["R_grid"]*1.25/p["dpc"] / 25, \
                 lam=visibilities["lam"][j], incl=p["i"], \
                 pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                 mc_scat_maxtauabs=5, verbose=verbose, setthreads=nprocesses, \
