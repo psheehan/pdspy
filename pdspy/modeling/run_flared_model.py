@@ -105,10 +105,10 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
     m.add_star(mass=p["M_star"], luminosity=p["L_star"],temperature=p["T_star"])
 
     if p["envelope_type"] == "ulrich":
-        m.set_spherical_grid(p["R_in"], p["R_env"], 100, 51, 2, code="radmc3d")
+        p["R_grid"] = p["R_env"]
     else:
-        m.set_spherical_grid(p["R_in"], max(5*p["R_disk"],300), 100, 51, 2, \
-                code="radmc3d")
+        p["R_grid"] = max(5*p["R_disk"],300)
+    m.set_spherical_grid(p["R_in"], p["R_grid"], 100, 51, 2, code="radmc3d")
 
     if p["disk_type"] == "exptaper":
         m.add_pringle_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
@@ -157,31 +157,30 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
         m.set_camera_wavelength(wave)
 
         if p["docontsub"]:
-            m.run_image(name=visibilities["lam"][j], nphot=1e5, \
-                    npix=visibilities["npix"][j], lam=None, \
-                    pixelsize=visibilities["pixelsize"][j], tgas_eq_tdust=True,\
-                    scattering_mode_max=0, incl_dust=True, incl_lines=True, \
-                    loadlambda=True, incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
-                    code="radmc3d", verbose=False, writeimage_unformatted=True,\
-                    setthreads=ncpus, nice=nice)
+            m.run_image(name=visibilities["lam"][j], nphot=1e5, npix=25, \
+                    lam=None, pixelsize=2*p["R_env"]*1.25/p["dpc"] / 25, \
+                    tgas_eq_tdust=True, scattering_mode_max=0, incl_dust=True, \
+                    incl_lines=True, loadlambda=True, incl=p["i"], pa=p["pa"], \
+                    dpc=p["dpc"], code="radmc3d", verbose=False, \
+                    writeimage_unformatted=True, setthreads=ncpus, nice=nice, \
+                    unstructured=True)
 
-            m.run_image(name="cont", nphot=1e5, \
-                    npix=visibilities["npix"][j], lam=None, \
-                    pixelsize=visibilities["pixelsize"][j], tgas_eq_tdust=True,\
+            m.run_image(name="cont", nphot=1e5, npix=25, lam=None, \
+                    pixelsize=2*p["R_env"]*1.25/p["dpc"]/25,tgas_eq_tdust=True,\
                     scattering_mode_max=0, incl_dust=True, incl_lines=False, \
                     loadlambda=True, incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
                     code="radmc3d", verbose=False, writeimage_unformatted=True,\
-                    setthreads=ncpus, nice=nice)
+                    setthreads=ncpus, nice=nice, unstructured=True)
 
             m.images[visibilities["lam"][j]].image -= m.images["cont"].image
         else:
-            m.run_image(name=visibilities["lam"][j], nphot=1e5, \
-                    npix=visibilities["npix"][j], lam=None, \
-                    pixelsize=visibilities["pixelsize"][j], tgas_eq_tdust=True,\
-                    scattering_mode_max=0, incl_dust=False, incl_lines=True, \
-                    loadlambda=True, incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
-                    code="radmc3d", verbose=False, writeimage_unformatted=True,\
-                    setthreads=ncpus, nice=nice)
+            m.run_image(name=visibilities["lam"][j], nphot=1e5, npix=25, \
+                    lam=None, pixelsize=2*p["R_env"]*1.25/p["dpc"] / 25, \
+                    tgas_eq_tdust=True, scattering_mode_max=0, incl_dust=False,\
+                    incl_lines=True, loadlambda=True, incl=p["i"], pa=p["pa"], \
+                    dpc=p["dpc"], code="radmc3d", verbose=False, \
+                    writeimage_unformatted=True, setthreads=ncpus, nice=nice, \
+                    unstructured=True)
 
         # Extinct the data, if included.
 
@@ -195,7 +194,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
         extinction = numpy.exp(-tau)
 
         for i in range(len(m.images[visibilities["lam"][j]].freq)):
-            m.images[visibilities["lam"][j]].image[:,:,i,:] *= extinction[i]
+            m.images[visibilities["lam"][j]].image[:,i] *= extinction[i]
 
         # Invert to get the visibilities.
 
@@ -203,7 +202,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                 visibilities["data"][j].u, visibilities["data"][j].v, \
                 visibilities["data"][j].freq, \
                 m.images[visibilities["lam"][j]], dRA=-p["x0"], dDec=-p["y0"], \
-                nthreads=ncpus)
+                nthreads=ncpus, code="trift")
 
         if plot:
             lam = c / visibilities["image"][j].freq / 1.0e-4
