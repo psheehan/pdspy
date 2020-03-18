@@ -1,6 +1,7 @@
 from ..interferometry import Visibilities, clean
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import numpy
 
 def plot_continuum_image(visibilities, model, parameters, params, index=0, \
@@ -8,7 +9,7 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
         contours="model", model_image="beam-convolve", \
         weighting="robust", robust=2, maxiter=200, threshold=0.001, \
         cmap_contours="none", colors_contours="none", levels=None, \
-        negative_levels=None):
+        negative_levels=None, show_beam=False, beamxy=(0.1,0.1)):
 
     # If no figure is provided, create one.
 
@@ -136,6 +137,18 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
 
             ax.imshow(plot_image.image[ymin:ymax,xmin:xmax,0,0], \
                     origin="lower", interpolation="nearest", cmap=cmap)
+
+            if show_beam:
+               bmaj = visibilities["image"][index].header["BMAJ"]/\
+                       abs(visibilities["image"][index].header["CDELT1"])
+               bmin = visibilities["image"][index].header["BMIN"]/\
+                       abs(visibilities["image"][index].header["CDELT1"])
+               bpa = visibilities["image"][index].header["BPA"]
+
+               ax.add_artist(patches.Ellipse(xy=beamxy, \
+                       xycoords="axes fraction", width=bmaj, height=bmin, \
+                       angle=(bpa+90), facecolor="white", edgecolor="black"))
+
         else:
             # Contour the model over the data.
 
