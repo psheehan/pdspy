@@ -12,7 +12,8 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
         vmin=None, vmax=None, levels=None, negative_levels=None, \
         image_cmap="viridis", contours_colors=None, fontsize="medium", \
         show_velocity=True, show_beam=True, vis_color="b", vis_model_color="g",\
-        show_xlabel=True, show_ylabel=True, skip=0):
+        show_xlabel=True, show_ylabel=True, skip=0, \
+        auto_center_velocity=False, v_width=10.):
 
     # Set up the figure if none was provided.
 
@@ -185,16 +186,35 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
                         int(round(visibilities["image_npix"][index]/2+1 + \
                         ticks[-1]/visibilities["image_pixelsize"][index]))
 
+        # Get the correct starting point, and skip value if auto calculating
+        # the velocity range.
+
+        if auto_center_velocity:
+            if "v_sys" in params:
+                v_start = params["v_sys"] - v_width/2
+                v_end = params["v_sys"] + v_width/2
+            else:
+                v_start = parameters["v_sys"] - v_width/2
+                v_end = parameters["v_sys"] + v_width/2
+
+            start = (numpy.abs(v/1e5 - v_start)).argmin()
+            end = (numpy.abs(v/1e5 - v_end)).argmin()
+
+            nchan = (end - start)
+            skip = int(nchan/visibilities["ncols"][index]) - 1
+        else:
+            start = visibilities["ind0"][index]
+
         # Now loop through the channels and plot.
 
         for k in range(visibilities["nrows"][index]):
             for l in range(visibilities["ncols"][index]):
-                ind = (k*visibilities["ncols"][index] + l)*(skip+1) + \
-                        visibilities["ind0"][index]
+                ind = (k*visibilities["ncols"][index] + l)*(skip+1) + start
 
                 # Turn off the axis if ind >= nchannels
 
                 if ind >= v.size:
+                    print('Index greater than array size, skipping',v.size,ind)
                     ax[k,l].set_axis_off()
                     continue
 
