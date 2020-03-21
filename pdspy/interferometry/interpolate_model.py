@@ -11,10 +11,10 @@ except:
 def interpolate_model(u, v, freq, model, nthreads=1, dRA=0., dDec=0., \
         code="galario"):
 
-    real = []
-    imag = []
-
     if code == "galario":
+        real = []
+        imag = []
+
         double.threads(nthreads)
 
         dxy = (model.x[1] - model.x[0])*arcsec
@@ -25,14 +25,22 @@ def interpolate_model(u, v, freq, model, nthreads=1, dRA=0., dDec=0., \
 
             real.append(vis.real.reshape((u.size,1)))
             imag.append(vis.imag.reshape((u.size,1)))
+
+        real = numpy.concatenate(real, axis=1)
+        imag = numpy.concatenate(imag, axis=1)
+
     elif code == "trift":
-        vis = trift.trift_c(model.x*arcsec, model.y*arcsec, \
-                model.image[:,0], u, v, dRA*arcsec, dDec*arcsec)
+        if len(model.freq) == 1:
+            vis = trift.trift_c(model.x*arcsec, model.y*arcsec, \
+                    model.image[:,0], u, v, dRA*arcsec, dDec*arcsec)
 
-        real.append(vis.real.reshape((u.size,1)))
-        imag.append(vis.imag.reshape((u.size,1)))
+            real = vis.real.reshape((u.size,1))
+            imag = vis.imag.reshape((u.size,1))
+        else:
+            vis = trift.trift_2D(model.x*arcsec, model.y*arcsec, model.image, \
+                    u, v, dRA*arcsec, dDec*arcsec)
 
-    real = numpy.concatenate(real, axis=1)
-    imag = numpy.concatenate(imag, axis=1)
+            real = vis.real
+            imag = vis.imag
 
     return Visibilities(u, v, freq, real, imag, numpy.ones(real.shape))
