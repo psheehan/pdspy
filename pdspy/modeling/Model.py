@@ -204,6 +204,11 @@ class Model:
             y = y * (1. + numpy.random.uniform(-0.001,0.001,x.size)) / \
                     (dpc*pc) / arcsec
 
+            x[x == 0] = numpy.abs(x[numpy.nonzero(x)]).min() * \
+                    numpy.random.uniform(-0.0001,0.0001, x[x==0].size)
+            y[y == 0] = numpy.abs(y[numpy.nonzero(y)]).min() * \
+                    numpy.random.uniform(-0.0001,0.0001, y[y==0].size)
+
             image = image / Jy
 
             self.images[name] = UnstructuredImage(image, x=x, y=y, \
