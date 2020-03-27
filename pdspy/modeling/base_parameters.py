@@ -58,6 +58,7 @@ base_parameters = {
         # Gas parameters.
         "gas_file1":{"fixed":True, "value":"co.dat", "limits":[0.,0.]},
         "logabundance1":{"fixed":True, "value":-4., "limits":[-6.,-2.]},
+        "freezeout1":{"fixed":True, "value":0., "limits":[0.,40.]},
         # Viewing parameters.
         "i":{"fixed":True, "value":45., "limits":[0.,180.]},
         "pa":{"fixed":True, "value":0., "limits":[0.,360.]},
