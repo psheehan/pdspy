@@ -88,35 +88,3 @@ class PringleDisk(Disk):
         T[r == 0] = t0 * (0.7*dr)**(-plt)
 
         return T
-
-    def gas_temperature(self, r, theta, phi):
-        ##### Disk Parameters
-        
-        rin = self.rmin * AU
-        rout = self.rmax * AU
-        pltgas = self.pltgas
-        tmid0 = self.tmid0
-        tatm0 = self.tatm0
-        zq0 = self.zq0
-        delta = self.delta
-
-        ##### Set up the coordinates
-
-        rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
-
-        rr = rt*numpy.sin(tt)
-        zz = rt*numpy.cos(tt)
-
-        ##### Make the dust density model for a protoplanetary disk.
-        
-        zq = zq0 * (rt / rin)**1.3
-
-        tmid = tmid0 * (rr / rin)**(-pltgas)
-        tatm = tatm0 * (rr / rin)**(-pltgas)
-
-        t = numpy.zeros(tatm.shape)
-        t[zz >= zq] = tatm[zz >= zq]
-        t[zz < zq] = tatm[zz < zq] + (tmid[zz < zq] - tatm[zz < zq]) * \
-                (numpy.cos(numpy.pi * zz[zz < zq] / (2*zq[zz < zq])))**2*delta
-        
-        return t
