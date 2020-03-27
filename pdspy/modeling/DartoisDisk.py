@@ -90,6 +90,12 @@ class DartoisDisk(Disk):
 
         n = n_H2 * self.abundance[gas]
 
+        # Account for freezeout as well.
+
+        T = self.temperature(r, theta, phi, coordsys="spherical")
+
+        n[T < self.freezeout[gas]] *= 1.0e-8
+
         return n
 
     def temperature(self, x1, x2, x3, coordsys="spherical"):
