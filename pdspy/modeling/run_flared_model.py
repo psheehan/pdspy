@@ -71,6 +71,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
 
     gases = []
     abundance = []
+    freezeout = []
 
     index = 1
     while index > 0:
@@ -81,6 +82,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
 
             gases.append(g)
             abundance.append(p["abundance"+str(index)])
+            freezeout.append(p["freezeout"+str(index)])
 
             index += 1
         else:
@@ -116,17 +118,17 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                 t0=p["T0"], plt=p["q"], gas=gases, abundance=abundance,\
                 aturb=p["a_turb"])
     elif p["disk_type"] == "dartois-exptaper":
-        m.add_pringle_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
-                plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
-                tmid0=p["tmid0"], tatm0=p["tatm0"], zq0=p["zq0"], \
+        m.add_dartois_pringle_disk(mass=p["M_disk"], rmin=p["R_in"], \
+                rmax=p["R_disk"], plrho=p["alpha"], h0=p["h_0"], plh=p["beta"],\
+                dust=ddust, tmid0=p["tmid0"], tatm0=p["tatm0"], zq0=p["zq0"], \
                 pltgas=p["pltgas"], delta=p["delta"], gas=gases, \
-                abundance=abundance, aturb=p["a_turb"])
+                abundance=abundance, freezeout=freezeout, aturb=p["a_turb"])
     elif p["disk_type"] == "dartois-truncated":
-        m.add_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
+        m.add_dartois_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
                 plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
                 tmid0=p["tmid0"], tatm0=p["tatm0"], zq0=p["zq0"], \
                 pltgas=p["pltgas"], delta=p["delta"], gas=gases, \
-                abundance=abundance, aturb=p["a_turb"])
+                abundance=abundance, freezeout=freezeout, aturb=p["a_turb"])
     else:
         m.add_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
                 plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
