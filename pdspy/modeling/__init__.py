@@ -1,7 +1,11 @@
 from .Disk import Disk
+from .DartoisDisk import DartoisDisk
 from .SettledDisk import SettledDisk
+
 from .PringleDisk import PringleDisk
+from .DartoisPringleDisk import DartoisPringleDisk
 from .SettledPringleDisk import SettledPringleDisk
+
 from .Grid import Grid
 from .Model import Model
 from .Star import Star
