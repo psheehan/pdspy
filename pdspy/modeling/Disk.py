@@ -30,6 +30,7 @@ class Disk:
 
         self.gas = []
         self.abundance = []
+        self.freezeout = []
         self.tmid0 = tmid0
         self.tatm0 = tatm0
         self.zq0 = zq0
@@ -37,9 +38,10 @@ class Disk:
         self.delta = delta
         self.aturb = aturb
 
-    def add_gas(self, gas, abundance):
+    def add_gas(self, gas, abundance, freezeout=0.):
         self.gas.append(gas)
         self.abundance.append(abundance)
+        self.freezeout.append(freezeout)
 
     def density(self, x1, x2, x3, coordsys="spherical"):
         ##### Set up the coordinates
@@ -271,6 +273,7 @@ class Disk:
             for i in range(len(self.gas)):
                 gases.append(gas.create_group("Gas{0:d}".format(i)))
                 gases[i]["Abundance"] = self.abundance[i]
+                gases[i]["Freezeout"] = self.freezeout[i]
                 self.gas[i].write(usefile=gases[i])
 
         if (usefile == None):
