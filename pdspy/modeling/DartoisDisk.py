@@ -23,7 +23,8 @@ class DartoisDisk(Disk):
         # Set up the high resolution grid.
 
         r = numpy.logspace(numpy.log10(rt.min()), numpy.log10(rt.max()),1000)/AU
-        z = numpy.logspace(-2., numpy.log10(rr.max()/AU), 1000)
+        z = numpy.hstack(([0], numpy.logspace(-1., numpy.log10(rr.max()/AU), \
+                1000)))
         phi = numpy.array([0.,2*numpy.pi])
 
         # Calculate the temperature structure.
@@ -33,9 +34,6 @@ class DartoisDisk(Disk):
         # Now make the high resolution coordinates into 3D arrays.
 
         r, z = numpy.meshgrid(r, z, indexing='ij')
-
-        rho = numpy.sqrt(r**2 + z**2)
-        theta = numpy.arctan(r / z)
 
         # Now calculate the derivative of T.
 
@@ -69,12 +67,14 @@ class DartoisDisk(Disk):
 
         # Now, interpolate that density onto the actual grid of interest.
 
-        points = numpy.empty((rho.size, 2))
-        points[:,0] = numpy.log10(rho).reshape((-1,))
-        points[:,1] = theta.reshape((-1,))
+        f = scipy.interpolate.RegularGridInterpolator((r[:,0],z[0,:]), logDens,\
+                bounds_error=False, fill_value=-300.)
 
-        logDens_interp = scipy.interpolate.griddata(points, logDens.reshape((\
-                -1,)), (numpy.log10(rt/AU), tt))
+        points = numpy.empty((rr.size, 2))
+        points[:,0] = rr.reshape((-1,))/AU
+        points[:,1] = zz.reshape((-1,))/AU
+
+        logDens_interp = f(points).reshape(rr.shape)
 
         Dens = numpy.exp(logDens_interp)
 
