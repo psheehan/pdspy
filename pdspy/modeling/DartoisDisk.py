@@ -5,7 +5,7 @@ from ..constants.astronomy import AU, M_sun
 from .Disk import Disk
 
 class DartoisDisk(Disk):
-    def log_gas_density_high(self):
+    def log_gas_density_high(self, mstar=0.5):
         # Set up the high resolution grid.
 
         r = numpy.logspace(numpy.log10(self.rmin), numpy.log10(5*self.rmax), \
@@ -30,7 +30,7 @@ class DartoisDisk(Disk):
 
         mu = 2.37
         cs = (k*T/(mu*m_p))**0.5
-        M = 1.*M_sun
+        M = mstar*M_sun
 
         gravity = 1./cs**2 * G*M*z*AU / ((r*AU)**2 + (z*AU)**2)**1.5
 
@@ -55,10 +55,10 @@ class DartoisDisk(Disk):
 
         return r, z, logDens
 
-    def log_number_density_high(self):
+    def log_number_density_high(self, mstar=0.5):
         # Get the high resolution gas density in cylindrical coordinates.
 
-        r, z, logrho_gas = self.log_gas_density_high()
+        r, z, logrho_gas = self.log_gas_density_high(mstar=mstar)
 
         logn_H2 = logrho_gas + numpy.log(0.8 / (2.37*m_p))
 
@@ -75,7 +75,7 @@ class DartoisDisk(Disk):
 
         return r, z, logn_H2
 
-    def gas_density(self, x1, x2, x3, coordsys="spherical"):
+    def gas_density(self, x1, x2, x3, coordsys="spherical", mstar=0.5):
         ##### Set up the coordinates
 
         if coordsys == "spherical":
@@ -92,7 +92,7 @@ class DartoisDisk(Disk):
 
         # Get the high resolution log of the gas density.
 
-        r, z, logDens = self.log_gas_density_high()
+        r, z, logDens = self.log_gas_density_high(mstar=mstar)
 
         # Now, interpolate that density onto the actual grid of interest.
 
@@ -109,7 +109,8 @@ class DartoisDisk(Disk):
 
         return Dens
 
-    def number_density(self, x1, x2, x3, gas=0, coordsys="spherical"):
+    def number_density(self, x1, x2, x3, gas=0, coordsys="spherical", \
+            mstar=0.5):
         ##### Set up the coordinates
 
         if coordsys == "spherical":
@@ -126,7 +127,7 @@ class DartoisDisk(Disk):
 
         # Get the high resolution log of the gas density.
 
-        r, z, logn = self.log_number_density_high()
+        r, z, logn = self.log_number_density_high(mstar=mstar)
 
         # Take account of the abundance.
 
