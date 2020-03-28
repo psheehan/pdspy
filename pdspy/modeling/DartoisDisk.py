@@ -5,25 +5,12 @@ from ..constants.astronomy import AU, M_sun
 from .Disk import Disk
 
 class DartoisDisk(Disk):
-    def gas_density(self, x1, x2, x3, coordsys="spherical"):
-        ##### Set up the coordinates
-
-        if coordsys == "spherical":
-            rt, tt, pp = numpy.meshgrid(x1*AU, x2, x3, indexing='ij')
-
-            rr = rt*numpy.sin(tt)
-            zz = rt*numpy.cos(tt)
-        elif coordsys == "cartesian":
-            xx, yy, zz = numpy.meshgrid(x1*AU, x2*AU, x3*AU, indexing='ij')
-
-            rr = (xx**2 + yy**2)**0.5
-        elif coordsys == "cylindrical":
-            rr, pp, zz = numpy.meshgrid(x1*AU, x2, x3*AU, indexing='ij')
-
+    def log_gas_density_high(self):
         # Set up the high resolution grid.
 
-        r = numpy.logspace(numpy.log10(rt.min()), numpy.log10(rt.max()),1000)/AU
-        z = numpy.hstack(([0], numpy.logspace(-1., numpy.log10(rr.max()/AU), \
+        r = numpy.logspace(numpy.log10(self.rmin), numpy.log10(5*self.rmax), \
+                1000)
+        z = numpy.hstack(([0], numpy.logspace(-1., numpy.log10(5*self.rmax), \
                 1000)))
         phi = numpy.array([0.,2*numpy.pi])
 
@@ -63,7 +50,53 @@ class DartoisDisk(Disk):
 
         # Finally, calculate the scaled density.
 
-        logDens += numpy.log(norm_arr)
+        with numpy.errstate(divide="ignore"):
+            logDens += numpy.where(norm_arr > 0, numpy.log(norm_arr), -300.)
+
+        return r, z, logDens
+
+    def log_number_density_high(self, gas=0):
+        # Get the high resolution gas density in cylindrical coordinates.
+
+        r, z, logrho_gas = self.log_gas_density_high()
+
+        logn_H2 = logrho_gas + numpy.log(0.8 / (2.37*m_p))
+
+        n_H2 = numpy.exp(logn_H2)
+
+        # Account for photodissociation.
+
+        cumn = scipy.integrate.cumtrapz(n_H2[:,::-1], x=z*AU, axis=1, \
+                initial=0.)[:,::-1]
+
+        dissociated = cumn < 0.79 * 1.59e21 / 0.706
+
+        logn_H2[dissociated] += -8.
+
+        # Take account of the abundance.
+
+        logn = logn_H2 + numpy.log(self.abundance[gas])
+
+        return r, z, logn
+
+    def gas_density(self, x1, x2, x3, coordsys="spherical"):
+        ##### Set up the coordinates
+
+        if coordsys == "spherical":
+            rt, tt, pp = numpy.meshgrid(x1*AU, x2, x3, indexing='ij')
+
+            rr = rt*numpy.sin(tt)
+            zz = rt*numpy.cos(tt)
+        elif coordsys == "cartesian":
+            xx, yy, zz = numpy.meshgrid(x1*AU, x2*AU, x3*AU, indexing='ij')
+
+            rr = (xx**2 + yy**2)**0.5
+        elif coordsys == "cylindrical":
+            rr, pp, zz = numpy.meshgrid(x1*AU, x2, x3*AU, indexing='ij')
+
+        # Get the high resolution log of the gas density.
+
+        r, z, logDens = self.log_gas_density_high()
 
         # Now, interpolate that density onto the actual grid of interest.
 
@@ -80,19 +113,41 @@ class DartoisDisk(Disk):
 
         return Dens
 
-    def number_density(self, r, theta, phi, gas=0):
-        rho_gas = self.gas_density(r, theta, phi)
+    def number_density(self, x1, x2, x3, gas=0, coordsys="spherical"):
+        ##### Set up the coordinates
 
-        rho_gas_critical = (100. / 0.8) * 2.37*m_p
-        rho_gas[rho_gas < rho_gas_critical] = 1.0e-50
+        if coordsys == "spherical":
+            rt, tt, pp = numpy.meshgrid(x1*AU, x2, x3, indexing='ij')
 
-        n_H2 = rho_gas * 0.8 / (2.37*m_p)
+            rr = rt*numpy.sin(tt)
+            zz = rt*numpy.cos(tt)
+        elif coordsys == "cartesian":
+            xx, yy, zz = numpy.meshgrid(x1*AU, x2*AU, x3*AU, indexing='ij')
 
-        n = n_H2 * self.abundance[gas]
+            rr = (xx**2 + yy**2)**0.5
+        elif coordsys == "cylindrical":
+            rr, pp, zz = numpy.meshgrid(x1*AU, x2, x3*AU, indexing='ij')
+
+        # Get the high resolution log of the gas density.
+
+        r, z, logn = self.log_number_density_high()
+
+        # Now, interpolate that density onto the actual grid of interest.
+
+        f = scipy.interpolate.RegularGridInterpolator((r[:,0],z[0,:]), logn, \
+                bounds_error=False, fill_value=-300.)
+
+        points = numpy.empty((rr.size, 2))
+        points[:,0] = rr.reshape((-1,))/AU
+        points[:,1] = zz.reshape((-1,))/AU
+
+        logn_interp = f(points).reshape(rr.shape)
+
+        n = numpy.exp(logn_interp)
 
         # Account for freezeout as well.
 
-        T = self.temperature(r, theta, phi, coordsys="spherical")
+        T = self.temperature(x1, x2, x3, coordsys=coordsys)
 
         n[T < self.freezeout[gas]] *= 1.0e-8
 
@@ -127,8 +182,9 @@ class DartoisDisk(Disk):
         
         zq = zq0 * (rr / (1*AU))**1.3
 
-        tmid = tmid0 * (rr / (1*AU))**(-pltgas)
-        tatm = tatm0 * (rr / (1*AU))**(-pltgas)
+        with numpy.errstate(divide="ignore"):
+            tmid = numpy.where(rr > 0, tmid0 * (rr / (1*AU))**(-pltgas), 0.1)
+            tatm = numpy.where(rr > 0, tatm0 * (rr / (1*AU))**(-pltgas), 0.1)
 
         t = numpy.zeros(tatm.shape)
         t[zz >= zq] = tatm[zz >= zq]
