@@ -55,7 +55,7 @@ class DartoisDisk(Disk):
 
         return r, z, logDens
 
-    def log_number_density_high(self, gas=0):
+    def log_number_density_high(self):
         # Get the high resolution gas density in cylindrical coordinates.
 
         r, z, logrho_gas = self.log_gas_density_high()
@@ -73,11 +73,7 @@ class DartoisDisk(Disk):
 
         logn_H2[dissociated] += -8.
 
-        # Take account of the abundance.
-
-        logn = logn_H2 + numpy.log(self.abundance[gas])
-
-        return r, z, logn
+        return r, z, logn_H2
 
     def gas_density(self, x1, x2, x3, coordsys="spherical"):
         ##### Set up the coordinates
@@ -131,6 +127,10 @@ class DartoisDisk(Disk):
         # Get the high resolution log of the gas density.
 
         r, z, logn = self.log_number_density_high()
+
+        # Take account of the abundance.
+
+        logn += numpy.log(self.abundance[gas])
 
         # Now, interpolate that density onto the actual grid of interest.
 
