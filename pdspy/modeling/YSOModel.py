@@ -2,8 +2,10 @@ import numpy
 import h5py
 from .Model import Model
 from .Disk import Disk
+from .DartoisDisk import DartoisDisk
 from .SettledDisk import SettledDisk
 from .PringleDisk import PringleDisk
+from .DartoisPringleDisk import DartoisPringleDisk
 from .Envelope import Envelope
 from .UlrichEnvelope import UlrichEnvelope
 from .Star import Star
