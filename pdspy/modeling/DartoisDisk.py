@@ -10,7 +10,7 @@ class DartoisDisk(Disk):
 
         r = numpy.logspace(numpy.log10(self.rmin), numpy.log10(5*self.rmax), \
                 1000)
-        z = numpy.hstack(([0], numpy.logspace(-1., numpy.log10(5*self.rmax), \
+        z = numpy.hstack(([0], numpy.logspace(-3., numpy.log10(5*self.rmax), \
                 1000)))
         phi = numpy.array([0.,2*numpy.pi])
 
@@ -88,6 +88,23 @@ class DartoisDisk(Disk):
             logn[dissociated] += numpy.log(1.0e-8)
 
             return r, z, logn
+
+    def log_gas_pressure_high(self, mstar=0.5):
+        # Get the number density and temperature.
+
+        r, z, logn = self.log_number_density_high(mstar=mstar, gas=-1)
+
+        T = self.temperature(r[:,0], numpy.array([0.,2*numpy.pi]), z[0,:], \
+                coordsys="cylindrical")[:,0,:]
+
+        logT = numpy.log(T)
+
+        # And calculate the pressure.
+
+        logP = logn + logT + numpy.log(k)
+
+        return r, z, logP
+
 
     def gas_density(self, x1, x2, x3, coordsys="spherical", mstar=0.5):
         ##### Set up the coordinates
@@ -220,8 +237,6 @@ class DartoisDisk(Disk):
         return aturb
 
     def velocity(self, r, theta, phi, mstar=0.5):
-        mstar *= M_sun
-
         rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
 
         rr = rt*numpy.sin(tt)
@@ -229,7 +244,39 @@ class DartoisDisk(Disk):
 
         v_r = numpy.zeros(rr.shape)
         v_theta = numpy.zeros(rr.shape)
-        v_phi = numpy.sqrt(G*mstar*rr**2/rt**3)
+
+        # Calculate the Keplerian velocity.
+
+        v_phi_kepler = numpy.sqrt(G*mstar*M_sun*rr**2/rt**3)
+
+        # Calculate the pressure contribution to the velocity.
+
+        R, z, logP = self.log_gas_pressure_high(mstar=mstar)
+        R, z, logDens = self.log_gas_density_high(mstar=mstar)
+
+        P = numpy.exp(logP)
+        Dens = numpy.exp(logDens)
+        Dens[logDens < -200.] = 0.
+
+        dP = numpy.gradient(P, R[:,0]*AU, axis=0)
+
+        with numpy.errstate(divide="ignore", invalid="ignore"):
+            v_phi_pressure2 = numpy.where(Dens > 0, dP / Dens * R*AU, 0.)
+
+        # Now, interpolate onto the proper grid.
+
+        f = scipy.interpolate.RegularGridInterpolator((R[:,0],z[0,:]), \
+                v_phi_pressure2, bounds_error=False, fill_value=0.)
+
+        points = numpy.empty((rr.size, 2))
+        points[:,0] = rr.reshape((-1,))/AU
+        points[:,1] = zz.reshape((-1,))/AU
+
+        v_phi_pressure2_interp = f(points).reshape(rr.shape)
+
+        # Finally, add the two together.
+
+        v_phi = numpy.sqrt(v_phi_kepler**2 + v_phi_pressure2_interp)
 
         return numpy.array((v_r, v_theta, v_phi))
 
