@@ -5,12 +5,12 @@ from ..constants.astronomy import AU, M_sun
 from .Disk import Disk
 
 class DartoisDisk(Disk):
-    def log_gas_density_high(self):
+    def log_gas_density_high(self, mstar=0.5):
         # Set up the high resolution grid.
 
         r = numpy.logspace(numpy.log10(self.rmin), numpy.log10(5*self.rmax), \
                 1000)
-        z = numpy.hstack(([0], numpy.logspace(-1., numpy.log10(5*self.rmax), \
+        z = numpy.hstack(([0], numpy.logspace(-3., numpy.log10(5*self.rmax), \
                 1000)))
         phi = numpy.array([0.,2*numpy.pi])
 
@@ -30,7 +30,7 @@ class DartoisDisk(Disk):
 
         mu = 2.37
         cs = (k*T/(mu*m_p))**0.5
-        M = 1.*M_sun
+        M = mstar*M_sun
 
         gravity = 1./cs**2 * G*M*z*AU / ((r*AU)**2 + (z*AU)**2)**1.5
 
@@ -55,31 +55,58 @@ class DartoisDisk(Disk):
 
         return r, z, logDens
 
-    def log_number_density_high(self, gas=0):
+    def log_number_density_high(self, mstar=0.5, gas=0):
         # Get the high resolution gas density in cylindrical coordinates.
 
-        r, z, logrho_gas = self.log_gas_density_high()
+        r, z, logrho_gas = self.log_gas_density_high(mstar=mstar)
 
         logn_H2 = logrho_gas + numpy.log(0.8 / (2.37*m_p))
 
-        n_H2 = numpy.exp(logn_H2)
+        if gas < 0:
+            return r, z, logn_H2
+        else:
+            # Take account of the abundance.
 
-        # Account for photodissociation.
+            logn = logn_H2 + numpy.log(self.abundance[gas])
 
-        cumn = scipy.integrate.cumtrapz(n_H2[:,::-1], x=z*AU, axis=1, \
-                initial=0.)[:,::-1]
+            # Account for freezeout as well.
 
-        dissociated = cumn < 0.79 * 1.59e21 / 0.706
+            T = self.temperature(r[:,0], numpy.array([0.,2*numpy.pi]), z[0,:], \
+                    coordsys="cylindrical")[:,0,:]
 
-        logn_H2[dissociated] += -8.
+            logn[T < self.freezeout[gas]] += numpy.log(1.0e-8)
 
-        # Take account of the abundance.
+            # Account for photodissociation.
 
-        logn = logn_H2 + numpy.log(self.abundance[gas])
+            n_H2 = numpy.exp(logn_H2)
 
-        return r, z, logn
+            cumn = -scipy.integrate.cumtrapz(n_H2[:,::-1], x=z[:,::-1]*AU, \
+                    axis=1, initial=0.)[:,::-1]
 
-    def gas_density(self, x1, x2, x3, coordsys="spherical"):
+            dissociated = cumn < 0.79 * 1.59e21 / 0.706
+
+            logn[dissociated] += numpy.log(1.0e-8)
+
+            return r, z, logn
+
+    def log_gas_pressure_high(self, mstar=0.5):
+        # Get the number density and temperature.
+
+        r, z, logn = self.log_number_density_high(mstar=mstar, gas=-1)
+
+        T = self.temperature(r[:,0], numpy.array([0.,2*numpy.pi]), z[0,:], \
+                coordsys="cylindrical")[:,0,:]
+
+        logT = numpy.log(T)
+
+        # And calculate the pressure.
+
+        logP = logn + logT + numpy.log(k)
+
+        return r, z, logP
+
+
+    def gas_density(self, x1, x2, x3, coordsys="spherical", mstar=0.5):
         ##### Set up the coordinates
 
         if coordsys == "spherical":
@@ -96,7 +123,7 @@ class DartoisDisk(Disk):
 
         # Get the high resolution log of the gas density.
 
-        r, z, logDens = self.log_gas_density_high()
+        r, z, logDens = self.log_gas_density_high(mstar=mstar)
 
         # Now, interpolate that density onto the actual grid of interest.
 
@@ -113,7 +140,8 @@ class DartoisDisk(Disk):
 
         return Dens
 
-    def number_density(self, x1, x2, x3, gas=0, coordsys="spherical"):
+    def number_density(self, x1, x2, x3, gas=0, coordsys="spherical", \
+            mstar=0.5):
         ##### Set up the coordinates
 
         if coordsys == "spherical":
@@ -130,7 +158,7 @@ class DartoisDisk(Disk):
 
         # Get the high resolution log of the gas density.
 
-        r, z, logn = self.log_number_density_high()
+        r, z, logn = self.log_number_density_high(mstar=mstar, gas=gas)
 
         # Now, interpolate that density onto the actual grid of interest.
 
@@ -144,12 +172,6 @@ class DartoisDisk(Disk):
         logn_interp = f(points).reshape(rr.shape)
 
         n = numpy.exp(logn_interp)
-
-        # Account for freezeout as well.
-
-        T = self.temperature(x1, x2, x3, coordsys=coordsys)
-
-        n[T < self.freezeout[gas]] *= 1.0e-8
 
         return n
 
@@ -215,8 +237,6 @@ class DartoisDisk(Disk):
         return aturb
 
     def velocity(self, r, theta, phi, mstar=0.5):
-        mstar *= M_sun
-
         rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
 
         rr = rt*numpy.sin(tt)
@@ -224,7 +244,39 @@ class DartoisDisk(Disk):
 
         v_r = numpy.zeros(rr.shape)
         v_theta = numpy.zeros(rr.shape)
-        v_phi = numpy.sqrt(G*mstar*rr**2/rt**3)
+
+        # Calculate the Keplerian velocity.
+
+        v_phi_kepler = numpy.sqrt(G*mstar*M_sun*rr**2/rt**3)
+
+        # Calculate the pressure contribution to the velocity.
+
+        R, z, logP = self.log_gas_pressure_high(mstar=mstar)
+        R, z, logDens = self.log_gas_density_high(mstar=mstar)
+
+        P = numpy.exp(logP)
+        Dens = numpy.exp(logDens)
+        Dens[logDens < -200.] = 0.
+
+        dP = numpy.gradient(P, R[:,0]*AU, axis=0)
+
+        with numpy.errstate(divide="ignore", invalid="ignore"):
+            v_phi_pressure2 = numpy.where(Dens > 0, dP / Dens * R*AU, 0.)
+
+        # Now, interpolate onto the proper grid.
+
+        f = scipy.interpolate.RegularGridInterpolator((R[:,0],z[0,:]), \
+                v_phi_pressure2, bounds_error=False, fill_value=0.)
+
+        points = numpy.empty((rr.size, 2))
+        points[:,0] = rr.reshape((-1,))/AU
+        points[:,1] = zz.reshape((-1,))/AU
+
+        v_phi_pressure2_interp = f(points).reshape(rr.shape)
+
+        # Finally, add the two together.
+
+        v_phi = numpy.sqrt(v_phi_kepler**2 + v_phi_pressure2_interp)
 
         return numpy.array((v_r, v_theta, v_phi))
 
