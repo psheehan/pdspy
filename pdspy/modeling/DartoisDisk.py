@@ -55,25 +55,39 @@ class DartoisDisk(Disk):
 
         return r, z, logDens
 
-    def log_number_density_high(self, mstar=0.5):
+    def log_number_density_high(self, mstar=0.5, gas=0):
         # Get the high resolution gas density in cylindrical coordinates.
 
         r, z, logrho_gas = self.log_gas_density_high(mstar=mstar)
 
         logn_H2 = logrho_gas + numpy.log(0.8 / (2.37*m_p))
 
-        n_H2 = numpy.exp(logn_H2)
+        if gas < 0:
+            return r, z, logn_H2
+        else:
+            # Take account of the abundance.
 
-        # Account for photodissociation.
+            logn = logn_H2 + numpy.log(self.abundance[gas])
 
-        cumn = scipy.integrate.cumtrapz(n_H2[:,::-1], x=z*AU, axis=1, \
-                initial=0.)[:,::-1]
+            # Account for freezeout as well.
 
-        dissociated = cumn < 0.79 * 1.59e21 / 0.706
+            T = self.temperature(r[:,0], numpy.array([0.,2*numpy.pi]), z[0,:], \
+                    coordsys="cylindrical")[:,0,:]
 
-        logn_H2[dissociated] += -8.
+            logn[T < self.freezeout[gas]] += numpy.log(1.0e-8)
 
-        return r, z, logn_H2
+            # Account for photodissociation.
+
+            n_H2 = numpy.exp(logn_H2)
+
+            cumn = scipy.integrate.cumtrapz(n_H2[:,::-1], x=z*AU, axis=1, \
+                    initial=0.)[:,::-1]
+
+            dissociated = cumn < 0.79 * 1.59e21 / 0.706
+
+            logn[dissociated] += numpy.log(1.0e-8)
+
+            return r, z, logn
 
     def gas_density(self, x1, x2, x3, coordsys="spherical", mstar=0.5):
         ##### Set up the coordinates
@@ -127,11 +141,7 @@ class DartoisDisk(Disk):
 
         # Get the high resolution log of the gas density.
 
-        r, z, logn = self.log_number_density_high(mstar=mstar)
-
-        # Take account of the abundance.
-
-        logn += numpy.log(self.abundance[gas])
+        r, z, logn = self.log_number_density_high(mstar=mstar, gas=gas)
 
         # Now, interpolate that density onto the actual grid of interest.
 
@@ -145,12 +155,6 @@ class DartoisDisk(Disk):
         logn_interp = f(points).reshape(rr.shape)
 
         n = numpy.exp(logn_interp)
-
-        # Account for freezeout as well.
-
-        T = self.temperature(x1, x2, x3, coordsys=coordsys)
-
-        n[T < self.freezeout[gas]] *= 1.0e-8
 
         return n
 
