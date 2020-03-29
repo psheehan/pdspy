@@ -80,8 +80,8 @@ class DartoisDisk(Disk):
 
             n_H2 = numpy.exp(logn_H2)
 
-            cumn = scipy.integrate.cumtrapz(n_H2[:,::-1], x=z*AU, axis=1, \
-                    initial=0.)[:,::-1]
+            cumn = -scipy.integrate.cumtrapz(n_H2[:,::-1], x=z[:,::-1]*AU, \
+                    axis=1, initial=0.)[:,::-1]
 
             dissociated = cumn < 0.79 * 1.59e21 / 0.706
 
