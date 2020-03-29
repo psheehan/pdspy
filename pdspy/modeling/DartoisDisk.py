@@ -230,9 +230,16 @@ class DartoisDisk(Disk):
         rr = rt*numpy.sin(tt)
         zz = rt*numpy.cos(tt)
 
-        ##### Make the dust density model for a protoplanetary disk.
+        # Calculate the sound speed.
+
+        T = self.temperature(r, theta, phi, coordsys="spherical")
+
+        # Parameterize in terms of the sound speed.
         
-        aturb = numpy.ones(rr.shape)*self.aturb*1.0e5
+        mu = 2.37
+        cs = (k*T/(mu*m_p))**0.5
+
+        aturb = cs*self.aturb
         
         return aturb
 
