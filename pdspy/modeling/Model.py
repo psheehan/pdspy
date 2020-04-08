@@ -173,7 +173,7 @@ class Model:
             lam="1300", loadlambda=False, imolspec=None, iline=None,  \
             widthkms=None, vkms=None, linenlam=None, doppcatch=False, \
             incl=0, pa=0, phi=0, dpc=1, verbose=True, nice=None, \
-            unstructured=False, **keywords):
+            unstructured=False, nostar=False, **keywords):
         self.write_radmc3d(nphot_scat=nphot, **keywords)
 
         if npix%2 == 0:
@@ -187,7 +187,8 @@ class Model:
                 loadlambda=loadlambda, imolspec=imolspec, iline=iline, \
                 widthkms=widthkms, vkms=vkms, linenlam=linenlam, \
                 doppcatch=doppcatch, incl=incl, posang=pa, phi=phi, \
-                verbose=verbose, nice=nice, unstructured=unstructured)
+                verbose=verbose, nice=nice, unstructured=unstructured, \
+                nostar=nostar)
 
         if 'writeimage_unformatted' in keywords:
             image, x, y, lam = radmc3d.read.image(\
@@ -199,9 +200,9 @@ class Model:
             image, x, y = radmc3d.read.unstructured_image(\
                     "subpixeling_diagnostics.out")
 
-            x = x * (1. + numpy.random.uniform(-0.001,0.001,x.size)) / \
+            x = x * (1. + numpy.random.uniform(-1.0e-8,1.0e-8,x.size)) / \
                     (dpc*pc) / arcsec
-            y = y * (1. + numpy.random.uniform(-0.001,0.001,x.size)) / \
+            y = y * (1. + numpy.random.uniform(-1.0e-8,1.0e-8,x.size)) / \
                     (dpc*pc) / arcsec
 
             image = image / Jy
@@ -261,7 +262,7 @@ class Model:
             pixelsize=1.0, lam="1300", loadlambda=False, imolspec=None, \
             iline=None,  widthkms=None, vkms=None, linenlam=None, \
             doppcatch=False, incl=0, pa=0, phi=0, dpc=1, verbose=True, \
-            nice=None, **keywords):
+            nice=None, nostar=False, **keywords):
         self.write_radmc3d(nphot_scat=nphot, **keywords)
 
         if npix%2 == 0:
@@ -275,7 +276,7 @@ class Model:
                 loadlambda=loadlambda, imolspec=imolspec, iline=iline, \
                 widthkms=widthkms, vkms=vkms, linenlam=linenlam, \
                 doppcatch=doppcatch, incl=incl, posang=pa, phi=phi, \
-                verbose=verbose, nice=nice)
+                verbose=verbose, nostar=nostar, nice=nice)
 
         if 'writeimage_unformatted' in keywords:
             image, x, y, lam = radmc3d.read.image(\
