@@ -2,7 +2,7 @@
 
 from ..constants.physics import c, m_p, G
 from ..constants.physics import k as k_b
-from ..constants.astronomy import M_sun, AU
+from ..constants.astronomy import M_sun, AU, arcsec
 from .YSOModel import YSOModel
 from .. import interferometry as uv
 from .. import spectroscopy as sp
@@ -154,6 +154,15 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
         lam = c / visibilities["data"][j].freq / 1.0e-4
         wave = lam * numpy.sqrt((1. - b) / (1. + b))
 
+        # Calculate how much refinement is needed.
+
+        needed_resolution = 1./visibilities["data"][j].uvdist.max() / arcsec / 2
+        max_min_res = 0.25/p["dpc"]
+        pixel_size = 2*p["R_grid"]*1.25/p["dpc"] / 25
+
+        nrrefine = int(numpy.ceil(numpy.log2(pixel_size / min(max_min_res, \
+                needed_resolution))))
+
         # Set the wavelengths for RADMC3D to use.
 
         m.set_camera_wavelength(wave)
@@ -165,14 +174,15 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                     incl_lines=True, loadlambda=True, incl=p["i"], pa=p["pa"], \
                     dpc=p["dpc"], code="radmc3d", verbose=False, \
                     writeimage_unformatted=True, setthreads=ncpus, nice=nice, \
-                    unstructured=True)
+                    unstructured=True, camera_nrrefine=nrrefine)
 
             m.run_image(name="cont", nphot=1e5, npix=25, lam=None, \
                     pixelsize=2*p["R_env"]*1.25/p["dpc"]/25,tgas_eq_tdust=True,\
                     scattering_mode_max=0, incl_dust=True, incl_lines=False, \
                     loadlambda=True, incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
                     code="radmc3d", verbose=False, writeimage_unformatted=True,\
-                    setthreads=ncpus, nice=nice, unstructured=True)
+                    setthreads=ncpus, nice=nice, unstructured=True, \
+                    camera_nrrefine=nrrefine)
 
             m.images[visibilities["lam"][j]].image -= m.images["cont"].image
         else:
@@ -182,7 +192,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                     incl_lines=True, loadlambda=True, incl=p["i"], pa=p["pa"], \
                     dpc=p["dpc"], code="radmc3d", verbose=False, \
                     writeimage_unformatted=True, setthreads=ncpus, nice=nice, \
-                    unstructured=True)
+                    unstructured=True, camera_nrrefine=nrrefine)
 
         # Extinct the data, if included.
 

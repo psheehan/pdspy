@@ -261,7 +261,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         max_min_res = 0.25/p["dpc"]
         pixel_size = 2*p["R_grid"]*1.25/p["dpc"] / 25
 
-        nrrefine = int(numpy.ceil(numpy.log2(pixel_size / min(max_min_res / \
+        nrrefine = int(numpy.ceil(numpy.log2(pixel_size / min(max_min_res, \
                 needed_resolution))))
 
         # Now generate the image.
