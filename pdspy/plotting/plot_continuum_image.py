@@ -145,10 +145,11 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
                        abs(visibilities["image"][index].header["CDELT1"])
                bpa = visibilities["image"][index].header["BPA"]
 
-               ax.add_artist(patches.Ellipse(xy=beamxy, \
-                       xycoords="axes fraction", width=bmaj, height=bmin, \
-                       angle=(bpa+90), facecolor="white", edgecolor="black"))
+               xy = ((xmax - xmin)*beamxy[0], (ymax - ymin)*beamxy[1])
 
+               ax.add_artist(patches.Ellipse(xy=beamxy, width=bmaj, \
+                       height=bmin, angle=(bpa+90), facecolor="white", \
+                       edgecolor="black"))
         else:
             # Contour the model over the data.
 
