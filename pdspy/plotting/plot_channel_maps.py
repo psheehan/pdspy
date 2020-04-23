@@ -13,7 +13,7 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
         image_cmap="viridis", contours_colors=None, fontsize="medium", \
         show_velocity=True, show_beam=True, vis_color="b", vis_model_color="g",\
         show_xlabel=True, show_ylabel=True, skip=0, \
-        auto_center_velocity=False, v_width=10.):
+        auto_center_velocity=False, v_width=10., beamxy=(0.15,0.15)):
 
     # Set up the figure if none was provided.
 
@@ -340,7 +340,9 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
                                     header["CDELT1"])
                             bpa = visibilities["image"][index].header["BPA"]
 
-                            ax[k,l].add_artist(patches.Ellipse(xy=(12.5,12.5), \
+                            xy = ((xmax-xmin)*beamxy[0], (ymax-ymin)*beamxy[1])
+
+                            ax[k,l].add_artist(patches.Ellipse(xy=xy, \
                                     width=bmaj, height=bmin, angle=(bpa+90), \
                                     facecolor="white", edgecolor="black"))
 
