@@ -20,7 +20,7 @@ requirements:
     - astropy
     - h5py
     - mpi4py
-    - emcee
+    - emcee <= 2.2.1
     - corner
     - galario
     - schwimmbad
