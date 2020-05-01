@@ -181,7 +181,7 @@ class UlrichEnvelope:
 
         v_r = -numpy.sqrt(G*mstar/rr)*numpy.sqrt(1 + mu/mu0)
         v_theta = numpy.sqrt(G*mstar/rr) * (mu0 - mu) * \
-                numpy.sqrt((mu0 + mu) / (mu0 * numpy.sin(tt)))
+                numpy.sqrt((mu0 + mu) / (mu0 * numpy.sin(tt)**2))
         v_phi = numpy.sqrt(G*mstar/rr) * numpy.sqrt((1 - mu0**2)/(1 - mu**2)) *\
                 numpy.sqrt(1 - mu/mu0)
 
