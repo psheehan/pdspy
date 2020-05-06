@@ -21,6 +21,23 @@ def check_parameters(parameters, nvis=3):
         if not key in parameters:
             parameters[key] = base_parameters[key]
 
+    # Make sure there are enough instances of freezeout for all of the gas 
+    # files provided.
+
+    index = 1
+    while index > 0:
+        if "gas_file"+str(index) in parameters:
+            if not "logabundance{0:d}".format(index) in parameters:
+                parameters["logabundance"+str(index)] = \
+                        base_parameters["logabundance1"]
+            if not "freezeout{0:d}".format(index) in parameters:
+                parameters["freezeout"+str(index)] = \
+                        base_parameters["freezeout1"]
+
+            index += 1
+        else:
+            index = -1
+
     # Make sure there are enough instances of flux_unc for all of the 
     # data files that are being fit.
 
