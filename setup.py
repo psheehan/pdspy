@@ -70,4 +70,5 @@ setup(name="pdspy", version="1.0.0", \
         'bin/disk_model.py',\
         'bin/disk_model_powerlaw.py',\
         'bin/flared_model.py',\
-        'bin/flared_model_ptsampler.py'])
+        'bin/flared_model_ptsampler.py',\
+        'bin/flared_model_nested.py'])
