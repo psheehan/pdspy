@@ -265,9 +265,9 @@ class YSOModel(Model):
             gas=None, abundance=None, freezeout=0., tmid0=None, tatm0=None, \
             zq0=None, pltgas=None, delta=None, gap_rin=[], gap_rout=[], \
             gap_delta=[], gaussian_gaps=False, aturb=None):
-        self.disk = PringleDisk(mass=mass, rmin=rmin, rmax=rmax, plrho=plrho, \
-                h0=h0, plh=plh, dust=dust, t0=t0, plt=plt, tmid0=tmid0, \
-                tatm0=tatm0, zq0=zq0, pltgas=pltgas, delta=delta, \
+        self.disk = DartoisPringleDisk(mass=mass, rmin=rmin, rmax=rmax, \
+                plrho=plrho, h0=h0, plh=plh, dust=dust, t0=t0, plt=plt, \
+                tmid0=tmid0, tatm0=tatm0, zq0=zq0, pltgas=pltgas, delta=delta, \
                 gap_rin=gap_rin, gap_rout=gap_rout, gap_delta=gap_delta, \
                 aturb=aturb, gaussian_gaps=gaussian_gaps)
 
