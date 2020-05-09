@@ -369,6 +369,8 @@ if args.action == "run":
             sys.exit(0)
     else:
         pool = None
+else:
+    pool = None
 
 ################################################################################
 #
@@ -525,7 +527,8 @@ elif args.action == "plot":
     # Add the final live points if needed and get the results.
 
     if not sampler.base:
-        sampler.add_final_live()
+        if not sampler.sampler.added_live:
+            sampler.sampler.add_final_live()
 
         res = sampler.sampler.results
     else:
