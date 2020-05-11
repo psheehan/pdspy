@@ -169,7 +169,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
 
         if p["docontsub"]:
             m.run_image(name=visibilities["lam"][j], nphot=1e5, npix=25, \
-                    lam=None, pixelsize=2*p["R_env"]*1.25/p["dpc"] / 25, \
+                    lam=None, pixelsize=pixel_size, \
                     tgas_eq_tdust=True, scattering_mode_max=0, incl_dust=True, \
                     incl_lines=True, loadlambda=True, incl=p["i"], pa=p["pa"], \
                     dpc=p["dpc"], code="radmc3d", verbose=False, \
@@ -177,7 +177,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                     unstructured=True, camera_nrrefine=nrrefine)
 
             m.run_image(name="cont", nphot=1e5, npix=25, lam=None, \
-                    pixelsize=2*p["R_env"]*1.25/p["dpc"]/25,tgas_eq_tdust=True,\
+                    pixelsize=pixel_size, tgas_eq_tdust=True,\
                     scattering_mode_max=0, incl_dust=True, incl_lines=False, \
                     loadlambda=True, incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
                     code="radmc3d", verbose=False, writeimage_unformatted=True,\
@@ -187,7 +187,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
             m.images[visibilities["lam"][j]].image -= m.images["cont"].image
         else:
             m.run_image(name=visibilities["lam"][j], nphot=1e5, npix=25, \
-                    lam=None, pixelsize=2*p["R_env"]*1.25/p["dpc"] / 25, \
+                    lam=None, pixelsize=pixel_size, \
                     tgas_eq_tdust=True, scattering_mode_max=0, incl_dust=False,\
                     incl_lines=True, loadlambda=True, incl=p["i"], pa=p["pa"], \
                     dpc=p["dpc"], code="radmc3d", verbose=False, \
