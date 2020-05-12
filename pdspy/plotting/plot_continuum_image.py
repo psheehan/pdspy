@@ -1,3 +1,4 @@
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from ..interferometry import Visibilities, clean
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
@@ -9,7 +10,10 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
         contours="model", model_image="beam-convolve", \
         weighting="robust", robust=2, maxiter=200, threshold=0.001, \
         cmap_contours="none", colors_contours="none", levels=None, \
-        negative_levels=None, show_beam=False, beamxy=(0.1,0.1)):
+        negative_levels=None, show_beam=False, beamxy=(0.1,0.1), \
+        show_colorbar=False, cax=None, colorbar_location='right', \
+        colorbar_orientation='vertical', colorbar_size='5%', colorbar_pad=0.05,\
+        units="Jy/beam"):
 
     # If no figure is provided, create one.
 
@@ -84,12 +88,24 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
                     weighting=weighting, robust=robust, convolution="expsinc", \
                     mfs=False, mode="continuum", maxiter=0)[0]
 
+        # Get the appropriate scaling for the image.
+
+        if units == "mJy/beam":
+            scale = 1000
+            colorbar_label = "mJy beam$^{-1}$"
+        elif units == "uJy/beam":
+            scale = 1e6
+            colorbar_label = "$\mu$Jy beam$^{-1}$"
+        else:
+            scale = 1.
+            colorbar_label = "Jy beam$^{-1}$"
+
         # Get the contour levels if none are specified.
 
         if i == 1:
             if levels is None:
                 levels = numpy.array([0.05, 0.25, 0.45, 0.65, 0.85, 0.95])*\
-                        plot_image.image.max()
+                        plot_image.image.max()*scale
 
         # Get the right xmin, xmax, ymin, ymax.
 
@@ -135,8 +151,8 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
         if i == 0:
             # Plot the image.
 
-            ax.imshow(plot_image.image[ymin:ymax,xmin:xmax,0,0], \
-                    origin="lower", interpolation="nearest", cmap=cmap)
+            implot = ax.imshow(plot_image.image[ymin:ymax,xmin:xmax,0,0]*\
+                    scale, origin="lower", interpolation="nearest", cmap=cmap)
 
             if show_beam:
                bmaj = visibilities["image"][index].header["BMAJ"]/\
@@ -150,19 +166,58 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
                ax.add_artist(patches.Ellipse(xy=beamxy, width=bmaj, \
                        height=bmin, angle=(bpa+90), facecolor="white", \
                        edgecolor="black"))
+
+            # Add a colorbar to the image.
+
+            if show_colorbar:
+                # If no cax were provided, create them based on the options.
+
+                user_specified_cbar = True
+
+                if cax == None:
+                    divider = make_axes_locatable(ax)
+
+                    cax = divider.append_axes(colorbar_location, \
+                            size=colorbar_size, pad=colorbar_pad)
+
+                    if colorbar_location in ['top','bottom']:
+                        colorbar_orientation = "horizontal"
+                    else:
+                        colorbar_orientation = "vertical"
+
+                    user_specified_cbar = False
+
+                # Now plot the colorbar.
+
+                cbar = plt.colorbar(implot, cax=cax, \
+                        orientation=colorbar_orientation)
+
+                # And make some adustments.
+
+                if not user_specified_cbar:
+                    if colorbar_location == 'top':
+                        cax.xaxis.set_ticks_position('top')
+                        cax.xaxis.set_label_position('top')
+                    elif colorbar_location == 'left':
+                        cax.yaxis.set_ticks_position('left')
+                        cax.yaxis.set_label_position('left')
+
+                cbar.set_label(colorbar_label, size=fontsize)
+
+                cax.tick_params(axis="both", which="major", labelsize=fontsize)
         else:
             # Contour the model over the data.
 
-            if len(numpy.where(plot_image.image[ymin:ymax,xmin:xmax,0,0] > \
-                    levels.min())[0]) > 0:
-                ax.contour(plot_image.image[ymin:ymax,xmin:xmax,0,0], \
+            if len(numpy.where(plot_image.image[ymin:ymax,xmin:xmax,0,0]*\
+                    scale > levels.min())[0]) > 0:
+                ax.contour(plot_image.image[ymin:ymax,xmin:xmax,0,0]*scale, \
                         cmap=cmap_contours, colors=colors_contours, \
                         levels=levels)
 
             if negative_levels is not None:
-                if len(numpy.where(plot_image.image[ymin:ymax,xmin:xmax,0,0] < \
-                        negative_levels.max())[0]) > 0:
-                    ax.contour(plot_image.image[ymin:ymax,xmin:xmax,0,0], \
+                if len(numpy.where(plot_image.image[ymin:ymax,xmin:xmax,0,0]*\
+                        scale < negative_levels.max())[0]) > 0:
+                    ax.contour(plot_image.image[ymin:ymax,xmin:xmax,0,0]*scale,\
                             cmap=cmap_contours, colors=colors_contours, \
                             levels=negative_levels, linestyles="--")
 
@@ -182,9 +237,16 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
     ax.set_xlabel("$\Delta$R.A.", fontsize=fontsize)
     ax.set_ylabel("$\Delta$Dec.", fontsize=fontsize)
 
+    # Adjust the label size as well.
+
+    ax.tick_params(axis="both", which="major", labelsize=fontsize)
+
     # Return the figure and axes.
 
-    return fig, ax
+    if show_colorbar:
+        return fig, ax, cax
+    else:
+        return fig, ax
 
 # Define a useful class for plotting.
 
