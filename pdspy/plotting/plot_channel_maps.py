@@ -13,7 +13,10 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
         image_cmap="viridis", contours_colors=None, fontsize="medium", \
         show_velocity=True, show_beam=True, vis_color="b", vis_model_color="g",\
         show_xlabel=True, show_ylabel=True, skip=0, \
-        auto_center_velocity=False, v_width=10., beamxy=(0.15,0.15)):
+        auto_center_velocity=False, v_width=10., beamxy=(0.15,0.15), \
+        show_colorbar=False, cax=None, colorbar_location='right', \
+        colorbar_orientation='vertical', colorbar_size='10%', colorbar_pad=0.01,\
+        units="Jy/beam"):
 
     # Set up the figure if none was provided.
 
@@ -112,18 +115,30 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
                         weighting="natural", convolution="expsinc", \
                         mfs=False, mode="spectralline", maxiter=0)[0]
 
+            # Get the appropriate scaling for the image.
+
+            if units == "mJy/beam":
+                scale = 1000
+                colorbar_label = "mJy beam$^{-1}$"
+            elif units == "uJy/beam":
+                scale = 1e6
+                colorbar_label = "$\mu$Jy beam$^{-1}$"
+            else:
+                scale = 1.
+                colorbar_label = "Jy beam$^{-1}$"
+
             # Set vmin, vmax, and the levels for plotting contours.
 
             if i == 0:
                 if vmin is None:
-                    vmin = numpy.nanmin(plot_image.image)
+                    vmin = numpy.nanmin(plot_image.image*scale)
                 if vmax is None:
-                    vmax = numpy.nanmax(plot_image.image)
+                    vmax = numpy.nanmax(plot_image.image*scale)
 
             if i == 1:
                 if levels is None:
                     levels = numpy.array([0.05, 0.25, 0.45, 0.65, 0.85, 0.95])*\
-                            plot_image.image.max()
+                            plot_image.image.max()*scale
 
             # Get the correct range of pixels for making the sub-image.
 
@@ -257,8 +272,8 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
                                 yerr=1./vis.weights[:,ind]**0.5, fmt=\
                                 vis_color+"o")
                     else:
-                        ax[k,l].imshow(plot_image.image[ymin:ymax,xmin:xmax,\
-                                ind,0]*scalefn(abs(v[ind]/1e5 - \
+                        implot = ax[k,l].imshow(plot_image.image[ymin:ymax,\
+                                xmin:xmax,ind,0]*scale*scalefn(abs(v[ind]/1e5 -\
                                 params["v_sys"])), origin="lower", \
                                 interpolation="nearest", vmin=vmin, vmax=vmax, \
                                 cmap=cmap)
@@ -364,24 +379,68 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
                                 vis_model_color+"-")
                     else:
                         if len(numpy.where(plot_image.image[ymin:ymax,\
-                                xmin:xmax,ind,0] > levels.min())[0]) > 0:
+                                xmin:xmax,ind,0]*scale > levels.min())[0]) > 0:
                             ax[k,l].contour(plot_image.image[ymin:ymax,\
-                                    xmin:xmax,ind,0], levels=levels, \
+                                    xmin:xmax,ind,0]*scale, levels=levels, \
                                     colors=contours_colors)
 
                         # Plot the negative contours, if requested.
                         if negative_levels is not None:
                             if len(numpy.where(plot_image.image[ymin:ymax,\
-                                    xmin:xmax,ind,0] < negative_levels.max())\
-                                    [0]) > 0:
+                                    xmin:xmax,ind,0]*scale < \
+                                    negative_levels.max())[0]) > 0:
                                 ax[k,l].contour(plot_image.image[ymin:ymax,\
-                                        xmin:xmax,ind,0], \
+                                        xmin:xmax,ind,0]*scale, \
                                         levels=negative_levels, \
                                         linestyles="--", colors=contours_colors)
 
+        # Add a colorbar to the image.
+
+        if not plot_vis and show_colorbar:
+            # If no cax were provided, create them based on the options.
+
+            user_specified_cbar = True
+
+            if cax == None:
+                ax_bbox = ax[0,visibilities["ncols"][index]-1].get_position()
+
+                if colorbar_location == 'top':
+                    cax = fig.add_axes([ax_bbox.x0, ax_bbox.y1+colorbar_pad, \
+                            ax_bbox.width, float(colorbar_size[0:-1])/100*\
+                            ax_bbox.height])
+
+                    colorbar_orientation = "horizontal"
+                else:
+                    cax = fig.add_axes([ax_bbox.x1+colorbar_pad, ax_bbox.y0, \
+                            float(colorbar_size[0:-1])/100*ax_bbox.width, \
+                            ax_bbox.height])
+
+                    colorbar_orientation = "vertical"
+
+                user_specified_cbar = False
+
+            # Now plot the colorbar.
+
+            cbar = plt.colorbar(implot, cax=cax, \
+                    orientation=colorbar_orientation)
+
+            # And make some adustments.
+
+            if not user_specified_cbar:
+                if colorbar_location == 'top':
+                    cax.xaxis.set_ticks_position('top')
+                    cax.xaxis.set_label_position('top')
+
+            cbar.set_label(colorbar_label, size=fontsize)
+
+            cax.tick_params(axis="both", which="major", labelsize=fontsize)
+
     # Return the figure and axes.
 
-    return fig, ax
+    if show_colorbar:
+        return fig, ax, cax
+    else:
+        return fig, ax
 
 # Define a useful class for plotting.
 
