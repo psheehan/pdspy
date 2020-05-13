@@ -163,7 +163,7 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
 
                xy = ((xmax - xmin)*beamxy[0], (ymax - ymin)*beamxy[1])
 
-               ax.add_artist(patches.Ellipse(xy=beamxy, width=bmaj, \
+               ax.add_artist(patches.Ellipse(xy=xy, width=bmaj, \
                        height=bmin, angle=(bpa+90), facecolor="white", \
                        edgecolor="black"))
 
