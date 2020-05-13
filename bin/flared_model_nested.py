@@ -425,8 +425,7 @@ else:
 # Run a few burner steps.
 
 if args.action == "run":
-    for it, results in enumerate(sampler.sample_initial(dlogz=\
-            config.dlogz)):
+    for it, results in enumerate(sampler.sample(dlogz=config.dlogz)):
         # Save the state of the sampler (delete the pool first).
 
         save_sampler("sampler.p", sampler, pool=pool)
