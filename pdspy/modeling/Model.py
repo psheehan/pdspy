@@ -383,6 +383,8 @@ class Model:
 
             nx, ny, nz = self.grid.number_density[0].shape
 
+            number_density[number_density == 0] = 1.0e-50
+
             velocity[0,:,:,:] = (number_density * vx).sum(axis=0) / \
                     number_density.sum(axis=0)
             velocity[1,:,:,:] = (number_density * vy).sum(axis=0) / \

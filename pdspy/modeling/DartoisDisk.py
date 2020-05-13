@@ -212,6 +212,11 @@ class DartoisDisk(Disk):
         t[zz >= zq] = tatm[zz >= zq]
         t[zz < zq] = tatm[zz < zq] + (tmid[zz < zq] - tatm[zz < zq]) * \
                 (numpy.cos(numpy.pi * zz[zz < zq] / (2*zq[zz < zq])))**(2*delta)
+
+        ##### Catch an temperatures greater than 10000 K and set to that value,
+        ##### as that is likely unphysical.
+
+        t[t > 10000] = 10000
         
         return t
 
@@ -283,7 +288,9 @@ class DartoisDisk(Disk):
 
         # Finally, add the two together.
 
-        v_phi = numpy.sqrt(v_phi_kepler**2 + v_phi_pressure2_interp)
+        with numpy.errstate(divide="ignore", invalid="ignore"):
+            v_phi = numpy.where(v_phi_kepler**2 + v_phi_pressure2_interp > 0, \
+                    numpy.sqrt(v_phi_kepler**2 + v_phi_pressure2_interp), 1.0)
 
         return numpy.array((v_r, v_theta, v_phi))
 
