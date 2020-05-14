@@ -4,6 +4,7 @@ from scipy.integrate import trapz
 from ..constants.astronomy import AU, M_sun
 from ..constants.math import pi
 from ..constants.physics import G, m_p
+from ..constants.time import year
 from ..dust import Dust
 from ..gas import Gas
 
@@ -186,6 +187,73 @@ class UlrichEnvelope:
                 numpy.sqrt(1 - mu/mu0)
 
         return numpy.array((v_r, v_theta, v_phi))
+
+    def calculate_mdot(self, r, theta, phi, mstar=0.5, code="hyperion"):
+        #numpy.seterr(all='ignore')
+        ##### Star parameters
+
+        mstar *= M_sun
+        
+        ##### Envelope parameters
+
+        rin = self.rmin * AU
+        rout = self.rmax * AU
+        mass = self.mass * M_sun
+        rcent = self.rcent * AU
+        cavz0 = 1*AU
+        cavpl = self.cavpl
+        cavrfact = self.cavrfact
+
+        # Set up the coordinates.
+        
+        rr, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+
+        mu = numpy.cos(tt)
+
+        RR = rr * numpy.sin(tt)
+        zz = rr * numpy.cos(tt)
+
+        # Calculate mu0 at each r, theta combination.
+
+        def func(mu0,r,mu,R_c):
+            return mu0**3-mu0*(1-r/R_c)-mu*(r/R_c)
+
+        mu0 = mu*0.
+        for ir in range(rr.shape[0]):
+            for it in range(rr.shape[1]):
+                mu0[ir,it,0] = brenth(func,-1.0,1.0,args=(rr[ir,it,0], \
+                        mu[ir,it,0],rcent))
+
+        ##### Make the dust density model for an Ulrich envelope.
+
+        rho0 = 1.0
+        
+        rho = rho0 * (rr / rcent)**(-1.5) * (1 + mu/mu0)**(-0.5)* \
+                (mu/mu0 + 2*mu0**2 * rcent/rr)**(-1)
+
+        mid1 = (numpy.abs(mu) < 1.0e-10) & (rr < rcent)
+        rho[mid1] = rho0 * (rr[mid1] / rcent)**(-0.5) * \
+                (1. - rr[mid1] / rcent)**(-1) / 2.
+
+        mid2 = (numpy.abs(mu) < 1.0e-10) & (rr > rcent)
+        rho[mid2] = rho0 * (2.*rr[mid2]/rcent - 1)**(-0.5) * \
+                (rr[mid2]/rcent - 1.)**(-1)
+
+        rho[(rr >= rout) ^ (rr <= rin)] = 0e0
+
+        ##### Normalize the mass correctly.
+        
+        if theta.max() > pi/2:
+            prefix = mass/(2*pi*trapz(trapz(rho*rr**2*numpy.sin(tt),tt,axis=1),\
+                    rr[:,0,:],axis=0))[0]
+        else:
+            prefix = mass/(4*pi*trapz(trapz(rho*rr**2*numpy.sin(tt),tt,axis=1),\
+                    rr[:,0,:],axis=0))[0]
+
+        mdot = prefix * 8*numpy.pi * numpy.sqrt(G * mstar) / (M_sun / year)
+
+        return mdot
+
 
     def read(self, filename=None, usefile=None):
         if (usefile == None):
