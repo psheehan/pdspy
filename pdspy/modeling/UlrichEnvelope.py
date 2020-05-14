@@ -198,7 +198,7 @@ class UlrichEnvelope:
 
         rin = self.rmin * AU
         rout = self.rmax * AU
-        mass = self.mass * M_sun
+        mass = 100 * self.mass * M_sun
         rcent = self.rcent * AU
         cavz0 = 1*AU
         cavpl = self.cavpl
@@ -250,7 +250,8 @@ class UlrichEnvelope:
             prefix = mass/(4*pi*trapz(trapz(rho*rr**2*numpy.sin(tt),tt,axis=1),\
                     rr[:,0,:],axis=0))[0]
 
-        mdot = prefix * 8*numpy.pi * numpy.sqrt(G * mstar) / (M_sun / year)
+        mdot = prefix * (4*numpy.pi * numpy.sqrt(G * mstar) * rcent**1.5) / \
+                (M_sun / year)
 
         return mdot
 
