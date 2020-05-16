@@ -200,7 +200,7 @@ class Model:
             image, x, y = radmc3d.read.unstructured_image(\
                     "subpixeling_diagnostics.out")
 
-            x = x * (1. + numpy.random.uniform(-1.0e-8,1.0e-8,x.size)) / \
+            x = x * -(1. + numpy.random.uniform(-1.0e-8,1.0e-8,x.size)) / \
                     (dpc*pc) / arcsec
             y = y * (1. + numpy.random.uniform(-1.0e-8,1.0e-8,x.size)) / \
                     (dpc*pc) / arcsec
