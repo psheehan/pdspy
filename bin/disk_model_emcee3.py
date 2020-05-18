@@ -323,7 +323,7 @@ else:
 
 # Run a few burner steps.
 
-while sampler.iterations < config.max_nsteps:
+while sampler.iteration < config.max_nsteps:
     if args.action == "run":
         for sample in sampler.sample(sample, iterations=config.steps_per_iter):
             # Plot the current state of the chain.
@@ -342,7 +342,7 @@ while sampler.iterations < config.max_nsteps:
 
     # Get the best fit parameters and uncertainties from the last nplot steps.
 
-    samples = sampler.get_chain(discard=sampler.iterations-config.nplot, \
+    samples = sampler.get_chain(discard=sampler.iteration-config.nplot, \
             flat=True)
 
     # Make the cuts specified by the user.
