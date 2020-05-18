@@ -330,6 +330,8 @@ while sampler.iteration < config.max_nsteps:
         for sample in sampler.sample(sample, iterations=config.steps_per_iter):
             # Plot the steps of the walkers.
 
+            chain = sampler.get_chain()
+
             for j in range(ndim):
                 fig, ax = plt.subplots(nrows=1, ncols=1)
 
