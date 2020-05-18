@@ -281,7 +281,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
                 visibilities["data"][j].u, visibilities["data"][j].v, \
                 visibilities["data"][j].freq, m.images[visibilities["lam"][j]],\
-                dRA=-p["x0"], dDec=-p["y0"], nthreads=nprocesses, code="trift")
+                dRA=p["x0"], dDec=p["y0"], nthreads=nprocesses, code="trift")
 
         # Add in free free emission.
 
@@ -303,8 +303,8 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
 
             m.visibilities[visibilities["lam"][j]+"_high"] = \
                     uv.interpolate_model(u, v, visibilities["data"][j].freq, \
-                    m.images[visibilities["lam"][j]], dRA=-p["x0"], \
-                    dDec=-p["y0"], nthreads=nprocesses, code="trift")
+                    m.images[visibilities["lam"][j]], dRA=p["x0"], \
+                    dDec=p["y0"], nthreads=nprocesses, code="trift")
 
             # Add in free free emission.
 
@@ -321,7 +321,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                     npix=visibilities["npix"][j], \
                     pixelsize=visibilities["pixelsize"][j], \
                     lam=visibilities["lam"][j], incl=p["i"], \
-                    pa=-p["pa"], dpc=p["dpc"], code="radmc3d", \
+                    pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=verbose, \
                     setthreads=nprocesses, nice=nice)
 
@@ -331,7 +331,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                     npix=visibilities["image_npix"][j], \
                     pixelsize=visibilities["image_pixelsize"][j], \
                     lam=visibilities["lam"][j], incl=p["i"], \
-                    pa=-p["pa"], dpc=p["dpc"], code="radmc3d", \
+                    pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=verbose, \
                     setthreads=nprocesses, nice=nice)
 

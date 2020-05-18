@@ -213,7 +213,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
         m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
                 visibilities["data"][j].u, visibilities["data"][j].v, \
                 visibilities["data"][j].freq, \
-                m.images[visibilities["lam"][j]], dRA=-p["x0"], dDec=-p["y0"], \
+                m.images[visibilities["lam"][j]], dRA=p["x0"], dDec=p["y0"], \
                 nthreads=ncpus, code="trift")
 
         if plot:
@@ -228,7 +228,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                         pixelsize=visibilities["image_pixelsize"][j], \
                         tgas_eq_tdust=True, scattering_mode_max=0, \
                         incl_dust=True, incl_lines=True, loadlambda=True, \
-                        incl=p["i"], pa=-p["pa"], dpc=p["dpc"], code="radmc3d",\
+                        incl=p["i"], pa=p["pa"], dpc=p["dpc"], code="radmc3d",\
                         verbose=False, setthreads=ncpus, nice=nice)
 
                 m.run_image(name="cont", nphot=1e5, \
@@ -236,7 +236,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                         pixelsize=visibilities["image_pixelsize"][j], \
                         tgas_eq_tdust=True, scattering_mode_max=0, \
                         incl_dust=True, incl_lines=False, loadlambda=True, \
-                        incl=p["i"], pa=-p["pa"], dpc=p["dpc"], code="radmc3d",\
+                        incl=p["i"], pa=p["pa"], dpc=p["dpc"], code="radmc3d",\
                         verbose=False, setthreads=ncpus, nice=nice)
 
                 m.images[visibilities["lam"][j]].image -= m.images["cont"].image
@@ -246,7 +246,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                         pixelsize=visibilities["image_pixelsize"][j], \
                         tgas_eq_tdust=True, scattering_mode_max=0, \
                         incl_dust=False, incl_lines=True, loadlambda=True, \
-                        incl=p["i"], pa=-p["pa"], dpc=p["dpc"], code="radmc3d",\
+                        incl=p["i"], pa=p["pa"], dpc=p["dpc"], code="radmc3d",\
                         verbose=False, setthreads=ncpus, nice=nice)
 
             # Extinct the data, if included.
