@@ -2,7 +2,7 @@ from .libinterferometry import Visibilities
 import casatools.ms as ms
 import numpy
 
-def readms(filename, spw=[0], tolerance=0.01):
+def readms(filename, spw=[0], tolerance=0.01, datacolumn="corrected"):
 
     # Load the MS file.
 
@@ -10,13 +10,18 @@ def readms(filename, spw=[0], tolerance=0.01):
 
     # Loop through all of the DATA_DESC_ID values and collect the relevant data.
 
+    if datacolumn == "corrected":
+        prefix = "corrected_"
+    else:
+        prefix = ""
+
     i = 0                                                               
     ms.reset()                                                          
     data = []
     while ms.selectinit(datadescid=i):
         if int(ms.getspectralwindowinfo().keys()[0]) in spw:
-            data.append(ms.getdata(items=["u","v","real","imaginary","weight",\
-                    "flag","axis_info","uvdist"]))
+            data.append(ms.getdata(items=["u","v",prefix+"real",prefix+\
+                    "imaginary","weight","flag","axis_info","uvdist"]))
         ms.reset()
         i += 1
 
