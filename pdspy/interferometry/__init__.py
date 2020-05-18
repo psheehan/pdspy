@@ -9,3 +9,5 @@ from .invert import invert
 from .model import model
 from .rotate import rotate
 from .interpolate_model import interpolate_model
+
+from .rmlimage import rmlimage
