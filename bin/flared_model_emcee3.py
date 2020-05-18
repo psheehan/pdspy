@@ -298,6 +298,8 @@ labels = ["$"+key.replace("T0_env","T_0,env").replace("T0","T_0").\
 # set up the info.
 
 if args.resume:
+    backend = emcee.backends.HDFBackend("results.hdf5")
+
     if args.resetprob:
         sample, _, _ = backend.get_last_sample()
     else:
@@ -323,7 +325,7 @@ else:
 
 # Run a few burner steps.
 
-while nsteps < config.max_nsteps:
+while sampler.iteration < config.max_nsteps:
     if args.action == "run":
         for sample in sampler.sample(sample, iterations=config.steps_per_iter):
             # Plot the steps of the walkers.
@@ -340,7 +342,7 @@ while nsteps < config.max_nsteps:
 
     # Get the best fit parameters and uncertainties.
 
-    samples = sampler.get_chain(discard=sampler.iterations-config.nplot, \
+    samples = sampler.get_chain(discard=sampler.iteration-config.nplot, \
             flat=True)
 
     # Make the cuts specified by the user.
