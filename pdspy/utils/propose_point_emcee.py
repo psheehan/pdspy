@@ -67,9 +67,9 @@ def propose_point_emcee(parameters, model="disk"):
             p.append(numpy.random.uniform(parameters[key]["limits"][0], \
                     0.2, 1)[0])
         elif key == "logTatm0":
-            temp_pos.append(tatm0)
+            p.append(tatm0)
         elif key == "logTmid0":
-            temp_pos.append(tmid0)
+            p.append(tmid0)
         elif key[0:8] == "flux_unc":
             p.append(numpy.random.normal(parameters[key]["value"], 0.001, 1)[0])
         else:
