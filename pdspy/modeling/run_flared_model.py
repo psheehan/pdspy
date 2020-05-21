@@ -171,15 +171,15 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
             m.run_image(name=visibilities["lam"][j], nphot=1e5, npix=25, \
                     lam=None, pixelsize=pixel_size, \
                     tgas_eq_tdust=True, scattering_mode_max=0, incl_dust=True, \
-                    incl_lines=True, loadlambda=True, incl=p["i"], pa=p["pa"], \
-                    dpc=p["dpc"], code="radmc3d", verbose=False, \
+                    incl_lines=True, loadlambda=True, incl=p["i"], pa=p["pa"]-\
+                    180., dpc=p["dpc"], code="radmc3d", verbose=False, \
                     writeimage_unformatted=True, setthreads=ncpus, nice=nice, \
                     unstructured=True, camera_nrrefine=nrrefine)
 
             m.run_image(name="cont", nphot=1e5, npix=25, lam=None, \
                     pixelsize=pixel_size, tgas_eq_tdust=True,\
                     scattering_mode_max=0, incl_dust=True, incl_lines=False, \
-                    loadlambda=True, incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
+                    loadlambda=True, incl=p["i"], pa=p["pa"]-180, dpc=p["dpc"],\
                     code="radmc3d", verbose=False, writeimage_unformatted=True,\
                     setthreads=ncpus, nice=nice, unstructured=True, \
                     camera_nrrefine=nrrefine)
@@ -189,8 +189,8 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
             m.run_image(name=visibilities["lam"][j], nphot=1e5, npix=25, \
                     lam=None, pixelsize=pixel_size, \
                     tgas_eq_tdust=True, scattering_mode_max=0, incl_dust=False,\
-                    incl_lines=True, loadlambda=True, incl=p["i"], pa=p["pa"], \
-                    dpc=p["dpc"], code="radmc3d", verbose=False, \
+                    incl_lines=True, loadlambda=True, incl=p["i"], pa=p["pa"]-\
+                    180, dpc=p["dpc"], code="radmc3d", verbose=False, \
                     writeimage_unformatted=True, setthreads=ncpus, nice=nice, \
                     unstructured=True, camera_nrrefine=nrrefine)
 
@@ -228,16 +228,18 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                         pixelsize=visibilities["image_pixelsize"][j], \
                         tgas_eq_tdust=True, scattering_mode_max=0, \
                         incl_dust=True, incl_lines=True, loadlambda=True, \
-                        incl=p["i"], pa=p["pa"], dpc=p["dpc"], code="radmc3d",\
-                        verbose=False, setthreads=ncpus, nice=nice)
+                        incl=p["i"], pa=p["pa"]-180, dpc=p["dpc"], \
+                        code="radmc3d", verbose=False, setthreads=ncpus, \
+                        nice=nice)
 
                 m.run_image(name="cont", nphot=1e5, \
                         npix=visibilities["image_npix"][j], lam=None, \
                         pixelsize=visibilities["image_pixelsize"][j], \
                         tgas_eq_tdust=True, scattering_mode_max=0, \
                         incl_dust=True, incl_lines=False, loadlambda=True, \
-                        incl=p["i"], pa=p["pa"], dpc=p["dpc"], code="radmc3d",\
-                        verbose=False, setthreads=ncpus, nice=nice)
+                        incl=p["i"], pa=p["pa"]-180, dpc=p["dpc"], \
+                        code="radmc3d", verbose=False, setthreads=ncpus, \
+                        nice=nice)
 
                 m.images[visibilities["lam"][j]].image -= m.images["cont"].image
             else:
@@ -246,8 +248,9 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                         pixelsize=visibilities["image_pixelsize"][j], \
                         tgas_eq_tdust=True, scattering_mode_max=0, \
                         incl_dust=False, incl_lines=True, loadlambda=True, \
-                        incl=p["i"], pa=p["pa"], dpc=p["dpc"], code="radmc3d",\
-                        verbose=False, setthreads=ncpus, nice=nice)
+                        incl=p["i"], pa=p["pa"]-180, dpc=p["dpc"], \
+                        code="radmc3d", verbose=False, setthreads=ncpus, \
+                        nice=nice)
 
             # Extinct the data, if included.
 

@@ -113,12 +113,12 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
             if "x0" in params:
                 x0 = -params["x0"]/visibilities["image_pixelsize"][index]
             else:
-                x0 = parameters["x0"]["value"]/\
+                x0 = -parameters["x0"]["value"]/\
                         visibilities["image_pixelsize"][index]
             if "y0" in params:
                 y0 = params["y0"]/visibilities["image_pixelsize"][index]
             else:
-                y0 = -parameters["y0"]["value"]/\
+                y0 = parameters["y0"]["value"]/\
                         visibilities["image_pixelsize"][index]
 
             xmin = int(round(x0 + visibilities["image_npix"][index]/2 + \
