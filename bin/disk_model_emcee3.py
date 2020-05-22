@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 
-from pdspy.constants.astronomy import arcsec
-import pdspy.interferometry as uv
-import pdspy.spectroscopy as sp
-import pdspy.imaging as im
 import pdspy.modeling as modeling
 import pdspy.plotting as plotting
 import pdspy.utils as utils
@@ -81,150 +77,6 @@ if args.trim == "":
     trim = []
 else:
     trim = args.trim.split(",")
-
-################################################################################
-#
-# Create a function which returns a model of the data.
-#
-################################################################################
-
-# Define a likelihood function.
-
-def lnlike(params, visibilities, images, spectra, parameters, plot):
-
-    m = modeling.run_disk_model(visibilities, images, spectra, params, \
-            parameters, plot, ncpus=ncpus, ncpus_highmass=ncpus_highmass, \
-            with_hyperion=args.withhyperion, timelimit=args.timelimit, \
-            source=source, nice=nice, verbose=args.verbose)
-
-    # Catch whether the model timed out.
-
-    if m == 0.:
-        return -numpy.inf
-
-    # A list to put all of the chisq into.
-
-    chisq = []
-
-    # Calculate the chisq for the visibilities.
-
-    for j in range(len(visibilities["file"])):
-        chisq.append(-0.5*(numpy.sum((visibilities["data"][j].real - \
-                m.visibilities[visibilities["lam"][j]].real)**2 * \
-                visibilities["data"][j].weights)) + \
-                -0.5*(numpy.sum((visibilities["data"][j].imag - \
-                m.visibilities[visibilities["lam"][j]].imag)**2 * \
-                visibilities["data"][j].weights)))
-
-    # Calculate the chisq for all of the images.
-
-    for j in range(len(images["file"])):
-        chisq.append(-0.5 * (numpy.sum((images["data"][j].image - \
-                m.images[images["lam"][j]].image)**2 / \
-                images["data"][j].unc**2)))
-
-    # Calculate the chisq for the SED.
-
-    if "total" in spectra:
-        chisq.append(-0.5 * (numpy.sum((spectra["total"].flux - \
-                m.spectra["SED"].flux)**2 / spectra["total"].unc**2)))
-
-    # Return the sum of the chisq.
-
-    return numpy.array(chisq).sum()
-
-# Define a prior function.
-
-def lnprior(params, parameters, visibilities):
-    for key in parameters:
-        if not parameters[key]["fixed"]:
-            if parameters[key]["limits"][0] <= params[key] <= \
-                    parameters[key]["limits"][1]:
-                pass
-            else:
-                return -numpy.inf
-
-    # Make sure that the radii are correct.
-
-    if "logR_in" in params:
-        R_in = 10.**params["logR_in"]
-    else:
-        R_in = 10.**parameters["logR_in"]["value"]
-
-    if "logR_disk" in params:
-        R_disk = 10.**params["logR_disk"]
-    else:
-        R_disk = 10.**parameters["logR_disk"]["value"]
-
-    if "logR_env" in params:
-        R_env = 10.**params["logR_env"]
-    else:
-        R_env = 10.**parameters["logR_env"]["value"]
-
-    if R_in <= R_disk <= R_env:
-        pass
-    else:
-        return -numpy.inf
-
-    # Check that we aren't allowing any absurdly dense models.
-
-    if "logR_env" in params and "logM_env" in params:
-        if params["logR_env"] < 0.5 * params["logM_env"] + 4.:
-            return -numpy.inf
-        else:
-            pass
-
-    # Check that the cavity actually falls within the disk.
-
-    if not parameters["logR_cav"]["fixed"]:
-        if R_in <= 10.**params["logR_cav"] <= R_disk:
-            pass
-        else:
-            return -numpy.inf
-
-    # Check that the gap is reasonable.
-
-    if not parameters["logR_gap1"]["fixed"]:
-        if R_in <= 10.**params["logR_gap1"] - params["w_gap1"]/2:
-            pass
-        else:
-            return -numpy.inf
-
-    # Everything was correct, so continue on.
-
-    lnp = 0.0
-
-    # Add in the priors.
-
-    for i in range(len(visibilities["file"])):
-        if (not parameters["flux_unc{0:d}".format(i+1)]["fixed"]) and \
-                (parameters["flux_unc{0:d}".format(i+1)]["prior"] == "gaussian"):
-            lnp += -0.5 * (params["flux_unc{0:d}".format(i+1)] - \
-                    parameters["flux_unc{0:d}".format(i+1)]["value"])**2 / \
-                    parameters["flux_unc{0:d}".format(i+1)]["sigma"]**2
-
-    # Return
-
-    return lnp
-
-# Define a probability function.
-
-def lnprob(p, visibilities, images, spectra, parameters, plot):
-
-    keys = []
-    for key in sorted(parameters.keys()):
-        if not parameters[key]["fixed"]:
-            keys.append(key)
-
-    params = dict(zip(keys, p))
-
-    lp = lnprior(params, parameters, visibilities)
-
-    if not numpy.isfinite(lp):
-        return -numpy.inf
-
-    return lp + lnlike(params, visibilities, images, spectra, parameters, \
-            plot)
 
 ################################################################################
 #
@@ -315,9 +167,12 @@ else:
 # Set up the MCMC simulation.
 
 if args.action == "run":
-    sampler = emcee.EnsembleSampler(config.nwalkers, ndim, lnprob, \
-            args=(visibilities, images, spectra, config.parameters, False), \
-            pool=pool, backend=backend)
+    sampler = emcee.EnsembleSampler(config.nwalkers, ndim, utils.emcee.lnprob, \
+            args=(visibilities, images, spectra, config.parameters, \
+            config.priors, False), kwargs={"model":"disk", "ncpus":ncpus, \
+            "timelimit":args.timelimit, "ncpus_highmass":ncpus_highmass, \
+            "with_hyperion":args.withhyperion, "source":source, "nice":nice, \
+            "verbose":args.verbose}, pool=pool, backend=backend)
 else:
     sampler = backend
 
