@@ -86,7 +86,7 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
                     imsize=visibilities["image_npix"][index], \
                     pixel_size=visibilities["image_pixelsize"][index], \
                     weighting=weighting, robust=robust, convolution="expsinc", \
-                    mfs=False, mode="continuum", maxiter=0)[0]
+                    mfs=False, mode="continuum", maxiter=maxiter)[0]
 
         # Get the appropriate scaling for the image.
 
