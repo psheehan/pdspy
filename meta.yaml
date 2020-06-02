@@ -21,6 +21,7 @@ requirements:
     - h5py
     - mpi4py
     - emcee
+    - dynesty
     - corner
     - galario
     - schwimmbad
