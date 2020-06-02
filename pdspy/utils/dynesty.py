@@ -202,10 +202,8 @@ def save_sampler(name, sampler, pool=None, dynamic=False):
     sampler.pool = pool
     if pool != None:
         sampler.M = pool.map
-        sampler.sampler.M = pool.map
     else:
         sampler.M = map
-        sampler.sampler.M = map
 
     # Again, repeat for the sub-sampler, if DynamicNestedSampler.
 
