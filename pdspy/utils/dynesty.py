@@ -227,11 +227,8 @@ def load_sampler(name, pool=None, dynamic=False):
     if pool != None:
         sampler.M = pool.map
         sampler.queue_size = pool.size
-        sampler.sampler.M = pool.map
-        sampler.sampler.queue_size = pool.size
     else:
         sampler.M = map
-        sampler.sampler.M = map
 
     # Add pool/random state correctly for the sub-sampler as well for 
     # the DynamicNestedSampler class.
