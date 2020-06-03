@@ -245,7 +245,7 @@ def load_sampler(name, pool=None, dynamic=False):
 
 # A function to make useful plots as the sampling is running.
 
-def plot_status(res, labels=None, periodic=None):
+def plot_status(res, ptform=None, labels=None, periodic=None):
     # Generate a plot of the trace.
 
     try:
@@ -264,8 +264,7 @@ def plot_status(res, labels=None, periodic=None):
     # Generate a bounds cornerplot.
 
     fig, ax = dyplot.cornerbound(res, it=res.niter-1, periodic=periodic, \
-            prior_transform=sampler.prior_transform, show_live=True, \
-            labels=labels)
+            prior_transform=ptform, show_live=True, labels=labels)
 
     fig.savefig("boundplot.png")
 
