@@ -198,7 +198,8 @@ if args.action == "run":
 
             # Make plots of the current status of the fit.
 
-            utils.dynesty.plot_status(res, labels=labels, periodic=periodic)
+            utils.dynesty.plot_status(res, ptform=sampler.prior_transform, \
+                    labels=labels, periodic=periodic)
 
             # If we haven't reached the stopping criteria yet, remove the 
             # live points.
@@ -209,7 +210,8 @@ if args.action == "run":
 
     res = sampler.results
 
-    utils.dynesty.plot_status(res, labels=labels, periodic=periodic)
+    utils.dynesty.plot_status(res, ptform=sampler.prior_transform, \
+            labels=labels, periodic=periodic)
 
 # If we are just plotting, a few minor things to do.
 
@@ -225,7 +227,8 @@ elif args.action == "plot":
 
     # Make the traceplots and the bound plots.
 
-    utils.dynesty.plot_status(res, labels=labels, periodic=periodic)
+    utils.dynesty.plot_status(res, ptform=sampler.prior_transform, \
+            labels=labels, periodic=periodic)
 
 # Generate a plot of the weighted samples.
 
