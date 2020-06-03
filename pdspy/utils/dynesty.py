@@ -60,7 +60,7 @@ def ptform(u, parameters, priors):
     # Get the correct order for setting parameters (as some depend on others
 
     ordered_keys, index = numpy.unique(["logR_env","logR_disk","logR_in", \
-            "logTmid0"]+list(parameters.keys()), return_index=True)
+            "logTatm0","logTmid0"]+list(parameters.keys()), return_index=True)
     ordered_keys = ordered_keys[numpy.argsort(index)]
 
     # Now loop through the parameters and transform the ones that aren't fixed.
