@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from pdspy.utils.dynesty import lnlike, ptform
 from matplotlib.backends.backend_pdf import PdfPages
 import pdspy.plotting as plotting
 import pdspy.modeling as modeling
@@ -102,6 +103,8 @@ if args.action == "run":
             sys.exit(0)
     else:
         pool = None
+else:
+    pool = None
 
 ################################################################################
 #
@@ -221,7 +224,7 @@ elif args.action == "plot":
     if not sampler.added_live:
         sampler.add_final_live()
 
-        res = sampler.sampler.results
+        res = sampler.results
     else:
         res = sampler.results
 
