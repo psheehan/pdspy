@@ -211,6 +211,8 @@ if args.action == "run":
 
     # Gather the results and make one final plot of the status.
 
+    sampler.add_final_live()
+
     res = sampler.results
 
     utils.dynesty.plot_status(res, ptform=sampler.prior_transform, \
