@@ -4,6 +4,7 @@ import pdspy.modeling as modeling
 import pdspy.plotting as plotting
 import pdspy.utils as utils
 import matplotlib.pyplot as plt
+import astropy.stats
 import schwimmbad
 import argparse
 import numpy
@@ -244,7 +245,7 @@ while nsteps < config.max_nsteps:
     # Get the best fit parameters.
 
     params = numpy.median(samples, axis=0)
-    sigma = samples.std(axis=0)
+    sigma = astropy.stats.mad_std(samples, axis=0)
 
     # Write out the results.
 
