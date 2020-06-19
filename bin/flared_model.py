@@ -6,6 +6,7 @@ import pdspy.modeling.mpi_pool
 import pdspy.modeling as modeling
 import pdspy.utils as utils
 import matplotlib.pyplot as plt
+import astropy.stats
 import schwimmbad
 import argparse
 import numpy
@@ -248,7 +249,7 @@ while nsteps < config.max_nsteps:
                 samples = samples[good,:]
 
     params = numpy.median(samples, axis=0)
-    sigma = samples.std(axis=0)
+    sigma = astropy.stats.mad_std(samples, axis=0)
 
     # Write out the results.
 

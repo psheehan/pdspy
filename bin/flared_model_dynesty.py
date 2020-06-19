@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from pdspy.utils.dynesty import lnlike, ptform
 from matplotlib.backends.backend_pdf import PdfPages
 import pdspy.plotting as plotting
 import pdspy.modeling as modeling
@@ -9,6 +10,7 @@ import dynesty.results as dyres
 import dynesty.utils as dyfunc
 import dynesty
 import matplotlib.pyplot as plt
+import astropy.stats
 import schwimmbad
 import argparse
 import numpy
@@ -324,7 +326,7 @@ for command in trim:
 # Now calculate the best fit parameters.
 
 params = numpy.median(samples, axis=0)
-sigma = samples.std(axis=0)
+sigma = astropy.stats.mad_std(samples, axis=0)
 
 # Write out the results.
 
