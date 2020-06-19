@@ -148,10 +148,30 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
     # Run the images/visibilities/SEDs.
 
     for j in range(len(visibilities["file"])):
+        # If sub-velocity resolution is requested, adjust the frequencies.
+
+        if visibilities["subsample"][j] > 1:
+            dfreq = visibilities["data"][j].freq[1:] - \
+                    visibilities["data"][j].freq[0:-1]
+            freq = []
+            for i in range(0, visibilities["data"][j].freq.size):
+                freq.append(visibilities["data"][j].freq[i] + dfreq[i%\
+                        (visibilities["data"][j].freq.size-1)] * \
+                        (numpy.linspace(1./(visibilities["subsample"][j]*\
+                        visibilities["averaging"][j]*2), 1.-1/(\
+                        visibilities["subsample"][j]*\
+                        visibilities["averaging"][j]*2), \
+                        visibilities["subsample"][j]*\
+                        visibilities["averaging"][j]) - 0.5))
+
+            freq = numpy.concatenate(freq)
+        else:
+            freq = visibilities["data"][j].freq
+
         # Shift the wavelengths by the velocities.
 
         b = p["v_sys"]*1.0e5 / c
-        lam = c / visibilities["data"][j].freq / 1.0e-4
+        lam = c / freq / 1.0e-4
         wave = lam * numpy.sqrt((1. - b) / (1. + b))
 
         # Set the wavelengths for RADMC3D to use.
@@ -187,9 +207,8 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
 
         # Extinct the data, if included.
 
-        velocity = c * (float(visibilities["freq"][j])*1.0e9 - \
-                visibilities["data"][j].freq)/(float(visibilities["freq"][j])*\
-                1.0e9) / 1.0e5
+        velocity = c * (float(visibilities["freq"][j])*1.0e9 - freq)/ \
+                (float(visibilities["freq"][j])*1.0e9) / 1.0e5
 
         tau = p["tau0"] * numpy.exp(-(velocity - p["v_ext"])**2 / \
                 (2*p["sigma_vext"]**2))
@@ -198,6 +217,50 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
 
         for i in range(len(m.images[visibilities["lam"][j]].freq)):
             m.images[visibilities["lam"][j]].image[:,:,i,:] *= extinction[i]
+
+        # And then if sub-sampling, sum the image along the frequency axis to
+        # get back to the right size, and also Hanning smooth.
+
+        if visibilities["subsample"][j] > 1:
+            recombined = numpy.empty((visibilities["npix"][j], \
+                    visibilities["npix"][j], visibilities["data"][j].freq.size*\
+                    visibilities["averaging"][j],1))
+            for i in range(freq.size // visibilities["subsample"][j]): 
+                recombined[:,:,i,0] = m.images[visibilities["lam"][j]].\
+                        image[:,:,i*visibilities["subsample"][j]:(i+1)*\
+                        visibilities["subsample"][j],0].mean(axis=2)
+
+            # Now do the Hanning smoothing.
+
+            if visibilities["hanning"][j]:
+                if visibilities["averaging"][j] > 1:
+                    average_window = numpy.zeros(2* \
+                            visibilities["averaging"][j]-1)
+                    average_window[0::2] = 1./visibilities["averaging"][j]
+                else:
+                    average_window = numpy.zeros(3)
+                    average_window[1] = 1.
+
+                hanning_window = numpy.hanning(9) / numpy.hanning(9).sum()
+
+                convolve_window = numpy.convolve(hanning_window, average_window)
+                convolve_window = convolve_window[1::2]/convolve_window[1::2].\
+                        sum()
+
+                recombined = scipy.signal.fftconvolve(recombined, \
+                        convolve_window.reshape((1,1,convolve_window.size,1)), \
+                        axes=2, mode="same")
+
+            # Finally, average by the binning.
+
+            binned = numpy.empty((visibilities["npix"][j], visibilities["npix"]\
+                    [j], visibilities["data"][j].freq.size, 1))
+            for i in range(visibilities["data"][j].freq.size): 
+                binned[:,:,i,0] = recombined[:,:,i*visibilities["averaging"]\
+                        [j]:(i+1)*visibilities["averaging"][j],0].mean(axis=2)
+
+            m.images[visibilities["lam"][j]].image = binned
+            m.images[visibilities["lam"][j]].freq = visibilities["data"][j].freq
 
         # Invert to get the visibilities.
 

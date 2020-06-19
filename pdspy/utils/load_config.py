@@ -76,6 +76,19 @@ def load_config():
                 (config.visibilities["npix"][i]* \
                 config.visibilities["pixelsize"][i]*arcsec))
 
+    # Make sure the visibilities dictionary has subsampling and averaging
+    # parameters.
+
+    if not "subsample" in config.visibilities:
+        config.visibilities["subsample"] = [1 for i in range(len(\
+                config.visibilities["file"]))]
+    if not "averaging" in config.visibilities:
+        config.visibilities["averaging"] = [1 for i in range(len(\
+                config.visibilities["file"]))]
+    if not "hanning" in config.visibilities:
+        config.visibilities["hanning"] = [False for i in range(len(\
+                config.visibilities["file"]))]
+
     # Make sure the spectra dictionary has a "weight" entry.
 
     if not "weight" in config.spectra:
