@@ -231,13 +231,13 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
         # get back to the right size, and also Hanning smooth.
 
         if visibilities["subsample"][j] > 1:
-            recombined = numpy.empty((visibilities["npix"][j], \
-                    visibilities["npix"][j], visibilities["data"][j].freq.size*\
-                    visibilities["averaging"][j],1))
+            recombined = numpy.empty((m.images[visibilities["lam"][j]].x.size, \
+                    visibilities["data"][j].freq.size*\
+                    visibilities["averaging"][j]))
             for i in range(freq.size // visibilities["subsample"][j]): 
-                recombined[:,:,i,0] = m.images[visibilities["lam"][j]].\
-                        image[:,:,i*visibilities["subsample"][j]:(i+1)*\
-                        visibilities["subsample"][j],0].mean(axis=2)
+                recombined[:,i] = m.images[visibilities["lam"][j]].\
+                        image[:,i*visibilities["subsample"][j]:(i+1)*\
+                        visibilities["subsample"][j]].mean(axis=1)
 
             # Now do the Hanning smoothing.
 
@@ -257,16 +257,18 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                         sum()
 
                 recombined = scipy.signal.fftconvolve(recombined, \
-                        convolve_window.reshape((1,1,convolve_window.size,1)), \
-                        axes=2, mode="same")
+                        convolve_window.reshape((1,convolve_window.size)), \
+                        axes=1, mode="same")
 
             # Finally, average by the binning.
 
             binned = numpy.empty((visibilities["npix"][j], visibilities["npix"]\
                     [j], visibilities["data"][j].freq.size, 1))
+            binned = numpy.empty((m.images[visibilities["lam"][j]].x.size, \
+                    visibilities["data"][j].freq.size))
             for i in range(visibilities["data"][j].freq.size): 
-                binned[:,:,i,0] = recombined[:,:,i*visibilities["averaging"]\
-                        [j]:(i+1)*visibilities["averaging"][j],0].mean(axis=2)
+                binned[:,i] = recombined[:,i*visibilities["averaging"]\
+                        [j]:(i+1)*visibilities["averaging"][j]].mean(axis=1)
 
             m.images[visibilities["lam"][j]].image = binned
             m.images[visibilities["lam"][j]].freq = visibilities["data"][j].freq
