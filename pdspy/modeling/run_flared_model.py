@@ -221,7 +221,8 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
         # And then if sub-sampling, sum the image along the frequency axis to
         # get back to the right size, and also Hanning smooth.
 
-        if visibilities["subsample"][j] > 1:
+        if visibilities["subsample"][j] * visibilities["averaging"][j] > 1 or \
+                visibilities["hanning"][j]:
             recombined = numpy.empty((visibilities["npix"][j], \
                     visibilities["npix"][j], visibilities["data"][j].freq.size*\
                     visibilities["averaging"][j],1))
