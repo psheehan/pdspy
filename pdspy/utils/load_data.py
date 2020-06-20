@@ -28,6 +28,10 @@ def load_data(config, model="disk"):
         data = uv.center(data, [config.visibilities["x0"][j], \
                 config.visibilities["y0"][j], 1.])
 
+        # Take the complex conjugate to make sure orientation is correct.
+
+        data.imag *= -1
+
         # Average the data to a more manageable size.
 
         if model == "disk":
