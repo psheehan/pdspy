@@ -178,6 +178,7 @@ if args.action == "run":
     for it, results in enumerate(sampler.sample(dlogz=config.dlogz)):
         # Save the state of the sampler (delete the pool first).
 
+        os.system("cp sampler.p sampler.p.backup")
         utils.dynesty.save_sampler("sampler.p", sampler, pool=pool)
 
         # Print out the status of the sampler.
