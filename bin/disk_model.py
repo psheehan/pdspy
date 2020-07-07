@@ -141,8 +141,8 @@ for key in sorted(config.parameters.keys()):
 
 # Make the labels nice with LaTeX.
 
-labels = ["$"+key.replace("_","_{").replace("log","\log ").\
-        replace("nu_ff","nu,ff")+"}$" if key[0:3] == "log" else \
+labels = ["$"+key.replace("nu_ff","nu,ff").replace("_","_{").\
+        replace("log","\log ")+"}$" if key[0:3] == "log" else \
         "$"+key.replace("h_large","h,large")+"$" for key in keys]
 
 # If we are resuming an MCMC simulation, read in the necessary info, otherwise
