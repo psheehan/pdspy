@@ -3,7 +3,7 @@ from .. import spectroscopy as sp
 from .. import imaging as im
 import numpy
 
-def load_data(config, model="disk"):
+def load_data(config, model="disk", gridsize1D=20):
 
     # Set up the places where we will put all of the data.
 
@@ -14,6 +14,11 @@ def load_data(config, model="disk"):
     config.spectra["data"] = []
     config.spectra["binned"] = []
     config.images["data"] = []
+
+    # Make sure gridsize1D has the proper number of elements.
+
+    if gridsize1D == 20:
+        gridsize1D = [20 for i in range(len(config.visibilities["file"]))]
 
     # Read in the millimeter visibilities.
 
@@ -53,13 +58,13 @@ def load_data(config, model="disk"):
         # Average the visibilities radially.
 
         if model == "disk":
-            config.visibilities["data1d"].append(uv.average(data, gridsize=20, \
-                    radial=True, log=True, \
+            config.visibilities["data1d"].append(uv.average(data, \
+                    gridsize=gridsize1D[j], radial=True, log=True, \
                     logmin=data.uvdist[numpy.nonzero(data.uvdist)].min()*0.95, \
                     logmax=data.uvdist.max()*1.05))
         elif model == "flared":
-            config.visibilities["data1d"].append(uv.average(data, gridsize=20, \
-                    radial=True, log=True, \
+            config.visibilities["data1d"].append(uv.average(data, \
+                    gridsize=gridsize1D[j], radial=True, log=True, \
                     logmin=data.uvdist[numpy.nonzero(data.uvdist)].min()*0.95, \
                     logmax=data.uvdist.max()*1.05, mode="spectralline"))
 
