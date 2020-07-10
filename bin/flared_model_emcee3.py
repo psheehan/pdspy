@@ -241,6 +241,8 @@ while sampler.iteration < config.max_nsteps:
 
     plt.savefig("fit.pdf")
 
+    plt.close(fig)
+
     # Make a dictionary of the best fit parameters.
 
     params = dict(zip(keys, params))

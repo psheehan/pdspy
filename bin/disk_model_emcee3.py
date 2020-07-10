@@ -141,9 +141,9 @@ for key in sorted(config.parameters.keys()):
 
 # Make the labels nice with LaTeX.
 
-labels = ["$"+key.replace("_","_{").replace("log","\log ")+"}$" \
-        if key[0:3] == "log" else "$"+key.replace("h_large","h,large")+\
-        "$" for key in keys]
+labels = ["$"+key.replace("nu_ff","nu,ff").replace("_","_{").\
+        replace("log","\log ")+"}$" if key[0:3] == "log" else \
+        "$"+key.replace("h_large","h,large")+"$" for key in keys]
 
 # If we are resuming an MCMC simulation, read in the necessary info, otherwise
 # set up the info.
@@ -237,6 +237,8 @@ while sampler.iteration < config.max_nsteps:
     fig = corner.corner(samples, labels=labels, truths=params)
 
     plt.savefig("fit.pdf")
+
+    plt.close(fig)
 
     # Make a dictionary of the best fit parameters.
 
