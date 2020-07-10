@@ -234,22 +234,10 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
             # Now do the Hanning smoothing.
 
             if visibilities["hanning"][j]:
-                if visibilities["averaging"][j] > 1:
-                    average_window = numpy.zeros(2* \
-                            visibilities["averaging"][j]-1)
-                    average_window[0::2] = 1./visibilities["averaging"][j]
-                else:
-                    average_window = numpy.zeros(3)
-                    average_window[1] = 1.
-
-                hanning_window = numpy.hanning(9) / numpy.hanning(9).sum()
-
-                convolve_window = numpy.convolve(hanning_window, average_window)
-                convolve_window = convolve_window[1::2]/convolve_window[1::2].\
-                        sum()
+                hanning_window = numpy.hanning(5) / numpy.hanning(5).sum()
 
                 recombined = scipy.signal.fftconvolve(recombined, \
-                        convolve_window.reshape((1,1,convolve_window.size,1)), \
+                        hanning_window.reshape((1,1,hanning_window.size,1)), \
                         axes=2, mode="same")
 
             # Finally, average by the binning.
