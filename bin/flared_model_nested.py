@@ -168,6 +168,7 @@ if args.resume:
             config.parameters, False]
     sampler.loglikelihood.kwargs = {"model":"flared", \
             "ncpus":ncpus, "source":source, "nice":nice}
+    sampler.prior_transform.kwargs = {"model":"flared"}
 
     res = sampler.results
 else:
@@ -175,8 +176,9 @@ else:
             ndim, nlive=config.nlive_init, logl_args=(visibilities, images, \
             spectra, config.parameters, False), logl_kwargs={"model":"flared", \
             "ncpus":ncpus, "source":source, "nice":nice}, ptform_args=(\
-            config.parameters, config.priors), periodic=periodic, pool=pool, \
-            sample="rwalk", walks=config.walks)
+            config.parameters, config.priors), ptform_kwargs={"model":\
+            "flared"}, periodic=periodic, pool=pool, sample="rwalk", \
+            walks=config.walks)
 
 # Run a few burner steps.
 
