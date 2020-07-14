@@ -163,6 +163,12 @@ labels = ["$"+key.replace("T0_env","T_0,env").replace("T0","T_0").\
 if args.resume:
     sampler = utils.dynesty.load_sampler("sampler.p", pool=pool)
 
+    # For backwards compatibility
+    sampler.loglikelihood.args = [visibilities, images, spectra, \
+            config.parameters, False]
+    sampler.loglikelihood.kwargs = {"model":"flared", \
+            "ncpus":ncpus, "source":source, "nice":nice}
+
     res = sampler.results
 else:
     sampler = dynesty.NestedSampler(utils.dynesty.lnlike, utils.dynesty.ptform,\
