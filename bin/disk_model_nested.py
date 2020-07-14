@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
 
-from pdspy.utils.dynesty import lnlike, ptform
-from matplotlib.backends.backend_pdf import PdfPages
-import pdspy.plotting as plotting
 import pdspy.modeling as modeling
+import pdspy.plotting as plotting
 import pdspy.utils as utils
 import dynesty.plotting as dyplot
 import dynesty.results as dyres
 import dynesty.utils as dyfunc
 import dynesty
 import matplotlib.pyplot as plt
-import astropy.stats
 import schwimmbad
 import argparse
 import numpy
@@ -30,15 +27,18 @@ comm = MPI.COMM_WORLD
 parser = argparse.ArgumentParser()
 parser.add_argument('-o', '--object')
 parser.add_argument('-r', '--resume', action='store_true')
+parser.add_argument('-c', '--withhyperion', action='store_true')
 parser.add_argument('-p', '--resetprob', action='store_true')
 parser.add_argument('-a', '--action', type=str, default="run")
 parser.add_argument('-n', '--ncpus', type=int, default=1)
+parser.add_argument('-m', '--ncpus_highmass', type=int, default=8)
 parser.add_argument('-e', '--withexptaper', action='store_true')
-parser.add_argument('-v', '--plot_vis', action='store_true')
-parser.add_argument('-c', '--withcontsub', action='store_true')
+parser.add_argument('-t', '--timelimit', type=int, default=7200)
 parser.add_argument('-b', '--trim', type=str, default="")
+parser.add_argument('-s', '--SED', action='store_true')
 parser.add_argument('-i', '--nice', action='store_true')
 parser.add_argument('-l', '--nicelevel', type=int, default=19)
+parser.add_argument('-v', '--verbose', action='store_true')
 args = parser.parse_args()
 
 # Check whether we are using MPI.
@@ -48,6 +48,7 @@ withmpi = comm.Get_size() > 1
 # Set the number of cpus to use.
 
 ncpus = args.ncpus
+ncpus_highmass = args.ncpus_highmass
 
 # Set the nice level of the subprocesses.
 
@@ -104,8 +105,6 @@ if args.action == "run":
             sys.exit(0)
     else:
         pool = None
-else:
-    pool = None
 
 ################################################################################
 #
@@ -117,19 +116,14 @@ else:
 
 config = utils.load_config()
 
-# Decide whether to use an exponentially tapered 
+# Deprecated option to include an expontial taper on the disk.
 
 if args.withexptaper:
     config.parameters["disk_type"]["value"] = "exptaper"
 
-# Decide whether to do continuum subtraction or not.
-
-if args.withcontsub:
-    config.parameters["docontsub"]["value"] = True
-
 # Read in the data.
 
-visibilities, images, spectra = utils.load_data(config, model="flared")
+visibilities, images, spectra = utils.load_data(config)
 
 ################################################################################
 #
@@ -153,126 +147,83 @@ for key in sorted(config.parameters.keys()):
 
 # Make the labels nice with LaTeX.
 
-labels = ["$"+key.replace("T0_env","T_0,env").replace("T0","T_0").\
-        replace("turb_env","turb,env").replace("in_env","in,env").\
-        replace("_","_{").replace("log","\log ")+"}$" if key[0:3] == \
-        "log" else "$"+key+"$" for key in keys]
+labels = ["$"+key.replace("_","_{").replace("log","\log ")+"}$" \
+        if key[0:3] == "log" else "$"+key.replace("h_large","h,large")+\
+        "$" for key in keys]
 
-# Set up the MCMC simulation.
+# If we are resuming an MCMC simulation, read in the necessary info, otherwise
+# set up the info.
 
 if args.resume:
-    sampler = utils.dynesty.load_sampler("sampler.p", pool=pool, dynamic=True)
+    sampler = utils.dynesty.load_sampler("sampler.p", pool=pool)
 
     res = sampler.results
 else:
-    sampler = dynesty.DynamicNestedSampler(utils.dynesty.lnlike, \
-            utils.dynesty.ptform, ndim, logl_args=(visibilities, images, \
-            spectra, config.parameters, False), logl_kwargs={"model":"flared", \
-            "ncpus":ncpus, "source":source, "nice":nice}, ptform_args=(\
-            config.parameters, config.priors), periodic=periodic, pool=pool, \
-            sample="rwalk", walks=config.walks)
+    sampler = dynesty.NestedSampler(utils.dynesty.lnlike, utils.dynesty.ptform,\
+            ndim, nlive=config.nlive_init, logl_args=(visibilities, \
+            images, spectra, config.parameters, False), logl_kwargs={\
+            "model":"disk", "ncpus":ncpus, "timelimit":args.timelimit, \
+            "ncpus_highmass":ncpus_highmass, "with_hyperion":args.withhyperion,\
+            "source":source, "nice":nice, "verbose":args.verbose}, \
+            ptform_args=(config.parameters, config.priors), periodic=periodic, \
+            pool=pool, sample="rwalk", walks=config.walks)
 
 # Run a few burner steps.
 
 if args.action == "run":
-    if not sampler.base:
-        for it, results in enumerate(sampler.sample_initial(dlogz=config.dlogz,\
-                nlive=config.nlive_init, save_samples=True, \
-                resume=args.resume)):
-            # Save the state of the sampler (delete the pool first).
+    for it, results in enumerate(sampler.sample(dlogz=config.dlogz)):
+        # Save the state of the sampler (delete the pool first).
 
-            utils.dynesty.save_sampler("sampler.p", sampler, pool=pool, \
-                    dynamic=True)
+        utils.dynesty.save_sampler("sampler.p", sampler, pool=pool)
 
-            # Print out the status of the sampler.
+        # Print out the status of the sampler.
 
-            dyres.print_fn(results, sampler.it - 1, sampler.ncall, \
-                    dlogz=config.dlogz, logl_max=numpy.inf)
+        dyres.print_fn(results, sampler.it - 1, sampler.ncall, \
+                dlogz=config.dlogz, logl_max=numpy.inf)
 
-            # Manually calculate the stopping criterion.
+        # Manually calculate the stopping criterion.
 
-            logz_remain = numpy.max(sampler.sampler.live_logl) + \
-                    sampler.sampler.saved_logvol[-1]
-            delta_logz = numpy.logaddexp(sampler.sampler.saved_logz[-1], \
-                    logz_remain) - sampler.sampler.saved_logz[-1]
+        logz_remain = numpy.max(sampler.live_logl) + sampler.saved_logvol[-1]
+        delta_logz = numpy.logaddexp(sampler.saved_logz[-1], logz_remain) - \
+                sampler.saved_logz[-1]
 
-            # Every 1000 steps stop and make plots of the status.
+        # Every 1000 steps stop and make plots of the status.
 
-            if (sampler.it - 1) % 1000 == 0 and delta_logz >= config.dlogz:
-                # Add the live points and get the results.
+        if (sampler.it - 1) % 1000 == 0 and delta_logz >= config.dlogz:
+            # Add the live points and get the results.
 
-                sampler.sampler.add_final_live()
+            sampler.add_final_live()
 
-                res = sampler.sampler.results
+            res = sampler.results
 
-                # Make plots of the current status of the fit.
+            # Make plots of the current status of the fit.
 
-                utils.dynesty.plot_status(res, ptform=sampler.prior_transform, \
-                        labels=labels, periodic=periodic)
+            utils.dynesty.plot_status(res, ptform=sampler.prior_transform, \
+                    labels=labels, periodic=periodic)
 
-                # If we haven't reached the stopping criteria yet, remove the 
-                # live points.
+            # If we haven't reached the stopping criteria yet, remove the
+            # live points.
 
-                sampler.sampler._remove_live_points()
+            sampler._remove_live_points()
 
-        # Gather the results and make one final plot of the status.
+    # Gather the results and make one final plot of the status.
 
-        res = sampler.results
+    sampler.add_final_live()
 
-        utils.dynesty.plot_status(res, ptform=sampler.prior_transform, \
-                labels=labels, periodic=periodic)
+    res = sampler.results
 
-    for i in range(sampler.batch, config.maxbatch):
-        # Get the correct bounds to use for the batch.
-
-        logl_bounds = dynesty.dynamicsampler.weight_function(sampler.results)
-        lnz, lnzerr = sampler.results.logz[-1], sampler.results.logzerr[-1]
-
-        # Sample the batch.
-
-        for results in sampler.sample_batch(logl_bounds=logl_bounds, \
-                nlive_new=config.nlive_batch):
-            # Print out the results.
-
-            (worst, ustar, vstar, loglstar, nc,
-                     worst_it, boundidx, bounditer, eff) = results
-
-            results = (worst, ustar, vstar, loglstar, numpy.nan, numpy.nan,
-                    lnz, lnzerr**2, numpy.nan, nc, worst_it, boundidx,
-                    bounditer, eff, numpy.nan)
-
-            dyres.print_fn(results, sampler.it - 1, sampler.ncall,\
-                    nbatch=sampler.batch+1, stop_val=5, \
-                    logl_min=logl_bounds[0], logl_max=logl_bounds[1])
-
-        # Merge the new samples in.
-
-        sampler.combine_runs()
-
-        # Save the status of the sampler after each batch.
-
-        utils.dynesty.save_sampler("sampler.p", sampler, pool=pool, \
-                dynamic=True)
-
-        # Get the results.
-
-        res = sampler.results
-
-        # Make plots of the current status of the fit.
-
-        utils.dynesty.plot_status(res, ptform=sampler.prior_transform, \
-                labels=labels, periodic=periodic)
+    utils.dynesty.plot_status(res, ptform=sampler.prior_transform, \
+            labels=labels, periodic=periodic)
 
 # If we are just plotting, a few minor things to do.
 
 elif args.action == "plot":
     # Add the final live points if needed and get the results.
 
-    if not sampler.base:
-        if not sampler.sampler.added_live:
-            sampler.sampler.add_final_live()
+    if not sampler.added_live:
+        sampler.add_final_live()
 
-        res = sampler.sampler.results
+        res = sampler.results
     else:
         res = sampler.results
 
@@ -323,10 +274,10 @@ for command in trim:
 
             samples = samples[good,:]
 
-# Now calculate the best fit parameters.
+# Get the best fit parameters.
 
 params = numpy.median(samples, axis=0)
-sigma = astropy.stats.mad_std(samples, axis=0)
+sigma = samples.std(axis=0)
 
 # Write out the results.
 
@@ -356,46 +307,71 @@ params = dict(zip(keys, params))
 #
 ############################################################################
 
+# Plot the best fit model over the data.
+
+fig, ax = plt.subplots(nrows=2*len(visibilities["file"]), ncols=3)
+
 # Create a high resolution model for averaging.
 
-m = modeling.run_flared_model(visibilities, params, config.parameters, \
-        plot=True, ncpus=ncpus, source=source, plot_vis=args.plot_vis, \
-        nice=nice)
+m = modeling.run_disk_model(visibilities, images, spectra, params, \
+        config.parameters, plot=True, ncpus=ncpus, \
+        ncpus_highmass=ncpus_highmass, with_hyperion=args.withhyperion, \
+        timelimit=args.timelimit, source=source, nice=nice)
 
-# Open up a pdf file to plot into.
-
-pdf = PdfPages("model.pdf")
-
-# Loop through the visibilities and plot.
+# Plot the millimeter data/models.
 
 for j in range(len(visibilities["file"])):
-    # Plot the best fit model over the data.
+    # Plot the visibilities.
 
-    fig, ax = plt.subplots(nrows=visibilities["nrows"][j], \
-            ncols=visibilities["ncols"][j], sharex=True, sharey=True)
+    plotting.plot_1D_visibilities(visibilities, m, config.parameters, \
+            params, index=j, fig=(fig, ax[2*j,0]))
 
-    # Make a plot of the channel maps.
+    # Plot the 2D visibilities.
 
-    plotting.plot_channel_maps(visibilities, m, config.parameters, params, \
-            index=j, plot_vis=args.plot_vis, fig=(fig,ax))
-    
-    # Adjust the plot and save it.
+    plotting.plot_2D_visibilities(visibilities, m, config.parameters, \
+            params, index=j, fig=(fig, ax[2*j+1,0:2]))
 
-    fig.set_size_inches((10,9))
-    fig.subplots_adjust(left=0.08, right=0.98, top=0.98, bottom=0.07, \
-            wspace=0.0,hspace=0.0)
+    # Plot the model image.
 
-    # Adjust the figure and save.
+    plotting.plot_continuum_image(visibilities, m, config.parameters, \
+            params, index=j, fig=(fig, ax[2*j,1]))
 
-    pdf.savefig(fig)
+# Plot the SED.
 
-    plt.clf()
+plotting.plot_SED(spectra, m, SED=args.SED, fig=(fig, ax[0,2]))
 
-# Close the pdf.
+# Plot the scattered light image.
 
-pdf.close()
+for j in range(len(images["file"])):
+    plotting.plot_scattered_light(visibilities, m, config.parameters, \
+            params, index=j, fig=(fig, ax[1,2]))
 
-# Now we can close the pool.
+# Turn off axes when they aren't being used.
+
+if len(images["file"]) == 0:
+    ax[1,2].set_axis_off()
+
+for j in range(len(visibilities["file"])):
+    if j > 0:
+        ax[2*j,2].set_axis_off()
+        ax[2*j+1,2].set_axis_off()
+
+# Adjust the plot.
+
+fig.set_size_inches((12.5,8*len(visibilities["file"])))
+fig.subplots_adjust(left=0.07, right=0.98, top=0.95, bottom=0.08, \
+        wspace=0.25, hspace=0.2)
+
+# Save the figure.
+
+fig.savefig("model.pdf")
+
+plt.close(fig)
+
+if args.action == "plot":
+    nsteps = numpy.inf
+
+# Now we can close the pool and end the code.
 
 if args.action == "run":
     if withmpi:
