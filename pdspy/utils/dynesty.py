@@ -70,7 +70,7 @@ def lnlike(p, visibilities, images, spectra, parameters, plot, \
 
 # Define a prior function.
 
-def ptform(u, parameters, priors):
+def ptform(u, parameters, priors, model="disk"):
 
     # Set up the params dictionary.
 
@@ -170,7 +170,7 @@ def ptform(u, parameters, priors):
                         parameters["w_gap1"]["limits"][0]) + \
                         parameters["w_gap1"]["limits"][0]
             # Disallow any absurdly dense models.
-            elif key == "logR_env":
+            elif key == "logR_env" and model == "disk":
                 if params["logM_env"]["fixed"]:
                     logR_env_min = max(0.5*params["logM_env"]["value"] + 4., \
                             params["logR_env"]["limits"][0])
@@ -179,7 +179,7 @@ def ptform(u, parameters, priors):
 
                 pparams[key] = uparams[key] * (parameters[key]["limits"][1] - \
                         logR_env_min) + logR_env_min
-            elif key == "logM_env":
+            elif key == "logM_env" and model == "disk":
                 if "logR_env" in pparams:
                     logR_env = pparams["logR_env"]
                 else:
