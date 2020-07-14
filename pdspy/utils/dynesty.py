@@ -8,8 +8,9 @@ import numpy
 
 # Define a likelihood function.
 
-def lnlike(p, visibilities, parameters, plot, ncpus=1, source="ObjName", \
-        nice=19):
+def lnlike(p, visibilities, images, spectra, parameters, plot, \
+        model="flared", ncpus=1, ncpus_highmass=1, with_hyperion=False, \
+        timelimit=3600, source="ObjName", nice=19, verbose=False):
 
     # Set up the params dictionary.
 
@@ -22,8 +23,19 @@ def lnlike(p, visibilities, parameters, plot, ncpus=1, source="ObjName", \
 
     # Run the model.
 
-    m = modeling.run_flared_model(visibilities, params, parameters, plot, \
-            ncpus=ncpus, source=source, nice=nice)
+    if model == "disk":
+        m = modeling.run_disk_model(visibilities, images, spectra, params, \
+                parameters, plot, ncpus=ncpus, ncpus_highmass=ncpus_highmass, \
+                with_hyperion=with_hyperion, timelimit=timelimit, \
+                source=source, nice=nice, verbose=verbose)
+    else:
+        m = modeling.run_flared_model(visibilities, params, parameters, plot, \
+                ncpus=ncpus, source=source, nice=nice)
+
+    # Catch whether the model timed out.
+
+    if m == 0.:
+        return -numpy.inf
 
     # A list to put all of the chisq into.
 
@@ -38,6 +50,19 @@ def lnlike(p, visibilities, parameters, plot, ncpus=1, source="ObjName", \
                 -0.5*(numpy.sum((visibilities["data"][j].imag - \
                 m.visibilities[visibilities["lam"][j]].imag)**2 * \
                 visibilities["data"][j].weights)))
+
+    # Calculate the chisq for all of the images.
+
+    for j in range(len(images["file"])):
+        chisq.append(-0.5 * (numpy.sum((images["data"][j].image - \
+                m.images[images["lam"][j]].image)**2 / \
+                images["data"][j].unc**2)))
+
+    # Calculate the chisq for the SED.
+
+    if "total" in spectra:
+        chisq.append(-0.5 * (numpy.sum((spectra["total"].flux - \
+                m.spectra["SED"].flux)**2 / spectra["total"].unc**2)))
 
     # Return the sum of the chisq.
 
@@ -60,7 +85,8 @@ def ptform(u, parameters, priors):
     # Get the correct order for setting parameters (as some depend on others
 
     ordered_keys, index = numpy.unique(["logR_env","logR_disk","logR_in", \
-            "logTatm0","logTmid0"]+list(parameters.keys()), return_index=True)
+            "logTatm0","logTmid0","logR_gap1"]+list(parameters.keys()), \
+            return_index=True)
     ordered_keys = ordered_keys[numpy.argsort(index)]
 
     # Now loop through the parameters and transform the ones that aren't fixed.
@@ -106,6 +132,63 @@ def ptform(u, parameters, priors):
                         parameters[key]["limits"][1]) - \
                         max(pparams["logR_in"],parameters[key]["limits"][0])) +\
                         max(pparams["logR_in"],parameters[key]["limits"][0])
+            # Same thing for R_gap and w_gap.
+            elif key == "logR_gap1":
+                if "logR_disk" in pparams:
+                    logR_disk = pparams["logR_disk"]
+                else:
+                    logR_disk = parameters["logR_disk"]["value"]
+
+                if "logR_in" in pparams:
+                    logR_in = pparams["logR_in"]
+                else:
+                    logR_in = parameters["logR_in"]["value"]
+
+                logR_gap_min = max(numpy.log10(10.**logR_in + \
+                        parameters["w_gap1"]["limits"][0]/2), \
+                        parameters["logR_gap1"]["limits"][0])
+                logR_gap_max = min(numpy.log10(0.75*10.**logR_disk),
+                        parameters["logR_gap1"]["limits"][1])
+
+                pparams[key] = uparams[key] * (logR_gap_max - logR_gap_min) + \
+                        logR_gap_min
+            elif key == "w_gap1":
+                if "logR_in" in pparams:
+                    logR_in = pparams["logR_in"]
+                else:
+                    logR_in = parameters["logR_in"]["value"]
+
+                if "logR_gap1" in pparams:
+                    logR_gap = pparams["logR_gap1"]
+                else:
+                    logR_gap = parameters["logR_gap1"]["value"]
+
+                w_gap_max = min(2*(10.**logR_gap - 10.**logR_in), \
+                        parameters["w_gap1"]["limits"][1])
+
+                pparams[key] = uparams[key] * (w_gap_max - \
+                        parameters["w_gap1"]["limits"][0]) + \
+                        parameters["w_gap1"]["limits"][0]
+            # Disallow any absurdly dense models.
+            elif key == "logR_env":
+                if params["logM_env"]["fixed"]:
+                    logR_env_min = max(0.5*params["logM_env"]["value"] + 4., \
+                            params["logR_env"]["limits"][0])
+                else:
+                    logR_env_min = params["logR_env"]["limits"][0]
+
+                pparams[key] = uparams[key] * (parameters[key]["limits"][1] - \
+                        logR_env_min) + logR_env_min
+            elif key == "logM_env":
+                if "logR_env" in pparams:
+                    logR_env = pparams["logR_env"]
+                else:
+                    logR_env = parameters["logR_env"]["value"]
+
+                pparams[key] = uparams[key] * (min(2*(logR_env - 4), \
+                        parameters[key]["limits"][1]) - \
+                        parameters[key]["limits"][0]) + \
+                        parameters[key]["limits"][0]
             # Tmid0 should be less than Tatm0.
             elif key == "logTmid0":
                 pparams[key] = uparams[key] * (min(pparams["logTatm0"], \

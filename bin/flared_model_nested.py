@@ -166,11 +166,11 @@ if args.resume:
     res = sampler.results
 else:
     sampler = dynesty.NestedSampler(utils.dynesty.lnlike, utils.dynesty.ptform,\
-            ndim, nlive=config.nlive_init, logl_args=(visibilities, \
-            config.parameters, False), logl_kwargs={"ncpus":ncpus, \
-            "source":source, "nice":nice}, ptform_args=(config.parameters, \
-            config.priors), periodic=periodic, pool=pool, sample="rwalk", \
-            walks=config.walks)
+            ndim, nlive=config.nlive_init, logl_args=(visibilities, images, \
+            spectra, config.parameters, False), logl_kwargs={"model":"flared", \
+            "ncpus":ncpus, "source":source, "nice":nice}, ptform_args=(\
+            config.parameters, config.priors), periodic=periodic, pool=pool, \
+            sample="rwalk", walks=config.walks)
 
 # Run a few burner steps.
 
