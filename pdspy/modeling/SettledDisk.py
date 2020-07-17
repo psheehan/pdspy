@@ -95,6 +95,19 @@ class SettledDisk:
 
         rho[numpy.isnan(rho)] = 0.
 
+        ##### Normalize the mass correctly.
+        
+        if coordsys == "spherical":
+            for i in range(na):
+                if tt.max() > pi/2:
+                    rho[:,:,:,i] *= mass_frac[i]/(2*pi*trapz(trapz(\
+                            rho[:,:,:,i]*rt**2*numpy.sin(tt),tt,axis=1), \
+                            rt[:,0,:],axis=0))[0]
+                else:
+                    rho[:,:,:,i] *= mass_frac[i]/(4*pi*trapz(trapz(\
+                            rho[:,:,:,i]*rt**2*numpy.sin(tt),tt,axis=1), \
+                            rt[:,0,:],axis=0))[0]
+
         return a, rho
 
     def number_density(self, r, theta, phi, gas=0):
