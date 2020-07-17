@@ -84,6 +84,10 @@ class UlrichEnvelope:
 
         rho[(rr >= rout) ^ (rr <= rin)] = 0e0
 
+        ##### Add an outflow cavity.
+
+        rho[numpy.abs(zz)/AU-cavz0/AU-(RR/AU)**cavpl > 0.0] *= cavrfact
+        
         ##### Normalize the mass correctly.
         
         if theta.max() > pi/2:
@@ -94,10 +98,6 @@ class UlrichEnvelope:
                     rr[:,0,:],axis=0))[0]
         rho *= mdot
 
-        ##### Add an outflow cavity.
-
-        rho[numpy.abs(zz)/AU-cavz0/AU-(RR/AU)**cavpl > 0.0] *= cavrfact
-        
         #numpy.seterr(all='warn')
 
         return rho

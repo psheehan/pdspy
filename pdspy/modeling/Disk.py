@@ -65,6 +65,16 @@ class Disk:
         
         rho = Sigma / (numpy.sqrt(2*numpy.pi)*h) * numpy.exp(-0.5*(zz / h)**2)
 
+        ##### Normalize the mass correctly.
+        
+        if coordsys == "spherical":
+            if tt.max() > pi/2:
+                rho *= mass/(2*pi*trapz(trapz(rho*rt**2*numpy.sin(tt),tt,\
+                        axis=1), rt[:,0,:],axis=0))[0]
+            else:
+                rho *= mass/(4*pi*trapz(trapz(rho*rt**2*numpy.sin(tt),tt,\
+                        axis=1), rt[:,0,:],axis=0))[0]
+
         return rho
 
     def number_density(self, r, theta, phi, gas=0):
