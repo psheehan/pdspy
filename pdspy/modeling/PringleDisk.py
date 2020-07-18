@@ -1,5 +1,6 @@
 import numpy
 import h5py
+from scipy.integrate import trapz
 from ..constants.physics import G, m_p
 from ..constants.astronomy import AU, M_sun
 from ..constants.math import pi
@@ -8,7 +9,7 @@ from ..gas import Gas
 from .Disk import Disk
 
 class PringleDisk(Disk):
-    def surface_density(self, r):
+    def surface_density(self, r, normalize=True):
         # Get the disk parameters.
 
         rr = r * AU
@@ -44,6 +45,17 @@ class PringleDisk(Disk):
                 Sigma[(r >= self.gap_rin[i]) & \
                         (r <= self.gap_rout[i])] *= self.gap_delta[i]
         
+        ##### Normalize the surface density correctly.
+        
+        if normalize:
+            r_high = numpy.logspace(numpy.log10(r.min()), numpy.log10(r.max()),\
+                    1000)*AU
+            Sigma_high = self.surface_density(r_high, normalize=False)
+
+            scale = mass / 2*numpy.pi*trapz(r_high*Sigma_high, r_high)
+
+            Sigma *= scale
+
         return Sigma
 
     def scale_height(self, r):

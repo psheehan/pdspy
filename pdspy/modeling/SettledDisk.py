@@ -1,5 +1,6 @@
 import numpy
 import h5py
+from scipy.integrate import trapz
 from ..constants.physics import G, m_p
 from ..constants.astronomy import AU, M_sun
 from ..constants.math import pi
@@ -95,19 +96,6 @@ class SettledDisk:
 
         rho[numpy.isnan(rho)] = 0.
 
-        ##### Normalize the mass correctly.
-        
-        if coordsys == "spherical":
-            for i in range(na):
-                if tt.max() > pi/2:
-                    rho[:,:,:,i] *= mass_frac[i]/(2*pi*trapz(trapz(\
-                            rho[:,:,:,i]*rt**2*numpy.sin(tt),tt,axis=1), \
-                            rt[:,0,:],axis=0))[0]
-                else:
-                    rho[:,:,:,i] *= mass_frac[i]/(4*pi*trapz(trapz(\
-                            rho[:,:,:,i]*rt**2*numpy.sin(tt),tt,axis=1), \
-                            rt[:,0,:],axis=0))[0]
-
         return a, rho
 
     def number_density(self, r, theta, phi, gas=0):
@@ -138,7 +126,7 @@ class SettledDisk:
 
         return n
 
-    def surface_density(self, r):
+    def surface_density(self, r, normalize=True):
         # Get the disk parameters.
 
         rin = self.rmin * AU
@@ -173,6 +161,17 @@ class SettledDisk:
                 Sigma[(r >= self.gap_rin[i]) & \
                         (r <= self.gap_rout[i])] *= self.gap_delta[i]
         
+        ##### Normalize the surface density correctly.
+        
+        if normalize:
+            r_high = numpy.logspace(numpy.log10(r.min()), numpy.log10(r.max()),\
+                    1000)*AU
+            Sigma_high = self.surface_density(r_high, normalize=False)
+
+            scale = mass / 2*numpy.pi*trapz(r_high*Sigma_high, r_high)
+
+            Sigma *= scale
+
         return Sigma
 
     def scale_height(self, r):
