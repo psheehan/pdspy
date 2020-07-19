@@ -10,6 +10,7 @@ from .Grid import Grid
 from .Model import Model
 from .Star import Star
 from .UlrichEnvelope import UlrichEnvelope
+from .UlrichEnvelopeExtended import UlrichEnvelopeExtended
 from .YSOModel import YSOModel
 
 from .run_disk_model import run_disk_model
