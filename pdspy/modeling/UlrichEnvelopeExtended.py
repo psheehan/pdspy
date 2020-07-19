@@ -51,7 +51,8 @@ class UlrichEnvelopeExtended:
         cavrfact = self.cavrfact
         theta_open = self.theta_open
 
-        cava = (rout / numpy.tan(theta_open/2) - cavz0) * rout**-cavpl
+        cava = (rout / numpy.tan(theta_open/2*numpy.pi/180.) - cavz0) * \
+                rout**-cavpl
 
         # Set up the coordinates.
         
