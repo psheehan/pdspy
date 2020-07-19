@@ -51,6 +51,8 @@ class UlrichEnvelopeExtended:
         cavrfact = self.cavrfact
         theta_open = self.theta_open
 
+        cava = (rout / numpy.tan(theta_open/2) - cavz0) * rout**-cavpl
+
         # Set up the coordinates.
         
         rr, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
