@@ -178,6 +178,12 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         m.add_ulrich_envelope(mass=p["M_env"], rmin=p["R_in"], rmax=p["R_env"],\
                 cavpl=p["ksi"], cavrfact=p["f_cav"], t0=p["T0_env"], \
                 tpl=p["q_env"], aturb=p["a_turb_env"], dust=edust)
+    elif p["envelope_type"] == "ulrich-extended":
+        m.add_ulrichextended_envelope(mass=p["M_env"], rmin=p["R_in"], \
+                rmax=p["R_env"], cavpl=p["ksi"], cavrfact=p["f_cav"], 
+                theta_open=p["theta_open"], zoffset=p["zoffset"], \
+                t0=p["T0_env"], tpl=p["q_env"], aturb=p["a_turb_env"], \
+                dust=edust)
     else:
         pass
 
