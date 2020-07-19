@@ -22,8 +22,8 @@ base_parameters = {
         "logR_gap3":{"fixed":True, "value":1.8, "limits":[-1.,3.]},
         "w_gap3":{"fixed":True, "value":10., "limits":[1.,100.]},
         "logdelta_gap3":{"fixed":True, "value":0.0, "limits":[-4.,0.]},
-        "f_M_large":{"fixed":True, "value":0.8, "limits":[0.05, 1.]},
-        "f_h_large":{"fixed":True, "value":0.5, "limits":[0.1, 1.]},
+        "f_M_large":{"fixed":True, "value":1., "limits":[0.05, 1.]},
+        "f_h_large":{"fixed":True, "value":1., "limits":[0.1, 1.]},
         "beta_large":{"fixed":True, "value":1., "limits":[0.5, 1.5]},
         "logalpha_settle":{"fixed":True, "value":-2., "limits":[-5., 0.]},
         # Disk temperature parameters.
@@ -44,6 +44,8 @@ base_parameters = {
         "logR_c":{"fixed":True, "value":"logR_disk", "limits":[-1.,4.]},
         "f_cav":{"fixed":True, "value":0.5, "limits":[0.,1.]},
         "ksi":{"fixed":True, "value":1.0, "limits":[0.5,1.5]},
+        "theta_open":{"fixed":True, "value":"45", "limits":[0.,90.]},
+        "zoffset":{"fixed":True, "value":1, "limits":[0.,5.]},
         # Envelope temperature parameters.
         "logT0_env":{"fixed":True, "value":2.5, "limits":[1.,3.5]},
         "q_env":{"fixed":True, "value":0.25, "limits":[0.,1.5]},
