@@ -49,10 +49,10 @@ class UlrichEnvelopeExtended:
         cavz0 = self.zoffset * AU
         cavpl = self.cavpl
         cavrfact = self.cavrfact
-        theta_open = self.theta_open
+        theta_open = self.theta_open * numpy.pi / 180.
 
-        cava = (rout / numpy.tan(theta_open/2*numpy.pi/180.) - cavz0) * \
-                rout**-cavpl
+        cava = (rout*numpy.sin(theta_open/2)/AU / numpy.tan(theta_open/2) - \
+                cavz0/AU) * (rout*numpy.sin(theta_open/2)/AU)**-cavpl
 
         # Set up the coordinates.
         
