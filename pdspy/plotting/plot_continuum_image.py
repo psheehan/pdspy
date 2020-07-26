@@ -8,8 +8,8 @@ import numpy
 def plot_continuum_image(visibilities, model, parameters, params, index=0, \
         fig=None, cmap="jet", fontsize="medium", image="data", \
         contours="model", model_image="beam-convolve", \
-        weighting="robust", robust=2, maxiter=200, threshold=0.001, \
-        cmap_contours="none", colors_contours="none", levels=None, \
+        weighting="robust", robust=2, maxiter=200, threshold=0.001, 
+        uvtaper=None, cmap_contours="none", colors_contours="none",levels=None,\
         negative_levels=None, show_beam=False, beamxy=(0.1,0.1), \
         show_colorbar=False, cax=None, colorbar_location='right', \
         colorbar_orientation='vertical', colorbar_size='5%', colorbar_pad=0.05,\
@@ -68,7 +68,8 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
                         pixel_size=visibilities["image_pixelsize"][index], \
                         weighting=weighting, robust=robust, \
                         convolution="expsinc", mfs=False, mode="continuum", \
-                        maxiter=maxiter, threshold=threshold)[0]
+                        maxiter=maxiter, threshold=threshold, \
+                        uvtaper=uvtaper)[0]
         elif plot_type == "residuals":
             residuals = Visibilities(visibilities["data"][index].u, \
                     visibilities["data"][index].v, \
@@ -86,7 +87,8 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
                     imsize=visibilities["image_npix"][index], \
                     pixel_size=visibilities["image_pixelsize"][index], \
                     weighting=weighting, robust=robust, convolution="expsinc", \
-                    mfs=False, mode="continuum", maxiter=maxiter)[0]
+                    mfs=False, mode="continuum", maxiter=maxiter, \
+                    uvtaper=uvtaper)[0]
 
         # Get the appropriate scaling for the image.
 
