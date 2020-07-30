@@ -7,7 +7,7 @@ from scipy.fftpack import ifft2, fftshift, ifftshift, fftfreq
 
 def invert(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
         weighting="natural", robust=2, npixels=0, centering=None, \
-        mode='continuum', beam=False):
+        mode='continuum', beam=False, uvtaper=None):
 
     # If we are calculating the beam, set all of the real values to 1 and the
     # imaginary data to 0.
@@ -18,6 +18,15 @@ def invert(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
 
         data.real[:,:] = 1.
         data.imag[:,:] = 0.
+
+    # Apply a uv-taper to the data, if requested.
+
+    if type(uvtaper) != type(None):
+        taper = numpy.exp(-0.5*data.uvdist**2/(uvtaper*1e3)**2)
+
+        weights = data.weights.copy()
+        for i in range(data.freq.size):
+            data.weights[:,i] *= taper
 
     # Grid the data before imaging.
     
@@ -31,6 +40,11 @@ def invert(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
     if beam:
         data.real = real
         data.imag = imag
+
+    # If using uvtaper, restore the weights.
+
+    if type(uvtaper) != type(None):
+        data.weights = weights
 
     # Center the data, if requested.
 

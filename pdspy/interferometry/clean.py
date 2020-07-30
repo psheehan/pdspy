@@ -6,13 +6,15 @@ import numpy
 
 def clean(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
         weighting="natural", robust=2, npixels=0, centering=None, \
-        mode='continuum', gain=0.1, maxiter=1000, threshold=0.001):
+        mode='continuum', gain=0.1, maxiter=1000, threshold=0.001, \
+        uvtaper=None):
 
     # First make the image.
 
     image = invert(data, imsize=imsize, pixel_size=pixel_size, \
             convolution=convolution, mfs=mfs, weighting=weighting, \
-            robust=robust, npixels=npixels, centering=centering, mode=mode)
+            robust=robust, npixels=npixels, centering=centering, mode=mode, \
+            uvtaper=uvtaper)
 
     # Now, also make an image of the beam.
 
