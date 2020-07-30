@@ -267,7 +267,29 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                 nthreads=ncpus)
 
         if plot:
-            lam = c / visibilities["image"][j].freq / 1.0e-4
+            # If sub-velocity resolution is requested, adjust the frequencies.
+
+            if visibilities["subsample"][j] > 1:
+                dfreq = visibilities["image"][j].freq[1:] - \
+                        visibilities["image"][j].freq[0:-1]
+                freq = []
+                for i in range(0, visibilities["image"][j].freq.size):
+                    freq.append(visibilities["image"][j].freq[i] + dfreq[i%\
+                            (visibilities["image"][j].freq.size-1)] * \
+                            (numpy.linspace(1./(visibilities["subsample"][j]*\
+                            visibilities["averaging"][j]*2), 1.-1/(\
+                            visibilities["subsample"][j]*\
+                            visibilities["averaging"][j]*2), \
+                            visibilities["subsample"][j]*\
+                            visibilities["averaging"][j]) - 0.5))
+
+                freq = numpy.concatenate(freq)
+            else:
+                freq = visibilities["image"][j].freq
+
+            # Get the wavelengths.
+
+            lam = c / freq / 1.0e-4
             wave = lam * numpy.sqrt((1. - b) / (1. + b))
 
             m.set_camera_wavelength(wave)
@@ -301,8 +323,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
 
             # Extinct the data, if included.
 
-            velocity = c * (float(visibilities["freq"][j])*1.0e9 - \
-                    visibilities["image"][j].freq) / \
+            velocity = c * (float(visibilities["freq"][j])*1.0e9 - freq) / \
                     (float(visibilities["freq"][j])*1.0e9) / 1.0e5
 
             tau = p["tau0"] * numpy.exp(-(velocity - p["v_ext"])**2 / \
@@ -312,6 +333,43 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
 
             for i in range(len(m.images[visibilities["lam"][j]].freq)):
                 m.images[visibilities["lam"][j]].image[:,:,i,:] *= extinction[i]
+
+            # And then if sub-sampling, sum the image along the frequency axis 
+            # to get back to the right size, and also Hanning smooth.
+
+            if visibilities["subsample"][j] * visibilities["averaging"][j] > 1 \
+                    or visibilities["hanning"][j]:
+                recombined = numpy.empty((visibilities["image_npix"][j], \
+                        visibilities["image_npix"][j], \
+                        visibilities["image"][j].freq.size*\
+                        visibilities["averaging"][j],1))
+                for i in range(freq.size // visibilities["subsample"][j]): 
+                    recombined[:,:,i,0] = m.images[visibilities["lam"][j]].\
+                            image[:,:,i*visibilities["subsample"][j]:(i+1)*\
+                            visibilities["subsample"][j],0].mean(axis=2)
+
+                # Now do the Hanning smoothing.
+
+                if visibilities["hanning"][j]:
+                    hanning_window = numpy.hanning(5) / numpy.hanning(5).sum()
+
+                    recombined = scipy.signal.fftconvolve(recombined, \
+                            hanning_window.reshape((1,1,hanning_window.size,\
+                            1)), axes=2, mode="same")
+
+                # Finally, average by the binning.
+
+                binned = numpy.empty((visibilities["image_npix"][j], \
+                        visibilities["image_npix"][j], \
+                        visibilities["image"][j].freq.size, 1))
+                for i in range(visibilities["image"][j].freq.size): 
+                    binned[:,:,i,0] = recombined[:,:,i * \
+                            visibilities["averaging"][j]:(i+1)*\
+                            visibilities["averaging"][j],0].mean(axis=2)
+
+                m.images[visibilities["lam"][j]].image = binned
+                m.images[visibilities["lam"][j]].freq = \
+                        visibilities["image"][j].freq
 
             # Now convolve with the beam.
 
@@ -326,7 +384,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                     (90-visibilities["image"][j].header["BPA"])*\
                     numpy.pi/180., 1.0)
 
-            for ind in range(len(wave)):
+            for ind in range(len(m.images[visibilities["lam"][j]].freq)):
                 m.images[visibilities["lam"][j]].image[:,:,ind,0] = \
                         scipy.signal.fftconvolve(\
                         m.images[visibilities["lam"][j]].image[:,:,ind,0], \
