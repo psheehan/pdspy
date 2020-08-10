@@ -77,6 +77,13 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
                     logmin=residuals.uvdist[numpy.nonzero(residuals.uvdist)].\
                     min()*0.95, logmax=residuals.uvdist.max()*1.05, \
                     mode="spectralline")
+            elif plot_type == "weights":
+                vis = Visibilities(visibilities["data1d"][index].u, \
+                        visibilities["data1d"][index].v, \
+                        visibilities["data1d"][index].freq, \
+                        1./visibilities["data1d"][index].weights**0.5, \
+                        1./visibilities["data1d"][index].weights**0.5,\
+                        visibilities["data1d"][index].weights.copy())
         else:
             # Get the correct image/contours for plotting.
 
