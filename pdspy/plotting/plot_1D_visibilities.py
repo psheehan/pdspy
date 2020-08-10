@@ -44,7 +44,7 @@ def plot_1D_visibilities(visibilities, model, parameters, params, index=0, \
     ax.axis([1,visibilities["data1d"][index].uvdist.max()/1000*3,0,\
             visibilities["data1d"][index].amp.max()*1.1*1000])
 
-    ax.set_xscale("log", nonposx='clip')
+    ax.set_xscale("log", nonpositive='clip')
 
     ax.set_xlabel("Baseline [k$\lambda$]", fontsize=fontsize)
     ax.set_ylabel("Amplitude [mJy]", fontsize=fontsize)
