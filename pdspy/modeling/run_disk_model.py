@@ -2,6 +2,7 @@
 
 from ..constants.astronomy import arcsec
 from .YSOModel import YSOModel
+from .get_surrogate_model import get_surrogate_model
 from .. import interferometry as uv
 from .. import spectroscopy as sp
 from .. import misc
@@ -33,7 +34,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         plot=False, ncpus=1, ncpus_highmass=1, with_hyperion=False, \
         timelimit=3600, source="disk", nice=None, disk_vis=False, \
         no_radiative_transfer=False, nlam_SED=50, run_thermal=True, \
-        verbose=False):
+        surrogate=[], verbose=False):
 
     # Set the values of all of the parameters.
 
@@ -50,10 +51,9 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         else:
             value = params[key]
 
+        p[key] = value
         if key[0:3] == "log":
             p[key[3:]] = 10.**value
-        else:
-            p[key] = value
 
     # Make sure alpha is defined.
 
@@ -205,54 +205,65 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
 
     # Run the thermal simulation.
 
-    if code == "hyperion" and run_thermal:
-        m.run_thermal(code="hyperion", nphot=2e5, mrw=True, pda=True, \
-                niterations=20, mpi=True, nprocesses=nprocesses, \
-                verbose=verbose)
+    if "temperature" in surrogate:
+        # Use the surrogate model to calculate the temperature.
 
-        # Convert model to radmc-3d format.
+        temperature = get_surrogate_model(p, quantity="temperature")
 
-        m.make_hyperion_symmetric()
+        m.grid.temperature = []
+        for i in range(len(m.grid.density)):
+            m.grid.add_temperature(temperature)
+    else:
+        if code == "hyperion" and run_thermal:
+            m.run_thermal(code="hyperion", nphot=2e5, mrw=True, pda=True, \
+                    niterations=20, mpi=True, nprocesses=nprocesses, \
+                    verbose=verbose)
 
-        m.convert_hyperion_to_radmc3d()
-    elif run_thermal:
-        try:
-            t1 = time.time()
-            m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
-                    mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
-                    verbose=verbose, setthreads=nprocesses, \
-                    timelimit=timelimit, nice=nice)
-            t2 = time.time()
-            f = open(original_dir + "/times.txt", "a")
-            f.write("{0:f}\n".format(t2-t1))
-            f.close()
-        # Catch a timeout error from models running for too long...
-        except TimeoutExpired:
-            t2 = time.time()
-            f = open(original_dir + "/times.txt", "a")
-            f.write("{0:f}\n".format(t2-t1))
-            f.close()
+            # Convert model to radmc-3d format.
 
-            os.system("mv params.txt {0:s}/params_timeout_{1:s}".format(\
-                    original_dir, time.strftime("%Y-%m-%d-%H:%M:%S", \
-                    time.gmtime())))
-            os.system("rm *.inp *.out *.dat *.uinp")
-            os.chdir(original_dir)
-            os.rmdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
+            m.make_hyperion_symmetric()
 
-            return 0.
-        # Catch a strange RADMC3D error and re-run. Not an ideal fix, but 
-        # perhaps the simplest option.
-        except:
-            t1 = time.time()
-            m.run_thermal(code="radmc3d", nphot=1e6, modified_random_walk=True,\
-                    mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
-                    verbose=verbose, setthreads=nprocesses, \
-                    timelimit=timelimit, nice=nice)
-            t2 = time.time()
-            f = open(original_dir + "/times.txt", "a")
-            f.write("{0:f}\n".format(t2-t1))
-            f.close()
+            m.convert_hyperion_to_radmc3d()
+        elif run_thermal:
+            try:
+                t1 = time.time()
+                m.run_thermal(code="radmc3d", nphot=1e6, \
+                        modified_random_walk=True,\
+                        mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
+                        verbose=verbose, setthreads=nprocesses, \
+                        timelimit=timelimit, nice=nice)
+                t2 = time.time()
+                f = open(original_dir + "/times.txt", "a")
+                f.write("{0:f}\n".format(t2-t1))
+                f.close()
+            # Catch a timeout error from models running for too long...
+            except TimeoutExpired:
+                t2 = time.time()
+                f = open(original_dir + "/times.txt", "a")
+                f.write("{0:f}\n".format(t2-t1))
+                f.close()
+
+                os.system("mv params.txt {0:s}/params_timeout_{1:s}".format(\
+                        original_dir, time.strftime("%Y-%m-%d-%H:%M:%S", \
+                        time.gmtime())))
+                os.system("rm *.inp *.out *.dat *.uinp")
+                os.chdir(original_dir)
+                os.rmdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(),source))
+
+                return 0.
+            # Catch a strange RADMC3D error and re-run. Not an ideal fix, but 
+            # perhaps the simplest option.
+            except:
+                t1 = time.time()
+                m.run_thermal(code="radmc3d", nphot=1e6, \
+                        modified_random_walk=True,\
+                        mrw_gamma=2, mrw_tauthres=10, mrw_count_trigger=100, \
+                        verbose=verbose, setthreads=nprocesses, \
+                        timelimit=timelimit, nice=nice)
+                t2 = time.time()
+                f = open(original_dir + "/times.txt", "a")
+                f.write("{0:f}\n".format(t2-t1))
+                f.close()
 
     # Run the images/visibilities/SEDs. If plot == "concat" then we are doing
     # a fit and we need less. Otherwise we are making a plot of the best fit 

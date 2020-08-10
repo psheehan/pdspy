@@ -51,8 +51,8 @@ def plot_SED(spectra, model, SED=False, fig=None, model_color="g",
     else:
         ax.axis([0.1,1.0e4,1e-6,1e3])
 
-    ax.set_xscale("log", nonposx='clip')
-    ax.set_yscale("log", nonposy='clip')
+    ax.set_xscale("log", nonpositive='clip')
+    ax.set_yscale("log", nonpositive='clip')
 
     ax.set_xlabel("$\lambda$ [$\mu$m]", fontsize=fontsize)
     if SED:
