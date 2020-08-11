@@ -154,6 +154,7 @@ for key in sorted(config.parameters.keys()):
 # Make the labels nice with LaTeX.
 
 labels = ["$"+key.replace("T0_env","T_0,env").replace("T0","T_0").\
+        replace("Tatm0","T_atm,0").replace("Tmid0","T_mid,0").\
         replace("turb_env","turb,env").replace("in_env","in,env").\
         replace("_","_{").replace("log","\log ")+"}$" if key[0:3] == \
         "log" else "$"+key+"$" for key in keys]
@@ -242,9 +243,12 @@ elif args.action == "plot":
 
     # Make the traceplots and the bound plots.
 
+    """
     utils.dynesty.plot_status(res, ptform=sampler.prior_transform, \
             labels=labels, periodic=periodic)
+    """
 
+"""
 # Generate a plot of the weighted samples.
 
 fig, ax = plt.subplots(ndim-1, ndim-1, figsize=(10,10))
@@ -261,6 +265,7 @@ dyplot.cornerplot(res, color="blue", show_titles=True, max_n_ticks=3, \
         quantiles=None, fig=(fig, ax), labels=labels)
 
 fig.savefig("cornerplot.png")
+"""
 
 # Convert the results to a more traditional set of samples that you would
 # get from an MCMC program.
@@ -268,6 +273,9 @@ fig.savefig("cornerplot.png")
 samples, weights = res.samples, numpy.exp(res.logwt - res.logz[-1])
 
 samples = dyfunc.resample_equal(samples, weights)
+
+#good = samples[:,0] > 173.
+#samples = samples[good,:]
 
 # Save pos, prob, chain.
 
@@ -289,8 +297,16 @@ for command in trim:
 
 # Now calculate the best fit parameters.
 
-params = numpy.median(samples, axis=0)
+#params = numpy.median(samples, axis=0)
+good = numpy.logical_and(res.samples[:,0] > 173.5, res.samples[:,0] < 174)
+params = res.samples[good,:][numpy.argmax(res.logl[good]),:]
 sigma = astropy.stats.mad_std(samples, axis=0)
+
+"""
+print()
+print(res.logl[-1])
+print(lnlike(params, visibilities, images, spectra, config.parameters, False, \
+        model="flared", ncpus=ncpus, source=source, nice=nice))
 
 # Write out the results.
 
@@ -309,6 +325,7 @@ os.system("cat fit.txt")
 fig = corner.corner(samples, labels=labels, truths=params)
 
 plt.savefig("fit.pdf")
+"""
 
 # Make a dictionary of the best fit parameters.
 
@@ -341,7 +358,8 @@ for j in range(len(visibilities["file"])):
     # Make a plot of the channel maps.
 
     plotting.plot_channel_maps(visibilities, m, config.parameters, params, \
-            index=j, plot_vis=args.plot_vis, fig=(fig,ax))
+            index=j, plot_vis=args.plot_vis, fig=(fig,ax), image="model", \
+            contours='none')
     
     # Adjust the plot and save it.
 
@@ -358,6 +376,25 @@ for j in range(len(visibilities["file"])):
 # Close the pdf.
 
 pdf.close()
+
+# Make a plot of the density distribution.
+
+theta, r = numpy.meshgrid(m.grid.theta, m.grid.r)
+print(r)
+print(theta)
+print(r.shape)
+print(theta.shape)
+
+R = r * numpy.sin(theta)
+z = r * numpy.cos(theta)
+
+number_density = numpy.log10(m.grid.number_density[0])
+
+levels = numpy.linspace(numpy.nanmax(number_density)-50, \
+        numpy.nanmax(number_density), 50)
+
+plt.contourf(R, z, number_density[:,:,0], levels=levels)
+plt.show()
 
 # Now we can close the pool.
 

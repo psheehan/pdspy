@@ -106,11 +106,16 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
     m = YSOModel()
     m.add_star(mass=p["M_star"], luminosity=p["L_star"],temperature=p["T_star"])
 
+    if "dartois" in p["disk_type"]:
+        ntheta = 101
+    else:
+        ntheta = 51
+
     if p["envelope_type"] == "ulrich":
         p["R_grid"] = p["R_env"]
     else:
         p["R_grid"] = max(5*p["R_disk"],300)
-    m.set_spherical_grid(p["R_in"], p["R_grid"], 100, 51, 2, code="radmc3d")
+    m.set_spherical_grid(p["R_in"], p["R_grid"], 100, ntheta, 2, code="radmc3d")
 
     if p["disk_type"] == "exptaper":
         m.add_pringle_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
