@@ -154,6 +154,7 @@ for key in sorted(config.parameters.keys()):
 # Make the labels nice with LaTeX.
 
 labels = ["$"+key.replace("T0_env","T_0,env").replace("T0","T_0").\
+        replace("Tatm0","T_atm,0").replace("Tmid0","T_mid,0").\
         replace("turb_env","turb,env").replace("in_env","in,env").\
         replace("_","_{").replace("log","\log ")+"}$" if key[0:3] == \
         "log" else "$"+key+"$" for key in keys]
