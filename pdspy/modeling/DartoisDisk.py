@@ -74,7 +74,7 @@ class DartoisDisk(Disk):
             T = self.temperature(r[:,0], numpy.array([0.,2*numpy.pi]), z[0,:], \
                     coordsys="cylindrical")[:,0,:]
 
-            logn[T < self.freezeout[gas]] += numpy.log(1.0e-8)
+            frozen = T < self.freezeout[gas]
 
             # Account for photodissociation.
 
@@ -85,7 +85,9 @@ class DartoisDisk(Disk):
 
             dissociated = cumn < 0.79 * 1.59e21 / 0.706
 
-            logn[dissociated] += numpy.log(1.0e-8)
+            # Now actually reduce the density.
+
+            logn[numpy.logical_or(frozen, dissociated)] += numpy.log(1.0e-8) 
 
             return r, z, logn
 
