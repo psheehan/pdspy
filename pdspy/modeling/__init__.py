@@ -16,3 +16,4 @@ from .YSOModel import YSOModel
 from .run_disk_model import run_disk_model
 from .run_flared_model import run_flared_model
 from .check_parameters import check_parameters
+from .get_surrogate_model import get_surrogate_model
