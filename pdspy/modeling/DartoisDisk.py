@@ -74,7 +74,8 @@ class DartoisDisk(Disk):
             T = self.temperature(r[:,0], numpy.array([0.,2*numpy.pi]), z[0,:], \
                     coordsys="cylindrical")[:,0,:]
 
-            frozen = T < self.freezeout[gas]
+            frozen = 18 * (numpy.arctan(10*(T - (self.freezeout[gas] - 2.25)))-\
+                    numpy.pi/2) / numpy.pi
 
             # Account for photodissociation.
 
@@ -83,11 +84,13 @@ class DartoisDisk(Disk):
             cumn = -scipy.integrate.cumtrapz(n_H2[:,::-1], x=z[:,::-1]*AU, \
                     axis=1, initial=0.)[:,::-1]
 
-            dissociated = cumn < 0.79 * 1.59e21 / 0.706
+            dissociated = 18 * (numpy.arctan(100*(numpy.log10(cumn) - \
+                    (numpy.log10(0.79 * 1.59e21 / 0.706) - 1.025))) - \
+                    numpy.pi/2) / numpy.pi
 
             # Now actually reduce the density.
 
-            logn[numpy.logical_or(frozen, dissociated)] += numpy.log(1.0e-8) 
+            logn += numpy.maximum(frozen + dissociated, -18)
 
             return r, z, logn
 
