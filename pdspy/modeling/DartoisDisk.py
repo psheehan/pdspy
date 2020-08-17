@@ -74,8 +74,12 @@ class DartoisDisk(Disk):
             T = self.temperature(r[:,0], numpy.array([0.,2*numpy.pi]), z[0,:], \
                     coordsys="cylindrical")[:,0,:]
 
-            frozen = 18 * (numpy.arctan(10*(T - (self.freezeout[gas] - 2.25)))-\
+            frozen = 18 * (numpy.arctan(10*(T - (self.freezeout[gas] - 1.1)))-\
                     numpy.pi/2) / numpy.pi
+
+            frozen = numpy.where(T > self.freezeout[gas], 0, numpy.cos(-(T - \
+                    self.freezeout[gas])*numpy.pi/2)*9 - 9.)
+            frozen = numpy.where(T < self.freezeout[gas]-2, -18., frozen)
 
             # Account for photodissociation.
 
@@ -84,9 +88,11 @@ class DartoisDisk(Disk):
             cumn = -scipy.integrate.cumtrapz(n_H2[:,::-1], x=z[:,::-1]*AU, \
                     axis=1, initial=0.)[:,::-1]
 
-            dissociated = 18 * (numpy.arctan(100*(numpy.log10(cumn) - \
-                    (numpy.log10(0.79 * 1.59e21 / 0.706) - 1.025))) - \
-                    numpy.pi/2) / numpy.pi
+            dissociated = numpy.where(numpy.log10(cumn) > numpy.log10(0.79*\
+                    1.59e21/0.706), 0, numpy.cos(-(numpy.log10(cumn) - \
+                    numpy.log10(0.79*1.59e21/0.706))*numpy.pi/2)*9 - 9.)
+            dissociated = numpy.where(numpy.log10(cumn) < numpy.log10(0.79*\
+                    1.59e21/0.706)-2, -18., dissociated)
 
             # Now actually reduce the density.
 
