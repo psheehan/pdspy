@@ -12,7 +12,8 @@ def propose_point_emcee(parameters, model="disk"):
         r_env = numpy.random.uniform(parameters["logR_env"]["limits"][0],\
                 parameters["logR_env"]["limits"][1],1)[0]
 
-    r_disk = numpy.random.uniform(numpy.log10(5.), min(numpy.log10(500.), \
+    r_disk = numpy.random.uniform(max(numpy.log10(5.), \
+            parameters["logR_disk"]["limits"][0]), min(numpy.log10(500.), \
             r_env, parameters["logR_disk"]["limits"][1]),1)[0]
     r_in = numpy.random.uniform(parameters["logR_in"]["limits"][0],\
             numpy.log10((10.**r_disk)/2),1)[0]
