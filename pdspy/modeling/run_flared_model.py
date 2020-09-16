@@ -263,8 +263,6 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
 
             # Finally, average by the binning.
 
-            binned = numpy.empty((visibilities["npix"][j], visibilities["npix"]\
-                    [j], visibilities["data"][j].freq.size, 1))
             binned = numpy.empty((m.images[visibilities["lam"][j]].x.size, \
                     visibilities["data"][j].freq.size))
             for i in range(visibilities["data"][j].freq.size): 
