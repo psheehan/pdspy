@@ -52,8 +52,8 @@ Anaconda is probably the easiest way to install pdspy
    hyperion  
    h5py  
    mpi4py  
-   galario
-   Cython
+   galario  
+   Cython  
    astropy < 4.0
 
 3. In a terminal, go to the directory where the code was downloaded, and into the code directory. Run:
