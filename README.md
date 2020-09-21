@@ -47,12 +47,13 @@ Anaconda is probably the easiest way to install pdspy
    numpy  
    scipy  
    matplotlib  
-   emcee < 4.0  
+   emcee 
    corner  
    hyperion  
    h5py  
    mpi4py  
-   galario  
+   galario
+   Cython
    astropy < 4.0
 
 3. In a terminal, go to the directory where the code was downloaded, and into the code directory. Run:
