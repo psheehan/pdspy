@@ -30,17 +30,23 @@ Anaconda is probably the easiest way to install pdspy
    conda install pdspy -c conda-forge --use-local
    ```
 
-3. Install the Hyperion and RADMC-3D. If you are a Homebrew user, you can do this with:
+### Installing the code with pip
+
+1. In a terminal, run:
 
    ```
-   brew tap psheehan/science
-   brew install hyperion
-   brew install radmc3d
+   pip install pdspy
    ```
+
+2. Install GALARIO. Unfortunately, GALARIO is not pip-installable, so you will need to follow the instructions [here](https://mtazzari.github.io/galario/).
 
 ### Installing the code manually
 
-1. Download the code from this webpage
+1. Download the code from this webpage. Git clone is recommended if you would like to be able to pull updates:
+
+   ```
+   git clone https://github.com/psheehan/pdspy.git
+   ```
 
 2. Install the Python dependencies (recommended with pip, when available):
 
@@ -61,20 +67,18 @@ Anaconda is probably the easiest way to install pdspy
 3. In a terminal, go to the directory where the code was downloaded, and into the code directory. Run:
 
    ```
-   ./compile --version python3
+   python setup.py install
    ```
-
-   Check that this didn’t break somewhere.
-
-4. We need to add pdspy to your PYTHONPATH. I tend to think the easiest thing to do is to find your Python site-packages folder and symbolically link the pdspy/pdspy directory there. The other option would be to do something like:
-
-   ```bash
-   export PYTHONPATH=<path/to/pdspy/pdspy>:$PYTHONPATH
+   
+   or
+   
    ```
+   pip install -e .
+   ```
+   
+### Other dependencies
 
-5. To test that it works, go to a clean directory, start up Python and try running “import pdspy"
-
-6. Install the Hyperion and RADMC-3D. If you are a Homebrew user, you can do this with:
+The other codes that are needed to run pdspy are [Hyperion](http://www.hyperion-rt.org) and [RADMC-3D](http://www.ita.uni-heidelberg.de/~dullemond/software/radmc-3d/). If you are a [Homebrew](https://brew.sh) user, you can do this with:
 
    ```
    brew tap psheehan/science
@@ -83,7 +87,6 @@ Anaconda is probably the easiest way to install pdspy
    ```
 
 ## Fitting data with radiative transfer models.
-
 
 This section is for setting up your data and running a fit of a disk radiative transfer model to it.
 
