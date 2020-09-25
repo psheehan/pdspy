@@ -1,10 +1,10 @@
 package:
     name: pdspy
-    version: "1.1.7"
+    version: "1.5.0"
 
 source:
-    url: https://files.pythonhosted.org/packages/a0/7c/de6854139a177266f0a7fc0bba1e86024731d904ba2ffc92afc2cf034807/pdspy-1.1.7.tar.gz
-    sha256: 00ffd12867d83d70d1f43466c8daa924d83ed81e1e7a6795bce53d7a7dc7ba39
+    url: https://files.pythonhosted.org/packages/ee/b0/3e834fb25a597ef12a9764b92ee1c5cf6e1d4897805c9c1346ac0f70dfbf/pdspy-1.5.0.tar.gz
+    sha256: 94d68282132f0272ef41fa4da84eebbf859ead2f3cb407223feeb9f2d1a7a247
 
 build:
     number: 0
