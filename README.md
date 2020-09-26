@@ -1,3 +1,5 @@
+[![Documentation Status](https://readthedocs.org/projects/pdspy/badge/?version=latest)](https://pdspy.readthedocs.io/en/latest/?badge=latest)
+
 # pdspy: A MCMC Tool for Continuum and Spectral Line Radiative Transfer Modeling
 
 Welcome to the GitHub page for pdspy! This code is meant to fit Monte Carlo Radiative Transfer models for protostellar/protoplanetary disks to ALMA continuum and spectral line datasets using Markov Chain Monte Carlo fitting.
