@@ -4,7 +4,7 @@ Welcome to the GitHub page for pdspy! This code is meant to fit Monte Carlo Radi
 
 Further capabilities (e.g. fitting spectral line data with a radiative equilibrium calculation) are being developed. If you are interested in new features, do let me know and I would be happy to either add them myself, or to work with you to add them. The documentation is currently included below, but will be ported to a more extensive, better laid out format soon. 
 
-If you are interested in making use of the code, please check out the [documentation](pdspy.readthedocs.io).
+If you are interested in making use of the code, please check out the [documentation](http://pdspy.readthedocs.io).
 
 For more extensive details on what the code does, please see these papers:
 
