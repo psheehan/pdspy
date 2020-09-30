@@ -1,3 +1,6 @@
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/pdspy/badges/installer/conda.svg)](https://conda.anaconda.org/conda-forge)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/pdspy/badges/version.svg)](https://anaconda.org/conda-forge/pdspy)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/pdspy/badges/platforms.svg)](https://anaconda.org/conda-forge/pdspy)
 [![Documentation Status](https://readthedocs.org/projects/pdspy/badge/?version=latest)](https://pdspy.readthedocs.io/en/latest/?badge=latest)
 
 # pdspy: A MCMC Tool for Continuum and Spectral Line Radiative Transfer Modeling
