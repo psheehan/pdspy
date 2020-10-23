@@ -28,10 +28,10 @@ def lnlike(p, visibilities, images, spectra, parameters, plot, \
         m = modeling.run_disk_model(visibilities, images, spectra, params, \
                 parameters, plot, ncpus=ncpus, ncpus_highmass=ncpus_highmass, \
                 with_hyperion=with_hyperion, timelimit=timelimit, \
-                source=source, nice=nice, verbose=verbose)
+                source=source, nice=nice, verbose=verbose, ftcode=ftcode)
     else:
         m = modeling.run_flared_model(visibilities, params, parameters, plot, \
-                ncpus=ncpus, source=source, nice=nice)
+                ncpus=ncpus, source=source, nice=nice, ftcode=ftcode)
 
     # Catch whether the model timed out.
 
