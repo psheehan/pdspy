@@ -5,7 +5,8 @@ import numpy
 
 def lnlike(params, visibilities, images, spectra, parameters, plot, \
         model="disk", ncpus=1, ncpus_highmass=1, with_hyperion=False, \
-        timelimit=3600, source="ObjName", nice=19, verbose=False):
+        timelimit=3600, source="ObjName", nice=19, verbose=False, \
+        ftcode="galario"):
 
     if model == "disk":
         m = run_disk_model(visibilities, images, spectra, params, \

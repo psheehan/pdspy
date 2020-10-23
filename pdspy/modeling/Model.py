@@ -200,10 +200,15 @@ class Model:
             image, x, y = radmc3d.read.unstructured_image(\
                     "subpixeling_diagnostics.out")
 
-            x = x * -(1. + numpy.random.uniform(-1.0e-8,1.0e-8,x.size)) / \
+            x = x * -(1. + numpy.random.uniform(-1.0e-3,1.0e-3,x.size)) / \
                     (dpc*pc) / arcsec
-            y = y * (1. + numpy.random.uniform(-1.0e-8,1.0e-8,x.size)) / \
+            y = y * (1. + numpy.random.uniform(-1.0e-3,1.0e-3,x.size)) / \
                     (dpc*pc) / arcsec
+
+            x[x == 0] = numpy.abs(x[numpy.nonzero(x)]).min() * \
+                    numpy.random.uniform(-0.0001,0.0001, x[x==0].size)
+            y[y == 0] = numpy.abs(y[numpy.nonzero(y)]).min() * \
+                    numpy.random.uniform(-0.0001,0.0001, y[y==0].size)
 
             image = image / Jy
 
@@ -415,8 +420,12 @@ class Model:
 
         if ('Images' in f):
             for image in f['Images']:
-                self.images[image] = Image()
-                self.images[image].read(usefile=f['Images'][image])
+                try:
+                    self.images[image] = Image()
+                    self.images[image].read(usefile=f['Images'][image])
+                except:
+                    self.images[image] = UnstructuredImage()
+                    self.images[image].read(usefile=f['Images'][image])
 
         if ('Spectra' in f):
             for spectrum in f['Spectra']:

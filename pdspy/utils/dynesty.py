@@ -10,7 +10,8 @@ import numpy
 
 def lnlike(p, visibilities, images, spectra, parameters, plot, \
         model="flared", ncpus=1, ncpus_highmass=1, with_hyperion=False, \
-        timelimit=3600, source="ObjName", nice=19, verbose=False):
+        timelimit=3600, source="ObjName", nice=19, verbose=False, \
+        ftcode="galario"):
 
     # Set up the params dictionary.
 

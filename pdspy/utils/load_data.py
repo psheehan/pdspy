@@ -33,6 +33,10 @@ def load_data(config, model="disk", gridsize1D=20):
         data = uv.center(data, [config.visibilities["x0"][j], \
                 config.visibilities["y0"][j], 1.])
 
+        # Take the complex conjugate to make sure orientation is correct.
+
+        data.imag *= -1
+
         # Add the data to the dictionary structure.
 
         config.visibilities["data"].append(data)
@@ -55,7 +59,7 @@ def load_data(config, model="disk", gridsize1D=20):
                     logmin=data.uvdist[numpy.nonzero(data.uvdist)].min()*0.95, \
                     logmax=data.uvdist.max()*1.05, mode="spectralline"))
 
-        # Average the data into a 2D grid.
+        # Also average the data into a 2D grid, if disk model..
 
         if model == "disk":
             config.visibilities["data2d"].append(uv.grid(data, \

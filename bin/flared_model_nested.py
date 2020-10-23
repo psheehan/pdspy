@@ -39,6 +39,7 @@ parser.add_argument('-c', '--withcontsub', action='store_true')
 parser.add_argument('-b', '--trim', type=str, default="")
 parser.add_argument('-i', '--nice', action='store_true')
 parser.add_argument('-l', '--nicelevel', type=int, default=19)
+parser.add_argument('-f', '--ftcode', type=str, default="galario")
 args = parser.parse_args()
 
 # Check whether we are using MPI.
@@ -176,7 +177,8 @@ else:
     sampler = dynesty.NestedSampler(utils.dynesty.lnlike, utils.dynesty.ptform,\
             ndim, nlive=config.nlive_init, logl_args=(visibilities, images, \
             spectra, config.parameters, False), logl_kwargs={"model":"flared", \
-            "ncpus":ncpus, "source":source, "nice":nice}, ptform_args=(\
+            "ncpus":ncpus, "source":source, "nice":nice, \
+            "ftcode":args.ftcode}, ptform_args=(\
             config.parameters, config.priors), ptform_kwargs={"model":\
             "flared"}, periodic=periodic, pool=pool, sample="rwalk", \
             walks=config.walks)
@@ -325,7 +327,7 @@ params = dict(zip(keys, params))
 
 m = modeling.run_flared_model(visibilities, params, config.parameters, \
         plot=True, ncpus=ncpus, source=source, plot_vis=args.plot_vis, \
-        nice=nice)
+        nice=nice, ftcode=args.ftcode)
 
 # Open up a pdf file to plot into.
 

@@ -34,7 +34,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         plot=False, ncpus=1, ncpus_highmass=1, with_hyperion=False, \
         timelimit=3600, source="disk", nice=None, disk_vis=False, \
         no_radiative_transfer=False, nlam_SED=50, run_thermal=True, \
-        surrogate=[], verbose=False):
+        surrogate=[], verbose=False, ftcode="galario"):
 
     # Set the values of all of the parameters.
 
@@ -117,7 +117,12 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
 
     m = YSOModel()
     m.add_star(mass=p["M_star"],luminosity=p["L_star"],temperature=p["T_star"])
-    m.set_spherical_grid(p["R_in"], p["R_env"], 100, nphi, 2, code=code)
+
+    if p["envelope_type"] == "ulrich":
+        p["R_grid"] = p["R_env"]
+    else:
+        p["R_grid"] = max(5*p["R_disk"],300)
+    m.set_spherical_grid(p["R_in"], p["R_grid"], 100, nphi, 2, code=code)
 
     if p["disk_type"] == "exptaper":
         m.add_pringle_disk(mass=p["M_disk"]*p["f_M_large"], rmin=p["R_in"], \
@@ -269,13 +274,34 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
     # Run the visibilities.
 
     for j in range(len(visibilities["file"])):
-        m.run_image(name=visibilities["lam"][j], nphot=1e5, \
-                npix=visibilities["npix"][j], \
-                pixelsize=visibilities["pixelsize"][j], \
-                lam=visibilities["lam"][j], incl=p["i"], \
-                pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
-                mc_scat_maxtauabs=5, verbose=verbose, setthreads=nprocesses, \
-                writeimage_unformatted=True, nice=nice)
+        if rtcode == "galario":
+            m.run_image(name=visibilities["lam"][j], nphot=1e5, \
+                    npix=visibilities["npix"][j], \
+                    pixelsize=visibilities["pixelsize"][j], \
+                    lam=visibilities["lam"][j], incl=p["i"], \
+                    pa=p["pa"]-180, dpc=p["dpc"], code="radmc3d", \
+                    mc_scat_maxtauabs=5, verbose=verbose,setthreads=nprocesses,\
+                    writeimage_unformatted=True, nice=nice)
+        else:
+            # Calculate how much refinement is needed.
+
+            needed_resolution = 1./visibilities["data"][j].uvdist.max() / \
+                    arcsec / 2
+            max_min_res = 0.25/p["dpc"]
+            pixel_size = 2*p["R_grid"]*1.25/p["dpc"] / 25
+
+            nrrefine = int(numpy.ceil(numpy.log2(pixel_size / min(max_min_res, \
+                    needed_resolution))))
+
+            # Now generate the image.
+
+            m.run_image(name=visibilities["lam"][j], nphot=1e5, \
+                    npix=25, pixelsize=2*p["R_grid"]*1.25/p["dpc"] / 25, \
+                    lam=visibilities["lam"][j], incl=p["i"], \
+                    pa=p["pa"]-180, dpc=p["dpc"], code="radmc3d", \
+                    mc_scat_maxtauabs=5, verbose=verbose,setthreads=nprocesses,\
+                    writeimage_unformatted=True, nice=nice, unstructured=True, \
+                    camera_nrrefine=nrrefine)
 
         # Account for the flux calibration uncertainties.
 
@@ -284,7 +310,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
                 visibilities["data"][j].u, visibilities["data"][j].v, \
                 visibilities["data"][j].freq, m.images[visibilities["lam"][j]],\
-                dRA=-p["x0"], dDec=-p["y0"], nthreads=nprocesses)
+                dRA=p["x0"], dDec=p["y0"], nthreads=nprocesses, code=rtcode)
 
         # Add in free free emission.
 
@@ -298,14 +324,22 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         if plot:
             # Make high resolution visibilities. 
 
-            u, v = numpy.meshgrid(numpy.linspace(-2.0e6, 2.0e6, 2000), \
-                    numpy.linspace(-2.0e6, 2.0e6, 2000))
+            if rtcode == "galario":
+                u, v = numpy.meshgrid(numpy.linspace(-2.0e6, 2.0e6, 2000), \
+                        numpy.linspace(-2.0e6, 2.0e6, 2000))
+            else:
+                u, v = numpy.meshgrid(numpy.hstack((\
+                        -numpy.logspace(3.,7.,50)[::-1],\
+                        numpy.logspace(3.,7.,50))),\
+                        numpy.hstack((-numpy.logspace(3.,7.,50)[::-1],\
+                        numpy.logspace(3.,7.,50))))
+
             u, v = u.reshape((u.size,)), v.reshape((v.size,))
 
             m.visibilities[visibilities["lam"][j]+"_high"] = \
                     uv.interpolate_model(u, v, visibilities["data"][j].freq, \
-                    m.images[visibilities["lam"][j]], dRA=-p["x0"], \
-                    dDec=-p["y0"], nthreads=nprocesses)
+                    m.images[visibilities["lam"][j]], dRA=p["x0"], \
+                    dDec=p["y0"], nthreads=nprocesses, code=rtcode)
 
             # Add in free free emission.
 
@@ -322,8 +356,8 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                     uv.interpolate_model(visibilities["data2d"][j].u, \
                     visibilities["data2d"][j].v, \
                     visibilities["data2d"][j].freq, \
-                    m.images[visibilities["lam"][j]], dRA=-p["x0"], \
-                    dDec=-p["y0"], nthreads=nprocesses)
+                    m.images[visibilities["lam"][j]], dRA=p["x0"], \
+                    dDec=p["y0"], nthreads=nprocesses, code=rtcode)
 
             # Run a millimeter image.
 
@@ -331,7 +365,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                     npix=visibilities["image_npix"][j], \
                     pixelsize=visibilities["image_pixelsize"][j], \
                     lam=visibilities["lam"][j], incl=p["i"], \
-                    pa=-p["pa"], dpc=p["dpc"], code="radmc3d", \
+                    pa=p["pa"]-180, dpc=p["dpc"], code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=verbose, \
                     setthreads=nprocesses, nice=nice)
 
@@ -370,8 +404,8 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
 
                 m.run_visibilities(name=visibilities["lam"][j]+"_disk", \
                         nphot=1e5, npix=2048, pixelsize=0.05, \
-                        lam=visibilities["lam"][j], incl=p["i"], pa=p["pa"], \
-                        dpc=p["dpc"], code="radmc3d", mc_scat_maxtauabs=5, \
+                        lam=visibilities["lam"][j], incl=p["i"], pa=p["pa"]-\
+                        180, dpc=p["dpc"], code="radmc3d", mc_scat_maxtauabs=5,\
                         verbose=verbose, setthreads=nprocesses, nice=nice)
 
                 m.grid.density = density_original
@@ -384,7 +418,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         m.run_image(name=images["lam"][j], nphot=1e5, \
                 npix=images["npix"][j], pixelsize=images["pixelsize"][j], \
                 lam=images["lam"][j], incl=p["i"], \
-                pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
+                pa=p["pa"]-180, dpc=p["dpc"], code="radmc3d", \
                 mc_scat_maxtauabs=5, verbose=verbose, setthreads=nprocesses, \
                 nice=nice)
 
@@ -410,7 +444,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
             m.set_camera_wavelength(spectra["total"].wave)
 
         m.run_sed(name="SED", nphot=1e4, loadlambda=True, incl=p["i"],\
-                pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
+                pa=p["pa"]-180, dpc=p["dpc"], code="radmc3d", \
                 camera_scatsrc_allfreq=True, mc_scat_maxtauabs=5, \
                 verbose=verbose, setthreads=nprocesses, nice=nice)
 

@@ -35,6 +35,7 @@ parser.add_argument('-c', '--withcontsub', action='store_true')
 parser.add_argument('-b', '--trim', type=str, default="")
 parser.add_argument('-i', '--nice', action='store_true')
 parser.add_argument('-l', '--nicelevel', type=int, default=19)
+parser.add_argument('-f', '--ftcode', type=str, default="galario")
 args = parser.parse_args()
 
 # Check whether we are using MPI.
@@ -177,7 +178,7 @@ if args.action == "run":
             config.priors, False), kwargs={"model":"flared", "ncpus":ncpus, \
             "timelimit":3600, "ncpus_highmass":ncpus, \
             "with_hyperion":False, "source":source, "nice":nice, \
-            "verbose":False}, pool=pool, backend=backend)
+            "verbose":False, "ftcode":args.ftcode}, pool=pool, backend=backend)
 else:
     sampler = backend
 
@@ -258,7 +259,7 @@ while sampler.iteration < config.max_nsteps:
 
     m = modeling.run_flared_model(visibilities, params, config.parameters, \
             plot=True, ncpus=ncpus, source=source, plot_vis=args.plot_vis, \
-            nice=nice)
+            nice=nice, ftcode=args.ftcode)
 
     # Open up a pdf file to plot into.
 

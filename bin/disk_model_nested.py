@@ -39,6 +39,7 @@ parser.add_argument('-s', '--SED', action='store_true')
 parser.add_argument('-i', '--nice', action='store_true')
 parser.add_argument('-l', '--nicelevel', type=int, default=19)
 parser.add_argument('-v', '--verbose', action='store_true')
+parser.add_argument('-f', '--ftcode', type=str, default="galario")
 args = parser.parse_args()
 
 # Check whether we are using MPI.
@@ -164,7 +165,8 @@ else:
             images, spectra, config.parameters, False), logl_kwargs={\
             "model":"disk", "ncpus":ncpus, "timelimit":args.timelimit, \
             "ncpus_highmass":ncpus_highmass, "with_hyperion":args.withhyperion,\
-            "source":source, "nice":nice, "verbose":args.verbose}, \
+            "source":source, "nice":nice, "verbose":args.verbose, \
+            "ftcode":args.ftcode}, \
             ptform_args=(config.parameters, config.priors), periodic=periodic, \
             pool=pool, sample="rwalk", walks=config.walks)
 
@@ -316,7 +318,8 @@ fig, ax = plt.subplots(nrows=2*len(visibilities["file"]), ncols=3)
 m = modeling.run_disk_model(visibilities, images, spectra, params, \
         config.parameters, plot=True, ncpus=ncpus, \
         ncpus_highmass=ncpus_highmass, with_hyperion=args.withhyperion, \
-        timelimit=args.timelimit, source=source, nice=nice)
+        timelimit=args.timelimit, source=source, nice=nice, \
+        ftcode=args.ftcode)
 
 # Plot the millimeter data/models.
 

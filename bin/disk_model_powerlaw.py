@@ -40,6 +40,7 @@ parser.add_argument('-b', '--trim', type=str, default="")
 parser.add_argument('-s', '--SED', action='store_true')
 parser.add_argument('-i', '--nice', action='store_true')
 parser.add_argument('-l', '--nicelevel', type=int, default=19)
+parser.add_argument('-f', '--ftcode', type=str, default="galario")
 args = parser.parse_args()
 
 # Check whether we are using MPI.
@@ -429,7 +430,7 @@ while nsteps < config.max_nsteps:
             config.parameters, plot=True, ncpus=ncpus, \
             ncpus_highmass=ncpus_highmass, with_hyperion=args.withhyperion, \
             timelimit=args.timelimit, source=source, nice=nice, \
-            run_thermal=False)
+            run_thermal=False, ftcode=args.ftcode)
 
     # Plot the millimeter data/models.
 

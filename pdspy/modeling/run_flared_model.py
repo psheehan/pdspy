@@ -2,7 +2,7 @@
 
 from ..constants.physics import c, m_p, G
 from ..constants.physics import k as k_b
-from ..constants.astronomy import M_sun, AU
+from ..constants.astronomy import M_sun, AU, arcsec
 from .YSOModel import YSOModel
 from .. import interferometry as uv
 from .. import spectroscopy as sp
@@ -24,7 +24,7 @@ comm = MPI.COMM_WORLD
 ################################################################################
 
 def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
-        source="flared", plot_vis=False, nice=None):
+        source="flared", plot_vis=False, nice=None, rtcode="galario"):
 
     # Set the values of all of the parameters.
 
@@ -112,10 +112,10 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
         ntheta = 51
 
     if p["envelope_type"] == "ulrich":
-        m.set_spherical_grid(p["R_in"], p["R_env"], 100, 51, 2, code="radmc3d")
+        p["R_grid"] = p["R_env"]
     else:
-        m.set_spherical_grid(p["R_in"], max(5*p["R_disk"],300), 100, ntheta, 2,\
-                code="radmc3d")
+        p["R_grid"] = max(5*p["R_disk"],300)
+    m.set_spherical_grid(p["R_in"], p["R_grid"], 100, ntheta, 2, code="radmc3d")
 
     if p["disk_type"] == "exptaper":
         m.add_pringle_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
@@ -191,32 +191,69 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
 
         m.set_camera_wavelength(wave)
 
-        if p["docontsub"]:
-            m.run_image(name=visibilities["lam"][j], nphot=1e5, \
-                    npix=visibilities["npix"][j], lam=None, \
-                    pixelsize=visibilities["pixelsize"][j], tgas_eq_tdust=True,\
-                    scattering_mode_max=0, incl_dust=True, incl_lines=True, \
-                    loadlambda=True, incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
-                    code="radmc3d", verbose=False, writeimage_unformatted=True,\
-                    setthreads=ncpus, nice=nice)
+        if rtcode == "galario":
+            if p["docontsub"]:
+                m.run_image(name=visibilities["lam"][j], nphot=1e5, \
+                        npix=visibilities["npix"][j], lam=None, \
+                        pixelsize=visibilities["pixelsize"][j], tgas_eq_tdust=True,\
+                        scattering_mode_max=0, incl_dust=True, incl_lines=True, \
+                        loadlambda=True, incl=p["i"], pa=p["pa"]-180., dpc=p["dpc"], \
+                        code="radmc3d", verbose=False, writeimage_unformatted=True,\
+                        setthreads=ncpus, nice=nice)
 
-            m.run_image(name="cont", nphot=1e5, \
-                    npix=visibilities["npix"][j], lam=None, \
-                    pixelsize=visibilities["pixelsize"][j], tgas_eq_tdust=True,\
-                    scattering_mode_max=0, incl_dust=True, incl_lines=False, \
-                    loadlambda=True, incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
-                    code="radmc3d", verbose=False, writeimage_unformatted=True,\
-                    setthreads=ncpus, nice=nice)
+                m.run_image(name="cont", nphot=1e5, \
+                        npix=visibilities["npix"][j], lam=None, \
+                        pixelsize=visibilities["pixelsize"][j], tgas_eq_tdust=True,\
+                        scattering_mode_max=0, incl_dust=True, incl_lines=False, \
+                        loadlambda=True, incl=p["i"], pa=p["pa"]-180., dpc=p["dpc"], \
+                        code="radmc3d", verbose=False, writeimage_unformatted=True,\
+                        setthreads=ncpus, nice=nice)
 
-            m.images[visibilities["lam"][j]].image -= m.images["cont"].image
+                m.images[visibilities["lam"][j]].image -= m.images["cont"].image
+            else:
+                m.run_image(name=visibilities["lam"][j], nphot=1e5, \
+                        npix=visibilities["npix"][j], lam=None, \
+                        pixelsize=visibilities["pixelsize"][j], tgas_eq_tdust=True,\
+                        scattering_mode_max=0, incl_dust=False, incl_lines=True, \
+                        loadlambda=True, incl=p["i"], pa=p["pa"]-180., dpc=p["dpc"], \
+                        code="radmc3d", verbose=False, writeimage_unformatted=True,\
+                        setthreads=ncpus, nice=nice)
         else:
-            m.run_image(name=visibilities["lam"][j], nphot=1e5, \
-                    npix=visibilities["npix"][j], lam=None, \
-                    pixelsize=visibilities["pixelsize"][j], tgas_eq_tdust=True,\
-                    scattering_mode_max=0, incl_dust=False, incl_lines=True, \
-                    loadlambda=True, incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
-                    code="radmc3d", verbose=False, writeimage_unformatted=True,\
-                    setthreads=ncpus, nice=nice)
+            # Calculate how much refinement is needed.
+
+            needed_resolution = 1./visibilities["data"][j].uvdist.max() / arcsec / 2
+            max_min_res = 0.25/p["dpc"]
+            pixel_size = 2*p["R_grid"]*1.25/p["dpc"] / 25
+
+            nrrefine = int(numpy.ceil(numpy.log2(pixel_size / min(max_min_res, \
+                    needed_resolution))))
+
+            if p["docontsub"]:
+                m.run_image(name=visibilities["lam"][j], nphot=1e5, npix=25, \
+                        lam=None, pixelsize=pixel_size, \
+                        tgas_eq_tdust=True, scattering_mode_max=0, incl_dust=True, \
+                        incl_lines=True, loadlambda=True, incl=p["i"], pa=p["pa"]-\
+                        180., dpc=p["dpc"], code="radmc3d", verbose=False, \
+                        writeimage_unformatted=True, setthreads=ncpus, nice=nice, \
+                        unstructured=True, camera_nrrefine=nrrefine)
+
+                m.run_image(name="cont", nphot=1e5, npix=25, lam=None, \
+                        pixelsize=pixel_size, tgas_eq_tdust=True,\
+                        scattering_mode_max=0, incl_dust=True, incl_lines=False, \
+                        loadlambda=True, incl=p["i"], pa=p["pa"]-180, dpc=p["dpc"],\
+                        code="radmc3d", verbose=False, writeimage_unformatted=True,\
+                        setthreads=ncpus, nice=nice, unstructured=True, \
+                        camera_nrrefine=nrrefine)
+
+                m.images[visibilities["lam"][j]].image -= m.images["cont"].image
+            else:
+                m.run_image(name=visibilities["lam"][j], nphot=1e5, npix=25, \
+                        lam=None, pixelsize=pixel_size, \
+                        tgas_eq_tdust=True, scattering_mode_max=0, incl_dust=False,\
+                        incl_lines=True, loadlambda=True, incl=p["i"], pa=p["pa"]-\
+                        180, dpc=p["dpc"], code="radmc3d", verbose=False, \
+                        writeimage_unformatted=True, setthreads=ncpus, nice=nice, \
+                        unstructured=True, camera_nrrefine=nrrefine)
 
         # Extinct the data, if included.
 
@@ -228,38 +265,70 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
 
         extinction = numpy.exp(-tau)
 
-        for i in range(len(m.images[visibilities["lam"][j]].freq)):
-            m.images[visibilities["lam"][j]].image[:,:,i,:] *= extinction[i]
+        if rtcode == "galario":
+            for i in range(len(m.images[visibilities["lam"][j]].freq)):
+                m.images[visibilities["lam"][j]].image[:,:,i,:] *= extinction[i]
+        else:
+            for i in range(len(m.images[visibilities["lam"][j]].freq)):
+                m.images[visibilities["lam"][j]].image[:,i] *= extinction[i]
 
         # And then if sub-sampling, sum the image along the frequency axis to
         # get back to the right size, and also Hanning smooth.
 
         if visibilities["subsample"][j] * visibilities["averaging"][j] > 1 or \
                 visibilities["hanning"][j]:
-            recombined = numpy.empty((visibilities["npix"][j], \
-                    visibilities["npix"][j], visibilities["data"][j].freq.size*\
-                    visibilities["averaging"][j],1))
-            for i in range(freq.size // visibilities["subsample"][j]): 
-                recombined[:,:,i,0] = m.images[visibilities["lam"][j]].\
-                        image[:,:,i*visibilities["subsample"][j]:(i+1)*\
-                        visibilities["subsample"][j],0].mean(axis=2)
+            # Using regular images.
+            if rtcode == "galario":
+                recombined = numpy.empty((visibilities["npix"][j], \
+                        visibilities["npix"][j], visibilities["data"][j].freq.size*\
+                        visibilities["averaging"][j],1))
+                for i in range(freq.size // visibilities["subsample"][j]): 
+                    recombined[:,:,i,0] = m.images[visibilities["lam"][j]].\
+                            image[:,:,i*visibilities["subsample"][j]:(i+1)*\
+                            visibilities["subsample"][j],0].mean(axis=2)
 
-            # Now do the Hanning smoothing.
+                # Now do the Hanning smoothing.
 
-            if visibilities["hanning"][j]:
-                hanning_window = numpy.hanning(5) / numpy.hanning(5).sum()
+                if visibilities["hanning"][j]:
+                    hanning_window = numpy.hanning(5) / numpy.hanning(5).sum()
 
-                recombined = scipy.signal.fftconvolve(recombined, \
-                        hanning_window.reshape((1,1,hanning_window.size,1)), \
-                        axes=2, mode="same")
+                    recombined = scipy.signal.fftconvolve(recombined, \
+                            hanning_window.reshape((1,1,hanning_window.size,1)), \
+                            axes=2, mode="same")
 
-            # Finally, average by the binning.
+                # Finally, average by the binning.
 
-            binned = numpy.empty((visibilities["npix"][j], visibilities["npix"]\
-                    [j], visibilities["data"][j].freq.size, 1))
-            for i in range(visibilities["data"][j].freq.size): 
-                binned[:,:,i,0] = recombined[:,:,i*visibilities["averaging"]\
-                        [j]:(i+1)*visibilities["averaging"][j],0].mean(axis=2)
+                binned = numpy.empty((visibilities["npix"][j], visibilities["npix"]\
+                        [j], visibilities["data"][j].freq.size, 1))
+                for i in range(visibilities["data"][j].freq.size): 
+                    binned[:,:,i,0] = recombined[:,:,i*visibilities["averaging"]\
+                            [j]:(i+1)*visibilities["averaging"][j],0].mean(axis=2)
+            # Using unstructured images.
+            else:
+                recombined = numpy.empty((m.images[visibilities["lam"][j]].x.size, \
+                        visibilities["data"][j].freq.size*\
+                        visibilities["averaging"][j]))
+                for i in range(freq.size // visibilities["subsample"][j]): 
+                    recombined[:,i] = m.images[visibilities["lam"][j]].\
+                            image[:,i*visibilities["subsample"][j]:(i+1)*\
+                            visibilities["subsample"][j]].mean(axis=1)
+
+                # Now do the Hanning smoothing.
+
+                if visibilities["hanning"][j]:
+                    hanning_window = numpy.hanning(5) / numpy.hanning(5).sum()
+
+                    recombined = scipy.signal.fftconvolve(recombined, \
+                            convolve_window.reshape((1,hanning_window.size)), \
+                            axes=1, mode="same")
+
+                # Finally, average by the binning.
+
+                binned = numpy.empty((m.images[visibilities["lam"][j]].x.size, \
+                        visibilities["data"][j].freq.size))
+                for i in range(visibilities["data"][j].freq.size): 
+                    binned[:,i] = recombined[:,i*visibilities["averaging"]\
+                            [j]:(i+1)*visibilities["averaging"][j]].mean(axis=1)
 
             m.images[visibilities["lam"][j]].image = binned
             m.images[visibilities["lam"][j]].freq = visibilities["data"][j].freq
@@ -269,8 +338,8 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
         m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
                 visibilities["data"][j].u, visibilities["data"][j].v, \
                 visibilities["data"][j].freq, \
-                m.images[visibilities["lam"][j]], dRA=-p["x0"], dDec=-p["y0"], \
-                nthreads=ncpus)
+                m.images[visibilities["lam"][j]], dRA=p["x0"], dDec=p["y0"], \
+                nthreads=ncpus, code=rtcode)
 
         if plot:
             # If sub-velocity resolution is requested, adjust the frequencies.
@@ -306,16 +375,18 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                         pixelsize=visibilities["image_pixelsize"][j], \
                         tgas_eq_tdust=True, scattering_mode_max=0, \
                         incl_dust=True, incl_lines=True, loadlambda=True, \
-                        incl=p["i"], pa=-p["pa"], dpc=p["dpc"], code="radmc3d",\
-                        verbose=False, setthreads=ncpus, nice=nice)
+                        incl=p["i"], pa=p["pa"]-180, dpc=p["dpc"], \
+                        code="radmc3d", verbose=False, setthreads=ncpus, \
+                        nice=nice)
 
                 m.run_image(name="cont", nphot=1e5, \
                         npix=visibilities["image_npix"][j], lam=None, \
                         pixelsize=visibilities["image_pixelsize"][j], \
                         tgas_eq_tdust=True, scattering_mode_max=0, \
                         incl_dust=True, incl_lines=False, loadlambda=True, \
-                        incl=p["i"], pa=-p["pa"], dpc=p["dpc"], code="radmc3d",\
-                        verbose=False, setthreads=ncpus, nice=nice)
+                        incl=p["i"], pa=p["pa"]-180, dpc=p["dpc"], \
+                        code="radmc3d", verbose=False, setthreads=ncpus, \
+                        nice=nice)
 
                 m.images[visibilities["lam"][j]].image -= m.images["cont"].image
             else:
@@ -324,8 +395,9 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                         pixelsize=visibilities["image_pixelsize"][j], \
                         tgas_eq_tdust=True, scattering_mode_max=0, \
                         incl_dust=False, incl_lines=True, loadlambda=True, \
-                        incl=p["i"], pa=-p["pa"], dpc=p["dpc"], code="radmc3d",\
-                        verbose=False, setthreads=ncpus, nice=nice)
+                        incl=p["i"], pa=p["pa"]-180, dpc=p["dpc"], \
+                        code="radmc3d", verbose=False, setthreads=ncpus, \
+                        nice=nice)
 
             # Extinct the data, if included.
 

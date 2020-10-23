@@ -152,53 +152,36 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
 
             if plot_type == "data":
                 if "x0" in params:
-                    xmin, xmax = int(round(visibilities["image_npix"][index]/2+\
-                          visibilities["x0"][index]/\
-                          visibilities["image_pixelsize"][index]+ \
-                          params["x0"]/visibilities["image_pixelsize"][index]+ \
-                          ticks[0]/visibilities["image_pixelsize"][index])), \
-                          int(round(visibilities["image_npix"][index]/2+\
-                          visibilities["x0"][index]/\
-                          visibilities["image_pixelsize"][index]+ \
-                          params["x0"]/visibilities["image_pixelsize"][index]+ \
-                          ticks[-1]/visibilities["image_pixelsize"][index]))
+                    x0 = -params["x0"]/visibilities["image_pixelsize"][index]
                 else:
-                    xmin, xmax = int(round(visibilities["image_npix"][index]/2+\
-                          visibilities["x0"][index]/\
-                          visibilities["image_pixelsize"][index]+ \
-                          parameters["x0"]["value"]/\
-                          visibilities["image_pixelsize"][index]+ \
-                          ticks[0]/visibilities["image_pixelsize"][index])), \
-                          int(round(visibilities["image_npix"][index]/2+\
-                          visibilities["x0"][index]/\
-                          visibilities["image_pixelsize"][index]+ \
-                          parameters["x0"]["value"]/\
-                          visibilities["image_pixelsize"][index]+ \
-                          ticks[-1]/visibilities["image_pixelsize"][index]))
+                    x0 = -parameters["x0"]["value"]/\
+                            visibilities["image_pixelsize"][index]
                 if "y0" in params:
-                    ymin, ymax = int(round(visibilities["image_npix"][index]/2-\
-                          visibilities["y0"][index]/\
-                          visibilities["image_pixelsize"][index]- \
-                          params["y0"]/visibilities["image_pixelsize"][index]+ \
-                          ticks[0]/visibilities["image_pixelsize"][index])), \
-                          int(round(visibilities["image_npix"][index]/2-\
-                          visibilities["y0"][index]/\
-                          visibilities["image_pixelsize"][index]- \
-                          params["y0"]/visibilities["image_pixelsize"][index]+ \
-                          ticks[-1]/visibilities["image_pixelsize"][index]))
+                    y0 = params["y0"]/visibilities["image_pixelsize"][index]
                 else:
-                    ymin, ymax = int(round(visibilities["image_npix"][index]/2-\
-                          visibilities["y0"][index]/\
-                          visibilities["image_pixelsize"][index]- \
-                          parameters["y0"]["value"]/\
-                          visibilities["image_pixelsize"][index]+ \
-                          ticks[0]/visibilities["image_pixelsize"][index])), \
-                          int(round(visibilities["image_npix"][index]/2-\
-                          visibilities["y0"][index]/\
-                          visibilities["image_pixelsize"][index]- \
-                          parameters["y0"]["value"]/\
-                          visibilities["image_pixelsize"][index]+ \
-                          ticks[-1]/visibilities["image_pixelsize"][index]))
+                    y0 = parameters["y0"]["value"]/\
+                            visibilities["image_pixelsize"][index]
+
+                xmin = int(round(x0 + visibilities["image_npix"][index]/2+\
+                      visibilities["x0"][index]/\
+                      visibilities["image_pixelsize"][index]+ \
+                      ticks[0]/visibilities["image_pixelsize"][index]))
+                xmax = int(round(x0 + visibilities["image_npix"][index]/2+\
+                      visibilities["x0"][index]/\
+                      visibilities["image_pixelsize"][index]+ \
+                      params["x0"]/visibilities["image_pixelsize"][index]+ \
+                      ticks[-1]/visibilities["image_pixelsize"][index]))
+
+                ymin = int(round(y0 + visibilities["image_npix"][index]/2-\
+                      visibilities["y0"][index]/\
+                      visibilities["image_pixelsize"][index]- \
+                      params["y0"]/visibilities["image_pixelsize"][index]+ \
+                      ticks[0]/visibilities["image_pixelsize"][index]))
+                ymax = int(round(y0 + visibilities["image_npix"][index]/2-\
+                      visibilities["y0"][index]/\
+                      visibilities["image_pixelsize"][index]- \
+                      params["y0"]/visibilities["image_pixelsize"][index]+ \
+                      ticks[-1]/visibilities["image_pixelsize"][index]))
             else:
                 xmin, xmax = int(round(visibilities["image_npix"][index]/2+1 + \
                         ticks[0]/visibilities["image_pixelsize"][index])), \

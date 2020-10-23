@@ -37,6 +37,7 @@ parser.add_argument('-s', '--SED', action='store_true')
 parser.add_argument('-i', '--nice', action='store_true')
 parser.add_argument('-l', '--nicelevel', type=int, default=19)
 parser.add_argument('-v', '--verbose', action='store_true')
+parser.add_argument('-f', '--ftcode', type=str, default="galario")
 args = parser.parse_args()
 
 # Check whether we are using MPI.
@@ -173,7 +174,8 @@ if args.action == "run":
             config.priors, False), kwargs={"model":"disk", "ncpus":ncpus, \
             "timelimit":args.timelimit, "ncpus_highmass":ncpus_highmass, \
             "with_hyperion":args.withhyperion, "source":source, "nice":nice, \
-            "verbose":args.verbose}, pool=pool, backend=backend)
+            "verbose":args.verbose, "ftcode":args.ftcode}, \
+            pool=pool, backend=backend)
 else:
     sampler = backend
 
@@ -259,7 +261,8 @@ while sampler.iteration < config.max_nsteps:
     m = modeling.run_disk_model(visibilities, images, spectra, params, \
             config.parameters, plot=True, ncpus=ncpus, \
             ncpus_highmass=ncpus_highmass, with_hyperion=args.withhyperion, \
-            timelimit=args.timelimit, source=source, nice=nice)
+            timelimit=args.timelimit, source=source, nice=nice, \
+            ftcode=args.ftcode)
 
     # Plot the millimeter data/models.
 
