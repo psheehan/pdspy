@@ -1,10 +1,13 @@
+from ..constants.physics import c
 from .libinterferometry import Visibilities
-import casatools.ms as ms
+import casatools
 import numpy
 
 def readms(filename, spw=[0], tolerance=0.01, datacolumn="corrected"):
 
     # Load the MS file.
+
+    ms = casatools.ms()
 
     ms.open(filename)
 
@@ -19,7 +22,7 @@ def readms(filename, spw=[0], tolerance=0.01, datacolumn="corrected"):
     ms.reset()                                                          
     data = []
     while ms.selectinit(datadescid=i):
-        if int(ms.getspectralwindowinfo().keys()[0]) in spw:
+        if int(list(ms.getspectralwindowinfo().keys())[0]) in spw:
             data.append(ms.getdata(items=["u","v",prefix+"real",prefix+\
                     "imaginary","weight","flag","axis_info","uvdist"]))
         ms.reset()
@@ -73,11 +76,13 @@ def readms(filename, spw=[0], tolerance=0.01, datacolumn="corrected"):
         new_u, new_v, new_real, new_imag, new_weights, new_flags, \
                 new_uvdist = [], [], [], [], [], [], []
 
+        scale = 100 * new_freq.mean() / c
+
         for j in range(len(data)):
             if matching_spw[j] == i:
-                new_u.append(data[j]["u"])
-                new_v.append(data[j]["v"])
-                new_uvdist.append(data[j]["uvdist"])
+                new_u.append(data[j]["u"]*scale)
+                new_v.append(data[j]["v"]*scale)
+                new_uvdist.append(data[j]["uvdist"]*scale)
                 new_real.append(data[j]["real"])
                 new_imag.append(data[j]["imaginary"])
                 new_weights.append(data[j]["weight"])
@@ -169,6 +174,14 @@ def readms(filename, spw=[0], tolerance=0.01, datacolumn="corrected"):
     imag = imag[:, 1:]
     weights = weights[:, 1:]
 
+    # Include the complex conjugate.
+
+    u = numpy.concatenate((u, -u))
+    v = numpy.concatenate((v, -v))
+    real = numpy.concatenate((real, real))
+    imag = numpy.concatenate((imag, -imag))
+    weights = numpy.concatenate((weights, weights))
+    
     return Visibilities(u, v, freq, real, imag, weights)
 
 # A little function to merge two arrays that may share the same first 

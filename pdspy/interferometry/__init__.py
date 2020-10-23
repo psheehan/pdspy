@@ -10,4 +10,9 @@ from .model import model
 from .rotate import rotate
 from .interpolate_model import interpolate_model
 
+try:
+    from .readms import readms
+except:
+    pass
+
 from .rmlimage import rmlimage
