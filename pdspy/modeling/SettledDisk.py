@@ -12,13 +12,14 @@ class SettledDisk:
             plh=58./45., t0=None, plt=None, dust=None, gap_rin=[], gap_rout=[],\
             gap_delta=[], tmid0=None, tatm0=None, zq0=None, pltgas=None, \
             delta=None, aturb=None, gaussian_gaps=False, amin=0.05, amax=1000.,\
-            pla=3.5, alpha_settle=1.0e-3):
+            pla=3.5, alpha_settle=1.0e-3, gamma_taper=None):
         self.mass = mass
         self.rmin = rmin
         self.rmax = rmax
         self.plrho = plrho
         self.h0 = h0
         self.plh = plh
+        self.gamma_taper = gamma_taper
         self.t0 = t0
         self.plt = plt
         self.gap_rin = gap_rin
@@ -296,6 +297,8 @@ class SettledDisk:
         self.plrho = f['plrho'][()]
         self.h0 = f['h0'][()]
         self.plh = f['plh'][()]
+        if 'gamma_taper' in f:
+            self.gamma_taper = gamma_taper
 
         self.amin = f['amin'][()]
         self.amax = f['amax'][()]
@@ -341,6 +344,9 @@ class SettledDisk:
         f['plrho'] = self.plrho
         f['h0'] = self.h0
         f['plh'] = self.plh
+
+        if self.gamma_taper != None:
+            f['gamma_taper'] = self.gamma_taper
 
         if self.t0 != None:
             f['t0'] = self.t0

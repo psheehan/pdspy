@@ -10,6 +10,7 @@ base_parameters = {
         "logR_disk":{"fixed":True, "value":2., "limits":[0.,4.]},
         "h_0":{"fixed":True, "value":0.1, "limits":[0.01,0.5]},
         "gamma":{"fixed":True, "value":1.0, "limits":[-0.5,2.0]},
+        "gamma_taper":{"fixed":True, "value":"gamma", "limits":[-0.5,2.0]},
         "beta":{"fixed":True, "value":1.0, "limits":[0.5,1.5]},
         "logR_cav":{"fixed":True, "value":1.0, "limits":[-1.,3.]},
         "logdelta_cav":{"fixed":True, "value":0.0, "limits":[-4.,0.]},

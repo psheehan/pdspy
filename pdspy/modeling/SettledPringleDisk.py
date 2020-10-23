@@ -16,12 +16,17 @@ class SettledPringleDisk(SettledDisk):
         rout = self.rmax * AU
         mass = self.mass * M_sun
         gamma = self.plrho - self.plh
+        if self.gamma_taper != None:
+            gamma_taper = self.gamma_taper
+        else:
+            gamma_taper = gamma
 
         # Set up the surface density.
 
         Sigma0 = (2-gamma)*mass/(2*pi*rout**2)*numpy.exp((rin/rout)**(2-gamma))
 
-        Sigma = Sigma0 * (rr/rout)**(-gamma) * numpy.exp(-(rr/rout)**(2-gamma))
+        Sigma = Sigma0 * (rr/rout)**(-gamma) * \
+                numpy.exp(-(rr/rout)**(2-gamma_taper))
 
         Sigma[r <= rin/AU] = 0e0
 

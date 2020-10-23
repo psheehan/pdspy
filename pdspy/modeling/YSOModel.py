@@ -208,12 +208,13 @@ class YSOModel(Model):
             h0=0.1, plh=58./45., dust=None,  t0=None, plt=None, gas=None, \
             abundance=None, tmid0=None, tatm0=None, zq0=None, pltgas=None, \
             delta=None, gap_rin=[], gap_rout=[], gap_delta=[], \
-            gaussian_gaps=False, aturb=None):
+            gaussian_gaps=False, aturb=None, gamma_taper=None):
         self.disk = PringleDisk(mass=mass, rmin=rmin, rmax=rmax, plrho=plrho, \
                 h0=h0, plh=plh, dust=dust, t0=t0, plt=plt, tmid0=tmid0, \
                 tatm0=tatm0, zq0=zq0, pltgas=pltgas, delta=delta, \
                 gap_rin=gap_rin, gap_rout=gap_rout, gap_delta=gap_delta, \
-                aturb=aturb, gaussian_gaps=gaussian_gaps)
+                aturb=aturb, gaussian_gaps=gaussian_gaps, \
+                gamma_taper=gamma_taper)
 
         if (dust != None):
             if self.grid.coordsystem == "spherical":
@@ -265,12 +266,13 @@ class YSOModel(Model):
             plrho=2.37, h0=0.1, plh=58./45., dust=None,  t0=None, plt=None, \
             gas=None, abundance=None, freezeout=0., tmid0=None, tatm0=None, \
             zq0=None, pltgas=None, delta=None, gap_rin=[], gap_rout=[], \
-            gap_delta=[], gaussian_gaps=False, aturb=None):
+            gap_delta=[], gaussian_gaps=False, aturb=None, gamma_taper=None):
         self.disk = DartoisPringleDisk(mass=mass, rmin=rmin, rmax=rmax, \
                 plrho=plrho, h0=h0, plh=plh, dust=dust, t0=t0, plt=plt, \
                 tmid0=tmid0, tatm0=tatm0, zq0=zq0, pltgas=pltgas, delta=delta, \
                 gap_rin=gap_rin, gap_rout=gap_rout, gap_delta=gap_delta, \
-                aturb=aturb, gaussian_gaps=gaussian_gaps)
+                aturb=aturb, gaussian_gaps=gaussian_gaps, \
+                gamma_taper=gamma_taper)
 
         if (dust != None):
             if self.grid.coordsystem == "spherical":
@@ -323,13 +325,13 @@ class YSOModel(Model):
             gas=None, abundance=None, tmid0=None, tatm0=None, zq0=None, \
             pltgas=None, delta=None, gap_rin=[], gap_rout=[], gap_delta=[], \
             gaussian_gaps=False, aturb=None, amin=0.05, amax=1000., pla=3.5, \
-            alpha_settle=1.0e-3, na=100):
+            alpha_settle=1.0e-3, na=100, gamma_taper=None):
         self.disk = SettledPringleDisk(mass=mass, rmin=rmin, rmax=rmax, \
                 plrho=plrho, h0=h0, plh=plh, dust=dust, t0=t0, plt=plt, \
                 tmid0=tmid0, tatm0=tatm0, zq0=zq0, pltgas=pltgas, delta=delta, \
                 gap_rin=gap_rin, gap_rout=gap_rout, gap_delta=gap_delta, \
                 aturb=aturb, gaussian_gaps=gaussian_gaps, amin=amin, amax=amax,\
-                pla=pla, alpha_settle=alpha_settle)
+                pla=pla, alpha_settle=alpha_settle, gamma_taper=None)
 
         if (dust != None):
             a, rho = self.disk.density(self.grid.r, self.grid.theta, \

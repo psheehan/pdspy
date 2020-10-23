@@ -11,11 +11,12 @@ class Disk:
     def __init__(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, h0=0.1, \
             plh=58./45., t0=None, plt=None, dust=None, gap_rin=[], gap_rout=[],\
             gap_delta=[], tmid0=None, tatm0=None, zq0=None, pltgas=None, \
-            delta=None, aturb=None, gaussian_gaps=False):
+            delta=None, aturb=None, gaussian_gaps=False, gamma_taper=None):
         self.mass = mass
         self.rmin = rmin
         self.rmax = rmax
         self.plrho = plrho
+        self.gamma_taper = gamma_taper
         self.h0 = h0
         self.plh = plh
         self.t0 = t0
@@ -220,6 +221,8 @@ class Disk:
         self.plrho = f['plrho'][()]
         self.h0 = f['h0'][()]
         self.plh = f['plh'][()]
+        if 'gamma_taper' in f:
+            self.gamma_taper = gamma_taper
 
         if 't0' in f:
             self.t0 = f['t0'][()]
@@ -260,6 +263,9 @@ class Disk:
         f['plrho'] = self.plrho
         f['h0'] = self.h0
         f['plh'] = self.plh
+
+        if self.gamma_taper != None:
+            f['gamma_taper'] = self.gamma_taper
 
         if self.t0 != None:
             f['t0'] = self.t0

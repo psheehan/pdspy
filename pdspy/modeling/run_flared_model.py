@@ -121,13 +121,14 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
         m.add_pringle_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
                 plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
                 t0=p["T0"], plt=p["q"], gas=gases, abundance=abundance,\
-                aturb=p["a_turb"])
+                aturb=p["a_turb"], gamma_taper=p["gamma_taper"])
     elif p["disk_type"] == "dartois-exptaper":
         m.add_dartois_pringle_disk(mass=p["M_disk"], rmin=p["R_in"], \
                 rmax=p["R_disk"], plrho=p["alpha"], h0=p["h_0"], plh=p["beta"],\
                 dust=ddust, tmid0=p["Tmid0"], tatm0=p["Tatm0"], zq0=p["zq0"], \
                 pltgas=p["pltgas"], delta=p["delta"], gas=gases, \
-                abundance=abundance, freezeout=freezeout, aturb=p["a_turb"])
+                abundance=abundance, freezeout=freezeout, aturb=p["a_turb"], \
+                gamma_taper=p["gamma_taper"])
     elif p["disk_type"] == "dartois-truncated":
         m.add_dartois_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
                 plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
