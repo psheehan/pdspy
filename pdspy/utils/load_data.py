@@ -9,6 +9,7 @@ def load_data(config, model="disk", gridsize1D=20):
 
     config.visibilities["data"] = []
     config.visibilities["data1d"] = []
+    config.visibilities["data2d"] = []
     config.visibilities["image"] = []
     config.spectra["data"] = []
     config.spectra["binned"] = []
@@ -32,14 +33,9 @@ def load_data(config, model="disk", gridsize1D=20):
         data = uv.center(data, [config.visibilities["x0"][j], \
                 config.visibilities["y0"][j], 1.])
 
-        # Average the data to a more manageable size.
+        # Add the data to the dictionary structure.
 
-        if model == "disk":
-            config.visibilities["data"].append(uv.grid(data, \
-                    gridsize=config.visibilities["gridsize"][j], \
-                    binsize=config.visibilities["binsize"][j]))
-        elif model == "flared":
-            config.visibilities["data"].append(data)
+        config.visibilities["data"].append(data)
 
         # Scale the weights of the visibilities to force them to be fit well.
 
@@ -58,6 +54,13 @@ def load_data(config, model="disk", gridsize1D=20):
                     gridsize=gridsize1D[j], radial=True, log=True, \
                     logmin=data.uvdist[numpy.nonzero(data.uvdist)].min()*0.95, \
                     logmax=data.uvdist.max()*1.05, mode="spectralline"))
+
+        # Average the data into a 2D grid.
+
+        if model == "disk":
+            config.visibilities["data2d"].append(uv.grid(data, \
+                    gridsize=config.visibilities["gridsize"][j], \
+                    binsize=config.visibilities["binsize"][j]))
 
         # Read in the image.
 

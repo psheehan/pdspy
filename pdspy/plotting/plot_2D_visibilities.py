@@ -31,12 +31,12 @@ def plot_2D_visibilities(visibilities, model, parameters, params, index=0, \
 
     # Show the real component.
 
-    ax[0].imshow(visibilities["data"][index].real.reshape(\
+    ax[0].imshow(visibilities["data2d"][index].real.reshape(\
             (visibilities["npix"][index],visibilities["npix"][index]))\
             [xmin:xmax,xmin:xmax][:,::-1], origin="lower", \
             interpolation="nearest", vmin=vmin, vmax=vmax, cmap="jet")
 
-    ax[0].contour(model.visibilities[visibilities["lam"][index]].real.\
+    ax[0].contour(model.visibilities[visibilities["lam"][index]+"_2d"].real.\
             reshape((visibilities["npix"][index],visibilities["npix"][index]))\
             [xmin:xmax,xmin:xmax][:,::-1], cmap="jet")
 
@@ -47,12 +47,12 @@ def plot_2D_visibilities(visibilities, model, parameters, params, index=0, \
 
     # Show the imaginary component.
 
-    ax[1].imshow(visibilities["data"][index].imag.reshape(\
+    ax[1].imshow(visibilities["data2d"][index].imag.reshape(\
             (visibilities["npix"][index],visibilities["npix"][index]))\
             [xmin:xmax,xmin:xmax][:,::-1], origin="lower", \
             interpolation="nearest", vmin=vmin, vmax=vmax, cmap="jet")
 
-    ax[1].contour(model.visibilities[visibilities["lam"][index]].imag.\
+    ax[1].contour(model.visibilities[visibilities["lam"][index]+"_2d"].imag.\
             reshape((visibilities["npix"][index],visibilities["npix"][index]))\
             [xmin:xmax,xmin:xmax][:,::-1], cmap="jet")
 

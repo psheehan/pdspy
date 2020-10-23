@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from ..constants.astronomy import arcsec
 from .YSOModel import YSOModel
 from .get_surrogate_model import get_surrogate_model
 from .. import interferometry as uv
@@ -268,55 +269,61 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
     # Run the visibilities.
 
     for j in range(len(visibilities["file"])):
-        m.run_visibilities(name=visibilities["lam"][j], nphot=1e5, \
+        m.run_image(name=visibilities["lam"][j], nphot=1e5, \
                 npix=visibilities["npix"][j], \
                 pixelsize=visibilities["pixelsize"][j], \
                 lam=visibilities["lam"][j], incl=p["i"], \
                 pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                 mc_scat_maxtauabs=5, verbose=verbose, setthreads=nprocesses, \
-                nice=nice)
+                writeimage_unformatted=True, nice=nice)
+
+        # Account for the flux calibration uncertainties.
+
+        m.images[visibilities["lam"][j]].image *= p["flux_unc{0:d}".format(j+1)]
+
+        m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
+                visibilities["data"][j].u, visibilities["data"][j].v, \
+                visibilities["data"][j].freq, m.images[visibilities["lam"][j]],\
+                dRA=-p["x0"], dDec=-p["y0"], nthreads=nprocesses)
 
         # Add in free free emission.
 
         m.visibilities[visibilities["lam"][j]].real += uv.model(\
                 m.visibilities[visibilities["lam"][j]].u, \
                 m.visibilities[visibilities["lam"][j]].v, \
-                [0.,0.,sp.freefree(m.visibilities[visibilities["lam"][j]].\
-                freq.mean(), p["F_nu_ff"], p["nu_turn"]*1e9, p["pl_turn"])], \
-                return_type="data", funct="point").real
-
-        # Account for the flux calibration uncertainties.
-
-        m.visibilities[visibilities["lam"][j]].real *= \
-                p["flux_unc{0:d}".format(j+1)]
-        m.visibilities[visibilities["lam"][j]].imag *= \
-                p["flux_unc{0:d}".format(j+1)]
-
-        m.visibilities[visibilities["lam"][j]] = uv.center(\
-                m.visibilities[visibilities["lam"][j]], [p["x0"], \
-                p["y0"], 1.])
+                [p["x0"],p["y0"],sp.freefree(m.visibilities[visibilities[\
+                "lam"][j]].freq.mean(), p["F_nu_ff"], p["nu_turn"]*1e9, \
+                p["pl_turn"])], return_type="data", funct="point").real
 
         if plot:
-            # Run a high resolution version of the visibilities.
+            # Make high resolution visibilities. 
 
-            m.run_visibilities(name=visibilities["lam"][j]+"_high", nphot=1e5, \
-                    npix=2048, pixelsize=0.05, lam=visibilities["lam"][j], \
-                    incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
-                    code="radmc3d", mc_scat_maxtauabs=5, verbose=verbose, \
-                    setthreads=nprocesses, nice=nice)
+            u, v = numpy.meshgrid(numpy.linspace(-2.0e6, 2.0e6, 2000), \
+                    numpy.linspace(-2.0e6, 2.0e6, 2000))
+            u, v = u.reshape((u.size,)), v.reshape((v.size,))
+
+            m.visibilities[visibilities["lam"][j]+"_high"] = \
+                    uv.interpolate_model(u, v, visibilities["data"][j].freq, \
+                    m.images[visibilities["lam"][j]], dRA=-p["x0"], \
+                    dDec=-p["y0"], nthreads=nprocesses)
 
             # Add in free free emission.
 
             m.visibilities[visibilities["lam"][j]+"_high"].real += uv.model(\
                     m.visibilities[visibilities["lam"][j]+"_high"].u, \
                     m.visibilities[visibilities["lam"][j]+"_high"].v, \
-                    [0.,0.,sp.freefree(m.visibilities[visibilities["lam"][j]].\
-                    freq.mean(), p["F_nu_ff"], p["nu_turn"]*1e9, \
+                    [p["x0"],p["y0"],sp.freefree(m.visibilities[visibilities[\
+                    "lam"][j]].freq.mean(), p["F_nu_ff"], p["nu_turn"]*1e9, \
                     p["pl_turn"])], return_type="data", funct="point").real
 
-            m.visibilities[visibilities["lam"][j]+"_high"] = uv.center(\
-                    m.visibilities[visibilities["lam"][j]+"_high"], \
-                    [p["x0"], p["y0"], 1.])
+            # Run the 2D visibilities.
+
+            m.visibilities[visibilities["lam"][j]+"_2d"] = \
+                    uv.interpolate_model(visibilities["data2d"][j].u, \
+                    visibilities["data2d"][j].v, \
+                    visibilities["data2d"][j].freq, \
+                    m.images[visibilities["lam"][j]], dRA=-p["x0"], \
+                    dDec=-p["y0"], nthreads=nprocesses)
 
             # Run a millimeter image.
 
