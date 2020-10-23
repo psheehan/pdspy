@@ -274,7 +274,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
     # Run the visibilities.
 
     for j in range(len(visibilities["file"])):
-        if rtcode == "galario":
+        if ftcode == "galario":
             m.run_image(name=visibilities["lam"][j], nphot=1e5, \
                     npix=visibilities["npix"][j], \
                     pixelsize=visibilities["pixelsize"][j], \
@@ -310,7 +310,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
                 visibilities["data"][j].u, visibilities["data"][j].v, \
                 visibilities["data"][j].freq, m.images[visibilities["lam"][j]],\
-                dRA=p["x0"], dDec=p["y0"], nthreads=nprocesses, code=rtcode)
+                dRA=p["x0"], dDec=p["y0"], nthreads=nprocesses, code=ftcode)
 
         # Add in free free emission.
 
@@ -324,7 +324,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         if plot:
             # Make high resolution visibilities. 
 
-            if rtcode == "galario":
+            if ftcode == "galario":
                 u, v = numpy.meshgrid(numpy.linspace(-2.0e6, 2.0e6, 2000), \
                         numpy.linspace(-2.0e6, 2.0e6, 2000))
             else:
@@ -339,7 +339,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
             m.visibilities[visibilities["lam"][j]+"_high"] = \
                     uv.interpolate_model(u, v, visibilities["data"][j].freq, \
                     m.images[visibilities["lam"][j]], dRA=p["x0"], \
-                    dDec=p["y0"], nthreads=nprocesses, code=rtcode)
+                    dDec=p["y0"], nthreads=nprocesses, code=ftcode)
 
             # Add in free free emission.
 
@@ -357,7 +357,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                     visibilities["data2d"][j].v, \
                     visibilities["data2d"][j].freq, \
                     m.images[visibilities["lam"][j]], dRA=p["x0"], \
-                    dDec=p["y0"], nthreads=nprocesses, code=rtcode)
+                    dDec=p["y0"], nthreads=nprocesses, code=ftcode)
 
             # Run a millimeter image.
 

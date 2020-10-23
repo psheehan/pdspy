@@ -24,7 +24,7 @@ comm = MPI.COMM_WORLD
 ################################################################################
 
 def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
-        source="flared", plot_vis=False, nice=None, rtcode="galario"):
+        source="flared", plot_vis=False, nice=None, ftcode="galario"):
 
     # Set the values of all of the parameters.
 
@@ -191,7 +191,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
 
         m.set_camera_wavelength(wave)
 
-        if rtcode == "galario":
+        if ftcode == "galario":
             if p["docontsub"]:
                 m.run_image(name=visibilities["lam"][j], nphot=1e5, \
                         npix=visibilities["npix"][j], lam=None, \
@@ -265,7 +265,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
 
         extinction = numpy.exp(-tau)
 
-        if rtcode == "galario":
+        if ftcode == "galario":
             for i in range(len(m.images[visibilities["lam"][j]].freq)):
                 m.images[visibilities["lam"][j]].image[:,:,i,:] *= extinction[i]
         else:
@@ -278,7 +278,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
         if visibilities["subsample"][j] * visibilities["averaging"][j] > 1 or \
                 visibilities["hanning"][j]:
             # Using regular images.
-            if rtcode == "galario":
+            if ftcode == "galario":
                 recombined = numpy.empty((visibilities["npix"][j], \
                         visibilities["npix"][j], visibilities["data"][j].freq.size*\
                         visibilities["averaging"][j],1))
@@ -339,7 +339,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                 visibilities["data"][j].u, visibilities["data"][j].v, \
                 visibilities["data"][j].freq, \
                 m.images[visibilities["lam"][j]], dRA=p["x0"], dDec=p["y0"], \
-                nthreads=ncpus, code=rtcode)
+                nthreads=ncpus, code=ftcode)
 
         if plot:
             # If sub-velocity resolution is requested, adjust the frequencies.
