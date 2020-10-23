@@ -1,5 +1,9 @@
+from setuptools import setup
 from numpy.distutils.core import setup, Extension
 from Cython.Build import cythonize
+
+from distutils.command.sdist import sdist
+cmdclass={'sdist': sdist}
 
 # Set up the extension modules.
 
@@ -23,7 +27,14 @@ read = cythonize([Extension('pdspy.radmc3d.read', ["pdspy/radmc3d/read.pyx"], \
 
 # Now define the setup for the package.
 
-setup(name="pdspy", version="1.0.0", \
+setup(name="pdspy", \
+        version="1.5.0", \
+        author="Patrick Sheehan", \
+        author_email="psheehan@northwestern.edu", \
+        description="Radiative transfer modeling of protoplanetary disks", \
+        long_description=open("README.md","r").read(), \
+        long_description_content_type="text/markdown", \
+        url="https://github.com/psheehan/pdspy", \
         packages=[\
         "pdspy",\
         "pdspy.constants", \
@@ -48,7 +59,10 @@ setup(name="pdspy", version="1.0.0", \
         "pdspy.stars": 'pdspy/stars'}, \
         package_data={\
         'pdspy.dust': ['data/*','reddening/*.dat'], \
+        'pdspy.imaging': ['*.pyx'], \
+        'pdspy.interferometry': ['*.pyx'], \
         'pdspy.gas': ['data/*.dat'], \
+        'pdspy.radmc3d': ['*.pyx'], \
         'pdspy.spectroscopy': ['btsettle_data/*.txt'], \
         'pdspy.stars': ['evolutionary_tracks/*',\
             'evolutionary_tracks/bressan2012/*',\
@@ -71,4 +85,8 @@ setup(name="pdspy", version="1.0.0", \
         'bin/disk_model_powerlaw.py',\
         'bin/flared_model.py',\
         'bin/flared_model_ptsampler.py',\
-        'bin/flared_model_nested.py'])
+        'bin/flared_model_nested.py'], \
+        install_requires=['numpy','scipy','matplotlib','emcee','corner',\
+        'hyperion','h5py','mpi4py','Cython','astropy','schwimmbad','dynesty'], \
+        cmdclass=cmdclass)
+

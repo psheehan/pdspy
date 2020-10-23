@@ -9,3 +9,6 @@ pdspy/dust/reddening/*.pdf
 test
 *.c
 *.cover
+_build
+_static
+_templates

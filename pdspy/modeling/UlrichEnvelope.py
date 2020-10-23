@@ -303,7 +303,7 @@ class UlrichEnvelope:
 
         if self.t0 != None:
             f['t0'] = self.t0
-            f['plt'] = self.plt
+            f['tpl'] = self.plt
 
         if self.aturb != None:
             f['aturb'] = self.aturb
