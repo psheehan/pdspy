@@ -39,6 +39,10 @@ def load_data(config, model="disk", gridsize1D=20):
         data = uv.center(data, [config.visibilities["x0"][j], \
                 config.visibilities["y0"][j], 1.])
 
+        # Set any weights < 0 to be equal to zero to prevent odd fits.
+
+        data.weights[data.weights < 0] = 0
+
         # Take the complex conjugate to make sure orientation is correct.
 
         #data.imag *= -1
