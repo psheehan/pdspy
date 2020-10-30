@@ -274,11 +274,16 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
     # Run the visibilities.
 
     for j in range(len(visibilities["file"])):
+        # Set the wavelengths for RADMC3D to use.
+
+        wave = c / visibilities["data"][j].freq / 1.0e-4
+        m.set_camera_wavelength(wave)
+
         if ftcode == "galario":
             m.run_image(name=visibilities["lam"][j], nphot=1e5, \
                     npix=visibilities["npix"][j], \
                     pixelsize=visibilities["pixelsize"][j], \
-                    lam=visibilities["lam"][j], incl=p["i"], \
+                    loadlambda=True, incl=p["i"], \
                     pa=p["pa"]-180, dpc=p["dpc"], code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=verbose,setthreads=nprocesses,\
                     writeimage_unformatted=True, nice=nice)
@@ -297,7 +302,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
 
             m.run_image(name=visibilities["lam"][j], nphot=1e5, \
                     npix=25, pixelsize=2*p["R_grid"]*1.25/p["dpc"] / 25, \
-                    lam=visibilities["lam"][j], incl=p["i"], \
+                    loadlambda=True, incl=p["i"], \
                     pa=p["pa"]-180, dpc=p["dpc"], code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=verbose,setthreads=nprocesses,\
                     writeimage_unformatted=True, nice=nice, unstructured=True, \
@@ -361,10 +366,13 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
 
             # Run a millimeter image.
 
+            wave = c / visibilities["image"][j].freq / 1.0e-4
+            m.set_camera_wavelength(wave)
+
             m.run_image(name=visibilities["lam"][j], nphot=1e5, \
                     npix=visibilities["image_npix"][j], \
                     pixelsize=visibilities["image_pixelsize"][j], \
-                    lam=visibilities["lam"][j], incl=p["i"], \
+                    loadlambda=True, incl=p["i"], \
                     pa=p["pa"]-180, dpc=p["dpc"], code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=verbose, \
                     setthreads=nprocesses, nice=nice)
@@ -402,9 +410,12 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                 del m.grid.temperature[-1]
                 del m.grid.dust[-1]
 
+                wave = c / visibilities["data"][j].freq / 1.0e-4
+                m.set_camera_wavelength(wave)
+
                 m.run_visibilities(name=visibilities["lam"][j]+"_disk", \
                         nphot=1e5, npix=2048, pixelsize=0.05, \
-                        lam=visibilities["lam"][j], incl=p["i"], pa=p["pa"]-\
+                        loadlambda=True, incl=p["i"], pa=p["pa"]-\
                         180, dpc=p["dpc"], code="radmc3d", mc_scat_maxtauabs=5,\
                         verbose=verbose, setthreads=nprocesses, nice=nice)
 
