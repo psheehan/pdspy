@@ -76,13 +76,11 @@ def readms(filename, spw=[0], tolerance=0.01, datacolumn="corrected"):
         new_u, new_v, new_real, new_imag, new_weights, new_flags, \
                 new_uvdist = [], [], [], [], [], [], []
 
-        scale = 100 * new_freq.mean() / c
-
         for j in range(len(data)):
             if matching_spw[j] == i:
-                new_u.append(data[j]["u"]*scale)
-                new_v.append(data[j]["v"]*scale)
-                new_uvdist.append(data[j]["uvdist"]*scale)
+                new_u.append(data[j]["u"])
+                new_v.append(data[j]["v"])
+                new_uvdist.append(data[j]["uvdist"])
                 new_real.append(data[j]["real"])
                 new_imag.append(data[j]["imaginary"])
                 new_weights.append(data[j]["weight"])
@@ -176,8 +174,10 @@ def readms(filename, spw=[0], tolerance=0.01, datacolumn="corrected"):
 
     # Include the complex conjugate.
 
-    u = numpy.concatenate((u, -u))
-    v = numpy.concatenate((v, -v))
+    scale = 100 * freq.mean() / c
+
+    u = numpy.concatenate((u, -u))*scale
+    v = numpy.concatenate((v, -v))*scale
     real = numpy.concatenate((real, real))
     imag = numpy.concatenate((imag, -imag))
     weights = numpy.concatenate((weights, weights))
