@@ -100,7 +100,7 @@ def readuvfits(filename, fmt="miriad", fast=False):
     
     data.close()
 
-    uvdata = Visibilities(u, v, freq, real, imag, weights, baseline=baseline)
+    uvdata = Visibilities(u, v, freq, real, -imag, weights, baseline=baseline)
     
     uvdata.set_header(header)
     

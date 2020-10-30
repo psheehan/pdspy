@@ -179,7 +179,7 @@ def readms(filename, spw=[0], tolerance=0.01, datacolumn="corrected"):
     u = numpy.concatenate((u, -u))*scale
     v = numpy.concatenate((v, -v))*scale
     real = numpy.concatenate((real, real))
-    imag = numpy.concatenate((imag, -imag))
+    imag = -1*numpy.concatenate((imag, -imag))
     weights = numpy.concatenate((weights, weights))
     
     return Visibilities(u, v, freq, real, imag, weights)

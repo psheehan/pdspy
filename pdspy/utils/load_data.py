@@ -41,7 +41,7 @@ def load_data(config, model="disk", gridsize1D=20):
 
         # Take the complex conjugate to make sure orientation is correct.
 
-        data.imag *= -1
+        #data.imag *= -1
 
         # Add the data to the dictionary structure.
 
