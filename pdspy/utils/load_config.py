@@ -76,6 +76,19 @@ def load_config():
                 (config.visibilities["npix"][i]* \
                 config.visibilities["pixelsize"][i]*arcsec))
 
+    # Make sure the visibilities dictionary has SPW, tolerance, and whether
+    # corrected or data column in it.
+
+    if not "spw" in config.visibilities:
+        config.visibilities["spw"] = [[0] for i in range(len(\
+                config.visibilities["file"]))]
+    if not "tolerance" in config.visibilities:
+        config.visibilities["tolerance"] = [0.01 for i in range(len(\
+                config.visibilities["file"]))]
+    if not "datacolumn" in config.visibilities:
+        config.visibilities["datacolumn"] = ["corrected" for i in range(len(\
+                config.visibilities["file"]))]
+
     # Make sure the visibilities dictionary has subsampling and averaging
     # parameters.
 

@@ -25,8 +25,14 @@ def load_data(config, model="disk", gridsize1D=20):
     for j in range(len(config.visibilities["file"])):
         # Read the raw data.
 
-        data = uv.Visibilities()
-        data.read(config.visibilities["file"][j])
+        if config.visibilities["file"][j].split(".")[-1] == "ms":
+            data = uv.readms(config.visibilities["file"][j], \
+                    spw=config.visibilities["spw"][j], \
+                    tolerance=config.visibilities["tolerance"][j], \
+                    datacolumn=config.visibilities["datacolumn"][j])
+        else:
+            data = uv.Visibilities()
+            data.read(config.visibilities["file"][j])
 
         # Center the data. => need to update!
 
