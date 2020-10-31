@@ -201,7 +201,7 @@ class Model:
             
             r = r / (dpc*pc) / arcsec
 
-            x = r*numpy.cos(phi)
+            x = -r*numpy.cos(phi)
             y = r*numpy.sin(phi)
 
             x = numpy.concatenate(([x[0,0]], x[:,1:].reshape((x[:,1:].size,))))
