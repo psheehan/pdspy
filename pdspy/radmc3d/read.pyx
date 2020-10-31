@@ -10,7 +10,7 @@ cimport cython
 cimport numpy
 
 from os.path import exists
-from numpy import array, empty, linspace, fromfile, loadtxt
+from numpy import array, empty, linspace, fromfile, loadtxt, intc, hstack
 import sys
 
 #==========================================================================
@@ -165,6 +165,166 @@ def unstructured_image(filename=None,ext=None,binary=False):
     image = data[:,4:]
 
     return image, x, y
+
+#-----------------------------------------------------------------
+#              READ THE CIRCULAR TELESCOPE IMAGE
+#-----------------------------------------------------------------
+@cython.boundscheck(False)
+def circimage(filename=None,ext=None,binary=False):
+    
+    cdef unsigned int nx=0
+    cdef unsigned int ny=0
+    cdef unsigned int nf=0
+    cdef unsigned int index
+    cdef numpy.ndarray[ndim=1, dtype=double] data
+    sizepix_x=0.e0
+    sizepix_y=0.e0
+    
+    if (filename == None):
+        if (ext == None):
+            if binary:
+                filename = "circimage.bout"
+            else:
+                filename = "circimage.out"
+        else:
+            if binary:
+                filename = "circimage_"+str(ext)+".bout"
+            else:
+                filename = "circimage_"+str(ext)+".out"
+
+    if (exists(filename) == False):
+        f = open("radmc3d.out","r")
+        lines = f.readlines()
+        f.close()
+        for line in lines:
+            sys.stdout.write(line)
+        print("Sorry, cannot find {0:s}. Presumably radmc2d exited without success. See above for possible error messages of radmc3d!".format(filename))
+        return
+    else:
+        if binary:
+            f = open(filename, "rb")
+            data = fromfile(filename)
+        else:
+            f = open(filename, "r")
+
+    # Read the image.
+
+    if binary:
+        iformat = fromfile(filename, count=1, dtype=intc).astype(int)[0]
+    else:
+        iformat = int(f.readline())
+
+    if (iformat < 1) or (iformat > 4):
+        print("ERROR: File format of {0:s} not recognized.".format(filename))
+        return
+
+    if (iformat == 1) or (iformat == 3):
+        radian = (1 == 0)
+    else:
+        radian = (1 == 1)
+
+    if (iformat == 1) or (iformat == 2):
+        stokes = (1 == 0)
+    else:
+        stokes = (1 == 1)
+
+    # Read in the number of pixels and frequencies.
+    if binary:
+        _, nr, nphi, nf = list(fromfile(filename, count=4, dtype=intc).\
+                astype(int))
+    else:
+        nr, nphi = tuple(array(f.readline().split(),dtype=int))
+        nf = int(f.readline())
+
+    # Read in the radius information.
+
+    if binary:
+        index = 2
+        re = hstack(([0.0], data[index:index+nr+1]))
+        index += nr+1
+        rc = hstack(([0.0], data[index:index+nr]))
+        index += nr
+    else:
+        f.readline()
+        re = empty(nr+2)
+        for i in range(nr+2):
+            re[i] = float(f.readline())
+
+        f.readline()
+        rc = empty(nr+1)
+        for i in range(nr+1):
+            rc[i] = float(f.readline())
+
+    # Read in the phi information.
+
+    if binary:
+        phie = data[index:index+nphi+1]
+        index += nphi+1
+        phic = data[index:index+nphi]
+        index += nphi
+    else:
+        f.readline()
+        phie = empty(nphi+1)
+        for i in range(nphi+1):
+            phie[i] = float(f.readline())
+
+        f.readline()
+        phic = empty(nphi)
+        for i in range(nphi):
+            phic[i] = float(f.readline())
+
+    # Read in the wavelength information.
+
+    if binary:
+        lam = data[index:index+nf]
+        index += nf
+    else:
+        f.readline()
+        lam = empty(nf)
+        for i in range(nf):
+            lam[i] = float(f.readline())
+    
+        f.readline()
+
+    cdef numpy.ndarray[ndim=4, dtype=double] image
+    if stokes:
+        image = empty((nphi,nr+1,nf,4))
+    else:
+        image = empty((nphi,nr+1,nf,1))
+
+    if binary:
+        for i in range(nf):
+            for j in range(nphi):
+                for k in range(nr+1):
+                    if stokes:
+                        image[j,k,i,:] = data[index:index+4]
+                        index += 4
+                    else:
+                        image[j,k,i,0] = data[index]
+                        index += 1
+    else:
+        for i in range(nf):
+            for j in range(nphi):
+                for k in range(nr+1):
+                    if stokes:
+                        image[j,k,i,:] = array(f.readline().split(), \
+                                dtype=float)
+                    else:
+                        image[j,k,i,0] = float(f.readline())
+
+                    if (j == nphi-1) and (k == nr+1-1):
+                        f.readline()
+
+    f.close()
+
+    # Compute the flux in this image as seen at 1 pc.
+
+    if stokes:
+        flux = image[:,:,:,0].sum(axis=0).sum(axis=0)
+    else:
+        flux = image.sum(axis=0).sum(axis=0)
+
+    return image, rc, phic, lam
 
 #==========================================================================
 #                        ROUTINES FOR SPECTRA

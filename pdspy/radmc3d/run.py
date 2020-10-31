@@ -165,13 +165,16 @@ def image(lam=None, npix=None, npixx=None, npixy=None, nrrefine=None, \
         inclline=None, noline=None, incldust=None, nodust=None, \
         inclfreefree=None, nofreefree=None, inclgascont=None, nogascont=None, \
         widthkms=None, vkms=None, linenlam=None, iline=None, imolspec=None, \
-        doppcatch=None, verbose=True, nice=None, unstructured=False):
+        doppcatch=None, verbose=True, nice=None, unstructured=False, \
+        circ=False):
 
     if nice != None:
         command="nice -{0:d} radmc3d image ".format(nice)
     else:
         command="radmc3d image "
 
+    if (circ):
+        command += "circ "
     if (lam != None):
         command += "lambda "+lam+" "
     if (iline != None):
