@@ -8,7 +8,7 @@ from ..gas import Gas
 from .SettledDisk import SettledDisk
 
 class SettledPringleDisk(SettledDisk):
-    def surface_density(self, r):
+    def surface_density(self, r, normalize=True):
         # Get the disk parameters.
 
         rr = r * AU
@@ -49,6 +49,17 @@ class SettledPringleDisk(SettledDisk):
                 Sigma[(r >= self.gap_rin[i]) & \
                         (r <= self.gap_rout[i])] *= self.gap_delta[i]
         
+        ##### Normalize the surface density correctly.
+        
+        if normalize:
+            r_high = numpy.logspace(numpy.log10(self.rmin), \
+                    numpy.log10(self.rmax), 1000)
+            Sigma_high = self.surface_density(r_high, normalize=False)
+
+            scale = mass / (2*numpy.pi*trapz(r_high*AU*Sigma_high, r_high*AU))
+
+            Sigma *= scale
+
         return Sigma
 
     def scale_height(self, r):

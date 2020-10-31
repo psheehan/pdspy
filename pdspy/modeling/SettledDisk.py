@@ -165,11 +165,11 @@ class SettledDisk:
         ##### Normalize the surface density correctly.
         
         if normalize:
-            r_high = numpy.logspace(numpy.log10(r.min()), numpy.log10(r.max()),\
-                    1000)*AU
+            r_high = numpy.logspace(numpy.log10(self.rmin), \
+                    numpy.log10(self.rmax), 1000)
             Sigma_high = self.surface_density(r_high, normalize=False)
 
-            scale = mass / 2*numpy.pi*trapz(r_high*Sigma_high, r_high)
+            scale = mass / (2*numpy.pi*trapz(r_high*AU*Sigma_high, r_high*AU))
 
             Sigma *= scale
 
