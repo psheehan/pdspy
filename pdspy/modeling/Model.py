@@ -187,34 +187,39 @@ class Model:
                 loadlambda=loadlambda, imolspec=imolspec, iline=iline, \
                 widthkms=widthkms, vkms=vkms, linenlam=linenlam, \
                 doppcatch=doppcatch, incl=incl, posang=pa, phi=phi, \
-                verbose=verbose, nice=nice, unstructured=unstructured, \
+                verbose=verbose, nice=nice, circ=unstructured, \
                 nostar=nostar)
 
-        if 'writeimage_unformatted' in keywords:
-            image, x, y, lam = radmc3d.read.image(\
-                    binary=keywords["writeimage_unformatted"])
-        else:
-            image, x, y, lam = radmc3d.read.image()
-
         if unstructured:
-            image, x, y = radmc3d.read.unstructured_image(\
-                    "subpixeling_diagnostics.out")
+            if 'writeimage_unformatted' in keywords:
+                image, r, phi, lam = radmc3d.read.circimage(\
+                        binary=keywords["writeimage_unformatted"])
+            else:
+                image, r, phi, lam = radmc3d.read.circimage()
 
-            x = x * -(1. + numpy.random.uniform(-1.0e-3,1.0e-3,x.size)) / \
-                    (dpc*pc) / arcsec
-            y = y * (1. + numpy.random.uniform(-1.0e-3,1.0e-3,x.size)) / \
-                    (dpc*pc) / arcsec
+            r, phi = numpy.meshgrid(r, phi)
+            
+            r = r / (dpc*pc) / arcsec
 
-            x[x == 0] = numpy.abs(x[numpy.nonzero(x)]).min() * \
-                    numpy.random.uniform(-0.0001,0.0001, x[x==0].size)
-            y[y == 0] = numpy.abs(y[numpy.nonzero(y)]).min() * \
-                    numpy.random.uniform(-0.0001,0.0001, y[y==0].size)
+            x = r*numpy.cos(phi)
+            y = r*numpy.sin(phi)
+
+            x = numpy.concatenate(([x[0,0]], x[:,1:].reshape((x[:,1:].size,))))
+            y = numpy.concatenate(([y[0,0]], y[:,1:].reshape((y[:,1:].size,))))
+            image = numpy.concatenate((image[0:1,0,:,0], image[:,1:,:,0].\
+                    reshape((image[:,1:,0,0].size,image.shape[2]))))
 
             image = image / Jy
 
             self.images[name] = UnstructuredImage(image, x=x, y=y, \
                     wave=lam*1.0e-4)
         else:
+            if 'writeimage_unformatted' in keywords:
+                image, x, y, lam = radmc3d.read.image(\
+                        binary=keywords["writeimage_unformatted"])
+            else:
+                image, x, y, lam = radmc3d.read.image()
+
             image = image / Jy * ((x[1] - x[0]) / (dpc * pc)) * \
                     ((y[1] - y[0]) / (dpc * pc))
 
