@@ -3,7 +3,7 @@ from ..constants.physics import c
 from .libinterferometry import Visibilities
 import numpy
 
-def readuvfits(filename, fmt="miriad", fast=False):
+def readuvfits(filename, fmt="casa", fast=False):
     
     data = open(filename)
     
@@ -47,12 +47,11 @@ def readuvfits(filename, fmt="miriad", fast=False):
                 new_imag = new_imag[order,:]
                 new_weights = new_weights[order,:]
 
-                u = numpy.concatenate((u, u))
-                v = numpy.concatenate((v, v))
-                real = numpy.concatenate((real, new_real), axis=0)
-                imag = numpy.concatenate((imag, new_imag), axis=0)
-                weights = numpy.concatenate((weights, new_weights), axis=0)
-                baselines = numpy.concatenate((baselines, baselines))
+                real += new_real
+                imag += new_imag
+                weights += new_weights
+                real[weights != 0] /= weights[weights != 0]
+                imag[weights != 0] /= weights[weights != 0]
     elif fmt == "miriad":
         real = (data[0].data.field("data"))[:,0,0,:,0,0].astype(numpy.float64)
         imag = (data[0].data.field("data"))[:,0,0,:,0,1].astype(numpy.float64)
