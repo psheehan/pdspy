@@ -169,7 +169,7 @@ if args.resume:
     sampler.loglikelihood.args = [visibilities, images, spectra, \
             config.parameters, False]
     sampler.loglikelihood.kwargs = {"model":"flared", \
-            "ncpus":ncpus, "source":source, "nice":nice}
+            "ncpus":ncpus, "source":source, "nice":nice, "ftcode":args.ftcode}
     sampler.prior_transform.kwargs = {"model":"flared"}
 
     res = sampler.results
