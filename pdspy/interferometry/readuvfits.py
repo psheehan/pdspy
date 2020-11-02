@@ -48,7 +48,7 @@ def readuvfits(filename, fmt="casa", fast=False):
                 new_weights = new_weights[order,:]
 
                 real = real*weights + new_real*new_weights
-                imag += imag*weights + new_imag*new_weights
+                imag = imag*weights + new_imag*new_weights
                 weights += new_weights
                 real[weights != 0] /= weights[weights != 0]
                 imag[weights != 0] /= weights[weights != 0]
