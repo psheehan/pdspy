@@ -235,7 +235,9 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
             vv = numpy.linspace(-(gridsize-1)*binsize/2, \
                     (gridsize-1)*binsize/2, gridsize)
 
-        new_u, new_v = numpy.meshgrid(uu, vv)
+        #new_u, new_v = numpy.meshgrid(uu, vv)
+        new_u = numpy.zeros((gridsize,gridsize,nchannels))
+        new_v = numpy.zeros((gridsize,gridsize,nchannels))
         new_real = numpy.zeros((gridsize,gridsize,nchannels))
         new_imag = numpy.zeros((gridsize,gridsize,nchannels))
         new_weights = numpy.zeros((gridsize,gridsize,nchannels))
@@ -250,23 +252,38 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
     for k in range(nuv):
         for n in range(nfreq):
             if mode == "continuum":
+                if not radial:
+                    new_u[j[k],i[k],0] += u[k]*weights[k,n]
+                    new_v[j[k],i[k],0] += v[k]*weights[k,n]
                 new_real[j[k],i[k],0] += real[k,n]*weights[k,n]
                 new_imag[j[k],i[k],0] += imag[k,n]*weights[k,n]
                 new_weights[j[k],i[k],0] += weights[k,n]
             elif mode == "spectralline":
+                if not radial:
+                    new_u[j[k],i[k],n] += u[k]*weights[k,n]
+                    new_v[j[k],i[k],n] += v[k]*weights[k,n]
                 new_real[j[k],i[k],n] += real[k,n]*weights[k,n]
                 new_imag[j[k],i[k],n] += imag[k,n]*weights[k,n]
                 new_weights[j[k],i[k],n] += weights[k,n]
 
     good_data = new_weights != 0.0
-
     new_real[good_data] = new_real[good_data] / new_weights[good_data]
     new_imag[good_data] = new_imag[good_data] / new_weights[good_data]
+    if not radial:
+        new_u[good_data] = new_u[good_data] / new_weights[good_data]
+        new_v[good_data] = new_v[good_data] / new_weights[good_data]
 
     good_data = numpy.any(good_data, axis=2)
+    if not radial:
+        new_u = (new_u*new_weights).sum(axis=2)[good_data] / \
+                new_weights.sum(axis=2)[good_data]
+        new_v = (new_v*new_weights).sum(axis=2)[good_data] / \
+                new_weights.sum(axis=2)[good_data]
+    else:
+        new_u = new_u[good_data]
+        new_v = new_v[good_data]
+
     good_data = numpy.dstack([good_data for m in range(nchannels)])
-    new_u = new_u[good_data[:,:,0]]
-    new_v = new_v[good_data[:,:,0]]
 
     if mode == "continuum":
         freq = numpy.array([data.freq.sum()/data.freq.size])
