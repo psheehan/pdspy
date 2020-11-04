@@ -81,7 +81,7 @@ def invert(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
         convolve = fftshift(ifft2(ifftshift(conv_func(u, v, binsize, \
                binsize)))).real
 
-        image[:,:,i,0] = (im/convolve)[::-1,:]
+        image[:,:,i,0] = (im/convolve)[:,::-1]
 
         # Make sure the beam peaks at exactly 1. Should be just a small 
         # correction.

@@ -94,11 +94,12 @@ def clean(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
                 mode='same')+dirty[:,:,i]
     
     model = Image(model.reshape((model.shape[0],model.shape[1],\
-            model.shape[2],1)))
+            model.shape[2],1)), freq=data.freq)
     residuals = Image(dirty.reshape((dirty.shape[0],dirty.shape[1],\
-            dirty.shape[2],1)))
+            dirty.shape[2],1)), freq=data.freq)
     clean_beam = Image(clean_beam.reshape((dirty_beam.shape[0],\
-            dirty_beam.shape[1],dirty_beam.shape[2],1)))
-    clean_image = Image(clean_image.reshape(model.image.shape))
+            dirty_beam.shape[1],dirty_beam.shape[2],1)), freq=data.freq)
+    clean_image = Image(clean_image.reshape(model.image.shape), \
+            freq=data.freq)
     
     return clean_image, residuals, beam, model
