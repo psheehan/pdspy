@@ -4,13 +4,15 @@ from ..modeling import base_parameters
 import importlib
 import sys
 
-def load_config():
+def load_config(path=''):
     # Import the configuration file information.
 
-    sys.path.insert(0, '')
+    sys.path.append(path)
 
     import config
     importlib.reload(config)
+
+    sys.path.remove(path)
 
     # If some set of information isn't supplied, provide it.
 
@@ -75,6 +77,12 @@ def load_config():
         config.visibilities["binsize"].append(1/ \
                 (config.visibilities["npix"][i]* \
                 config.visibilities["pixelsize"][i]*arcsec))
+
+    # Make sure the fmt keyword is in the visibilities dictionary.
+
+    if not "fmt" in config.visibilities:
+        config.visibilities["fmt"] = ['4.1f' for i in range(len(\
+                config.visibilities["file"]))]
 
     # Make sure the visibilities dictionary has SPW, tolerance, and whether
     # corrected or data column in it.
