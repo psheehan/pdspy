@@ -81,11 +81,13 @@ setup(name="pdspy", \
         bhcoat, dmilay, read], \
         scripts=[\
         'bin/config_template.py',\
-        'bin/disk_model.py',\
+        'bin/disk_model_emcee3.py',\
+        'bin/disk_model_nested.py',\
+        'bin/disk_model_dynesty.py',\
         'bin/disk_model_powerlaw.py',\
-        'bin/flared_model.py',\
-        'bin/flared_model_ptsampler.py',\
-        'bin/flared_model_nested.py'], \
+        'bin/flared_model_emcee3.py',\
+        'bin/flared_model_nested.py', \
+        'bin/flared_model_dynesty.py'], \
         install_requires=['numpy','scipy','matplotlib','emcee','corner',\
         'hyperion','h5py','mpi4py','Cython','astropy','schwimmbad','dynesty'], \
         cmdclass=cmdclass)
