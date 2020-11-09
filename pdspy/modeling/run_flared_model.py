@@ -10,12 +10,10 @@ from .. import misc
 from .. import dust
 from .. import gas
 import scipy.signal
+import tempfile
 import numpy
 import time
 import os
-from mpi4py import MPI
-
-comm = MPI.COMM_WORLD
 
 ################################################################################
 #
@@ -91,8 +89,8 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
     # Make sure we are in a temp directory to not overwrite anything.
 
     original_dir = os.environ["PWD"]
-    os.mkdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
-    os.chdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
+    temp_dir = tempfile.TemporaryDirectory()
+    os.chdir(temp_dir.name)
 
     # Write the parameters to a text file so it is easy to keep track of them.
 
@@ -479,6 +477,5 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
 
     os.system("rm params.txt")
     os.chdir(original_dir)
-    os.system("rmdir /tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
 
     return m
