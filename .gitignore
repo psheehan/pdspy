@@ -12,3 +12,5 @@ test
 _build
 _static
 _templates
+build
+pdspy.egg-info
