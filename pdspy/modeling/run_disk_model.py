@@ -9,20 +9,17 @@ from .. import misc
 from .. import dust
 import scipy.signal
 import subprocess
-import argparse
+import tempfile
 import signal
 import numpy
 import time
 import os
-from mpi4py import MPI
 
 import sys
 if sys.version_info.major > 2:
     from subprocess import TimeoutExpired
 else:
     from subprocess32 import TimeoutExpired
-
-comm = MPI.COMM_WORLD
 
 ################################################################################
 #
@@ -88,8 +85,8 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
     # Make sure we are in a temp directory to not overwrite anything.
 
     original_dir = os.environ["PWD"]
-    os.mkdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
-    os.chdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
+    temp_dir = tempfile.TemporaryDirectory()
+    os.chdir(temp_dir.name)
 
     # Write the parameters to a text file so it is easy to keep track of them.
 
@@ -478,6 +475,5 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
 
     os.system("rm params.txt")
     os.chdir(original_dir)
-    os.rmdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
 
     return m
