@@ -26,7 +26,9 @@ If you have any questions about using the code (or this documentation), requests
    :caption: Contents:
 
    installation.rst
+   models.rst
    fitting.rst
+   postprocess.rst
 
 
 
