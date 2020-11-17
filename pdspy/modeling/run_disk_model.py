@@ -198,7 +198,6 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
     if no_radiative_transfer:
         os.system("rm params.txt")
         os.chdir(original_dir)
-        os.rmdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(), source))
 
         return m
 
@@ -247,7 +246,6 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                         time.gmtime())))
                 os.system("rm *.inp *.out *.dat *.uinp")
                 os.chdir(original_dir)
-                os.rmdir("/tmp/temp_{1:s}_{0:d}".format(comm.Get_rank(),source))
 
                 return 0.
             # Catch a strange RADMC3D error and re-run. Not an ideal fix, but 
