@@ -166,8 +166,108 @@ class Model:
         else:
             self.run_image_hyperion(name=name, nphot=nphot, **keywords)
 
-    def run_image_hyperion(self, name=None, nphot=1e6):
-        return
+    def run_image_hyperion(self, nphot=1e6, mrw=False, pda=False, \
+            niterations=20, percentile=99., absolute=2.0, relative=1.02, \
+            max_interactions=1e8, mpi=False, nprocesses=None, \
+            sublimation_temperature=None, verbose=True, incl=45, pa=45, \
+            dpc=1, lam=1300., track_origin='basic', nphot_imaging=1e6, \
+            name=None, npix=256, pixelsize=1.0):
+        d = []
+        for i in range(len(self.grid.dust)):
+            d.append(IsotropicDust( \
+                    self.grid.dust[i].nu[::-1].astype(numpy.float64), \
+                    self.grid.dust[i].albedo[::-1].astype(numpy.float64), \
+                    self.grid.dust[i].kext[::-1].astype(numpy.float64)))
+
+            if sublimation_temperature != None:
+                d[-1].set_sublimation_temperature('fast', \
+                        temperature=sublimation_temperature)
+
+        m = HypModel()
+        if (self.grid.coordsystem == "cartesian"):
+            m.set_cartesian_grid(self.grid.w1*AU, self.grid.w2*AU, \
+                    self.grid.w3*AU)
+        elif (self.grid.coordsystem == "cylindrical"):
+            m.set_cylindrical_polar_grid(self.grid.w1*AU, self.grid.w3*AU, \
+                    self.grid.w2)
+        elif (self.grid.coordsystem == "spherical"):
+            m.set_spherical_polar_grid(self.grid.w1*AU, self.grid.w2, \
+                    self.grid.w3)
+
+        for i in range(len(self.grid.density)):
+            if (self.grid.coordsystem == "cartesian"):
+                m.add_density_grid(numpy.transpose(self.grid.density[i], \
+                        axes=(2,1,0)), d[i])
+            if (self.grid.coordsystem == "cylindrical"):
+                m.add_density_grid(numpy.transpose(self.grid.density[i], \
+                        axes=(1,2,0)), d[i])
+            if (self.grid.coordsystem == "spherical"):
+                m.add_density_grid(numpy.transpose(self.grid.density[i], \
+                        axes=(2,1,0)), d[i])
+
+        sources = []
+        for i in range(len(self.grid.stars)):
+            sources.append(m.add_spherical_source())
+            sources[i].luminosity = self.grid.stars[i].luminosity * L_sun
+            sources[i].radius = self.grid.stars[i].radius * R_sun
+            sources[i].temperature = self.grid.stars[i].temperature
+
+        m.set_raytracing(True)
+        
+        if npix%2 == 0:
+            zoomau = [-pixelsize*dpc*AU * (npix+1)/2, \
+                    pixelsize*dpc*AU * (npix-1)/2, \
+                    -pixelsize*dpc*AU * (npix+1)/2, \
+                    pixelsize*dpc*AU * (npix-1)/2]
+        else:
+            zoomau = [-pixelsize*dpc*AU * npix/2, \
+                    pixelsize*dpc*AU * npix/2, \
+                    -pixelsize*dpc*AU * npix/2, \
+                    pixelsize*dpc*AU * npix/2]
+
+        image = m.add_peeled_images(sed=False, image=True)
+        image.set_viewing_angles([incl], [pa])
+        image.set_wavelength_range(1, lam, lam)
+        image.set_track_origin(track_origin)
+        image.set_image_size(npix, npix)
+        image.set_image_limits(*tuple(zoomau))
+
+        m.set_mrw(mrw)
+        m.set_pda(pda)
+        m.set_max_interactions(max_interactions)
+        m.set_n_initial_iterations(niterations)
+        m.set_n_photons(initial=nphot, imaging=nphot_imaging, \
+                raytracing_sources=1e4, raytracing_dust=nphot_imaging)
+        m.conf.output.output_density = 'last'
+        m.set_convergence(True, percentile=percentile, absolute=absolute, \
+                relative=relative)
+
+        m.write("temp.rtin")
+
+        if verbose:
+            m.run("temp.rtout", mpi=mpi, n_processes=nprocesses, overwrite=True)
+        else:
+            m.run("temp.rtout", mpi=mpi, n_processes=nprocesses, \
+                    overwrite=True, logfile="temp.log")
+
+        n = ModelOutput("temp.rtout")
+
+        image = n.get_image(inclination=0, distance=dpc*pc, units='Jy')
+
+        self.images[name] = Image(image.val.reshape(image.val.shape+(1,)), \
+                wave=numpy.array([lam])*1.0e-4)
+
+        if track_origin == "detailed":
+            for component in ["source_emit","source_scat","dust_emit", \
+                    "dust_scat"]:
+                image = n.get_image(inclination=0, distance=dpc*pc, \
+                        units='Jy', component=component)
+
+                self.images[name+"-"+component] = Image(image.val.reshape(\
+                        image.val.shape+(1,)), wave=numpy.array([lam])*1.0e-4)
+
+        os.system("rm temp.rtin temp.rtout temp.log")
+
 
     def run_image_radmc3d(self, name=None, nphot=1e6, npix=256, pixelsize=1.0, \
             lam="1300", loadlambda=False, imolspec=None, iline=None,  \
