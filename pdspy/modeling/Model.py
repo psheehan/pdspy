@@ -225,9 +225,9 @@ class Model:
                     -pixelsize*dpc*AU * npix/2, \
                     pixelsize*dpc*AU * npix/2]
 
+        m.set_monochromatic(True, wavelengths=[lam])
         image = m.add_peeled_images(sed=False, image=True)
         image.set_viewing_angles([incl], [pa])
-        image.set_wavelength_range(1, lam, lam)
         image.set_track_origin(track_origin)
         image.set_image_size(npix, npix)
         image.set_image_limits(*tuple(zoomau))
@@ -236,8 +236,9 @@ class Model:
         m.set_pda(pda)
         m.set_max_interactions(max_interactions)
         m.set_n_initial_iterations(niterations)
-        m.set_n_photons(initial=nphot, imaging=nphot_imaging, \
-                raytracing_sources=1e4, raytracing_dust=nphot_imaging)
+        m.set_n_photons(initial=nphot, raytracing_sources=1e4, \
+                raytracing_dust=nphot_imaging, imaging_sources=nphot_imaging, \
+                imaging_dust=nphot_imaging)
         m.conf.output.output_density = 'last'
         m.set_convergence(True, percentile=percentile, absolute=absolute, \
                 relative=relative)
@@ -255,7 +256,7 @@ class Model:
         image = n.get_image(inclination=0, distance=dpc*pc, units='Jy')
 
         self.images[name] = Image(image.val.reshape(image.val.shape+(1,)), \
-                wave=numpy.array([lam])*1.0e-4)
+                wave=image.wav*1.0e-4)
 
         if track_origin == "detailed":
             for component in ["source_emit","source_scat","dust_emit", \
@@ -264,7 +265,7 @@ class Model:
                         units='Jy', component=component)
 
                 self.images[name+"-"+component] = Image(image.val.reshape(\
-                        image.val.shape+(1,)), wave=numpy.array([lam])*1.0e-4)
+                        image.val.shape+(1,)), wave=image.wav*1.0e-4)
 
         os.system("rm temp.rtin temp.rtout temp.log")
 
