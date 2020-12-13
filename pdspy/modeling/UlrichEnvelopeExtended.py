@@ -146,13 +146,6 @@ class UlrichEnvelopeExtended:
         return n
 
     def microturbulence(self, r, theta, phi):
-        ##### Disk Parameters
-        
-        rin = self.rmin * AU
-        rout = self.rmax * AU
-        t0 = self.t0
-        plt = self.plt
-
         ##### Set up the coordinates
 
         rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')

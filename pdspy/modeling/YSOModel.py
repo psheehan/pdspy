@@ -424,15 +424,15 @@ class YSOModel(Model):
         if rcent_ne_rdisk:
             self.envelope = UlrichEnvelope(mass=mass, rmin=rmin, rmax=rmax, \
                     rcent=rcent, cavpl=cavpl, cavrfact=cavrfact, t0=t0, \
-                    tpl=tpl, dust=dust)
+                    tpl=tpl, dust=dust, aturb=aturb)
         elif hasattr(self, 'disk'):
             self.envelope = UlrichEnvelope(mass=mass, rmin=rmin, rmax=rmax, \
                     rcent=self.disk.rmax, cavpl=cavpl, cavrfact=cavrfact, \
-                    t0=t0, tpl=tpl, dust=dust)
+                    t0=t0, tpl=tpl, dust=dust, aturb=aturb)
         else:
             self.envelope = UlrichEnvelope(mass=mass, rmin=rmin, rmax=rmax, \
                     rcent=rcent, cavpl=cavpl, cavrfact=cavrfact, t0=t0, \
-                    tpl=tpl, dust=dust)
+                    tpl=tpl, dust=dust, aturb=aturb)
 
         if (dust != None):
             self.grid.add_density(self.envelope.density(self.grid.r, \
@@ -449,7 +449,7 @@ class YSOModel(Model):
                             self.grid.theta, self.grid.phi, \
                             mstar=self.grid.stars[0].mass))
                     if aturb != None:
-                        self.grid.add_microturbulence(self.disk.\
+                        self.grid.add_microturbulence(self.envelope.\
                                 microturbulence(self.grid.r, self.grid.theta, \
                                 self.grid.phi))
             else:
@@ -461,8 +461,9 @@ class YSOModel(Model):
                         self.grid.theta, self.grid.phi, \
                         mstar=self.grid.stars[0].mass))
                 if aturb != None:
-                    self.grid.add_microturbulence(self.disk.microturbulence( \
-                            self.grid.r, self.grid.theta, self.grid.phi))
+                    self.grid.add_microturbulence(self.envelope.\
+                            microturbulence(self.grid.r, self.grid.theta, \
+                            self.grid.phi))
 
         if t0 != None:
             self.grid.add_temperature(self.envelope.temperature(self.grid.r, \
@@ -479,17 +480,17 @@ class YSOModel(Model):
             self.envelope = UlrichEnvelopeExtended(mass=mass, rmin=rmin, \
                     rmax=rmax, rcent=rcent, cavpl=cavpl, cavrfact=cavrfact, \
                     theta_open=theta_open, zoffset=zoffset, t0=t0, tpl=tpl, \
-                    dust=dust)
+                    dust=dust, aturb=aturb)
         elif hasattr(self, 'disk'):
             self.envelope = UlrichEnvelopeExtended(mass=mass, rmin=rmin, \
                     rmax=rmax, rcent=self.disk.rmax, cavpl=cavpl, \
                     cavrfact=cavrfact, theta_open=theta_open, zoffset=zoffset, \
-                    t0=t0, tpl=tpl, dust=dust)
+                    t0=t0, tpl=tpl, dust=dust, aturb=aturb)
         else:
             self.envelope = UlrichEnvelopeExtended(mass=mass, rmin=rmin, \
                     rmax=rmax, rcent=rcent, cavpl=cavpl, cavrfact=cavrfact, \
                     theta_open=theta_open, zoffset=zoffset, t0=t0, tpl=tpl, \
-                    dust=dust)
+                    dust=dust, aturb=aturb)
 
         if (dust != None):
             self.grid.add_density(self.envelope.density(self.grid.r, \
@@ -506,7 +507,7 @@ class YSOModel(Model):
                             self.grid.theta, self.grid.phi, \
                             mstar=self.grid.stars[0].mass))
                     if aturb != None:
-                        self.grid.add_microturbulence(self.disk.\
+                        self.grid.add_microturbulence(self.envelope.\
                                 microturbulence(self.grid.r, self.grid.theta, \
                                 self.grid.phi))
             else:
@@ -518,8 +519,9 @@ class YSOModel(Model):
                         self.grid.theta, self.grid.phi, \
                         mstar=self.grid.stars[0].mass))
                 if aturb != None:
-                    self.grid.add_microturbulence(self.disk.microturbulence( \
-                            self.grid.r, self.grid.theta, self.grid.phi))
+                    self.grid.add_microturbulence(self.envelope.\
+                            microturbulence(self.grid.r, self.grid.theta, \
+                            self.grid.phi))
 
         if t0 != None:
             self.grid.add_temperature(self.envelope.temperature(self.grid.r, \

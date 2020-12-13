@@ -82,7 +82,10 @@ class UlrichEnvelope:
         rho[mid2] = rho0 * (2.*rr[mid2]/rcent - 1)**(-0.5) * \
                 (rr[mid2]/rcent - 1.)**(-1)
 
-        rho[(rr >= rout) ^ (rr <= rin)] = 0e0
+        #rho[(rr >= rout) ^ (rr <= rin)] = 0e0
+        rho[rr <= rin] = 0e0
+
+        rho *= numpy.exp(-(rr/rout)**(2-0.5))
 
         ##### Add an outflow cavity.
 
@@ -139,13 +142,6 @@ class UlrichEnvelope:
         return n
 
     def microturbulence(self, r, theta, phi):
-        ##### Disk Parameters
-        
-        rin = self.rmin * AU
-        rout = self.rmax * AU
-        t0 = self.t0
-        plt = self.plt
-
         ##### Set up the coordinates
 
         rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
