@@ -169,18 +169,15 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
                 xmax = int(round(x0 + visibilities["image_npix"][index]/2 - \
                       visibilities["x0"][index]/\
                       visibilities["image_pixelsize"][index]+ \
-                      params["x0"]/visibilities["image_pixelsize"][index]+ \
                       ticks[-1]/visibilities["image_pixelsize"][index]))
 
                 ymin = int(round(y0 + visibilities["image_npix"][index]/2 + \
                       visibilities["y0"][index]/\
-                      visibilities["image_pixelsize"][index]- \
-                      params["y0"]/visibilities["image_pixelsize"][index]+ \
+                      visibilities["image_pixelsize"][index]+ \
                       ticks[0]/visibilities["image_pixelsize"][index]))
                 ymax = int(round(y0 + visibilities["image_npix"][index]/2 + \
                       visibilities["y0"][index]/\
-                      visibilities["image_pixelsize"][index]- \
-                      params["y0"]/visibilities["image_pixelsize"][index]+ \
+                      visibilities["image_pixelsize"][index]+ \
                       ticks[-1]/visibilities["image_pixelsize"][index]))
             else:
                 xmin, xmax = int(round(visibilities["image_npix"][index]/2+1 + \
