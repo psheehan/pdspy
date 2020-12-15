@@ -24,8 +24,6 @@ base_parameters = {
         "w_gap3":{"fixed":True, "value":10., "limits":[1.,100.]},
         "logdelta_gap3":{"fixed":True, "value":0.0, "limits":[-4.,0.]},
         "f_M_large":{"fixed":True, "value":1., "limits":[0.05, 1.]},
-        "f_h_large":{"fixed":True, "value":1., "limits":[0.1, 1.]},
-        "beta_large":{"fixed":True, "value":1., "limits":[0.5, 1.5]},
         "logalpha_settle":{"fixed":True, "value":-2., "limits":[-5., 0.]},
         # Disk temperature parameters.
         "logT0":{"fixed":True, "value":2.5, "limits":[1.,3.]},

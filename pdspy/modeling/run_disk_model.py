@@ -59,7 +59,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
 
     # If we're using a Pringle disk, make sure the scale height is set correctly
 
-    if p["disk_type"] in ["exptaper","settledexptaper"]:
+    if p["disk_type"] in ["exptaper","twolayerexptaper","settledexptaper"]:
         p["h_0"] *= p["R_disk"]**p["beta"]
 
     # Get the needed values of the gaps.
@@ -131,16 +131,24 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                 p["R_out_gap2"],p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
                 p["delta_gap1"],p["delta_gap2"],p["delta_gap3"]], \
                 gamma_taper=p["gamma_taper"])
-        if p["f_M_large"] < 1:
-            m.add_pringle_disk(mass=p["M_disk"]*(1-p["f_M_large"]), \
-                    rmin=p["R_in"], rmax=p["R_disk"], plrho=p["alpha"], \
-                    h0=p["h_0"], plh=p["beta"], dust=edust, \
-                    t0=p["T0"], plt=p["q"], gap_rin=[p["R_in"],\
-                    p["R_in_gap1"],p["R_in_gap2"],p["R_in_gap3"]], \
-                    gap_rout=[p["R_cav"],p["R_out_gap1"],p["R_out_gap2"],\
-                    p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
-                    p["delta_gap1"], p["delta_gap2"],p["delta_gap3"]], \
-                    gamma_taper=p["gamma_taper"])
+    elif p["disk_type"] == "twolayer":
+        m.add_twolayer_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"],\
+                plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=dust_gen,\
+                gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"],\
+                p["R_in_gap3"]], gap_rout=[p["R_cav"],p["R_out_gap1"],\
+                p["R_out_gap2"],p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
+                p["delta_gap1"],p["delta_gap2"],p["delta_gap3"]], \
+                amin=p["a_min"], amax=p["a_max"], fmin=p["f_M_large"], \
+                alpha_settle=p["alpha_settle"])
+    elif p["disk_type"] == "twolayerexptaper":
+        m.add_twolayer_pringle_disk(mass=p["M_disk"], rmin=p["R_in"], \
+                rmax=p["R_disk"],plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], \
+                dust=dust_gen,gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"],\
+                p["R_in_gap3"]], gap_rout=[p["R_cav"],p["R_out_gap1"],\
+                p["R_out_gap2"],p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
+                p["delta_gap1"],p["delta_gap2"],p["delta_gap3"]], \
+                amin=p["a_min"], amax=p["a_max"], fmin=p["f_M_large"], \
+                alpha_settle=p["alpha_settle"])
     elif p["disk_type"] == "settled":
         m.add_settled_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
                 plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=dust_gen,\
@@ -168,15 +176,6 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                 p["R_in_gap3"]], gap_rout=[p["R_cav"],p["R_out_gap1"],\
                 p["R_out_gap2"],p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
                 p["delta_gap1"],p["delta_gap2"],p["delta_gap3"]])
-        if p["f_M_large"] < 1:
-            m.add_disk(mass=p["M_disk"]*(1-p["f_M_large"]), rmin=p["R_in"], \
-                    rmax=p["R_disk"], plrho=p["alpha"], h0=p["h_0"], \
-                    plh=p["beta"], dust=edust, \
-                    t0=p["T0"], plt=p["q"], gap_rin=[p["R_in"],\
-                    p["R_in_gap1"],p["R_in_gap2"],p["R_in_gap3"]], \
-                    gap_rout=[p["R_cav"],p["R_out_gap1"],p["R_out_gap2"],\
-                    p["R_out_gap3"]], gap_delta=[p["delta_cav"],\
-                    p["delta_gap1"], p["delta_gap2"],p["delta_gap3"]])
 
     if p["envelope_type"] == "ulrich":
         m.add_ulrich_envelope(mass=p["M_env"], rmin=p["R_in"], rmax=p["R_env"],\

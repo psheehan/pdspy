@@ -3,9 +3,12 @@ import h5py
 from .Model import Model
 from .Disk import Disk
 from .DartoisDisk import DartoisDisk
+from .TwoLayerDisk import TwoLayerDisk
 from .SettledDisk import SettledDisk
 from .PringleDisk import PringleDisk
 from .DartoisPringleDisk import DartoisPringleDisk
+from .SettledPringleDisk import SettledPringleDisk
+from .TwoLayerPringleDisk import TwoLayerPringleDisk
 from .Envelope import Envelope
 from .UlrichEnvelope import UlrichEnvelope
 from .UlrichEnvelopeExtended import UlrichEnvelopeExtended
@@ -149,6 +152,60 @@ class YSOModel(Model):
         if tmid0 != None:
             self.grid.add_temperature(self.disk.temperature(self.grid.r, \
                     self.grid.theta, self.grid.phi))
+
+    def add_twolayer_disk(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, \
+            h0=0.1, plh=58./45., dust=None,  t0=None, plt=None, gas=None, \
+            abundance=None, tmid0=None, tatm0=None, zq0=None, pltgas=None, \
+            delta=None, gap_rin=[], gap_rout=[], gap_delta=[], \
+            gaussian_gaps=False, aturb=None, amin=1., amax=1000., fmax=0.8, \
+            alpha_settle=1.0e-3):
+        self.disk = TwoLayerDisk(mass=mass, rmin=rmin, rmax=rmax, plrho=plrho, \
+                h0=h0, plh=plh, dust=dust, t0=t0, plt=plt, tmid0=tmid0, \
+                tatm0=tatm0, zq0=zq0, pltgas=pltgas, delta=delta, \
+                gap_rin=gap_rin, gap_rout=gap_rout, gap_delta=gap_delta, \
+                aturb=aturb, gaussian_gaps=gaussian_gaps, amin=amin, amax=amax,\
+                fmax=fmax, alpha_settle=alpha_settle)
+
+        if (dust != None):
+            a, rho = self.disk.density(self.grid.r, self.grid.theta, \
+                    self.grid.phi)
+
+            for i in range(len(a)):
+                self.grid.add_density(rho[:,:,:,i], self.disk.dust(a[i]/1e4, \
+                        pla))
+
+        if (gas != None):
+            if (type(gas) == list):
+                for i in range(len(gas)):
+                    self.disk.add_gas(gas[i], abundance[i])
+                    self.grid.add_number_density(self.disk.number_density(\
+                            self.grid.r, self.grid.theta, self.grid.phi, \
+                            gas=i), gas[i])
+                    self.grid.add_velocity(self.disk.velocity(self.grid.r, \
+                            self.grid.theta, self.grid.phi, \
+                            mstar=self.grid.stars[0].mass))
+                    if aturb != None:
+                        self.grid.add_microturbulence(self.disk.\
+                                microturbulence(self.grid.r, self.grid.theta, \
+                                self.grid.phi))
+            else:
+                self.disk.add_gas(gas, abundance)
+                self.grid.add_number_density(self.disk.number_density( \
+                        self.grid.r, self.grid.theta, self.grid.phi, \
+                        gas=0), gas)
+                self.grid.add_velocity(self.disk.velocity(self.grid.r, \
+                        self.grid.theta, self.grid.phi, \
+                        mstar=self.grid.stars[0].mass))
+                if aturb != None:
+                    self.grid.add_microturbulence(self.disk.microturbulence(\
+                            self.grid.r, self.grid.theta, self.grid.phi))
+
+        if t0 != None:
+            self.grid.add_temperature(self.disk.temperature(self.grid.r, \
+                    self.grid.theta, self.grid.phi))
+        if tmid0 != None:
+            self.grid.add_gas_temperature(self.disk.gas_temperature( \
+                    self.grid.r, self.grid.theta, self.grid.phi))
 
     def add_settled_disk(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, \
             h0=0.1, plh=58./45., dust=None,  t0=None, plt=None, gas=None, \
@@ -319,6 +376,60 @@ class YSOModel(Model):
         if tmid0 != None:
             self.grid.add_temperature(self.disk.temperature(self.grid.r, \
                     self.grid.theta, self.grid.phi))
+
+    def add_twolayer_pringle_disk(self, mass=1.0e-3, rmin=0.1, rmax=300, \
+            plrho=2.37, h0=0.1, plh=58./45., dust=None,  t0=None, plt=None, \
+            gas=None, abundance=None, tmid0=None, tatm0=None, zq0=None, \
+            pltgas=None, delta=None, gap_rin=[], gap_rout=[], gap_delta=[], \
+            gaussian_gaps=False, aturb=None, amin=1., amax=1000., fmax=0.8, \
+            alpha_settle=1.0e-3):
+        self.disk = TwoLayerPringleDisk(mass=mass, rmin=rmin, rmax=rmax, \
+                plrho=plrho, h0=h0, plh=plh, dust=dust, t0=t0, plt=plt, \
+                tmid0=tmid0, tatm0=tatm0, zq0=zq0, pltgas=pltgas, delta=delta, \
+                gap_rin=gap_rin, gap_rout=gap_rout, gap_delta=gap_delta, \
+                aturb=aturb, gaussian_gaps=gaussian_gaps, amin=amin, amax=amax,\
+                fmax=fmax, alpha_settle=alpha_settle)
+
+        if (dust != None):
+            a, rho = self.disk.density(self.grid.r, self.grid.theta, \
+                    self.grid.phi)
+
+            for i in range(len(a)):
+                self.grid.add_density(rho[:,:,:,i], self.disk.dust(a[i]/1e4, \
+                        pla))
+
+        if (gas != None):
+            if (type(gas) == list):
+                for i in range(len(gas)):
+                    self.disk.add_gas(gas[i], abundance[i])
+                    self.grid.add_number_density(self.disk.number_density(\
+                            self.grid.r, self.grid.theta, self.grid.phi, \
+                            gas=i), gas[i])
+                    self.grid.add_velocity(self.disk.velocity(self.grid.r, \
+                            self.grid.theta, self.grid.phi, \
+                            mstar=self.grid.stars[0].mass))
+                    if aturb != None:
+                        self.grid.add_microturbulence(self.disk.\
+                                microturbulence(self.grid.r, self.grid.theta, \
+                                self.grid.phi))
+            else:
+                self.disk.add_gas(gas, abundance)
+                self.grid.add_number_density(self.disk.number_density( \
+                        self.grid.r, self.grid.theta, self.grid.phi, \
+                        gas=0), gas)
+                self.grid.add_velocity(self.disk.velocity(self.grid.r, \
+                        self.grid.theta, self.grid.phi, \
+                        mstar=self.grid.stars[0].mass))
+                if aturb != None:
+                    self.grid.add_microturbulence(self.disk.microturbulence(\
+                            self.grid.r, self.grid.theta, self.grid.phi))
+
+        if t0 != None:
+            self.grid.add_temperature(self.disk.temperature(self.grid.r, \
+                    self.grid.theta, self.grid.phi))
+        if tmid0 != None:
+            self.grid.add_gas_temperature(self.disk.gas_temperature( \
+                    self.grid.r, self.grid.theta, self.grid.phi))
 
     def add_settled_pringle_disk(self, mass=1.0e-3, rmin=0.1, rmax=300, \
             plrho=2.37, h0=0.1, plh=58./45., dust=None,  t0=None, plt=None, \
