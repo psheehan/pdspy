@@ -97,6 +97,9 @@ class Grid:
         w2 = f['w2'][...]
         w3 = f['w3'][...]
 
+        if type(coordsystem) == bytes:
+            coordsystem = coordsystem.decode('utf-8')
+
         if (coordsystem == 'cartesian'):
             self.set_cartesian_grid(w1, w2, w3)
         elif (coordsystem == 'cylindrical'):
