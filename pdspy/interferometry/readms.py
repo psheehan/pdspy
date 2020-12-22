@@ -1,9 +1,11 @@
 from ..constants.physics import c
 from .libinterferometry import Visibilities
+import astropy.table
 import casatools
 import numpy
 
-def readms(filename, spw=[0], tolerance=0.01, datacolumn="corrected"):
+def readms(filename, spw=[0], tolerance=0.01, time_tolerance=0., \
+        datacolumn="corrected"):
 
     # Load the MS file.
 
@@ -24,7 +26,8 @@ def readms(filename, spw=[0], tolerance=0.01, datacolumn="corrected"):
     while ms.selectinit(datadescid=i):
         if int(list(ms.getspectralwindowinfo().keys())[0]) in spw:
             data.append(ms.getdata(items=["u","v",prefix+"real",prefix+\
-                    "imaginary","weight","flag","axis_info","uvdist"]))
+                    "imaginary","weight","flag","axis_info","uvdist",\
+                    "antenna1","antenna2","time"]))
         ms.reset()
         i += 1
 
@@ -74,7 +77,8 @@ def readms(filename, spw=[0], tolerance=0.01, datacolumn="corrected"):
         # Collect all of the DATA_DESC_ID's that match that spectral window.
 
         new_u, new_v, new_real, new_imag, new_weights, new_flags, \
-                new_uvdist = [], [], [], [], [], [], []
+                new_uvdist, new_antenna1, new_antenna2, new_time = [], [], [], \
+                [], [], [], [], [], [], []
 
         for j in range(len(data)):
             if matching_spw[j] == i:
@@ -85,6 +89,9 @@ def readms(filename, spw=[0], tolerance=0.01, datacolumn="corrected"):
                 new_imag.append(data[j]["imaginary"])
                 new_weights.append(data[j]["weight"])
                 new_flags.append(data[j]["flag"])
+                new_antenna1.append(data[j]["antenna1"])
+                new_antenna2.append(data[j]["antenna2"])
+                new_time.append(data[j]["time"])
 
         # Concatenate them all along the uvdist axis.
 
@@ -95,6 +102,9 @@ def readms(filename, spw=[0], tolerance=0.01, datacolumn="corrected"):
         new_imag = numpy.concatenate(new_imag, axis=2)
         new_weights = numpy.concatenate(new_weights, axis=1)
         new_flags = numpy.concatenate(new_flags, axis=2)
+        new_antenna1 = numpy.concatenate(new_antenna1)
+        new_antenna2 = numpy.concatenate(new_antenna2)
+        new_time = numpy.concatenate(new_time)
 
         # Adjust the weights for flags and make the right shape.
         
@@ -116,6 +126,20 @@ def readms(filename, spw=[0], tolerance=0.01, datacolumn="corrected"):
         new_imag = numpy.transpose(new_imag)
         new_weights = numpy.transpose(new_weights)
 
+        # Trim the autocorrelation data.
+
+        good = new_uvdist != 0
+
+        new_u = new_u[good]
+        new_v = new_v[good]
+        new_uvdist = new_uvdist[good]
+        new_real = new_real[good,:]
+        new_imag = new_imag[good,:]
+        new_weights = new_weights[good,:]
+        new_antenna1 = new_antenna1[good]
+        new_antenna2 = new_antenna2[good]
+        new_time = new_time[good]
+
         # Now do some fancy stuff to merge the multiple spectral windows. Since 
         # it is possible that even for the same observation, there'll be a 
         # different number of UV points because of flagging, we need to match 
@@ -127,50 +151,72 @@ def readms(filename, spw=[0], tolerance=0.01, datacolumn="corrected"):
 
             # Make the first column uvdist.
 
-            u = numpy.hstack((new_uvdist.reshape((-1,1)),new_u.reshape((-1,1))))
-            v = numpy.hstack((new_uvdist.reshape((-1,1)),new_v.reshape((-1,1))))
-            real = numpy.hstack((new_uvdist.reshape((-1,1)),new_real))
-            imag = numpy.hstack((new_uvdist.reshape((-1,1)),new_imag))
-            weights = numpy.hstack((new_uvdist.reshape((-1,1)),new_weights))
+            table = astropy.table.Table([new_antenna1, \
+                    new_antenna2, new_time, new_u, new_v, new_real, new_imag, \
+                    new_weights, new_uvdist], names=["antenna1","antenna2",\
+                    "time"]+[string+"_"+str(i) for string in ['u','v','real',\
+                    'imag','weights','uvdist']])
         else:
             freq = numpy.concatenate((freq, new_freq))
 
             # Make the first column uvdist.
 
-            new_u = numpy.hstack((new_uvdist.reshape((-1,1)), \
-                    new_u.reshape((-1,1))))
-            new_v = numpy.hstack((new_uvdist.reshape((-1,1)), \
-                    new_v.reshape((-1,1))))
-            new_real = numpy.hstack((new_uvdist.reshape((-1,1)),new_real))
-            new_imag = numpy.hstack((new_uvdist.reshape((-1,1)),new_imag))
-            new_weights = numpy.hstack((new_uvdist.reshape((-1,1)),new_weights))
+            new_table = astropy.table.Table([new_antenna1, \
+                    new_antenna2, new_time, new_u, new_v, new_real, new_imag, \
+                    new_weights, new_uvdist], names=["antenna1","antenna2",\
+                    "time"]+[string+"_"+str(i) for string in ['u','v','real',\
+                    'imag','weights','uvdist']])
 
             # Do the fancy merging.
 
-            u = merge_arrays(u, new_u)
-            v = merge_arrays(v, new_v)
+            if time_tolerance == 0:
+                table = astropy.table.join(table, new_table, join_type='outer',\
+                        keys=["antenna1","antenna2","time"])
+            else:
+                table = astropy.table.join(table, new_table, join_type='outer',\
+                        keys=["antenna1","antenna2","time"], \
+                        join_funcs={'time':astropy.table.\
+                        join_distance(time_tolerance)})
 
-            real = merge_arrays(real, new_real)
-            imag = merge_arrays(imag, new_imag)
-            weights = merge_arrays(weights, new_weights)
+                for key in ["time"]:
+                    table[key] = numpy.concatenate([\
+                            table[key+'_1'].data[:,numpy.newaxis], \
+                            table[key+'_2'].data[:,numpy.newaxis]], axis=1)
 
-            # Since for u and v, the two columns are duplicates of each other 
-            # (except when there's a uv point that exists in one but not the 
-            # other, trim it down to just one column.
+                    wt = numpy.where(table[key].data == 0, 0, 1)
 
-            u[:,1] = numpy.where(u[:,1] != 0, u[:,1], u[:,2])
-            u = u[:,0:2]
-            v[:,1] = numpy.where(v[:,1] != 0, v[:,1], v[:,2])
-            v = v[:,0:2]
+                    table[key] = (table[key].data*wt).sum(axis=1)/\
+                            wt.sum(axis=1)
+                
+                    table.remove_columns([key+'_1',key+'_2',key+'_id'])
 
-    # Finally, chop off the uvdist column as it is not needed any more.
+    # Make sure masked colums are filled appropriately.
 
-    u = u[:,1]
-    v = v[:,1]
+    for colname in table.colnames:
+        table[colname].fill_value = 0.
+    table = table.filled()
+
+    # Get the info out of the table.
+
+    u = numpy.concatenate([table['u_{0:d}'.format(i)].data[:,numpy.newaxis] \
+            for i in numpy.unique(matching_spw)], axis=1)
+    v = numpy.concatenate([table['v_{0:d}'.format(i)].data[:,numpy.newaxis] \
+            for i in numpy.unique(matching_spw)], axis=1)
+
     freq = freq[:,0]
-    real = real[:, 1:]
-    imag = imag[:, 1:]
-    weights = weights[:, 1:]
+
+    real = numpy.concatenate([table['real_{0:d}'.format(i)].data for i in \
+            numpy.unique(matching_spw)], axis=1)
+    imag = numpy.concatenate([table['imag_{0:d}'.format(i)].data for i in \
+            numpy.unique(matching_spw)], axis=1)
+    weights = numpy.concatenate([table['weights_{0:d}'.format(i)].data for i \
+            in numpy.unique(matching_spw)], axis=1)
+
+    # Trim down u and v.
+
+    uwt = numpy.where(numpy.logical_and(u == 0, v == 0), 0, 1)
+    u = (u*uwt).sum(axis=1) / uwt.sum(axis=1)
+    v = (v*uwt).sum(axis=1) / uwt.sum(axis=1)
 
     # Include the complex conjugate.
 
@@ -183,17 +229,3 @@ def readms(filename, spw=[0], tolerance=0.01, datacolumn="corrected"):
     weights = numpy.concatenate((weights, weights))
     
     return Visibilities(u, v, freq, real, imag, weights)
-
-# A little function to merge two arrays that may share the same first 
-# column.
-
-def merge_arrays(a, b):
-    d = numpy.union1d(a[:, 0],b[:, 0]).reshape((-1,1))
-    z = numpy.zeros((d.shape[0],a.shape[1]-1 + b.shape[1]-1),dtype=int)
-    c = numpy.hstack((d,z))
-    mask = numpy.in1d(c[:, 0], a[:, 0])
-    c[mask,1:a.shape[1]] = a[:, 1:]
-    mask = numpy.in1d(c[:, 0], b[:, 0])
-    c[mask,a.shape[1]:] = b[:, 1:]
-
-    return c
