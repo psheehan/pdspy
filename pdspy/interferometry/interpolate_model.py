@@ -30,19 +30,10 @@ def interpolate_model(u, v, freq, model, nthreads=1, dRA=0., dDec=0., \
         imag = numpy.concatenate(imag, axis=1)
 
     elif code == "trift":
-        if len(model.freq) == 1:
-            vis = trift.trift_extended(model.x*arcsec, model.y*arcsec, \
-                    model.image[:,0], u, v, dRA*arcsec, dDec*arcsec, \
-                    nthreads=nthreads)
+        vis = trift.cpu.trift(model.x*arcsec, model.y*arcsec, \
+                model.image, u, v, dRA*arcsec, dDec*arcsec, \
+                nthreads=nthreads, mode="extended")
 
-            real = vis.real.reshape((u.size,1))
-            imag = vis.imag.reshape((u.size,1))
-        else:
-            vis = trift.trift2D_extended(model.x*arcsec, model.y*arcsec, \
-                    model.image, u, v, dRA*arcsec, dDec*arcsec, \
-                    nthreads=nthreads)
-
-            real = vis.real
-            imag = vis.imag
+        real, imag = vis.real, vis.imag
 
     return Visibilities(u, v, freq, real, imag, numpy.ones(real.shape))
