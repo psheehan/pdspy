@@ -24,7 +24,7 @@ def interpolate_model(u, v, freq, model, nthreads=1, dRA=0., dDec=0., \
                     dxy, u, v, dRA=dRA*arcsec, dDec=dDec*arcsec)
 
             real.append(vis.real.reshape((u.size,1)))
-            imag.append(vis.imag.reshape((u.size,1)))
+            imag.append(-vis.imag.reshape((u.size,1)))
 
         real = numpy.concatenate(real, axis=1)
         imag = numpy.concatenate(imag, axis=1)
