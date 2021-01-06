@@ -1,27 +1,32 @@
+{% set name = "pdspy" %}
+{% set version = "1.5.0" %}
+
 package:
-    name: pdspy
-    version: "1.5.0"
+    name: {{ name|lower }}
+    version: {{ version }}
 
 source:
-    url: https://files.pythonhosted.org/packages/ee/b0/3e834fb25a597ef12a9764b92ee1c5cf6e1d4897805c9c1346ac0f70dfbf/pdspy-1.5.0.tar.gz
-    sha256: 94d68282132f0272ef41fa4da84eebbf859ead2f3cb407223feeb9f2d1a7a247
+    path: ../pdspy
 
 build:
     number: 0
     script: "{{ PYTHON }} -m pip install . -vv --no-deps"
+    skip: True  # [win]
 
 requirements:
+    build:
+        - {{ compiler('c') }}
+        - {{ compiler('fortran') }}
     host:
         - python
-        - setuptools
-        - numpy
-        - Cython
+        - numpy >=1.16
+        - cython
         - pip
     run:
         - python
-        - numpy
+        - {{ pin_compatible('numpy>=1.16') }}
         - scipy
-        - matplotlib
+        - matplotlib-base
         - astropy
         - h5py
         - mpi4py
@@ -34,10 +39,13 @@ requirements:
 test:
     imports:
         - pdspy
+    commands:
+        - test -d ${PREFIX}
+        - test -f ${PREFIX}/bin/disk_model.py
 
 about:
     home: https://github.com/psheehan/pdspy
-    license: GPL-3.0
+    license: GPL-3.0-only
     license_family: GPL
     license_file: LICENSE
     summary: 'Radiative transfer modeling of protoplanetary disks'
