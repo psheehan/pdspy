@@ -9,16 +9,15 @@ def center(data, params):
     elif type(params) == numpy.ndarray:
         pass
     
-    if params.size > 2:
-        params[2] = 1.0
+    centering_params = [params[0], params[1], 1.]
     
     data_complex = data.real+1j*data.imag
 
     model_complex = numpy.empty(data.real.shape, dtype=complex)
     for i in range(len(data.freq)):
         model_complex[:,i] = model(data.u*data.freq[i]/data.freq.mean(), \
-                data.v*data.freq[i]/data.freq.mean(), params, funct="point", \
-                return_type="complex")[:,0]
+                data.v*data.freq[i]/data.freq.mean(), centering_params, \
+                funct="point", return_type="complex")[:,0]
     
     centered_data = data_complex * model_complex.conj()
     
