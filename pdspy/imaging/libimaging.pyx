@@ -217,7 +217,7 @@ cdef class UnstructuredImageObject:
                 self.freq, self.unc, self.velocity))
 
 def rebuild_unstructured(image, x, y, wave, freq, unc, velocity):
-    return ImageObject(image, x, y, wave, freq, unc, velocity)
+    return UnstructuredImageObject(image, x, y, wave, freq, unc, velocity)
 
 class UnstructuredImage(UnstructuredImageObject):
 
