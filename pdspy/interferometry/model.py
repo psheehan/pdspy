@@ -4,7 +4,8 @@ from ..constants.astronomy import arcsec
 from ..constants.physics import c
 from .libinterferometry import Visibilities
 
-def model(u, v, params, return_type="complex", funct="gauss", freq=230):
+def model(u, v, params, return_type="complex", funct="gauss", freq=230., \
+        primary_beam=None):
     
     if type(params) == list:
         params = numpy.array(params)
@@ -36,7 +37,27 @@ def model(u, v, params, return_type="complex", funct="gauss", freq=230):
             index += nparams[j]
         index = int(index)
         
+        # Make a copy of the parameters so we don't mess it up.
         par = params.copy()
+
+        # If we were suplied with a primary beam shape, then calculate the flux
+        # correction factor.
+        if primary_beam != None:
+            r0 = (par[index+0]**2 + par[index+1]**2)**0.5
+
+            if primary_beam == "ALMA":
+                fwhm_pb = 1.13 * (c*1.0e-2 / freq) / 12 / arcsec
+            elif primary_beam == "VLA":
+                fwhm_pb = 60. * 45 / (freq / 1.0e9)
+            else:
+                fwhm_pb = 0.
+
+            sigma_pb = fwhm_pb / (2. * numpy.sqrt(2 * numpy.log(2.)))
+            pb = numpy.exp(-r0**2/(2*sigma_pb**2))
+
+            par[int(index + nparams[i] - 1)] *= pb
+
+        # Convert sizes into arcseconds.
         par[index+0] *= arcsec
         par[index+1] *= arcsec
         if (funct[i] == "gauss") or (funct[i] == "circle") or \
@@ -46,6 +67,7 @@ def model(u, v, params, return_type="complex", funct="gauss", freq=230):
             if (funct[i] == "gauss") or (funct[i] == "ring"):
                 par[index+3] *= arcsec
         
+        # Generate the model.
         if funct[i] == "point":
             model += point_model(u, v, par[index+0], par[index+1], par[index+2])
         elif funct[i] == "gauss":
@@ -71,7 +93,7 @@ def model(u, v, params, return_type="complex", funct="gauss", freq=230):
     elif return_type == "amp":
         return numpy.sqrt(real**2 + imag**2)
     elif return_type == "data":
-        return Visibilities(u, v, numpy.array([freq*1.0e9]), \
+        return Visibilities(u, v, numpy.array([freq]), \
                 real.reshape((real.size,1)), imag.reshape((imag.size,1)), \
                 numpy.ones((real.size,1)))
     elif return_type == "append":
