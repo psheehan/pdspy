@@ -316,7 +316,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                     hanning_window = numpy.hanning(5) / numpy.hanning(5).sum()
 
                     recombined = scipy.signal.fftconvolve(recombined, \
-                            convolve_window.reshape((1,hanning_window.size)), \
+                            hanning_window.reshape((1,hanning_window.size)), \
                             axes=1, mode="same")
 
                 # Finally, average by the binning.
