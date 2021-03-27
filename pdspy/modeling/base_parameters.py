@@ -45,6 +45,7 @@ base_parameters = {
         "ksi":{"fixed":True, "value":1.0, "limits":[0.5,1.5]},
         "theta_open":{"fixed":True, "value":"45", "limits":[0.,90.]},
         "zoffset":{"fixed":True, "value":1, "limits":[0.,5.]},
+        "gamma_env":{"fixed":True, "value":0., "limits":[-0.5,2.0]},
         # Envelope temperature parameters.
         "logT0_env":{"fixed":True, "value":2.5, "limits":[1.,3.5]},
         "q_env":{"fixed":True, "value":0.25, "limits":[0.,1.5]},

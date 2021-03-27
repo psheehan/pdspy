@@ -109,7 +109,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
     else:
         ntheta = 51
 
-    if p["envelope_type"] == "ulrich":
+    if "ulrich" in p["envelope_type"]:
         #p["R_grid"] = 20*p["R_env"]
         p["R_grid"] = 20*10.**4.5
     else:
@@ -160,6 +160,19 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                 zoffset=p["zoffset"], t0=p["T0_env"], tpl=p["q_env"], \
                 aturb=p["a_turb_env"], dust=edust, gas=gases, \
                 abundance=abundance)
+    elif p["envelope_type"] == "ulrich-tapered":
+        m.add_tapered_ulrich_envelope(mass=p["M_env"], rmin=p["R_in"], \
+                rmax=p["R_env"], gamma=p["gamma_env"], cavpl=p["ksi"], \
+                cavrfact=p["f_cav"], dust=edust, t0=p["T0_env"], \
+                tpl=p["q_env"], gas=gases, abundance=abundance,\
+                aturb=p["a_turb_env"], rcent=p["R_c"])
+    elif p["envelope_type"] == "ulrich-tapered-extended":
+        m.add_tapered_ulrichextended_envelope(mass=p["M_env"], rmin=p["R_in"], \
+                rmax=p["R_env"], gamma=p["gamma_env"], rcent=p["R_c"], \
+                cavpl=p["ksi"], cavrfact=p["f_cav"], \
+                theta_open=p["theta_open"], zoffset=p["zoffset"], \
+                t0=p["T0_env"], tpl=p["q_env"], aturb=p["a_turb_env"], \
+                dust=edust, gas=gases, abundance=abundance)
     else:
         pass
 

@@ -8,17 +8,18 @@ from ..constants.time import year
 from ..dust import Dust
 from ..gas import Gas
 
-class UlrichEnvelopeExtended:
+class TaperedUlrichEnvelopeExtended:
 
     def __init__(self, mass=1.0e-3, rmin=0.1, rmax=1000, rcent=30, cavpl=1.0, \
-            cavrfact=0.2, theta_open=1., zoffset=1., t0=None, tpl=None, \
-            dust=None, aturb=None):
+            cavrfact=0.2, gamma=1., theta_open=1., zoffset=1., t0=None, \
+            tpl=None, dust=None, aturb=None):
         self.mass = mass
         self.rmin = rmin
         self.rmax= rmax
         self.rcent = rcent
         self.cavpl = cavpl
         self.cavrfact = cavrfact
+        self.gamma = gamma
         self.t0 = t0
         self.tpl = tpl
         self.theta_open = theta_open
@@ -49,6 +50,7 @@ class UlrichEnvelopeExtended:
         cavz0 = self.zoffset * AU
         cavpl = self.cavpl
         cavrfact = self.cavrfact
+        gamma = self.gamma
         theta_open = self.theta_open * numpy.pi / 180.
 
         cava = (rout*numpy.sin(theta_open/2)/AU / numpy.tan(theta_open/2) - \
@@ -89,7 +91,8 @@ class UlrichEnvelopeExtended:
         rho[mid2] = rho0 * (2.*rr[mid2]/rcent - 1)**(-0.5) * \
                 (rr[mid2]/rcent - 1.)**(-1)
 
-        rho[(rr >= rout) ^ (rr <= rin)] = 0e0
+        rho *= numpy.exp(-(rr/rout)**(2-gamma))
+        rho[rr <= rin] = 0e0
 
         ##### Add an outflow cavity.
 
@@ -128,7 +131,7 @@ class UlrichEnvelopeExtended:
         
         t = t0 * (rt / (1*AU))**(-tpl)
 
-        t[(rt >= rout) ^ (rt <= rin)] = 0e0
+        t[rt <= rin] = 0e0
 
         t[t > 10000.] = 10000.
         
@@ -268,6 +271,7 @@ class UlrichEnvelopeExtended:
         self.rcent = f['rcent'][()]
         self.cavpl = f['cavpl'][()]
         self.cavrfact = f['cavrfact'][()]
+        self.gamma = f['gamma'][()]
         self.theta_open = f['theta_open'][()]
         self.zoffset = f['zoffset'][()]
 
@@ -302,6 +306,7 @@ class UlrichEnvelopeExtended:
         f['rcent'] = self.rcent
         f['cavpl'] = self.cavpl
         f['cavrfact'] = self.cavrfact
+        f['gamma'] = self.gamma
         f['theta_open'] = self.theta_open
         f['zoffset'] = self.zoffset
 

@@ -12,6 +12,8 @@ from .TwoLayerPringleDisk import TwoLayerPringleDisk
 from .Envelope import Envelope
 from .UlrichEnvelope import UlrichEnvelope
 from .UlrichEnvelopeExtended import UlrichEnvelopeExtended
+from .TaperedUlrichEnvelope import TaperedUlrichEnvelope
+from .TaperedUlrichEnvelopeExtended import TaperedUlrichEnvelopeExtended
 from .Star import Star
 from ..constants.physics import h, c, G, m_p, k
 from ..constants.astronomy import AU, M_sun, kms, R_sun, Jy, pc
@@ -602,6 +604,119 @@ class YSOModel(Model):
                     rmax=rmax, rcent=rcent, cavpl=cavpl, cavrfact=cavrfact, \
                     theta_open=theta_open, zoffset=zoffset, t0=t0, tpl=tpl, \
                     dust=dust, aturb=aturb)
+
+        if (dust != None):
+            self.grid.add_density(self.envelope.density(self.grid.r, \
+                    self.grid.theta, self.grid.phi),dust)
+
+        if (gas != None):
+            if (type(gas) == list):
+                for i in range(len(gas)):
+                    self.envelope.add_gas(gas[i], abundance[i])
+                    self.grid.add_number_density(self.envelope.number_density( \
+                            self.grid.r, self.grid.theta, self.grid.phi, \
+                            gas=i), gas[i])
+                    self.grid.add_velocity(self.envelope.velocity(self.grid.r, \
+                            self.grid.theta, self.grid.phi, \
+                            mstar=self.grid.stars[0].mass))
+                    if aturb != None:
+                        self.grid.add_microturbulence(self.envelope.\
+                                microturbulence(self.grid.r, self.grid.theta, \
+                                self.grid.phi))
+            else:
+                self.envelope.add_gas(gas, abundance)
+                self.grid.add_number_density(self.envelope.number_density( \
+                        self.grid.r, self.grid.theta, self.grid.phi, gas=0), \
+                        gas)
+                self.grid.add_velocity(self.envelope.velocity(self.grid.r, \
+                        self.grid.theta, self.grid.phi, \
+                        mstar=self.grid.stars[0].mass))
+                if aturb != None:
+                    self.grid.add_microturbulence(self.envelope.\
+                            microturbulence(self.grid.r, self.grid.theta, \
+                            self.grid.phi))
+
+        if t0 != None:
+            self.grid.add_temperature(self.envelope.temperature(self.grid.r, \
+                    self.grid.theta, self.grid.phi))
+        if tmid0 != None:
+            self.grid.add_gas_temperature(self.envelope.gas_temperature( \
+                    self.grid.r, self.grid.theta, self.grid.phi))
+
+    def add_tapered_ulrich_envelope(self, mass=1.0e-3, rmin=0.1, rmax=1000, \
+            rcent=300, cavpl=1.0, cavrfact=0.2, gamma=1., t0=None, tpl=None, \
+            dust=None, gas=None, abundance=None, tmid0=None, \
+            rcent_ne_rdisk=False, aturb=None):
+        if rcent_ne_rdisk:
+            self.envelope = TaperedUlrichEnvelope(mass=mass, rmin=rmin, \
+                    rmax=rmax, rcent=rcent, gamma=gamma, cavpl=cavpl, \
+                    cavrfact=cavrfact, t0=t0, tpl=tpl, dust=dust, aturb=aturb)
+        elif hasattr(self, 'disk'):
+            self.envelope = TaperedUlrichEnvelope(mass=mass, rmin=rmin, \
+                    rmax=rmax, rcent=self.disk.rmax, gamma=gamma, cavpl=cavpl, \
+                    cavrfact=cavrfact, t0=t0, tpl=tpl, dust=dust, aturb=aturb)
+        else:
+            self.envelope = TaperedUlrichEnvelope(mass=mass, rmin=rmin, \
+                    rmax=rmax, rcent=rcent, gamma=gamma, cavpl=cavpl, \
+                    cavrfact=cavrfact, t0=t0, tpl=tpl, dust=dust, aturb=aturb)
+
+        if (dust != None):
+            self.grid.add_density(self.envelope.density(self.grid.r, \
+                    self.grid.theta, self.grid.phi),dust)
+
+        if (gas != None):
+            if (type(gas) == list):
+                for i in range(len(gas)):
+                    self.envelope.add_gas(gas[i], abundance[i])
+                    self.grid.add_number_density(self.envelope.number_density( \
+                            self.grid.r, self.grid.theta, self.grid.phi, \
+                            gas=i), gas[i])
+                    self.grid.add_velocity(self.envelope.velocity(self.grid.r, \
+                            self.grid.theta, self.grid.phi, \
+                            mstar=self.grid.stars[0].mass))
+                    if aturb != None:
+                        self.grid.add_microturbulence(self.envelope.\
+                                microturbulence(self.grid.r, self.grid.theta, \
+                                self.grid.phi))
+            else:
+                self.envelope.add_gas(gas, abundance)
+                self.grid.add_number_density(self.envelope.number_density( \
+                        self.grid.r, self.grid.theta, self.grid.phi, gas=0), \
+                        gas)
+                self.grid.add_velocity(self.envelope.velocity(self.grid.r, \
+                        self.grid.theta, self.grid.phi, \
+                        mstar=self.grid.stars[0].mass))
+                if aturb != None:
+                    self.grid.add_microturbulence(self.envelope.\
+                            microturbulence(self.grid.r, self.grid.theta, \
+                            self.grid.phi))
+
+        if t0 != None:
+            self.grid.add_temperature(self.envelope.temperature(self.grid.r, \
+                    self.grid.theta, self.grid.phi))
+        if tmid0 != None:
+            self.grid.add_gas_temperature(self.envelope.gas_temperature( \
+                    self.grid.r, self.grid.theta, self.grid.phi))
+
+    def add_tapered_ulrichextended_envelope(self, mass=1.0e-3, rmin=0.1, \
+            rmax=1000, rcent=300, cavpl=1.0, cavrfact=0.2, gamma=1., \
+            theta_open=45., zoffset=1., t0=None, tpl=None, dust=None, gas=None,\
+            abundance=None, tmid0=None, rcent_ne_rdisk=False, aturb=None):
+        if rcent_ne_rdisk:
+            self.envelope = TaperedUlrichEnvelopeExtended(mass=mass, rmin=rmin,\
+                    rmax=rmax, rcent=rcent, gamma=gamma, cavpl=cavpl, \
+                    cavrfact=cavrfact, theta_open=theta_open, zoffset=zoffset, \
+                    t0=t0, tpl=tpl, dust=dust, aturb=aturb)
+        elif hasattr(self, 'disk'):
+            self.envelope = TaperedUlrichEnvelopeExtended(mass=mass, rmin=rmin,\
+                    rmax=rmax, rcent=self.disk.rmax, gamma=gamma, cavpl=cavpl, \
+                    cavrfact=cavrfact, theta_open=theta_open, zoffset=zoffset, \
+                    t0=t0, tpl=tpl, dust=dust, aturb=aturb)
+        else:
+            self.envelope = TaperedUlrichEnvelopeExtended(mass=mass, rmin=rmin,\
+                    rmax=rmax, rcent=rcent, gamma=gamma, cavpl=cavpl, \
+                    cavrfact=cavrfact, theta_open=theta_open, zoffset=zoffset, \
+                    t0=t0, tpl=tpl, dust=dust, aturb=aturb)
 
         if (dust != None):
             self.grid.add_density(self.envelope.density(self.grid.r, \

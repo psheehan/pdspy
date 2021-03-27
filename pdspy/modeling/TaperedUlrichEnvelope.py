@@ -8,21 +8,19 @@ from ..constants.time import year
 from ..dust import Dust
 from ..gas import Gas
 
-class UlrichEnvelopeExtended:
+class TaperedUlrichEnvelope:
 
     def __init__(self, mass=1.0e-3, rmin=0.1, rmax=1000, rcent=30, cavpl=1.0, \
-            cavrfact=0.2, theta_open=1., zoffset=1., t0=None, tpl=None, \
-            dust=None, aturb=None):
+            cavrfact=0.2, gamma=1., t0=None, tpl=None, dust=None, aturb=None):
         self.mass = mass
         self.rmin = rmin
         self.rmax= rmax
         self.rcent = rcent
         self.cavpl = cavpl
         self.cavrfact = cavrfact
+        self.gamma = gamma
         self.t0 = t0
         self.tpl = tpl
-        self.theta_open = theta_open
-        self.zoffset = zoffset
         if (dust != None):
             self.dust = dust
 
@@ -46,13 +44,10 @@ class UlrichEnvelopeExtended:
         rout = self.rmax * AU
         mass = self.mass * M_sun
         rcent = self.rcent * AU
-        cavz0 = self.zoffset * AU
+        cavz0 = 1*AU
         cavpl = self.cavpl
         cavrfact = self.cavrfact
-        theta_open = self.theta_open * numpy.pi / 180.
-
-        cava = (rout*numpy.sin(theta_open/2)/AU / numpy.tan(theta_open/2) - \
-                cavz0/AU) * (rout*numpy.sin(theta_open/2)/AU)**-cavpl
+        gamma = self.gamma
 
         # Set up the coordinates.
         
@@ -89,11 +84,12 @@ class UlrichEnvelopeExtended:
         rho[mid2] = rho0 * (2.*rr[mid2]/rcent - 1)**(-0.5) * \
                 (rr[mid2]/rcent - 1.)**(-1)
 
-        rho[(rr >= rout) ^ (rr <= rin)] = 0e0
+        rho *= numpy.exp(-(rr/rout)**(2-gamma))
+        rho[rr <= rin] = 0e0
 
         ##### Add an outflow cavity.
 
-        rho[numpy.abs(zz)/AU-cavz0/AU-cava*(RR/AU)**cavpl > 0.0] *= cavrfact
+        rho[numpy.abs(zz)/AU-cavz0/AU-(RR/AU)**cavpl > 0.0] *= cavrfact
         
         ##### Normalize the mass correctly.
         
@@ -128,7 +124,7 @@ class UlrichEnvelopeExtended:
         
         t = t0 * (rt / (1*AU))**(-tpl)
 
-        t[(rt >= rout) ^ (rt <= rin)] = 0e0
+        t[rt <= rin] = 0.1
 
         t[t > 10000.] = 10000.
         
@@ -268,8 +264,7 @@ class UlrichEnvelopeExtended:
         self.rcent = f['rcent'][()]
         self.cavpl = f['cavpl'][()]
         self.cavrfact = f['cavrfact'][()]
-        self.theta_open = f['theta_open'][()]
-        self.zoffset = f['zoffset'][()]
+        self.gamma = f['gamma'][()]
 
         if 't0' in f:
             self.t0 = f['t0'][()]
@@ -302,12 +297,11 @@ class UlrichEnvelopeExtended:
         f['rcent'] = self.rcent
         f['cavpl'] = self.cavpl
         f['cavrfact'] = self.cavrfact
-        f['theta_open'] = self.theta_open
-        f['zoffset'] = self.zoffset
+        f['gamma'] = self.cavrfact
 
         if self.t0 != None:
             f['t0'] = self.t0
-            f['plt'] = self.plt
+            f['tpl'] = self.plt
 
         if self.aturb != None:
             f['aturb'] = self.aturb
