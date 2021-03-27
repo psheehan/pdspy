@@ -110,10 +110,19 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
         ntheta = 51
 
     if p["envelope_type"] == "ulrich":
-        p["R_grid"] = p["R_env"]
+        #p["R_grid"] = 20*p["R_env"]
+        p["R_grid"] = 20*10.**4.5
     else:
         p["R_grid"] = max(5*p["R_disk"],300)
-    m.set_spherical_grid(p["R_in"], p["R_grid"], 100, ntheta, 2, code="radmc3d")
+
+    if ftcode == "trift":
+        nr = int(numpy.ceil((numpy.log10(p["R_grid"]) - -1.) / 0.04))
+        p["R_in_grid"] = 0.1
+    else:
+        nr = 100
+        p["R_in_grid"] = p["R_in"]
+    m.set_spherical_grid(p["R_in_grid"], p["R_grid"], nr, ntheta, 2, \
+            code="radmc3d")
 
     if p["disk_type"] == "exptaper":
         m.add_pringle_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \

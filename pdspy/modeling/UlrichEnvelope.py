@@ -85,7 +85,7 @@ class UlrichEnvelope:
         #rho[(rr >= rout) ^ (rr <= rin)] = 0e0
         rho[rr <= rin] = 0e0
 
-        rho *= numpy.exp(-(rr/rout)**(2-0.5))
+        rho *= numpy.exp(-(rr/rout)**(2-0.))
 
         ##### Add an outflow cavity.
 
@@ -124,7 +124,8 @@ class UlrichEnvelope:
         
         t = t0 * (rt / (1*AU))**(-tpl)
 
-        t[(rr >= rout) ^ (rr <= rin)] = 0e0
+        #t[(rr >= rout) ^ (rr <= rin)] = 0e0
+        t[rt <= rin] = 0.1
 
         t[t > 10000.] = 10000.
         
