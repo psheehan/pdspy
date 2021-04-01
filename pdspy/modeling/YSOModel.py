@@ -127,7 +127,7 @@ class YSOModel(Model):
                 for i in range(len(gas)):
                     self.disk.add_gas(gas[i], abundance[i], freezeout[i])
                     self.grid.add_number_density(self.disk.number_density(\
-                            self.grid.r, self.grid.theta, self.grid.phi, \
+                            self.grid.w1, self.grid.w2, self.grid.w3, \
                             gas=i, mstar=self.grid.stars[0].mass), gas[i])
                     self.grid.add_velocity(self.disk.velocity(self.grid.r, \
                             self.grid.theta, self.grid.phi, \
@@ -139,7 +139,7 @@ class YSOModel(Model):
             else:
                 self.disk.add_gas(gas, abundance, freezeout)
                 self.grid.add_number_density(self.disk.number_density( \
-                        self.grid.r, self.grid.theta, self.grid.phi, \
+                        self.grid.w1, self.grid.w2, self.grid.w3, \
                         gas=0, mstar=self.grid.stars[0].mass), gas)
                 self.grid.add_velocity(self.disk.velocity(self.grid.r, \
                         self.grid.theta, self.grid.phi, \
@@ -351,7 +351,7 @@ class YSOModel(Model):
                 for i in range(len(gas)):
                     self.disk.add_gas(gas[i], abundance[i], freezeout[i])
                     self.grid.add_number_density(self.disk.number_density( \
-                            self.grid.r, self.grid.theta, self.grid.phi, \
+                            self.grid.w1, self.grid.w2, self.grid.w3, \
                             gas=i, mstar=self.grid.stars[0].mass), gas[i])
                     self.grid.add_velocity(self.disk.velocity(self.grid.r, \
                             self.grid.theta, self.grid.phi, \
@@ -363,7 +363,7 @@ class YSOModel(Model):
             else:
                 self.disk.add_gas(gas, abundance, freezeout)
                 self.grid.add_number_density(self.disk.number_density( \
-                        self.grid.r, self.grid.theta, self.grid.phi, \
+                        self.grid.w1, self.grid.w2, self.grid.w3, \
                         gas=0, mstar=self.grid.stars[0].mass), gas)
                 self.grid.add_velocity(self.disk.velocity(self.grid.r, \
                         self.grid.theta, self.grid.phi, \

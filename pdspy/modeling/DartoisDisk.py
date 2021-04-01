@@ -74,12 +74,7 @@ class DartoisDisk(Disk):
             T = self.temperature(r[:,0], numpy.array([0.,2*numpy.pi]), z[0,:], \
                     coordsys="cylindrical")[:,0,:]
 
-            frozen = 18 * (numpy.arctan(10*(T - (self.freezeout[gas] - 1.1)))-\
-                    numpy.pi/2) / numpy.pi
-
-            frozen = numpy.where(T > self.freezeout[gas], 0, numpy.cos(-(T - \
-                    self.freezeout[gas])*numpy.pi/2)*9 - 9.)
-            frozen = numpy.where(T < self.freezeout[gas]-2, -18., frozen)
+            frozen = T < self.freezeout[gas]
 
             # Account for photodissociation.
 
@@ -88,15 +83,11 @@ class DartoisDisk(Disk):
             cumn = -scipy.integrate.cumtrapz(n_H2[:,::-1], x=z[:,::-1]*AU, \
                     axis=1, initial=0.)[:,::-1]
 
-            dissociated = numpy.where(numpy.log10(cumn) > numpy.log10(0.79*\
-                    1.59e21/0.706), 0, numpy.cos(-(numpy.log10(cumn) - \
-                    numpy.log10(0.79*1.59e21/0.706))*numpy.pi/2)*9 - 9.)
-            dissociated = numpy.where(numpy.log10(cumn) < numpy.log10(0.79*\
-                    1.59e21/0.706)-2, -18., dissociated)
+            dissociated = cumn < 0.79 * 1.59e21 / 0.706
 
             # Now actually reduce the density.
 
-            logn += numpy.maximum(frozen + dissociated, -18)
+            logn[numpy.logical_or(frozen, dissociated)] += numpy.log(1.0e-8)
 
             return r, z, logn
 
@@ -151,40 +142,28 @@ class DartoisDisk(Disk):
 
         return Dens
 
-    def number_density(self, x1, x2, x3, gas=0, coordsys="spherical", \
+    def number_density(self, w1, w2, w3, gas=0, coordsys="spherical", \
             mstar=0.5):
-        ##### Set up the coordinates
-
-        if coordsys == "spherical":
-            rt, tt, pp = numpy.meshgrid(x1*AU, x2, x3, indexing='ij')
-
-            rr = rt*numpy.sin(tt)
-            zz = rt*numpy.cos(tt)
-        elif coordsys == "cartesian":
-            xx, yy, zz = numpy.meshgrid(x1*AU, x2*AU, x3*AU, indexing='ij')
-
-            rr = (xx**2 + yy**2)**0.5
-        elif coordsys == "cylindrical":
-            rr, pp, zz = numpy.meshgrid(x1*AU, x2, x3*AU, indexing='ij')
-
         # Get the high resolution log of the gas density.
 
         r, z, logn = self.log_number_density_high(mstar=mstar, gas=gas)
 
-        # Now, interpolate that density onto the actual grid of interest.
+        rho = numpy.sqrt(r**2 + z**2)
+        theta = numpy.pi/2 - numpy.arctan(z / r)
 
-        f = scipy.interpolate.RegularGridInterpolator((r[:,0],z[0,:]), logn, \
-                bounds_error=False, fill_value=-300.)
+        # Now, interpolate that density onto the actual grid of interest by
+        # averaging all of the high resolution points that fall within the 
+        # lower resolution cell.
 
-        points = numpy.empty((rr.size, 2))
-        points[:,0] = rr.reshape((-1,))/AU
-        points[:,1] = zz.reshape((-1,))/AU
+        n = numpy.exp(logn)
 
-        logn_interp = f(points).reshape(rr.shape)
+        n_interp = scipy.stats.binned_statistic_2d(rho.flatten(), \
+                theta.flatten(), n.flatten(), statistic="mean", \
+                bins=(w1, w2)).statistic[:,:,numpy.newaxis]
 
-        n = numpy.exp(logn_interp)
+        n_interp[numpy.isnan(n_interp)] = 0.
 
-        return n
+        return n_interp
 
     def temperature(self, x1, x2, x3, coordsys="spherical"):
         ##### Disk Parameters
