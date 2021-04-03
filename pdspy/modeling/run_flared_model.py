@@ -110,8 +110,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
         ntheta = 51
 
     if "ulrich" in p["envelope_type"]:
-        #p["R_grid"] = 20*p["R_env"]
-        p["R_grid"] = 20*10.**4.5
+        p["R_grid"] = 20*p["R_env"]
     else:
         p["R_grid"] = max(5*p["R_disk"],300)
 
