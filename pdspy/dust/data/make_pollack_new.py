@@ -3,22 +3,27 @@
 from pdspy.dust import *
 import numpy
 
-troilite = Dust()
-troilite.set_optical_constants_from_henn("optical_constants/troilite.txt")
-troilite.set_density(4.83)
-
-organics = Dust()
-organics.set_optical_constants_from_henn("optical_constants/organics.txt")
-organics.set_density(1.5)
-
-water_ice = Dust()
-water_ice.set_optical_constants_from_henn("optical_constants/water_ice.txt")
-water_ice.set_density(0.92)
+lam = numpy.logspace(-5.,1.,1000)
 
 silicates = Dust()
 silicates.set_optical_constants_from_draine("optical_constants/astronomical_silicates.txt")
 silicates.set_density(3.3)
-silicates.calculate_optical_constants_on_wavelength_grid(water_ice.lam)
+silicates.calculate_optical_constants_on_wavelength_grid(lam)
+
+troilite = Dust()
+troilite.set_optical_constants_from_henn("optical_constants/troilite.txt")
+troilite.set_density(4.83)
+troilite.calculate_optical_constants_on_wavelength_grid(lam)
+
+organics = Dust()
+organics.set_optical_constants_from_henn("optical_constants/organics.txt")
+organics.set_density(1.5)
+organics.calculate_optical_constants_on_wavelength_grid(lam)
+
+water_ice = Dust()
+water_ice.set_optical_constants_from_henn("optical_constants/water_ice.txt")
+water_ice.set_density(0.92)
+water_ice.calculate_optical_constants_on_wavelength_grid(lam)
 
 species = [silicates,troilite,organics,water_ice]
 #mass_fraction = numpy.array([6.4e-3,7.68e-4,2.13e-3,1.4e-3])

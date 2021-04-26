@@ -13,10 +13,12 @@ class Dust:
         self.coat = coat
 
     def calculate_optical_constants_on_wavelength_grid(self, lam):
-        f = scipy.interpolate.interp1d(self.lam, self.n)
-        n = f(lam)
-        f = scipy.interpolate.interp1d(self.lam, self.k)
-        k = f(lam)
+        f = scipy.interpolate.interp1d(numpy.log10(self.lam), self.n, \
+                fill_value="extrapolate", kind="cubic")
+        n = f(numpy.log10(lam))
+        f = scipy.interpolate.interp1d(numpy.log10(self.lam), self.k, \
+                fill_value="extrapolate", kind="cubic")
+        k = f(numpy.log10(lam))
 
         self.lam = lam
         self.nu = c / self.lam
@@ -32,6 +34,8 @@ class Dust:
         a = numpy.logspace(numpy.log10(amin),numpy.log10(amax),na)
         kabsgrid = numpy.zeros((self.lam.size,na))
         kscagrid = numpy.zeros((self.lam.size,na))
+        Z11grid = numpy.zeros((self.lam.size,na))
+        Z12grid = numpy.zeros((self.lam.size,na))
         
         normfunc = a**(3-p)
 
@@ -44,6 +48,8 @@ class Dust:
             
             kabsgrid[:,i] = self.kabs*normfunc[i]
             kscagrid[:,i] = self.ksca*normfunc[i]
+            Z11grid[:,i] = self.Z11*normfunc[i]
+            Z12grid[:,i] = self.Z12*normfunc[i]
         
         norm = scipy.integrate.trapz(normfunc,x=a)
         
@@ -52,9 +58,14 @@ class Dust:
         self.kext = self.kabs + self.ksca
         self.albedo = self.ksca / self.kext
 
+        self.Z11 = scipy.integrate.trapz(Z11grid,x=a)/norm
+        self.Z12 = scipy.integrate.trapz(Z12grid,x=a)/norm
+
     def calculate_opacity(self, a, coat_volume_fraction=0.0, nang=1000):
         self.kabs = numpy.zeros(self.lam.size)
         self.ksca = numpy.zeros(self.lam.size)
+        self.Z11 = numpy.zeros(self.lam.size)
+        self.Z12 = numpy.zeros(self.lam.size)
         
         if not hasattr(self, 'coat'):
             mdust = 4*pi*a**3/3*self.rho
@@ -68,6 +79,10 @@ class Dust:
                 
                 self.kabs[i] = pi*a**2*Qabs/mdust
                 self.ksca[i] = pi*a**2*Qsca/mdust
+                self.Z11[i] = 0.5*(abs(S1[nang-1])*abs(S1[nang-1]) + \
+                        abs(S2[nang-1])*abs(S2[nang-1]))
+                self.Z12[i] = 0.5*(-abs(S1[nang-1])*abs(S1[nang-1]) + \
+                        abs(S2[nang-1])*abs(S2[nang-1]))
         
         else:
             a_coat = a*(1+coat_volume_fraction)**(1./3)
@@ -85,6 +100,10 @@ class Dust:
                 
                 self.kabs[i] = pi*a_coat**2*Qabs/mdust
                 self.ksca[i] = pi*a_coat**2*Qsca/mdust
+                self.Z11[i] = 0.5*(abs(S1[nang-1])*abs(S1[nang-1]) + \
+                        abs(S2[nang-1])*abs(S2[nang-1]))
+                self.Z12[i] = 0.5*(-abs(S1[nang-1])*abs(S1[nang-1]) + \
+                        abs(S2[nang-1])*abs(S2[nang-1]))
 
         self.kext = self.kabs + self.ksca
         self.albedo = self.ksca / self.kext
@@ -172,7 +191,7 @@ class Dust:
         self.k = opt_data[:,2]
         self.m = self.n+1j*self.k
 
-    def set_properties(self, lam, kabs, ksca):
+    def set_properties(self, lam, kabs, ksca, Z11=None, Z12=None):
         self.lam = lam
         self.nu = c / self.lam
 
@@ -180,6 +199,9 @@ class Dust:
         self.ksca = ksca
         self.kext = self.kabs + self.ksca
         self.albedo = self.ksca / self.kext
+
+        self.Z11 = Z11
+        self.Z12 = Z12
 
     def set_properties_from_file(self, filename=None, usefile=None):
         if (usefile == None):
@@ -207,6 +229,11 @@ class Dust:
         if (hasattr(self, 'kabs') and hasattr(self, 'ksca')):
             self.kext = self.kabs + self.ksca
             self.albedo = self.ksca / self.kext
+
+        if ('Z11' in f):
+            self.Z11 = f['Z11'][...]
+        if ('Z12' in f):
+            self.Z12 = f['Z12'][...]
 
         if ('coat' in f):
             self.coat = Dust()
@@ -244,6 +271,13 @@ class Dust:
         if hasattr(self, 'g'):
             g_dset = f.create_dataset("g", (self.g.size,), dtype='f')
             g_dset[...] = self.g
+
+        if hasattr(self, 'Z11'):
+            Z11_dset = f.create_dataset("Z11", (self.Z11.size,), dtype='f')
+            Z11_dset[...] = self.Z11
+        if hasattr(self, 'Z12'):
+            Z12_dset = f.create_dataset("Z12", (self.Z12.size,), dtype='f')
+            Z12_dset[...] = self.Z12
 
         if hasattr(self, 'coat'):
             coat_group = f.create_group("coat")
