@@ -438,17 +438,17 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
                     l = j[k,n]
                     m = i[k,n]
 
-                    weights[k,n] /= binned_weights[l,m]
+                    weights[k,n] /= binned_weights[l,m,n]
         elif weighting == "robust":
             f2 = (5*10**(-robust))**2 / \
-                    ((binned_weights**2).sum() / weights.sum())
+                    ((binned_weights**2).sum(axis=(0,1)) / weights.sum(axis=0))
 
             for k in range(nuv):
                 for n in range(nfreq):
                     l = j[k,n]
                     m = i[k,n]
 
-                    weights[k,n] /= (1 + f2 * binned_weights[l,m])
+                    weights[k,n] /= (1 + f2[n] * binned_weights[l,m,n])
 
     # Now actually go through and calculate the new visibilities.
 
