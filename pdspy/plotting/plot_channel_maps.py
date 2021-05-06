@@ -15,8 +15,8 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
         show_xlabel=True, show_ylabel=True, skip=0, \
         auto_center_velocity=False, v_width=10., beamxy=(0.15,0.15), \
         show_colorbar=False, cax=None, colorbar_location='right', \
-        colorbar_orientation='vertical', colorbar_size='10%', colorbar_pad=0.01,\
-        units="Jy/beam"):
+        colorbar_orientation='vertical', colorbar_size='10%', \
+        colorbar_pad=0.01, units="Jy/beam", vis_marker="o"):
 
     # Set up the figure if none was provided.
 
@@ -150,7 +150,8 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
 
             # Get the correct range of pixels for making the sub-image.
 
-            if plot_type == "data":
+            if plot_type in ["data","residuals"] or \
+                    model_image != "beam-convolve":
                 if "x0" in params:
                     x0 = -params["x0"]/visibilities["image_pixelsize"][index]
                 else:
@@ -180,14 +181,15 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
                       visibilities["image_pixelsize"][index]+ \
                       ticks[-1]/visibilities["image_pixelsize"][index]))
             else:
-                xmin, xmax = int(round(visibilities["image_npix"][index]/2+1 + \
-                        ticks[0]/visibilities["image_pixelsize"][index])), \
-                        int(round(visibilities["image_npix"][index]/2+1 +\
-                        ticks[-1]/visibilities["image_pixelsize"][index]))
-                ymin, ymax = int(round(visibilities["image_npix"][index]/2+1 + \
-                        ticks[0]/visibilities["image_pixelsize"][index])), \
-                        int(round(visibilities["image_npix"][index]/2+1 + \
-                        ticks[-1]/visibilities["image_pixelsize"][index]))
+                if model_image == "beam-convolve":
+                    xmin, xmax = int(round(visibilities["image_npix"][index]/2+\
+                            ticks[0]/visibilities["image_pixelsize"][index]+1\
+                            )), int(round(visibilities["image_npix"][index]/2 +\
+                            ticks[-1]/visibilities["image_pixelsize"][index]+1))
+                    ymin, ymax = int(round(visibilities["image_npix"][index]/2+\
+                            ticks[0]/visibilities["image_pixelsize"][index]+1\
+                            )), int(round(visibilities["image_npix"][index]/2 +\
+                            ticks[-1]/visibilities["image_pixelsize"][index]+1))
 
         # Get the correct starting point, and skip value if auto calculating
         # the velocity range.
@@ -196,15 +198,30 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
             if "v_sys" in params:
                 v_start = params["v_sys"] - v_width/2
                 v_end = params["v_sys"] + v_width/2
+                v_center = params["v_sys"]
             else:
                 v_start = parameters["v_sys"] - v_width/2
                 v_end = parameters["v_sys"] + v_width/2
+                v_center = parameters["v_sys"]
 
+            center = (numpy.abs(v/1e5 - v_center)).argmin()
             start = (numpy.abs(v/1e5 - v_start)).argmin()
             end = (numpy.abs(v/1e5 - v_end)).argmin()
 
-            nchan = (end - start)
-            skip = int(nchan/visibilities["ncols"][index]) - 1
+            nchan = end - start + 1
+            skip = int(nchan/visibilities["ncols"][index]/\
+                    visibilities["nrows"][index] - 0.5)
+
+            if visibilities["ncols"][index]*visibilities["nrows"][index] % 2 \
+                    == 0:
+                half = int(visibilities["ncols"][index]*\
+                        visibilities["nrows"][index] / 2)
+            else:
+                half = int((visibilities["ncols"][index]*\
+                        visibilities["nrows"][index] - 1) / 2)
+
+            start = center - half*(skip + 1)
+            end = center + half*(skip + 1)
         else:
             start = visibilities["ind0"][index]
 
@@ -258,7 +275,7 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
                     if plot_vis:
                         ax[k,l].errorbar(vis.uvdist/1000, vis.amp[:,ind], \
                                 yerr=1./vis.weights[:,ind]**0.5, fmt=\
-                                vis_color+"o")
+                                vis_color+vis_marker)
                     else:
                         implot = ax[k,l].imshow(plot_image.image[ymin:ymax,\
                                 xmin:xmax,ind,0]*scale*scalefn(abs(v[ind]/1e5 -\
@@ -297,7 +314,7 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
                         else:
                             ax[k,l].set_ylim(-0.5, vis.amp.max()*1.1)
 
-                        ax[k,l].set_xscale("log", nonposx='clip')
+                        ax[k,l].set_xscale("log", nonpositive='clip')
 
                         # Turn off tick labels if we aren't in the correct
                         # row/column.

@@ -4,8 +4,8 @@ import emcee
 import numpy
 
 def load_results(config, model_path='', code="dynesty", discard=100, \
-        best="median", unc="std", percentile=68, chisq_cut=False, \
-        trim=None):
+        best="median", unc="none", percentile=68, chisq_cut=False, \
+        trim=None, fix_log10=False, gas_mass=False, return_format="dict"):
     # Get the list of parameters.
 
     keys = []
@@ -74,6 +74,22 @@ def load_results(config, model_path='', code="dynesty", discard=100, \
 
         params = numpy.array(params)
 
+    # If we ask for the gas mass instead of the dust mass, fix.
+
+    if gas_mass:
+        for i in range(ndim):
+            if keys[i] in ["logM_disk","logM_env"]:
+                params[i] += 2.
+                samples[:,i] += 2.
+
+    # Fix the parameters that were done in log10.
+
+    if fix_log10:
+        for i in range(ndim):
+            if "log" in keys[i]:
+                params[i] = 10.**params[i]
+                samples[:,i] = 10.**samples[:,i]
+
     # Get the uncertainties.
 
     if unc == "std":
@@ -87,6 +103,20 @@ def load_results(config, model_path='', code="dynesty", discard=100, \
 
     # Make a dictionary of the best fit parameters.
 
-    params = dict(zip(keys, params))
+    if return_format == "dict":
+        params = dict(zip(keys, params))
 
-    return keys, params, samples
+        if unc == "std":
+            sigma == dict(zip(keys, sigma))
+        elif unc == "percentile":
+            sigma == dict(zip(keys, sigma_up))
+            sigma == dict(zip(keys, sigma_down))
+
+    # Finally, return the values.
+
+    if unc == "std":
+        return keys, params, sigma, samples
+    elif unc == "percentile":
+        return keys, params, sigma_up, sigma_down, samples
+    else:
+        return keys, params, samples
