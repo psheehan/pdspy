@@ -4,7 +4,7 @@ import astropy.table
 import casatools
 import numpy
 
-def readms(filename, spw=[0], tolerance=0.01, time_tolerance=0., \
+def readms(filename, spw='all', tolerance=0.01, time_tolerance=0., \
         datacolumn="corrected"):
 
     # Load the MS file.
@@ -12,6 +12,17 @@ def readms(filename, spw=[0], tolerance=0.01, time_tolerance=0., \
     ms = casatools.ms()
 
     ms.open(filename)
+
+    # If we want all of the spw, then get them all.
+
+    if spw == 'all':
+        tb = casatools.table()
+
+        tb.open(filename)
+        spw = tb.getcol('DATA_DESC_ID')
+        tb.close()
+
+        spw = list(numpy.unique(spw))
 
     # Loop through all of the DATA_DESC_ID values and collect the relevant data.
 
@@ -23,13 +34,12 @@ def readms(filename, spw=[0], tolerance=0.01, time_tolerance=0., \
     i = 0                                                               
     ms.reset()                                                          
     data = []
-    while ms.selectinit(datadescid=i):
-        if int(list(ms.getspectralwindowinfo().keys())[0]) in spw:
-            data.append(ms.getdata(items=["u","v",prefix+"real",prefix+\
-                    "imaginary","weight","flag","axis_info","uvdist",\
-                    "antenna1","antenna2","time"]))
+    for i in spw:
+        ms.selectinit(datadescid=i)
+        data.append(ms.getdata(items=["u","v",prefix+"real",prefix+\
+                "imaginary","weight","flag","axis_info","uvdist",\
+                "antenna1","antenna2","time"]))
         ms.reset()
-        i += 1
 
     # We are done with the data now, so close it.
 
