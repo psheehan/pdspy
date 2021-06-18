@@ -25,6 +25,12 @@ class Dust:
         self.k = k
         self.m = self.n + 1j*self.k
 
+    def calculate_opacity_at_wavelength(self, lam):
+        f = scipy.interpolate.interp1d(self.lam, self.kabs)
+        kabs_interp = f(lam)
+
+        return kabs_interp
+
     def calculate_size_distribution_opacity(self, amin, amax, p, \
             coat_volume_fraction=0.0, nang=1000, with_dhs=False, fmax=0.8, \
             nf=50):
