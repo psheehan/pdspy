@@ -9,6 +9,7 @@ import numpy
 def plot_channel_maps(visibilities, model, parameters, params, index=0, \
         plot_vis=False, fig=None, image="data", contours="model", \
         model_image="beam-convolve", maxiter=100, threshold=1., uvtaper=None, \
+        weighting="natural", robust=2.0, \
         vmin=None, vmax=None, levels=None, negative_levels=None, \
         image_cmap="viridis", contours_colors=None, fontsize="medium", \
         show_velocity=True, show_beam=True, vis_color="b", vis_model_color="g",\
@@ -100,8 +101,9 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
                             model.visibilities[visibilities["lam"][index]], \
                             imsize=visibilities["image_npix"][index], \
                             pixel_size=visibilities["image_pixelsize"][index], \
-                            weighting="natural", convolution="expsinc", \
-                            mfs=False, mode="spectralline", maxiter=maxiter, \
+                            weighting=weighting, robust=robust, \
+                            convolution="expsinc", mfs=False, \
+                            mode="spectralline", maxiter=maxiter, \
                             threshold=threshold, uvtaper=uvtaper)[0]
             elif plot_type == "residuals":
                 residuals = Visibilities(visibilities["data"][index].u, \
@@ -119,9 +121,9 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
                 plot_image = clean(residuals, \
                         imsize=visibilities["image_npix"][index], \
                         pixel_size=visibilities["image_pixelsize"][index], \
-                        weighting="natural", convolution="expsinc", \
-                        mfs=False, mode="spectralline", maxiter=0, \
-                        uvtaper=uvtaper)[0]
+                        weighting=weighting, robust=robust, \
+                        convolution="expsinc", mfs=False, mode="spectralline", \
+                        maxiter=0, uvtaper=uvtaper)[0]
 
             # Get the appropriate scaling for the image.
 

@@ -249,6 +249,23 @@ def average(data, gridsize=256, binsize=None, radial=False, log=False, \
             i = numpy.round(u/binsize+(gridsize-1)/2.).astype(numpy.uint32)
             j = numpy.round(v/binsize+(gridsize-1)/2.).astype(numpy.uint32)
 
+    good_i = numpy.logical_and(i >= 0, i < gridsize)
+    good_j = numpy.logical_and(j >= 0, j < gridsize)
+    good = numpy.logical_and(good_i, good_j)
+    if good.sum() < good.size:
+        print("WARNING: uv.grid was supplied with a gridsize and binsize that do not cover the full range of the input data in the uv-plane and is cutting baselines that are outside of this grid. Make sure to check your results carefully.")
+
+    u = u[good]
+    v = v[good]
+    real = real[good,:]
+    imag = imag[good,:]
+    weights = weights[good,:]
+
+    i = i[good]
+    j = j[good]
+
+    nuv = u.size
+
     for k in range(nuv):
         for n in range(nfreq):
             if mode == "continuum":
@@ -399,6 +416,14 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
         ninclude_min = numpy.uint32((ninclude-1)*0.5)
         ninclude_max = numpy.uint32((ninclude-1)*0.5)
 
+    # Check whether any data falls outside of the grid, and exclude.
+
+    good_i = numpy.logical_and(i >= 0, i < gridsize)
+    good_j = numpy.logical_and(j >= 0, j < gridsize)
+    good = numpy.logical_and(good_i, good_j)
+    if good.sum() < good.size:
+        print("WARNING: uv.grid was supplied with a gridsize and binsize that do not cover the full range of the input data in the uv-plane and is cutting baselines that are outside of this grid. Make sure to check your results carefully.")
+
     # If we are using a non-uniform weighting scheme, adjust the data weights.
 
     if weighting in ["uniform","superuniform","robust"]:
@@ -411,6 +436,9 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
 
         for k in range(nuv):
             for n in range(nfreq):
+                if not good[k,n]:
+                    continue
+
                 if npix > j[k,n]:
                     lmin = 0
                 else:
@@ -435,6 +463,9 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
         if weighting in ["uniform","superuniform"]:
             for k in range(nuv):
                 for n in range(nfreq):
+                    if not good[k,n]:
+                        continue
+
                     l = j[k,n]
                     m = i[k,n]
 
@@ -445,6 +476,9 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
 
             for k in range(nuv):
                 for n in range(nfreq):
+                    if not good[k,n]:
+                        continue
+
                     l = j[k,n]
                     m = i[k,n]
 
@@ -454,6 +488,9 @@ def grid(data, gridsize=256, binsize=2000.0, convolution="pillbox", \
 
     for k in range(nuv):
         for n in range(nfreq):
+            if not good[k,n]:
+                continue
+
             if ninclude_min > j[k,n]:
                 lmin = 0
             else:
