@@ -37,16 +37,18 @@ def clean(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
     clean_beam = numpy.zeros(dirty_beam.shape)
 
     ny, nx, nfreq = dirty_beam.shape
-    x, y = numpy.meshgrid(numpy.arange(nx) - nx/2, numpy.arange(ny) - ny/2)
+    x, y = numpy.meshgrid(numpy.arange(nx) - nx/2 + 1, numpy.arange(ny) - ny/2)
 
     for i in range(nfreq):
         fitfunc = lambda p, x, y: numpy.exp(-(x * numpy.cos(p[2]) - \
                 y * numpy.sin(p[2]))**2 / (2*p[0]**2) - (x * numpy.sin(p[2]) + \
                 y * numpy.cos(p[2]))**2 / (2*p[1]**2))
-        errfunc = lambda p, x, y, z: numpy.ravel(fitfunc(p, x, y) - z)
-        p0 = [3.,3.,0.]
+        errfunc = lambda p, x, y, z, w: numpy.ravel((fitfunc(p, x, y) - z) * w)
+        p0 = [0.5,0.5,0.]
 
-        p, success = leastsq(errfunc, p0, args=(x,y,dirty_beam[:,:,i]))
+        weights = numpy.abs(dirty_beam[:,:,i])*(dirty_beam[:,:,i] > 0.4)
+
+        p, success = leastsq(errfunc, p0, args=(x,y,dirty_beam[:,:,i],weights))
 
         clean_beam[:,:,i] = fitfunc(p, x, y)
     
