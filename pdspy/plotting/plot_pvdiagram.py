@@ -36,27 +36,27 @@ def plot_pvdiagram(visibilities, model, parameters, params, index=0, \
         if plot_type in ["data","residuals"] or \
                 model_image != "beam-convolve":
             if "x0" in params:
-                x0 = visibilities["image_npix"][index]/2 + \
+                x0 = visibilities["image_npix"][index]/2 - \
                         visibilities["x0"][index]/\
-                        visibilities["image_pixelsize"][index]+ \
+                        visibilities["image_pixelsize"][index]- \
                         params["x0"]/\
                         visibilities["image_pixelsize"][index]
             else:
-                x0 = visibilities["image_npix"][index]/2 + \
+                x0 = visibilities["image_npix"][index]/2 - \
                         visibilities["x0"][index]/\
-                        visibilities["image_pixelsize"][index]+ \
+                        visibilities["image_pixelsize"][index]- \
                         parameters["x0"]["value"]/\
                         visibilities["image_pixelsize"][index]
             if "y0" in params:
-                y0 = visibilities["image_npix"][index]/2 - \
+                y0 = visibilities["image_npix"][index]/2 + \
                         visibilities["y0"][index]/\
-                        visibilities["image_pixelsize"][index] - \
+                        visibilities["image_pixelsize"][index] + \
                         params["y0"]/\
                         visibilities["image_pixelsize"][index]
             else:
-                y0 = visibilities["image_npix"][index]/2 - \
+                y0 = visibilities["image_npix"][index]/2 + \
                         visibilities["y0"][index]/\
-                        visibilities["image_pixelsize"][index] - \
+                        visibilities["image_pixelsize"][index] + \
                         parameters["y0"]["value"]/\
                         visibilities["image_pixelsize"][index]
         else:
