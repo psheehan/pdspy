@@ -113,7 +113,8 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
                 # Only include levels above some detection threshold.
 
                 rms = astropy.stats.mad_std(visibilities["image"][index].\
-                        image[:,:,0,0])*scale
+                        image[:,:,0,0])*scale * plot_image.image.max() / \
+                        visibilities["image"][index].image.max()
 
                 levels = levels[levels > 3*rms]
 
