@@ -1,3 +1,7 @@
+try:
+    from sklearn.neighbors import KernelDensity
+except:
+    pass
 import scipy.signal
 import scipy.stats
 import emcee
@@ -73,6 +77,17 @@ def load_results(config, model_path='', code="dynesty", discard=100, \
             params.append(numpy.median(samples[good,i]))
 
         params = numpy.array(params)
+    elif best == "kde":
+        zscored_samples = (samples - samples.min(axis=0)) / \
+            (samples.max(axis=0) - samples.min(axis=0))
+
+        bw = (samples.shape[0] * (ndim+2) / 4.)**(-1./(ndim+4))
+
+        kde = KernelDensity(kernel='gaussian', bandwidth=bw).fit(\
+                zscored_samples)
+        scores = kde.score_samples(zscored_samples)
+
+        params = samples[numpy.argmax(scores)]
 
     # Get the uncertainties.
 
