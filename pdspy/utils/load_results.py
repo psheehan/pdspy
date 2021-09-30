@@ -1,3 +1,4 @@
+from sklearn.neighbors import KernelDensity
 import scipy.signal
 import scipy.stats
 import emcee
@@ -58,21 +59,35 @@ def load_results(config, model_path='', code="dynesty", discard=100, \
     if best == "median":
         params = numpy.median(samples, axis=0)
     elif best == "peak":
+        zscored_samples = (samples - samples.min(axis=0)) / \
+            (samples.max(axis=0) - samples.min(axis=0))
+
         params = []
         for i in range(samples.shape[1]):
-            hist, bins = numpy.histogram(samples[:,i], bins=20)
+            bw = (samples.shape[0] * (1+2) / 4.)**(-1./(1+4)) / 3.
+            kde = KernelDensity(kernel="gaussian", bandwidth=bw).\
+                    fit(zscored_samples[:,i:i+1])
 
-            kernel = numpy.exp(-0.5*numpy.linspace(-9,9,19)**2) / \
-                    numpy.exp(-0.5*numpy.linspace(-9,9,19)**2).sum()
-            smooth = scipy.signal.fftconvolve(hist, kernel, mode="same")
+            xtest = numpy.linspace(samples[:,i].min(), samples[:,i].max(), 100)
+            zscored_xtest = (xtest - samples[:,i].min()) / \
+                    (samples[:,i].max() - samples[:,i].min())
 
-            best = numpy.where(smooth == smooth.max())[0][0]
+            scores = kde.score_samples(zscored_xtest[:,None])
 
-            good = numpy.logical_and(samples[:,i] > bins[best], samples[:,i] < \
-                    bins[best+1])
-            params.append(numpy.median(samples[good,i]))
+            params.append(xtest[numpy.argmax(scores)])
 
         params = numpy.array(params)
+    elif best == "kde":
+        zscored_samples = (samples - samples.min(axis=0)) / \
+            (samples.max(axis=0) - samples.min(axis=0))
+
+        bw = (samples.shape[0] * (ndim+2) / 4.)**(-1./(ndim+4))
+
+        kde = KernelDensity(kernel='gaussian', bandwidth=bw).fit(\
+                zscored_samples)
+        scores = kde.score_samples(zscored_samples)
+
+        params = samples[numpy.argmax(scores)]
 
     # If we ask for the gas mass instead of the dust mass, fix.
 

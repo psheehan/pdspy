@@ -89,6 +89,7 @@ setup(name="pdspy", \
         'bin/flared_model_nested.py', \
         'bin/flared_model_dynesty.py'], \
         install_requires=['numpy','scipy','matplotlib','emcee','corner',\
-        'hyperion','h5py','mpi4py','Cython','astropy','schwimmbad','dynesty'], \
+        'hyperion','h5py','mpi4py','Cython','astropy','schwimmbad','dynesty',\
+        'scikit-learn'], \
         cmdclass=cmdclass)
 

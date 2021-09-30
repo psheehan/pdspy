@@ -35,6 +35,7 @@ requirements:
         - corner
         - galario
         - schwimmbad
+        - scikit-learn
 
 test:
     imports:

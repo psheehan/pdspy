@@ -3,6 +3,7 @@ from ..interferometry import Visibilities, clean
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import astropy.stats
 import numpy
 
 def plot_continuum_image(visibilities, model, parameters, params, index=0, \
@@ -106,8 +107,16 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
 
         if i == 1:
             if levels is None:
-                levels = numpy.array([0.05, 0.25, 0.45, 0.65, 0.85, 0.95])*\
+                levels = numpy.array([0.1, 0.3, 0.5, 0.7, 0.9])*\
                         plot_image.image.max()*scale
+
+                # Only include levels above some detection threshold.
+
+                rms = astropy.stats.mad_std(visibilities["image"][index].\
+                        image[:,:,0,0])*scale * plot_image.image.max() / \
+                        visibilities["image"][index].image.max()
+
+                levels = levels[levels > 3*rms]
 
         # Get the right xmin, xmax, ymin, ymax.
 

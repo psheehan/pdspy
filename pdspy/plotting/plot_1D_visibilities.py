@@ -22,11 +22,27 @@ def plot_1D_visibilities(visibilities, model, parameters, params, index=0, \
         m1d_disk = uv.average(model.visibilities[visibilities["lam"][index]+\
                 "_disk"], gridsize=10000, binsize=3500, radial=True)
 
+    # Calculate the error properly.
+
+    real_samples = visibilities["data1d"][index].real + numpy.random.normal(\
+            0, 1, (visibilities["data1d"][index].real.size, 1000)) * \
+            1./visibilities["data1d"][index].weights**0.5
+
+    imag_samples = visibilities["data1d"][index].imag + numpy.random.normal(\
+            0, 1, (visibilities["data1d"][index].imag.size, 1000)) * \
+            1./visibilities["data1d"][index].weights**0.5
+
+    amp_samples = (real_samples**2 + imag_samples**2)**0.5
+
+    amp_unc = (numpy.percentile(amp_samples, [50], axis=1) - \
+            numpy.percentile(amp_samples, [16, 84], axis=1)) * \
+            numpy.array([1,-1])[:,None]
+
     # Plot the visibilities.
 
     ax.errorbar(visibilities["data1d"][index].uvdist/1000, \
             visibilities["data1d"][index].amp*1000, \
-            yerr=1000*numpy.sqrt(1/visibilities["data1d"][index].weights[:,0]),\
+            yerr=amp_unc*1000, \
             fmt="o", markersize=markersize, markeredgecolor=color, \
             markerfacecolor=color, ecolor=color)
 
