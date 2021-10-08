@@ -162,7 +162,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
     for j in range(len(visibilities["file"])):
         # If sub-velocity resolution is requested, adjust the frequencies.
 
-        if visibilities["subsample"][j] > 1:
+        if visibilities["subsample"][j] * visibilities["averaging"] > 1:
             dfreq = visibilities["data"][j].freq[1:] - \
                     visibilities["data"][j].freq[0:-1]
             freq = []
@@ -274,7 +274,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
         if plot:
             # If sub-velocity resolution is requested, adjust the frequencies.
 
-            if visibilities["subsample"][j] > 1:
+            if visibilities["subsample"][j] * visibilities["averaging"][j] > 1:
                 dfreq = visibilities["image"][j].freq[1:] - \
                         visibilities["image"][j].freq[0:-1]
                 freq = []
