@@ -122,27 +122,27 @@ class Visibilities(VisibilitiesObject):
             f = usefile
 
         if (type(self.u) != type(None)) and (type(self.v) != type(None)):
-            u_dset = f.create_dataset("u", self.u.shape, dtype='float32')
+            u_dset = f.create_dataset("u", self.u.shape, dtype='float64')
             u_dset[...] = self.u
-            v_dset = f.create_dataset("v", self.v.shape, dtype='float32')
+            v_dset = f.create_dataset("v", self.v.shape, dtype='float64')
             v_dset[...] = self.v
         if (type(self.freq) != type(None)):
             freq_dset = f.create_dataset("freq", self.freq.shape, \
-                    dtype='float32')
+                    dtype='float64')
             freq_dset[...] = self.freq
         if (type(self.real) != type(None)) and (type(self.imag) != type(None)):
             real_dset = f.create_dataset("real", self.real.shape, \
-                    dtype='float32')
+                    dtype='float64')
             real_dset[...] = self.real
             imag_dset = f.create_dataset("imag", self.imag.shape, \
-                    dtype='float32')
+                    dtype='float64')
             imag_dset[...] = self.imag
 
             if type(self.weights) != type(None):
                 if numpy.product(self.weights == numpy.ones(self.real.shape)) \
                         == 0:
                     weights_dset = f.create_dataset("weights", \
-                            self.weights.shape, dtype='float32')
+                            self.weights.shape, dtype='float64')
                     weights_dset[...] = self.weights
 
         if (usefile == None):
