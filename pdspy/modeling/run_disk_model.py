@@ -278,7 +278,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                     npix=visibilities["npix"][j], \
                     pixelsize=visibilities["pixelsize"][j], \
                     loadlambda=True, incl=p["i"], \
-                    pa=p["pa"]-180, dpc=p["dpc"], code="radmc3d", \
+                    pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=verbose,setthreads=nprocesses,\
                     writeimage_unformatted=True, nice=nice)
         else:
@@ -297,7 +297,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
             m.run_image(name=visibilities["lam"][j], nphot=1e5, \
                     npix=25, pixelsize=2*p["R_grid"]*1.25/p["dpc"] / 25, \
                     loadlambda=True, incl=p["i"], \
-                    pa=p["pa"]-180, dpc=p["dpc"], code="radmc3d", \
+                    pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=verbose,setthreads=nprocesses,\
                     writeimage_unformatted=True, nice=nice, unstructured=True, \
                     camera_nrrefine=nrrefine)
@@ -367,7 +367,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                     npix=visibilities["image_npix"][j], \
                     pixelsize=visibilities["image_pixelsize"][j], \
                     loadlambda=True, incl=p["i"], \
-                    pa=p["pa"]-180, dpc=p["dpc"], code="radmc3d", \
+                    pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=verbose, \
                     setthreads=nprocesses, nice=nice)
 
@@ -409,8 +409,8 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
 
                 m.run_visibilities(name=visibilities["lam"][j]+"_disk", \
                         nphot=1e5, npix=2048, pixelsize=0.05, \
-                        loadlambda=True, incl=p["i"], pa=p["pa"]-\
-                        180, dpc=p["dpc"], code="radmc3d", mc_scat_maxtauabs=5,\
+                        loadlambda=True, incl=p["i"], pa=p["pa"], \
+                        dpc=p["dpc"], code="radmc3d", mc_scat_maxtauabs=5,\
                         verbose=verbose, setthreads=nprocesses, nice=nice)
 
                 m.grid.density = density_original
@@ -423,7 +423,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         m.run_image(name=images["lam"][j], nphot=1e5, \
                 npix=images["npix"][j], pixelsize=images["pixelsize"][j], \
                 lam=images["lam"][j], incl=p["i"], \
-                pa=p["pa"]-180, dpc=p["dpc"], code="radmc3d", \
+                pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                 mc_scat_maxtauabs=5, verbose=verbose, setthreads=nprocesses, \
                 nice=nice)
 
@@ -449,7 +449,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
             m.set_camera_wavelength(spectra["total"].wave)
 
         m.run_sed(name="SED", nphot=1e4, loadlambda=True, incl=p["i"],\
-                pa=p["pa"]-180, dpc=p["dpc"], code="radmc3d", \
+                pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                 camera_scatsrc_allfreq=True, mc_scat_maxtauabs=5, \
                 verbose=verbose, setthreads=nprocesses, nice=nice)
 
