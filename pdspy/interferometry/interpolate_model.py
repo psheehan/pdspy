@@ -20,7 +20,7 @@ def interpolate_model(u, v, freq, model, nthreads=1, dRA=0., dDec=0., \
         dxy = (model.x[1] - model.x[0])*arcsec
 
         for i in range(len(model.freq)):
-            vis = double.sampleImage(model.image[:,:,i,0].copy(order='C'), \
+            vis = double.sampleImage(model.image[::-1,:,i,0].copy(order='C'), \
                     dxy, u, v, dRA=dRA*arcsec, dDec=dDec*arcsec)
 
             real.append(vis.real.reshape((u.size,1)))
