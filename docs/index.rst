@@ -31,6 +31,45 @@ If you have any questions about using the code (or this documentation), requests
    postprocess.rst
 
 
+Changelog
+=========
+
+1.5.2 (2021-10-19)
+------------------
+
+Further updates to v1.5, including:
+
+* Better estimate of the CLEAN beam shape in uv.clean
+* New routine to plot PV diagrams of the results of model fits
+* Use KDE to find peaks in the posteriors of model fits.
+* A number of minor bug fixes
+
+1.5.1 (2021-09-08)
+------------------
+
+Some minor updates to v1.5, including:
+
+* Adding a tool to load results of fits under the hood, with a number of options
+* Ability to adjust weighting of images in plot_channel_maps
+* Fully working readms function
+
+1.5.0 (2020-09-24)
+------------------
+
+A significant series of updates, but not quite enough to get to version 2.0, hence 1.5. The changes include:
+
+* Adding support for emcee v3
+* Adding support for fitting with dynesty
+* Adding a non-vertically isothermal option to run_flared_model
+* Added plotting tools
+
+And many more bug fixes and smaller features.
+
+1.0.0 (2018-12-20)
+------------------
+
+Initial commit.
+
 
 Indices and tables
 ==================

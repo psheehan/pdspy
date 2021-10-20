@@ -28,7 +28,7 @@ read = cythonize([Extension('pdspy.radmc3d.read', ["pdspy/radmc3d/read.pyx"], \
 # Now define the setup for the package.
 
 setup(name="pdspy", \
-        version="1.5.1", \
+        version="1.5.2", \
         author="Patrick Sheehan", \
         author_email="psheehan@northwestern.edu", \
         description="Radiative transfer modeling of protoplanetary disks", \
