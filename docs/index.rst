@@ -26,6 +26,7 @@ If you have any questions about using the code (or this documentation), requests
    :caption: Contents:
 
    installation.rst
+   upgrading.rst
    models.rst
    fitting.rst
    postprocess.rst
@@ -33,6 +34,16 @@ If you have any questions about using the code (or this documentation), requests
 
 Changelog
 =========
+
+2.0.0 (2021-?-?)
+----------------
+
+A major upgrade to pdspy, which is not backwards compatible to versions < 2.0.0. Updates include:
+
+* x0, y0 now defined in the proper sense as opposed to backwards as they were before
+* Position angles reported are now defined correctly, so no post-processing needed
+* Supply the code directly with CASA MS files (requires Python 3.6 and CASA6)
+* Fourier Transforms of model images are now done entirely with either GALARIO or TriFT, and an option to choose between them exists.
 
 1.5.2 (2021-10-19)
 ------------------

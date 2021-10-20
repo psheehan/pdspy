@@ -7,7 +7,7 @@ This section is for setting up your data and running a fit of a disk radiative t
 Preparing your data to be in the correct format
 """""""""""""""""""""""""""""""""""""""""""""""
 
-Once CASA6 is released, there will be functionality to read data directly from CASA MS files, however until CASA6 is available, I put the data into my own HDF5 format. Here’s how:
+If you have CASA6 installed within your Python installation (currently requires Python 3.6), you can skip this step and move on to the next. Otherwise, if you do not have CASA6 installed in this distribution you can put your data into an HDF5 format. Here’s how:
 
 1. Within CASA, use the exportuvfits to split every spectral window that you care about into a separate UV FITS file. Each MS file should go into a separate .vis file:
    ::
@@ -57,11 +57,11 @@ Setting up a configuration file
 
 You can find a basic configuration file in the pdspy bin directory (`config_template.py <https://github.com/psheehan/pdspy/blob/master/bin/config_template.py>`_) as an example, and I think it should be close to what you’ll want for your application. The visibilities dictionary requests a bunch of information about the visibility data. The things in particular you’ll want to update are:
 
-**file:** the HDF5 visibility files the were created above. Can list as many as you’d like, I just put in 2 as an example. (All of the entries in the visibilities dictionary should be lists with the same number of elements).
+**file:** Either the MS file for your dataset, or the HDF5 visibility files the were created above. Can list as many as you’d like, I just put in 2 as an example. (All of the entries in the visibilities dictionary should be lists with the same number of elements).
 
 **freq/lam:** The frequency/wavelength of the observations. Freq should be a string, lam a number.
 
-**x0/y0:** If the data is far off-center, these are initial corrections to approximately center the data. I believe positive x0 means west and positive y0 is south (i.e. perfectly backwards; a relic of not catching the problem until I was in too deep).
+**x0/y0:** If the data is far off-center, these are initial corrections to approximately center the data. Positive x0 means east (i.e. to the left in a CASA image) and positive y0 is north (i.e. up in a CASA image).
 
 **image_file:** every HDF5 file should have a corresponding FITS image to show the best fit model over. All of the other image_* parameters correspond to values from the image: pixelsize, npix
 
