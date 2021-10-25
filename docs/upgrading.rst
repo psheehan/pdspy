@@ -2,7 +2,7 @@
 Upgrading to v2 from v1
 =======================
 
-pdspy v2.0.0 represents a major upgrade to the pdspy infrastructure, and is not backwards compatible with models that were run using earlier versions.
+**tl;dr -** pdspy v2.0.0 represents a major upgrade to the pdspy infrastructure, and is not backwards compatible with models that were run using earlier versions. Use the :code:`upgrade_to_pdspy2.py` script to upgrade your pre-v2 models.
 
 What's new?
 """""""""""
@@ -28,4 +28,4 @@ There are a few places in particular that you need to look to make sure that you
 This sounds like a pain...
 ==========================
 
-You're telling me... but to make your life easier, there is a helper script upgrade_to_pdspy2 that *should* take care of the transition for you. To use, simply go to the directory of an existing model and run the script. *Note:* The script will make permanent changes to files in that directory, and though it makes a backup copy of everything, it would perhaps be wise to make your own backup beforehand.
+You're telling me... but to make your life easier, there is a helper script :code:`upgrade_to_pdspy2` that *should* take care of the transition for you in most cases. To use, simply go to the directory of an existing model and run the script. *Note:* The script will make permanent changes to files in that directory, and though it makes a backup copy of everything, it would perhaps be wise to make your own backup beforehand.

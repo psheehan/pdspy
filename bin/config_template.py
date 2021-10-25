@@ -59,25 +59,22 @@ spectra = {
 #
 ################################################################################
 
-# The number of walkers to use.
+# emcee parameters.
 
-nwalkers = 6
+nwalkers = 6            # The number of walkers to use.
+steps_per_iter = 5      # The number of steps to do at one time.
+max_nsteps = 10         # The maximum total number of steps to take.
+nplot = 5               # The number of previous steps to plot.
 
-# The number of temperatures to use, if running a PTSampler generation.
+# dynesty parameters.
 
-ntemps = 5
-
-# The number of steps to do at one time.
-
-steps_per_iter = 5
-
-# The maximum total number of steps to take.
-
-max_nsteps = 10
-
-# The number of previous steps to plot.
-
-nplot = 5
+nlive_init = 250        # The number of live points to use for Dynesty.
+nlive_batch = 250       # Number of live points per batch for dynamic nested 
+                        # sampling
+maxbatch = 0            # Maximum number of batches to use.
+dlogz = 0.05            # Stopping threshold for nested sampling.
+walks = 25              # Number of random walk steps to use to generate a 
+                        # sample
 
 ################################################################################
 #
@@ -111,8 +108,6 @@ parameters = {
         "w_gap3":{"fixed":True, "value":10., "limits":[1.,100.]},
         "logdelta_gap3":{"fixed":True, "value":0.0, "limits":[-4.,0.]},
         "f_M_large":{"fixed":True, "value":0.8, "limits":[0.05, 1.]},
-        "f_h_large":{"fixed":True, "value":0.5, "limits":[0.1, 1.]},
-        "beta_large":{"fixed":True, "value":1., "limits":[0.5, 1.5]},
         "logalpha_settle":{"fixed":True, "value":-2., "limits":[-5., 0.]},
         # Disk temperature parameters.
         "logT0":{"fixed":True, "value":2.5, "limits":[1.,3.]},
@@ -132,6 +127,9 @@ parameters = {
         "logR_c":{"fixed":True, "value":"logR_disk", "limits":[-1.,4.]},
         "f_cav":{"fixed":True, "value":0.5, "limits":[0.,1.]},
         "ksi":{"fixed":True, "value":1.0, "limits":[0.5,1.5]},
+        "theta_open":{"fixed":True, "value":"45", "limits":[0.,90.]},
+        "zoffset":{"fixed":True, "value":1, "limits":[0.,5.]},
+        "gamma_env":{"fixed":True, "value":0., "limits":[-0.5,2.0]},
         # Envelope temperature parameters.
         "logT0_env":{"fixed":True, "value":2.5, "limits":[1.,3.5]},
         "q_env":{"fixed":True, "value":0.25, "limits":[0.,1.5]},
