@@ -7,7 +7,7 @@ pdspy v2.0.0 represents a major upgrade to the pdspy infrastructure, and is not 
 What's new?
 """""""""""
 
-v1.* of the pdspy code fixed longstanding issues with the orientation parameters (x0, y0, pa, etc.). Previously x0 and y0 were entirely backwards from their traditional definitions, and pa was even worse. For models with density reductions, the mass of the component with the density reduction was not being calculated accurately. Now the values that are reported from the modeling are entirely accurate.
+Version 2 of the pdspy code fixes longstanding issues with the orientation parameters (x0, y0, pa, etc.). Previously x0 and y0 were entirely backwards from their traditional definitions, and pa was even worse. Moreover, for models with density reductions, e.g. gaps, outflow cavities, etc., the mass of the component with the density reduction was not being calculated accurately. Now the values that are reported from the modeling are entirely accurate.
 
 Why is it not backwards compatible?
 ===================================

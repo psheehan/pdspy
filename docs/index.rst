@@ -6,13 +6,11 @@
 Welcome to pdspy's documentation!
 =================================
 
-This code is meant to fit Monte Carlo Radiative Transfer models for protostellar/protoplanetary disks to ALMA continuum and spectral line datasets using Markov Chain Monte Carlo fitting. There are currently three well tested tools to run models:
+This code is meant to fit Monte Carlo Radiative Transfer models for protostellar/protoplanetary disks to ALMA continuum and spectral line datasets using Markov Chain Monte Carlo fitting. There are currently two well tested tools to run models:
 
-+ **disk_model.py**: Used to fit ALMA continuum visibilities and broadband spectral energy distributions (SEDs) with full radiative transfer models.
++ **disk_model_emcee3.py or disk_model_nested.py**: Used to fit ALMA continuum visibilities and broadband spectral energy distributions (SEDs) with full radiative transfer models.
 
-+ **disk_model_powerlaw.py**: Used to fit ALMA continuum visibilities with protoplanetary disk models that include a vertically isothermal, power law temperature distribution. No radiative equilibrium calculation is done.
-
-+ **flared_model.py**: Used to fit ALMA spectral line visibilities with protoplanetary disk models that include a vertically isothermal, power law temperature distribution. No radiative equilibrium calculation is done.
++ **flared_model_emcee3.py or flared_model_nested.py**: Used to fit ALMA spectral line visibilities with protoplanetary disk models that include a vertically isothermal, power law temperature distribution. No radiative equilibrium calculation is done.
 
 Further capabilities (e.g. fitting spectral line data with a radiative equilibrium calculation) are being developed. If you are interested in new features, do let me know and I would be happy to either add them myself, or to work with you to add them. The documentation is currently included below, but will be ported to a more extensive, better laid out format soon. For more extensive details on what the code does, please see these papers:
 

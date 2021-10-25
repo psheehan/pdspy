@@ -72,37 +72,35 @@ The **flux_unc\*** parameters at the bottom add a flux uncertainty to the observ
 Running a model
 """""""""""""""
 
-Make sure /path/to/pdspy/bin is in your PATH so that you can see the disk_model.py function. There are currently three well tested tools to run models:
+Make sure /path/to/pdspy/bin is in your PATH so that you can see the disk_model.py function. There are currently two well tested tools to run models:
 
-+ **disk_model.py**: Used to fit ALMA continuum visibilities and broadband spectral energy distributions (SEDs) with full radiative transfer models.
++ **disk_model_emcee3.py or disk_model_nested.py**: Used to fit ALMA continuum visibilities and broadband spectral energy distributions (SEDs) with full radiative transfer models.
 
-+ **disk_model_powerlaw.py**: Used to fit ALMA continuum visibilities with protoplanetary disk models that include a vertically isothermal, power law temperature distribution. No radiative equilibrium calculation is done.
-
-+ **flared_model.py**: Used to fit ALMA spectral line visibilities with protoplanetary disk models that include a vertically isothermal, power law temperature distribution. No radiative equilibrium calculation is done.
++ **flared_model_emcee3.py or flared_model_nested.py**: Used to fit ALMA spectral line visibilities with protoplanetary disk models that include a vertically isothermal, power law temperature distribution. No radiative equilibrium calculation is done.
 
 From there the most basic way to run any one of these models is in the directory with config.py and entering:
 ::
 
-    disk_model.py --object <Object Name>
+    disk_model_emcee3.py --object <Object Name>
 
 If you want to run with parallel RADMC-3D, to speed up the code, you can run:
 ::
 
-    disk_model.py --object <Object Name> --ncpus N
+    disk_model_emcee3.py --object <Object Name> --ncpus N
 
 Progress is saved, so if you want to resume a fit that stopped for some reason, you can add:
 ::
 
-    disk_model.py --object <Object Name> --ncpus N --resume
+    disk_model_emcee3.py --object <Object Name> --ncpus N --resume
 
 You can also use MPI to run multiple single core models at once:
 ::
 
-    mpirun -np N disk_model.py --object <Object Name> --ncpus 1
+    mpirun -np N disk_model_emcee3.py --object <Object Name> --ncpus 1
 
 Or some combination of simultaneous models and parallel RADMC-3D:
 ::
 
-    mpirun -np N disk_model.py --object <Object Name> --ncpus M
+    mpirun -np N disk_model_emcee3.py --object <Object Name> --ncpus M
 
 (where NxM should be <= the number of cores on your computer). The last two commands for running the code (using MPI) make it adaptable so that it can be run on supercomputers as well, for an even bigger boost. If you want to do this, let me know and I can provide some more details of how to efficiently run over multiple supercomputer nodes.
