@@ -52,7 +52,7 @@ class SettledDisk:
         self.gas.append(gas)
         self.abundance.append(abundance)
 
-    def density(self, r, theta, phi, na=100):
+    def density(self, r, theta, phi, na=100, normalize=True):
         ##### Set up the coordinates
 
         rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
@@ -78,7 +78,7 @@ class SettledDisk:
 
         ##### Make the gas density model for a protoplanetary disk.
 
-        Sigma = self.surface_density(rr/AU)
+        Sigma = self.surface_density(rr/AU, normalize=normalize)
         h_g = self.scale_height(rr/AU)
 
         rho = numpy.zeros(Sigma.shape + (100,))

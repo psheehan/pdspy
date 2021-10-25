@@ -45,7 +45,7 @@ class Disk:
         self.abundance.append(abundance)
         self.freezeout.append(freezeout)
 
-    def density(self, x1, x2, x3, coordsys="spherical"):
+    def density(self, x1, x2, x3, coordsys="spherical", normalize=True):
         ##### Set up the coordinates
 
         if coordsys == "spherical":
@@ -62,7 +62,7 @@ class Disk:
 
         ##### Make the dust density model for a protoplanetary disk.
 
-        Sigma = self.surface_density(rr/AU)
+        Sigma = self.surface_density(rr/AU, normalize=normalize)
         h = self.scale_height(rr/AU)
         
         rho = Sigma / (numpy.sqrt(2*numpy.pi)*h) * numpy.exp(-0.5*(zz / h)**2)
