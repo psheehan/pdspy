@@ -44,13 +44,13 @@ If you have CASA6 installed within your Python installation (currently requires 
 
        data = []  
        for file in files:  
-           data.append(uv.freqcorrect(uv.readvis(file)))  
+           data.append(uv.readvis(file))  
 
        vis = uv.concatenate(data)  
 
        vis.write("Source_Band3.hdf5")
 
-   It’ll grab all of the \*.vis files that match the wildcard at the beginning, so you can adjust that to decide which sets of files get grabbed. So in the above example you could run it once with \*Band3\*.vis to merge the Band 3 data into one file, and then \*Band5\*.vis to merge the Band 6 data into a single dataset.
+   It’ll grab all of the \*.vis files that match the wildcard at the beginning, so you can adjust that to decide which sets of files get grabbed. So in the above example you could run it once with \*Band3\*.vis to merge the Band 3 data into one file, and then \*Band5\*.vis to merge the Band 6 data into a single dataset. As a warning: :code:`uv.concatenate` is not tremendously smart - it will stick two visibility datasets together as long as they have the same number of channels. It doesn't care if the channels are entirely different. So take care to make sure you are only including data with channels that are approximately the same. This is particularly important for spectral line datasets where the exact frequency of the datasets is important.
 
 Setting up a configuration file
 """""""""""""""""""""""""""""""
@@ -89,20 +89,6 @@ You can find a basic configuration file in the pdspy bin directory (`config_temp
                 "ticks":[numpy.array([-250,-200,-100,0,100,200,250])],
                 "image_ticks":[numpy.array([-0.75,-0.5,0,0.5,0.75])],
                 "fmt":['4.1f'],
-                }
-
-        # Something similar for images.
-
-        images = {
-                "file":["path/to/file1"],
-                "npix":[128],
-                "pixelsize":[0.1],
-                "lam":["0.8"],
-                "bmaj":[1.0],
-                "bmin":[1.0],
-                "bpa":[0.0],
-                "ticks":[numpy.array([-6,-3,0,3,6])],
-                "plot_mode":["linear"],
                 }
 
         # Something similar for spectra.
@@ -149,7 +135,7 @@ You can find a basic configuration file in the pdspy bin directory (`config_temp
                 "T_star":{"fixed":True, "value":4000., "limits":[500.,10000.]},
                 "logL_star":{"fixed":False, "value":0.0, "limits":[-1.,2.]},
                 # Disk parameters.
-                "disk_type":{"fixed":True, "value":"truncated", "limits":[0.,0.]},
+                "disk_type":{"fixed":True, "value":"tapered", "limits":[0.,0.]},
                 "logM_disk":{"fixed":False, "value":-4., "limits":[-10.,-2.5]},
                 "logR_in":{"fixed":False, "value":-1., "limits":[-1.,4.]},
                 "logR_disk":{"fixed":False, "value":2., "limits":[0.,4.]},
