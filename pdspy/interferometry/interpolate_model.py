@@ -9,7 +9,7 @@ except:
     pass
 
 def interpolate_model(u, v, freq, model, nthreads=1, dRA=0., dDec=0., \
-        code="galario"):
+        code="galario", nxy=1024, dxy=0.01):
 
     if code == "galario":
         real = []
@@ -22,6 +22,23 @@ def interpolate_model(u, v, freq, model, nthreads=1, dRA=0., dDec=0., \
         for i in range(len(model.freq)):
             vis = double.sampleImage(model.image[::-1,:,i,0].copy(order='C'), \
                     dxy, u, v, dRA=dRA*arcsec, dDec=dDec*arcsec)
+
+            real.append(vis.real.reshape((u.size,1)))
+            imag.append(-vis.imag.reshape((u.size,1)))
+
+        real = numpy.concatenate(real, axis=1)
+        imag = numpy.concatenate(imag, axis=1)
+
+    elif code == "galario-unstructured":
+        real = []
+        imag = []
+
+        double.threads(nthreads)
+
+        for i in range(len(model.freq)):
+            vis = double.sampleUnstructuredImage(model.x*arcsec, \
+                    model.y*arcsec, model.image[:,i], nxy, dxy*arcsec, \
+                    u, v, dRA=dRA*arcsec, dDec=dDec*arcsec)
 
             real.append(vis.real.reshape((u.size,1)))
             imag.append(-vis.imag.reshape((u.size,1)))
