@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from ..constants.astronomy import arcsec
+from ..constants.physics import c
 from .YSOModel import YSOModel
 from .get_surrogate_model import get_surrogate_model
 from .. import interferometry as uv
@@ -277,26 +278,13 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
             m.run_image(name=visibilities["lam"][j], nphot=1e5, \
                     npix=visibilities["npix"][j], \
                     pixelsize=visibilities["pixelsize"][j], \
-                    loadlambda=True, incl=p["i"], \
+                    lam=None, loadlambda=True, incl=p["i"], \
                     pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=verbose,setthreads=nprocesses,\
                     writeimage_unformatted=True, nice=nice)
         else:
-            # Calculate how much refinement is needed.
-
-            needed_resolution = 1./visibilities["data"][j].uvdist.max() / \
-                    arcsec / 2
-            max_min_res = 0.25/p["dpc"]
-            pixel_size = 2*p["R_grid"]*1.25/p["dpc"] / 25
-
-            nrrefine = int(numpy.ceil(numpy.log2(pixel_size / min(max_min_res, \
-                    needed_resolution))))
-
-            # Now generate the image.
-
             m.run_image(name=visibilities["lam"][j], nphot=1e5, \
-                    npix=25, pixelsize=2*p["R_grid"]*1.25/p["dpc"] / 25, \
-                    loadlambda=True, incl=p["i"], \
+                    lam=None, loadlambda=True, incl=p["i"], \
                     pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=verbose,setthreads=nprocesses,\
                     writeimage_unformatted=True, nice=nice, unstructured=True, \
@@ -366,7 +354,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
             m.run_image(name=visibilities["lam"][j], nphot=1e5, \
                     npix=visibilities["image_npix"][j], \
                     pixelsize=visibilities["image_pixelsize"][j], \
-                    loadlambda=True, incl=p["i"], \
+                    lam=None, loadlambda=True, incl=p["i"], \
                     pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=verbose, \
                     setthreads=nprocesses, nice=nice)
