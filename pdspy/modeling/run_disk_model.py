@@ -287,8 +287,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                     lam=None, loadlambda=True, incl=p["i"], \
                     pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=verbose,setthreads=nprocesses,\
-                    writeimage_unformatted=True, nice=nice, unstructured=True, \
-                    camera_nrrefine=nrrefine)
+                    writeimage_unformatted=True, nice=nice, unstructured=True)
 
         # Account for the flux calibration uncertainties.
 
@@ -297,7 +296,8 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         m.visibilities[visibilities["lam"][j]] = uv.interpolate_model(\
                 visibilities["data"][j].u, visibilities["data"][j].v, \
                 visibilities["data"][j].freq, m.images[visibilities["lam"][j]],\
-                dRA=p["x0"], dDec=p["y0"], nthreads=nprocesses, code=ftcode)
+                dRA=p["x0"], dDec=p["y0"], nthreads=nprocesses, code=ftcode, \
+                nxy=visibilities["npix"][j], dxy=visibilities["pixelsize"][j])
 
         # Add in free free emission.
 
@@ -311,7 +311,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         if plot:
             # Make high resolution visibilities. 
 
-            if ftcode == "galario":
+            if "galario" in ftcode:
                 u, v = numpy.meshgrid(numpy.linspace(-2.0e6, 2.0e6, 2000), \
                         numpy.linspace(-2.0e6, 2.0e6, 2000))
             else:
@@ -326,7 +326,9 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
             m.visibilities[visibilities["lam"][j]+"_high"] = \
                     uv.interpolate_model(u, v, visibilities["data"][j].freq, \
                     m.images[visibilities["lam"][j]], dRA=p["x0"], \
-                    dDec=p["y0"], nthreads=nprocesses, code=ftcode)
+                    dDec=p["y0"], nthreads=nprocesses, code=ftcode, \
+                    nxy=visibilities["npix"][j], \
+                    dxy=visibilities["pixelsize"][j])
 
             # Add in free free emission.
 

@@ -357,7 +357,8 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                 visibilities["data"][j].u, visibilities["data"][j].v, \
                 visibilities["data"][j].freq, \
                 m.images[visibilities["lam"][j]], dRA=p["x0"], dDec=p["y0"], \
-                nthreads=ncpus, code=ftcode)
+                nthreads=ncpus, code=ftcode, nxy=visibilities["npix"][j], \
+                dxy=visibilities["pixelsize"][j])
 
         if plot:
             # If sub-velocity resolution is requested, adjust the frequencies.
