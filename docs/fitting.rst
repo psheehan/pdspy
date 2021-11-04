@@ -71,10 +71,10 @@ You can find a basic configuration file in the pdspy bin directory (`config_temp
 
         visibilities = {
                 "file":["path/to/file1"],
-                "pixelsize":[0.1],
                 "freq":["230GHz"],
                 "lam":["1300"],
                 "npix":[256],
+                "pixelsize":[0.1],
                 "weight":[10.],
                 "x0":[0.],
                 "y0":[0.],
@@ -189,17 +189,23 @@ You can find a basic configuration file in the pdspy bin directory (`config_temp
 
 The things in particular you’ll want to update are:
 
-**file:** Either the MS file for your dataset, or the HDF5 visibility files the were created above. Can list as many as you’d like, I just put in 2 as an example. (All of the entries in the visibilities dictionary should be lists with the same number of elements).
++ :code:`file`: Either the MS file for your dataset, or the HDF5 visibility files the were created above. Can list as many as you’d like. All of the entries in the visibilities dictionary should be lists with the same number of elements.
 
-**freq/lam:** The frequency/wavelength of the observations. Freq should be a string, lam a number.
++ :code:`freq/lam`: The frequency/wavelength of the observations. Both should be strings.
 
-**x0/y0:** If the data is far off-center, these are initial corrections to approximately center the data. Positive x0 means east (i.e. to the left in a CASA image) and positive y0 is north (i.e. up in a CASA image).
++ :code:`x0/y0`: If the data is far off-center, these are initial corrections to approximately center the data. Positive x0 means east (i.e. to the left in a CASA image) and positive y0 is north (i.e. up in a CASA image).
 
-**image_file:** every HDF5 file should have a corresponding FITS image to show the best fit model over. All of the other image_* parameters correspond to values from the image: pixelsize, npix
++ :code:`image_file`: every HDF5/MS file should have a corresponding FITS image to show the best fit model over. All of the other image_* parameters correspond to values from the image: pixelsize, npix
 
-Then at the bottom the **parameters** dictionary gives you a giant list of parameters that can be turned on or off. When a parameter has fixed:True, then it is fixed at a value of value. If fixed:False, then it’s a free parameter constrained by limits. For a full list of parameters, see `here <https://github.com/psheehan/pdspy/blob/master/pdspy/modeling/base_parameters.py>`_
+Then at the bottom the **parameters** dictionary gives you a giant list of parameters that can be turned on or off. When a parameter has fixed:True, then it is fixed at a value of value. If fixed:False, then it’s a free parameter constrained by limits. For a full list of parameters, see `here <https://github.com/psheehan/pdspy/blob/master/pdspy/modeling/base_parameters.py>`_. Many of the parameters are fairly self-explanatory, but here's some info on the less obvious ones:
 
-The **flux_unc\*** parameters at the bottom add a flux uncertainty to the observations, with sigma:0.1 = 10% uncertainty (but that can be changed), and a Gaussian prior. You can add as many of these as you have visibility files, so you can tune the flux uncertainty separately for each dataset.
++ :code:`disk_type`: You can choose between a disk that is truncated after R_disk (:code:`truncated`) or disk that is exponentially tapered beyond R_disk (:code:`exptaper`).
+
++ :code:`envelope_type`: You can choose between no envelope (:code:`none`), the standard envelope perscription from Ulrich 1976 (:code:`ulrich`), or the envelope perscription from Ulrich 1976, but with an exponential taper beyond R_env (:code:`ulrich-tapered`).
+
++ :code:`dust_file`/:code:`envelope_dust`: The dust opacities used in the modeling. Two common values to use here are :code:`pollack_new.hdf5`, which follow the recipe from Pollack et al. 1994, more or less, or :code:`diana_wice.hdf5`, which are similar to the opacities from the DIANA project.
+
++ :code:`gas_file*`: You can add as many of these as you like. Some built in options are :code:`co.dat`, :code:`13co.dat`, and :code:`c18o.dat`, but any LAMDA file should be able to be added. These files live in the pdspy/pdspy/gas/data directory.
 
 Running a model
 """""""""""""""
@@ -236,3 +242,10 @@ Or some combination of simultaneous models and parallel RADMC-3D:
     mpirun -np N disk_model_emcee3.py --object <Object Name> --ncpus M
 
 (where NxM should be <= the number of cores on your computer). The last two commands for running the code (using MPI) make it adaptable so that it can be run on supercomputers as well, for an even bigger boost. If you want to do this, let me know and I can provide some more details of how to efficiently run over multiple supercomputer nodes.
+
+You also have the option to specify which code you would like to use to do the Fourier Transform:
+::
+
+    disk_model_emcee3.py --object <Object Name> --ncpus N --ftcode galario
+
+The options are :code:`galario`, :code:`galario-unstructured`, and :code:`trift`. Each has its benefits, but :code:`galario` is perhaps the most well tested and straightforward to understand - it does an FFT of an image and then interpolates on to the baselines of the observations.

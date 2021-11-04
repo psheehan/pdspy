@@ -22,7 +22,7 @@ Installing the code with pip
 2. Install GALARIO. Unfortunately, GALARIO is not pip-installable by default, so you will need to follow the instructions `here <https://mtazzari.github.io/galario/>`_. Alternatively, a pip-installable version of GALARIO is in the works and can be installed like so:
    ::
 
-       pip install git+https://github.com/psheehan/galario.git
+       pip install git+https://github.com/psheehan/galario.git@add_unstructured
 
 but note that this is a fork of GALARIO and is not yet completely merged.
 

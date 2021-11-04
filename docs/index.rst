@@ -12,7 +12,7 @@ This code is meant to fit Monte Carlo Radiative Transfer models for protostellar
 
 + **flared_model_emcee3.py or flared_model_nested.py**: Used to fit ALMA spectral line visibilities with protoplanetary disk models that include a vertically isothermal, power law temperature distribution. No radiative equilibrium calculation is done.
 
-Further capabilities (e.g. fitting spectral line data with a radiative equilibrium calculation) are being developed. If you are interested in new features, do let me know and I would be happy to either add them myself, or to work with you to add them. The documentation is currently included below, but will be ported to a more extensive, better laid out format soon. For more extensive details on what the code does, please see these papers:
+Further capabilities (e.g. fitting spectral line data with a radiative equilibrium calculation) are being developed. If you are interested in new features, do let me know and I would be happy to either add them myself, or to work with you to add them. For more extensive details on what the code does, please see these papers:
 
    + `Disk Masses for Embedded Class I Protostars in the Taurus Molecular Cloud <https://ui.adsabs.harvard.edu/abs/2017ApJ...851...45S/abstract>`_
    + `High-precision Dynamical Masses of Pre-main-sequence Stars with ALMA and Gaia <https://ui.adsabs.harvard.edu/abs/2019ApJ...874..136S/abstract>`_
