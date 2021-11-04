@@ -35,10 +35,12 @@ def interpolate_model(u, v, freq, model, nthreads=1, dRA=0., dDec=0., \
 
         double.threads(nthreads)
 
+        vol = None
         for i in range(len(model.freq)):
-            vis = double.sampleUnstructuredImage(model.x*arcsec, \
-                    model.y*arcsec, model.image[:,i], nxy, dxy*arcsec, \
-                    u, v, dRA=dRA*arcsec, dDec=dDec*arcsec)
+            vis, vol = double.sampleUnstructuredImage(model.x*arcsec, \
+                    model.y*arcsec, model.image[:,i].copy(order='C'), nxy, \
+                    dxy*arcsec, u, v, dRA=dRA*arcsec, dDec=dDec*arcsec, \
+                    vol=vol, return_weights=True)
 
             real.append(vis.real.reshape((u.size,1)))
             imag.append(-vis.imag.reshape((u.size,1)))
