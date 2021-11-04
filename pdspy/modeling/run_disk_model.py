@@ -188,6 +188,18 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                 theta_open=p["theta_open"], zoffset=p["zoffset"], \
                 t0=p["T0_env"], tpl=p["q_env"], aturb=p["a_turb_env"], \
                 dust=edust)
+    elif p["envelope_type"] == "ulrich-tapered":
+        m.add_tapered_ulrich_envelope(mass=p["M_env"], rmin=p["R_in"], \
+                rmax=p["R_env"], gamma=p["gamma_env"], cavpl=p["ksi"], \
+                cavrfact=p["f_cav"], dust=edust, t0=p["T0_env"], \
+                tpl=p["q_env"], aturb=p["a_turb_env"], rcent=p["R_c"])
+    elif p["envelope_type"] == "ulrich-tapered-extended":
+        m.add_tapered_ulrichextended_envelope(mass=p["M_env"], rmin=p["R_in"], \
+                rmax=p["R_env"], gamma=p["gamma_env"], rcent=p["R_c"], \
+                cavpl=p["ksi"], cavrfact=p["f_cav"], \
+                theta_open=p["theta_open"], zoffset=p["zoffset"], \
+                t0=p["T0_env"], tpl=p["q_env"], aturb=p["a_turb_env"], \
+                dust=edust)
     else:
         pass
 
