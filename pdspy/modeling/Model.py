@@ -72,9 +72,9 @@ class Model:
 
         sources = []
         for i in range(len(self.grid.stars)):
-            sources.append(m.add_spherical_source())
+            sources.append(m.add_point_source())
             sources[i].luminosity = self.grid.stars[i].luminosity * L_sun
-            sources[i].radius = self.grid.stars[i].radius * R_sun
+            #sources[i].radius = self.grid.stars[i].radius * R_sun
             sources[i].temperature = self.grid.stars[i].temperature
 
         m.set_mrw(mrw)
@@ -450,7 +450,7 @@ class Model:
             density = numpy.array(self.grid.density)
             temperature = numpy.array(self.grid.temperature)
 
-            density[density == 0] = 1.0e-50
+            density[density == 0] = 1.0e-30
 
             temperature = (density * temperature).sum(axis=0) / \
                     density.sum(axis=0)
