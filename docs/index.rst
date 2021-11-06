@@ -33,7 +33,7 @@ If you have any questions about using the code (or this documentation), requests
 Changelog
 =========
 
-2.0.0 (2021-?-?)
+2.0.0 (2021-11-07)
 ----------------
 
 A major upgrade to pdspy, which is not backwards compatible to versions < 2.0.0. Updates include:
