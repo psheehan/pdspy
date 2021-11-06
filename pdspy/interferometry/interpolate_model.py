@@ -38,7 +38,7 @@ def interpolate_model(u, v, freq, model, nthreads=1, dRA=0., dDec=0., \
         vol = None
         for i in range(len(model.freq)):
             vis, vol = double.sampleUnstructuredImage(model.x*arcsec, \
-                    model.y*arcsec, model.image[:,i].copy(order='C'), nxy, \
+                    -model.y*arcsec, model.image[:,i].copy(order='C'), nxy, \
                     dxy*arcsec, u, v, dRA=dRA*arcsec, dDec=dDec*arcsec, \
                     vol=vol, return_weights=True)
 
