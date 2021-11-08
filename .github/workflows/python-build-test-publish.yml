@@ -54,8 +54,10 @@ jobs:
         with:
           python-version: '3.8'
           
-      - name: Install numpy
-        run: pip install numpy
+      - name: Install numpy and Cython
+        run: 
+          pip install numpy
+          pip install cython
 
       - name: Build sdist
         run: python setup.py sdist
