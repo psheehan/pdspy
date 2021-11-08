@@ -34,7 +34,7 @@ Changelog
 =========
 
 2.0.0 (2021-11-07)
-----------------
+------------------
 
 A major upgrade to pdspy, which is not backwards compatible to versions < 2.0.0. Updates include:
 
