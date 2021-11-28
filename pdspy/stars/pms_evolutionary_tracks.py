@@ -371,9 +371,41 @@ def pms_get_luminosity(mass=1.0, age=1.0e6, tracks="BHAC15"):
 
     if isinstance(age,float) and isinstance(mass,float):
         xi = numpy.array([[mass, numpy.log10(age)]])
-    elif isinstance(age,float):
+    elif isinstance(age,float) and not isinstance(mass,float):
         xi = numpy.array([[mass[i],numpy.log10(age)] for i in range(len(mass))])
-    else:
+    elif not isinstance(age,float) and isinstance(mass,float):
         xi = numpy.array([[mass,numpy.log10(age[i])] for i in range(len(age))])
+    else:
+        xi = numpy.array([[mass[i],numpy.log10(age[i])] for i in range(len(age))])
 
     return 10.**Lstar(xi)
+
+############################################################################
+#
+# Get Rstar from Mass and Age.
+#
+############################################################################
+
+def pms_get_radius(mass=1.0, age=1.0e6, tracks="BHAC15"):
+
+    # Load in the data for the appropriate set of evolutionary tracks.
+
+    table = read_pms_data(tracks=tracks)
+
+    # Now do the 2D interpolation.
+
+    Rstar = scipy.interpolate.LinearNDInterpolator((table["M/Ms"],\
+            table["log_t(yr)"]), table["LogR"])
+
+    # Finally, get the stellar mass.
+
+    if isinstance(age,float) and isinstance(mass,float):
+        xi = numpy.array([[mass, numpy.log10(age)]])
+    elif isinstance(age,float) and not isinstance(mass,float):
+        xi = numpy.array([[mass[i],numpy.log10(age)] for i in range(len(mass))])
+    elif not isinstance(age,float) and isinstance(mass,float):
+        xi = numpy.array([[mass,numpy.log10(age[i])] for i in range(len(age))])
+    else:
+        xi = numpy.array([[mass[i],numpy.log10(age[i])] for i in range(len(age))])
+
+    return 10.**Rstar(xi)
