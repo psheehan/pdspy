@@ -409,11 +409,29 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                 wave = c / visibilities["data"][j].freq / 1.0e-4
                 m.set_camera_wavelength(wave)
 
-                m.run_visibilities(name=visibilities["lam"][j]+"_disk", \
-                        nphot=1e5, npix=2048, pixelsize=0.05, \
-                        loadlambda=True, incl=p["i"], pa=p["pa"], \
-                        dpc=p["dpc"], code="radmc3d", mc_scat_maxtauabs=5,\
-                        verbose=verbose, setthreads=nprocesses, nice=nice)
+                if ftcode == "galario":
+                    m.run_image(name=visibilities["lam"][j]+"_disk", nphot=1e5,\
+                            npix=visibilities["npix"][j], \
+                            pixelsize=visibilities["pixelsize"][j], \
+                            lam=None, loadlambda=True, incl=p["i"], \
+                            pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
+                            mc_scat_maxtauabs=5, verbose=verbose, \
+                            setthreads=nprocesses,writeimage_unformatted=True, \
+                            nice=nice)
+                else:
+                    m.run_image(name=visibilities["lam"][j]+"_disk", nphot=1e5,\
+                            lam=None, loadlambda=True, incl=p["i"], \
+                            pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
+                            mc_scat_maxtauabs=5, verbose=verbose, \
+                            setthreads=nprocesses, writeimage_unformatted=True,\
+                            nice=nice, unstructured=True)
+
+                m.visibilities[visibilities["lam"][j]+"_disk"] = \
+                        uv.interpolate_model(u,v,visibilities["data"][j].freq, \
+                        m.images[visibilities["lam"][j]+"_disk"], dRA=p["x0"], \
+                        dDec=p["y0"], nthreads=nprocesses, code=ftcode, \
+                        nxy=visibilities["npix"][j], \
+                        dxy=visibilities["pixelsize"][j])
 
                 m.grid.density = density_original
                 m.grid.temperature = temperature_original
