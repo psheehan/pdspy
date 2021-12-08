@@ -122,10 +122,10 @@ def load_results(config, model_path='', code="dynesty", discard=100, \
         params = dict(zip(keys, params))
 
         if unc == "std":
-            sigma == dict(zip(keys, sigma))
+            sigma = dict(zip(keys, sigma))
         elif unc == "percentile":
-            sigma == dict(zip(keys, sigma_up))
-            sigma == dict(zip(keys, sigma_down))
+            sigma_up = dict(zip(keys, sigma_up))
+            sigma_down = dict(zip(keys, sigma_down))
 
     # Finally, return the values.
 
