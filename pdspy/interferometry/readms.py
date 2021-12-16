@@ -5,7 +5,7 @@ import casatools
 import numpy
 
 def readms(filename, spw='all', tolerance=0.01, time_tolerance=0., \
-        datacolumn="corrected"):
+        datacolumn="corrected", corr=["I"]):
 
     # Load the MS file.
 
@@ -36,6 +36,7 @@ def readms(filename, spw='all', tolerance=0.01, time_tolerance=0., \
     data = []
     for i in spw:
         ms.selectinit(datadescid=i)
+        ms.selectpolarization(corr)
         data.append(ms.getdata(items=["u","v",prefix+"real",prefix+\
                 "imaginary","weight","flag","axis_info","uvdist",\
                 "antenna1","antenna2","time"]))
@@ -95,8 +96,8 @@ def readms(filename, spw='all', tolerance=0.01, time_tolerance=0., \
                 new_u.append(data[j]["u"])
                 new_v.append(data[j]["v"])
                 new_uvdist.append(data[j]["uvdist"])
-                new_real.append(data[j]["real"])
-                new_imag.append(data[j]["imaginary"])
+                new_real.append(data[j][prefix+"real"])
+                new_imag.append(data[j][prefix+"imaginary"])
                 new_weights.append(data[j]["weight"])
                 new_flags.append(data[j]["flag"])
                 new_antenna1.append(data[j]["antenna1"])
