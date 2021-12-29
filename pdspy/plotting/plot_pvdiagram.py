@@ -9,6 +9,81 @@ def plot_pvdiagram(visibilities, model, parameters, params, index=0, \
         model_image="beam-convolve", maxiter=100, threshold=1., uvtaper=None, \
         weighting="natural", robust=2.0, length=100, width=9, \
         image_cmap="Blues", levels=None, fontsize="medium", fig=None):
+    r"""
+    Plot the millimeter channel maps, along with the best fit model.
+
+    Args:
+        :attr:`visibilities` (`dict`):
+            Dictionary containing the visibility data, typically as loaded by 
+            :code:`utils.load_config` and :code:`utils.load_data`.
+        :attr:`model` (`modeling.Model`):
+            The radiative transfer model that you would like to plot the 
+            visibilities of. Typically this is the output of 
+            modeling.run_disk_model.
+        :attr:`parameters` (`dict`):
+            The parameters dictionary in the config module as loaded in by 
+            :code:`utils.load_config`
+        :attr:`params` (`dict`):
+            The parameters of the model, typically as a dictionary mapping 
+            parameter keys from the :code:`parameters` dictionary to their 
+            values.
+        :attr:`index` (`int`, optional):
+            The visibilities dictionary typically contains a list of datasets. 
+            `index` indicates which one to plot.
+        :attr:`fig` (`tuple`, `(matplotlib.Figure, matplotlib.Axes)`, optional):
+            If you've already created a figure and axes to put the plot in, you 
+            can supply them here. Otherwise, `plot_channel_maps` will 
+            generate them for you. It will use 
+            :code:`visibilities["nrows"][index]` rows and 
+            :code:`visibilities["ncols"][index]` columns. Default: `None`
+        :attr:`image` (`str`, optional):
+            Should the image show the `"data"`, `"model"`, or `"residuals"`.
+            Default: `"data"`
+        :attr:`contours` (`str`, optional):
+            Should the image show the `"data"`, `"model"`, or `"residuals"`.
+            Or could also not show contours with `"none"`. Default: `"model"`
+        :attr:`model_image` (`str`, optional):
+            Should the model image be made by convolving a radiatie transfer
+            generated image with an estimate of the beam (`"beam-convolve"`), 
+            or by generating model visibilities at the correct baselines of the
+            data and then using :code:`interferometry.clean` to generate an 
+            image (`"CLEAN"`). Default: `"beam-convolve"`
+        :attr:`weighting` (`str`, optional):
+            What weighting scheme should the model image use if 
+            :code:`model_image="CLEAN"`, `"natural"`, `"robust"`, or 
+            `"uniform"`. Default:`"robust"`
+        :attr:`robust` (`int`, optional):
+            The robust parameter when :code:`weighting="robust"`. Default: 2
+        :attr:`maxiter` (`int`, optional):
+            The maximum number of CLEAN iterations to perform. Default: 2
+        :attr:`threshold` (`float`, optional, Jy):
+            The stopping threshold for the CLEAN algorithm. Default: 0.001 Jy
+        :attr:`uvtaper` (`float`, optional, lambda):
+            FWHM of the Gaussian tapering to apply to the weights when running
+            CLEAN. Default: None
+        :attr:`length` (`int`, optional):
+            Length of the box, in pixels, to use to extract the PV diagram.
+            Default: `100`
+        :attr:`width` (`int`, optional):
+            Width of the box, in pixels, to use to extract the PV diagram. 
+            Default: `100`
+        :attr:`image_cmap` (`str`, optional):
+            Which colormap to use for plotting the image. Default: `"Blues"`
+        :attr:`levels` (`list` of `float`, optional):
+            The flux levels at which to plot contours. If `None`, use 
+            :code:`[0.1, 0.3, 0.5, 0.7, 0.9] x image.max()`. Default: `None`
+        :attr:`fontsize` (`str` or `int`):
+            What fontsize to use for labels, ticks, etc. Default: `"medium"`
+
+    Returns:
+        :attr:`fig` (`matplotlib.Figure`):
+            The matplotlib figure that was used for the plot.
+        :attr:`ax` (`matplotlib.Axes`):
+            The matplotlib axes that were used for the plot.
+        :attr:`cax` (`matplotlib.Axes`, optional):
+            The matplotlib axes that were used for the colorbar, if 
+            :code:`show_colorbar=True`.
+    """
 
     # Set up the figure if none was provided.
 

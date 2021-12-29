@@ -22,6 +22,9 @@ from ..misc import B_nu
 from ..imaging import Image, imtovis
 
 class YSOModel(Model):
+    r"""
+    A Model that specifically represents a young star, including a star, disk, and envelope.
+    """
 
     def add_star(self, mass=0.5, luminosity=1, temperature=4000.):
         self.grid.add_star(Star(mass=mass, luminosity=luminosity, \
@@ -58,6 +61,10 @@ class YSOModel(Model):
         phi = numpy.linspace(0.0, 2*numpy.pi, nphi)
 
         self.grid.set_spherical_grid(r, theta, phi)
+
+    def add_ambient_medium(self, dens=1.0e-24):
+        for i in range(len(self.grid.density)):
+            self.grid.density[i] += dens
 
     def add_disk(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, h0=0.1, \
             plh=58./45., dust=None,  t0=None, plt=None, gas=None, \
