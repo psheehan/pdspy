@@ -5,6 +5,18 @@ import importlib
 import sys
 
 def load_config(path=''):
+    r"""
+    Load a pdspy configuration file in as a module.
+
+    Args:
+        :attr:`path` (`str`):
+            The path to the directory where the information for the radiative transfer model is stored.
+
+    Returns:
+        :attr:`config` (`module`):
+            A python module containing the configuration information for pdspy modeling.
+    """
+
     # Import the configuration file information.
 
     sys.path.append(path)
