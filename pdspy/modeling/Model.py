@@ -332,6 +332,67 @@ class Model:
             sublimation_temperature=None, verbose=True, incl=45, pa=45, \
             dpc=1, lam=1300., track_origin='basic', nphot_imaging=1e6, \
             name=None, npix=256, pixelsize=1.0):
+        """
+        Run the radiative equilibrium calculation using the Hyperion radiative
+        transfer code. As a result, the `Model.grid.temperature` list will be
+        populated with the temperatures calculated.
+
+        Args:
+            :attr:`name` (`str`, optional):
+                The name of the spectrum, to use as a key in the 
+                :code:`Model.spectra` dictionary. Default: `None`
+            :attr:`nphot` (int, optional):
+                The number of photons to use for the calculation. Default: `1e6`
+            :attr:`mrw` (bool, optional):
+                If using `hyperion`, whether or not to use the Modified Random 
+                Walk Algorithm. Default: `False`
+            :attr:`pda` (bool, optional):
+                If using `hyperion`, whether or not to use the Partial Diffusion
+                Approximation algorithm. Default: `False`
+            :attr:`niterations` (int, optional):
+                The maximum number of iterations to perform, if convergence is
+                not reached, before giving up. Default: `20`
+            :attr:`percentile` (`float`, optional):
+                Which percentile of cells to use when calculating the 
+                convergence criteria. Default: `99.`
+            :attr:`absolute` (`float`, optional):
+                Maximum absolute difference of the ratio between cells for 
+                convergence to be reached. Default: `2.0`
+            :attr:`relative` (`float`, optional):
+                Relative difference between cells for convergence to be reached.
+                Default: `1.02`
+            :attr:`max_interactions` (`int`, optional):
+                Maximum number of interactions a photon can have before it is 
+                killed. Default: `1e8`
+            :attr:`mpi` (bool, optional):
+                If using `hyperion`, whether or not to run the model in 
+                parallel with MPI. Default: `False`
+            :attr:`nprocesses` (bool, optional):
+                If `mpi=True`, the number of MPI threads to use. Default: `None`
+            :attr:`sublimation_temperature` (`float`, optional):
+                If you would like to sublimate dust above a certain temperature,
+                set that here. Default: `None`
+            :attr:`verbose` (`bool`, False):
+                Should output be printed to the screen, or hidden. 
+                Default: `False`
+            :attr:`incl` (`float`, optional):
+                The inclination of the model to use for the image. Default: `0.`
+            :attr:`pa` (`float`, optional):
+                The position angle to use for the image. Default: `0.`
+            :attr:`dpc` (`float`, optional):
+                The distance to the model in units of parsecs. Default: `1.`
+            :attr:`lam` (`float`, optional):
+                The wavelength, in microns, to make the image at. Default: 
+                `1300.`
+            :attr:`nphot_imaging` (`float`, optional):
+                The number of photons to use in making the image. Default: `1e6`
+            :attr:`npix` (`int`, optional):
+                The number of pixels (squared) that the image should have. 
+                Default: `256`
+            :attr:`pixelsize` (`float`, optional):
+                The size of the pixels, in arcseconds. Default: `1.`
+        """
+
         d = []
         for i in range(len(self.grid.dust)):
             d.append(IsotropicDust( \
@@ -743,6 +804,19 @@ class Model:
                 radmc3d.write.microturbulence(microturbulence)
 
     def read(self, filename=None, usefile=None):
+        r"""
+        Read a model in from an HDF5 model file.
+
+        Args:
+            :attr:`filename` (`str`, optional):
+                The filename of the file storing the model to read in. 
+                Default: `None`
+            :attr:`usefile` (`h5py.File`, optional):
+                If :code:`filename = None`, then use this keyword to provide an
+                instance of an :code:`h5py.File` that has already be opened 
+                that the model can be read from.
+        """
+
         if (usefile == None):
             f = h5py.File(filename, "r")
         else:
@@ -776,6 +850,19 @@ class Model:
             f.close()
 
     def write(self, filename=None, usefile=None):
+        r"""
+        Write a model to an HDF5 model file.
+
+        Args:
+            :attr:`filename` (`str`, optional):
+                The filename of the file that will be written out with the 
+                model. Default: `None`
+            :attr:`usefile` (`h5py.File`, optional):
+                If :code:`filename = None`, then use this keyword to provide an
+                instance of an :code:`h5py.File` that has already be opened 
+                that the model can be written to.
+        """
+
         if (usefile == None):
             f = h5py.File(filename, "w")
         else:
