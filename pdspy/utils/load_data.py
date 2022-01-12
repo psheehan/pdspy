@@ -4,6 +4,26 @@ from .. import imaging as im
 import numpy
 
 def load_data(config, model="disk", gridsize1D=20):
+    r"""
+    Loads the data, as specified by the configuration module.
+
+    Args:
+        :attr:`config` (`module`):
+            The configuration information for the model, as read in by the :code:utils.load_config function.
+        :attr:`model` (`str`, optional):
+            Are you running disk_model_* or flared_model_*. Default: `"disk"`
+        :attr:`model` (`int` or `list-like`, optional):
+            The number of bins to use when averaging the visibility data into 1D. Default: `40`
+
+    Returns:
+        :attr:`visibilities` (`dict`):
+            A dictionary containing the visibility data and the information about it from the configuration module.
+        :attr:`images` (`dict`):
+            A dictionary containing the image data and the information about it from the configuration module.
+        :attr:`spectra` (`dict`):
+            A dictionary containing the spectra and the information about it from the configuration module.
+    """
+
 
     # Set up the places where we will put all of the data.
 

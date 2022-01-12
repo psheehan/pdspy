@@ -15,6 +15,105 @@ def plot_continuum_image(visibilities, model, parameters, params, index=0, \
         show_colorbar=False, cax=None, colorbar_location='right', \
         colorbar_orientation='vertical', colorbar_size='5%', colorbar_pad=0.05,\
         units="Jy/beam"):
+    r"""
+    Plot the millimeter continuum image, along with the best fit model.
+
+    Args:
+        :attr:`visibilities` (`dict`):
+            Dictionary containing the visibility data, typically as loaded by 
+            :code:`utils.load_config` and :code:`utils.load_data`.
+        :attr:`model` (`modeling.Model`):
+            The radiative transfer model that you would like to plot the 
+            visibilities of. Typically this is the output of 
+            modeling.run_disk_model.
+        :attr:`parameters` (`dict`):
+            The parameters dictionary in the config module as loaded in by 
+            :code:`utils.load_config`
+        :attr:`params` (`dict`):
+            The parameters of the model, typically as a dictionary mapping 
+            parameter keys from the :code:`parameters` dictionary to their 
+            values.
+        :attr:`index` (`int`, optional):
+            The visibilities dictionary typically contains a list of datasets. 
+            `index` indicates which one to plot.
+        :attr:`fig` (`tuple`, `(matplotlib.Figure, matplotlib.Axes)`, optional):
+            If you've already created a figure and axes to put the plot in, you 
+            can supply them here. Otherwise, `plot_1D_visibilities` will 
+            generate them for you. Default: `None`
+        :attr:`image` (`str`, optional):
+            Should the image show the `"data"`, `"model"`, or `"residuals"`.
+            Default: `"data"`
+        :attr:`contours` (`str`, optional):
+            Should the image show the `"data"`, `"model"`, or `"residuals"`.
+            Or could also not show contours with `"none"`. Default: `"model"`
+        :attr:`model_image` (`str`, optional):
+            Should the model image be made by convolving a radiatie transfer
+            generated image with an estimate of the beam (`"beam-convolve"`), 
+            or by generating model visibilities at the correct baselines of the
+            data and then using :code:`interferometry.clean` to generate an 
+            image (`"CLEAN"`). Default: `"beam-convolve"`
+        :attr:`weighting` (`str`, optional):
+            What weighting scheme should the model image use if 
+            :code:`model_image="CLEAN"`, `"natural"`, `"robust"`, or 
+            `"uniform"`. Default:`"robust"`
+        :attr:`robust` (`int`, optional):
+            The robust parameter when :code:`weighting="robust"`. Default: 2
+        :attr:`maxiter` (`int`, optional):
+            The maximum number of CLEAN iterations to perform. Default: 2
+        :attr:`threshold` (`float`, optional, Jy):
+            The stopping threshold for the CLEAN algorithm. Default: 0.001 Jy
+        :attr:`uvtaper` (`float`, optional, lambda):
+            FWHM of the Gaussian tapering to apply to the weights when running
+            CLEAN. Default: None
+        :attr:`cmap` (`str`, optional):
+            Which colormap to use for plotting the image. Default: `"jet"`
+        :attr:`cmap_contours` (`str`, optional):
+            Colormap to use for the contours. If `"none"`, use the same as 
+            :code:`cmap`. Default: `"none"`
+        :attr:`colors_contours` (`str` or `list`-like, optional):
+            Colors to use for the contours. If `"none"`, use the :code:`"cmap"`
+            from the image. Default: `"none"`
+        :attr:`levels` (`list` of `float`, optional):
+            The flux levels at which to plot contours. If `None`, use 
+            :code:`[0.1, 0.3, 0.5, 0.7, 0.9] x image.max()`. Default: `None`
+        :attr:`negative_levels` (`list` of `float`, optional):
+            A list of negative flux levels at which to plot dashed contours.
+            Default: `None`
+        :attr:`show_beam` (`bool`, optional):
+            Should the plot show the size of the beam? Default: `False`
+        :attr:`beamxy` (`tuple`, optional):
+            If :code:`show_beam=True`, where should the beam be placed in the
+            image, in units of axes fraction. Default: `(0.1,0.1)`
+        :attr:`show_colorbar` (`bool`, optional):
+            Should the plot show a colorbar for the image? Default: `False` 
+        :attr:`cax` (`matplotlib.Axes`, optional):
+            Pass an existing Axes class to use for the colorbar. If `None`, 
+            :code:`plot_continuum_image` will generate a new one. 
+            Default:`None`
+        :attr:`colorbar_location` (`str`, optional):
+            Should the colorbar be located to the `"right"` of the image or 
+            on `"top"` of the image. Default: `'right'`
+        :attr:`colorbar_size` (`str`, optional):
+            The percent width of the image Axes that should be used for the 
+            width of the colorbar Axes. Default: '5%'
+        :attr:`colorbar_pad` (`str`, optional):
+            How much padding should there be between the image Axes and the 
+            colorbar Axes. Default: `0.05`
+        :attr:`units` (`str`, optional):
+            What units should the colorbar use? Options include `"Jy/beam"`, 
+            `"mJy/beam"`, and `"uJy/beam"`. Default: `"Jy/beam"`
+        :attr:`fontsize` (`str` or `int`):
+            What fontsize to use for labels, ticks, etc. Default: `"medium"`
+
+    Returns:
+        :attr:`fig` (`matplotlib.Figure`):
+            The matplotlib figure that was used for the plot.
+        :attr:`ax` (`matplotlib.Axes`):
+            The matplotlib axes that were used for the plot.
+        :attr:`cax` (`matplotlib.Axes`, optional):
+            The matplotlib axes that were used for the colorbar, if 
+            :code:`show_colorbar=True`.
+    """
 
     # If no figure is provided, create one.
 
