@@ -9,11 +9,19 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
 
+import os
+import sys
+sys.path.insert(0, os.path.abspath("../"))
+
+
+# -- Mock imports ------------------------------------------------------------
+
+autodoc_mock_imports = ["numpy","hyperion","scipy","scikit-learn","h5py",
+        "matplotlib","emcee","corner","mpi4py","astropy","schwimmbad","dynesty",
+        "pdspy.dust.bhmie","pdspy.dust.bhcoat","pdspy.dust.dmilay",
+        "pdspy.interferometry.libinterferometry","pdspy.imaging.libimaging",
+        "pdspy.radmc3d.read","galario","mpl_toolkits","sklearn","casatools"]
 
 # -- Project information -----------------------------------------------------
 
@@ -32,7 +40,7 @@ release = '2.0.0'
 # ones.
 extensions = [
         'recommonmark',
-        'sphinx.ext.autodoc'
+        'sphinx.ext.autodoc',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
