@@ -6,3 +6,15 @@ sphinx_rtd_theme==0.5.2
 readthedocs-sphinx-search==0.1.0
 docutils==0.16
 numpy
+scipy
+matplotlib
+emcee
+corner
+hyperion
+h5py
+mpi4py
+Cython
+astropy
+schwimmbad
+dynesty
+scikit-learn
