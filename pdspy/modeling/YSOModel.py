@@ -59,6 +59,10 @@ class YSOModel(Model):
 
         self.grid.set_spherical_grid(r, theta, phi)
 
+    def add_ambient_medium(self, dens=1.0e-24):
+        for i in range(len(self.grid.density)):
+            self.grid.density[i] += dens
+
     def add_disk(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, h0=0.1, \
             plh=58./45., dust=None,  t0=None, plt=None, gas=None, \
             abundance=None, tmid0=None, tatm0=None, zq0=None, pltgas=None, \
