@@ -29,9 +29,28 @@ If you have any questions about using the code (or this documentation), requests
    fitting.rst
    postprocess.rst
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Package Reference:
+
+   interferometry
+   modeling
+   plotting
+   utils
 
 Changelog
 =========
+
+2.0.2 (2021-12-18)
+------------------
+
+Mostly a number of minor fixes to v2.0.0, including:
+
+* Fix utils.load_results to load uncertainties properly
+* Make sure disk-only plotting is working correctly in modeling.run_disk_model
+* interferometry.readms now loads "corrected" columns without breaking
+* Added an option to pick which polarizations to load in interferometry.readms. Defaults to "I"
+* interferometry.interpolate_model now uses the C++ version of the unstructured galario algorithm
 
 2.0.0 (2021-11-07)
 ------------------

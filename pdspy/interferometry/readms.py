@@ -6,6 +6,11 @@ import numpy
 
 def readms(filename, spw='all', tolerance=0.01, time_tolerance=0., \
         datacolumn="corrected", corr=["I"]):
+    """Testing
+
+    :param filename: The name of the MS file that you would like to read in.
+    :param spw: The list of spectral windows to read in.
+    """
 
     # Load the MS file.
 

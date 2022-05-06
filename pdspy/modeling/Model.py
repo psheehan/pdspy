@@ -20,6 +20,20 @@ from ..constants.physics import c
 import time
 
 class Model:
+    r"""
+    A class that can be used to set up a generic model with arbitrary coordinates and densities.
+
+    Base Attributes:
+        :attr:`grid` (Grid):
+            The Grid object that contains information about the 3D spatial distribution of the material in the system.
+        :attr:`images` (dict):
+            A dictionary containing the radiative transfer model images that have been generated for the model.
+        :attr:`spectra` (dict):
+            A dictionary containing the radiative transfer model spectra that have been generated for the model.
+        :attr:`visibilities` (dict):
+            A dictionary containing the radiative transfer model visibilities that have been generated for the model.
+    """
+
 
     def __init__(self):
         self.grid = Grid()
@@ -28,9 +42,30 @@ class Model:
         self.visibilities = {}
 
     def set_camera_wavelength(self, lam):
+        r"""
+        Set the wavelengths that the camera should use for generating images, visibilities, and spectra.
+
+        Args:
+            :attr:`lam` (numpy.ndarray `n`):
+                The array of wavelengths, in microns.
+        """
         self.camera_wavelength = lam
 
     def run_thermal(self, nphot=1e6, code="radmc3d", **keywords):
+        r"""
+        Run the radiative equilibrium calculation for the model.
+
+        Args:
+            :attr:`nphot` (int, optional):
+                The number of photons to use for the calculation. Default: `1e6`
+            :attr:`code` (str, optional):
+                Which underlying radiative transfer modeling code to use for the radiative equilibrium calculation. `radmc3d` or `hyperion`. Default: `radmc3d`
+            :attr:`kwargs` (optional):
+                Can be used to pass arguments to either 
+                :code:`Model.run_thermal_hyperion` or 
+                :code:`Model.run_thermal_radmc3d`, depending on the value of 
+                :code:`code`.
+        """
         if (code == "radmc3d"):
             self.run_thermal_radmc3d(nphot=nphot, **keywords)
         else:
@@ -41,6 +76,48 @@ class Model:
             max_interactions=1e8, mpi=False, nprocesses=None, \
             sublimation_temperature=None, verbose=True, timeout=3600, \
             increase_photons_until_convergence=False):
+        """
+        Run the radiative equilibrium calculation using the Hyperion radiative
+        transfer code. As a result, the `Model.grid.temperature` list will be
+        populated with the temperatures calculated.
+
+        Args:
+            :attr:`nphot` (int, optional):
+                The number of photons to use for the calculation. Default: `1e6`
+            :attr:`mrw` (bool, optional):
+                If using `hyperion`, whether or not to use the Modified Random 
+                Walk Algorithm. Default: `False`
+            :attr:`pda` (bool, optional):
+                If using `hyperion`, whether or not to use the Partial Diffusion
+                Approximation algorithm. Default: `False`
+            :attr:`niterations` (int, optional):
+                The maximum number of iterations to perform, if convergence is
+                not reached, before giving up. Default: `20`
+            :attr:`percentile` (`float`, optional):
+                Which percentile of cells to use when calculating the 
+                convergence criteria. Default: `99.`
+            :attr:`absolute` (`float`, optional):
+                Maximum absolute difference of the ratio between cells for 
+                convergence to be reached. Default: `2.0`
+            :attr:`relative` (`float`, optional):
+                Relative difference between cells for convergence to be reached.
+                Default: `1.02`
+            :attr:`max_interactions` (`int`, optional):
+                Maximum number of interactions a photon can have before it is 
+                killed. Default: `1e8`
+            :attr:`mpi` (bool, optional):
+                If using `hyperion`, whether or not to run the model in 
+                parallel with MPI. Default: `False`
+            :attr:`nprocesses` (bool, optional):
+                If `mpi=True`, the number of MPI threads to use. Default: `None`
+            :attr:`sublimation_temperature` (`float`, optional):
+                If you would like to sublimate dust above a certain temperature,
+                set that here. Default: `None`
+            :attr:`verbose` (`bool`, False):
+                Should output be printed to the screen, or hidden. 
+                Default: `False`
+        """
+
         d = []
         for i in range(len(self.grid.dust)):
             d.append(IsotropicDust( \
@@ -143,6 +220,28 @@ class Model:
 
     def run_thermal_radmc3d(self, nphot=1e6, verbose=True, timelimit=7200, \
             nice=None, **keywords):
+        """
+        Run the radiative equilibrium calculation using the RADMC-3D radiative
+        transfer code. As a result, the `Model.grid.temperature` list will be
+        populated with the temperatures calculated.
+
+        Args:
+            :attr:`nphot` (int, optional):
+                The number of photons to use for the calculation. Default: `1e6`
+            :attr:`verbose` (`bool`, False):
+                Should output be printed to the screen, or hidden. 
+                Default: `False`
+            :attr:`**keywords` (optional):
+                This can be used to pass any options to RADMC-3D. For a list of
+                all possibilities for the thermal code, check the RADMC-3D
+                documentation. Two commonly used ones are described below.
+            :attr:`modified_random_walk` (bool, optional):
+                If using `radmc3d`, whether or not to use the Modified Random 
+                Walk Algorithm. Default: `False`
+            :attr:`setthreads` (int, optional):
+                The number of OpenMP threads to use. Default: `1`
+        """
+
         self.write_radmc3d(nphot_therm=nphot, **keywords)
 
         radmc3d.run.thermal(verbose=verbose, timelimit=timelimit, nice=nice)
@@ -157,6 +256,22 @@ class Model:
         os.system("rm *.out *.inp *.dat")
 
     def run_scattering(self, nphot=1e6, code="radmc3d", **keywords):
+        r"""
+        Run a scattering phase function calculation for the model.
+
+        Args:
+            :attr:`nphot` (int, optional):
+                The number of photons to use for the calculation. Default: `1e6`
+            :attr:`code` (str, optional):
+                Which underlying radiative transfer modeling code to use for 
+                the radiative equilibrium calculation. `radmc3d` or `hyperion`. 
+                Default: `radmc3d`
+            :attr:`kwargs` (optional):
+                Can be used to pass arguments to either 
+                :code:`Model.run_scattering_hyperion` or 
+                :code:`Model.run_scattering_radmc3d`, depending on the value of 
+                :code:`code`.
+        """
         if (code == "radmc3d"):
             self.run_scattering_radmc3d(nphot=nphot, **keywords)
         else:
@@ -164,6 +279,31 @@ class Model:
 
     def run_scattering_radmc3d(self, nphot=1e6, verbose=True, nice=None, \
             loadlambda=None, **keywords):
+        """
+        Run a scattering phase function calculation using the RADMC-3D radiative
+        transfer code. As a result, the `Model.grid.scattering_phase` list will 
+        be populated with the scattering phase functions calculated.
+
+        Args:
+            :attr:`nphot` (int, optional):
+                The number of photons to use for the calculation. Default: `1e6`
+            :attr:`verbose` (`bool`, False):
+                Should output be printed to the screen, or hidden. 
+                Default: `False`
+            :attr:`loadlambda` (`bool`, optional):
+                If `True`, use the :code:`Model.camera_wavelength` array as the
+                list of wavelengths for the scattering phase function 
+                calculation. If `None`, use the :code:`Model.grid.lam array`. 
+                Default: `None`
+            :attr:`**keywords` (optional):
+                This can be used to pass any options to RADMC-3D. For a list of
+                all possibilities for the scattering phase function code, check 
+                the RADMC-3D documentation. Two commonly used ones are 
+                described below.
+            :attr:`setthreads` (int, optional):
+                The number of OpenMP threads to use. Default: `1`
+        """
+
         self.write_radmc3d(nphot_scat=nphot, **keywords)
 
         radmc3d.run.scattering(verbose=verbose, nice=nice, \
@@ -182,6 +322,26 @@ class Model:
         os.system("rm *.out *.inp *.dat")
 
     def run_image(self, name=None, nphot=1e6, code="radmc3d", **keywords):
+        r"""
+        Run an image of the model.
+
+        Args:
+            :attr:`name` (`str`, optional):
+                The name of the image, to use as a key in the 
+                :code:`Model.images` dictionary. Default: `None`
+            :attr:`nphot` (int, optional):
+                The number of photons to use for the calculation. Default: `1e6`
+            :attr:`code` (str, optional):
+                Which underlying radiative transfer modeling code to use for 
+                the radiative equilibrium calculation. `radmc3d` or `hyperion`. 
+                Default: `radmc3d`
+            :attr:`kwargs` (optional):
+                Can be used to pass arguments to either 
+                :code:`Model.run_scattering_hyperion` or 
+                :code:`Model.run_scattering_radmc3d`, depending on the value of 
+                :code:`code`.
+        """
+
         if (code == "radmc3d"):
             self.run_image_radmc3d(name=name, nphot=nphot, **keywords)
         else:
@@ -193,6 +353,67 @@ class Model:
             sublimation_temperature=None, verbose=True, incl=45, pa=45, \
             dpc=1, lam=1300., track_origin='basic', nphot_imaging=1e6, \
             name=None, npix=256, pixelsize=1.0):
+        """
+        Run the radiative equilibrium calculation using the Hyperion radiative
+        transfer code. As a result, the `Model.grid.temperature` list will be
+        populated with the temperatures calculated.
+
+        Args:
+            :attr:`name` (`str`, optional):
+                The name of the spectrum, to use as a key in the 
+                :code:`Model.spectra` dictionary. Default: `None`
+            :attr:`nphot` (int, optional):
+                The number of photons to use for the calculation. Default: `1e6`
+            :attr:`mrw` (bool, optional):
+                If using `hyperion`, whether or not to use the Modified Random 
+                Walk Algorithm. Default: `False`
+            :attr:`pda` (bool, optional):
+                If using `hyperion`, whether or not to use the Partial Diffusion
+                Approximation algorithm. Default: `False`
+            :attr:`niterations` (int, optional):
+                The maximum number of iterations to perform, if convergence is
+                not reached, before giving up. Default: `20`
+            :attr:`percentile` (`float`, optional):
+                Which percentile of cells to use when calculating the 
+                convergence criteria. Default: `99.`
+            :attr:`absolute` (`float`, optional):
+                Maximum absolute difference of the ratio between cells for 
+                convergence to be reached. Default: `2.0`
+            :attr:`relative` (`float`, optional):
+                Relative difference between cells for convergence to be reached.
+                Default: `1.02`
+            :attr:`max_interactions` (`int`, optional):
+                Maximum number of interactions a photon can have before it is 
+                killed. Default: `1e8`
+            :attr:`mpi` (bool, optional):
+                If using `hyperion`, whether or not to run the model in 
+                parallel with MPI. Default: `False`
+            :attr:`nprocesses` (bool, optional):
+                If `mpi=True`, the number of MPI threads to use. Default: `None`
+            :attr:`sublimation_temperature` (`float`, optional):
+                If you would like to sublimate dust above a certain temperature,
+                set that here. Default: `None`
+            :attr:`verbose` (`bool`, False):
+                Should output be printed to the screen, or hidden. 
+                Default: `False`
+            :attr:`incl` (`float`, optional):
+                The inclination of the model to use for the image. Default: `0.`
+            :attr:`pa` (`float`, optional):
+                The position angle to use for the image. Default: `0.`
+            :attr:`dpc` (`float`, optional):
+                The distance to the model in units of parsecs. Default: `1.`
+            :attr:`lam` (`float`, optional):
+                The wavelength, in microns, to make the image at. Default: 
+                `1300.`
+            :attr:`nphot_imaging` (`float`, optional):
+                The number of photons to use in making the image. Default: `1e6`
+            :attr:`npix` (`int`, optional):
+                The number of pixels (squared) that the image should have. 
+                Default: `256`
+            :attr:`pixelsize` (`float`, optional):
+                The size of the pixels, in arcseconds. Default: `1.`
+        """
+
         d = []
         for i in range(len(self.grid.dust)):
             d.append(IsotropicDust( \
@@ -356,6 +577,26 @@ class Model:
                 os.system("rm *.bout")
 
     def run_sed(self, name=None, nphot=1e6, code="radmc3d", **keywords):
+        r"""
+        Run a spectrum of the model.
+
+        Args:
+            :attr:`name` (`str`, optional):
+                The name of the spectrum, to use as a key in the 
+                :code:`Model.spectra` dictionary. Default: `None`
+            :attr:`nphot` (int, optional):
+                The number of photons to use for the calculation. Default: `1e6`
+            :attr:`code` (str, optional):
+                Which underlying radiative transfer modeling code to use for 
+                the radiative equilibrium calculation. `radmc3d` or `hyperion`. 
+                Default: `radmc3d`
+            :attr:`kwargs` (optional):
+                Can be used to pass arguments to either 
+                :code:`Model.run_sed_hyperion` or 
+                :code:`Model.run_sed_radmc3d`, depending on the value of 
+                :code:`code`.
+        """
+
         if (code == "radmc3d"):
             self.run_sed_radmc3d(name=name, nphot=nphot, **keywords)
         else:
@@ -367,6 +608,34 @@ class Model:
     def run_sed_radmc3d(self, name=None, nphot=1e6, incl=0, pa=0, \
             phi=0, dpc=1, loadlambda=False, verbose=True, nice=None, \
             **keywords):
+        r"""
+        Run a spectrum of the model with RADMC-3D. As a result, the 
+        :code:`Model.spectra` dictionary will have a 
+        :code:`pdspy.spectroscopy.Spectrum` added with key `name`.
+
+        Args:
+            :attr:`name` (`str`, optional):
+                The name of the spectrum, to use as a key in the 
+                :code:`Model.spectra` dictionary. Default: `None`
+            :attr:`nphot` (int, optional):
+                The number of photons to use for the calculation. Default: `1e6`
+            :attr:`incl` (`float`, optional):
+                The inclination of the model to use for the image. Default: `0.`
+            :attr:`loadlambda` (`bool`, optional):
+                If `True`, use the :code:`Model.camera_wavelength` array as the
+                list of wavelengths for the scattering phase function 
+                calculation. If `False`, use the :code:`Model.grid.lam array`. 
+                Default: `False`
+            :attr:`code` (str, optional):
+                Which underlying radiative transfer modeling code to use for 
+                the radiative equilibrium calculation. `radmc3d` or `hyperion`. 
+                Default: `radmc3d`
+            :attr:`kwargs` (optional):
+                Can be used to pass arguments to RADMC-3D.
+                This can be used to pass any options to RADMC-3D. For a list of
+                all possibilities for spectra, check the RADMC-3D documentation.
+        """
+
         self.write_radmc3d(nphot_spec=nphot, **keywords)
 
         radmc3d.run.sed(incl=incl, posang=pa, phi=phi, noline=True, \
@@ -382,6 +651,26 @@ class Model:
 
     def run_visibilities(self, name=None, nphot=1e6, code="radmc3d", \
             **keywords):
+        r"""
+        Run visibilities for the model.
+
+        Args:
+            :attr:`name` (`str`, optional):
+                The name of the visibilities, to use as a key in the 
+                :code:`Model.visibilities` dictionary. Default: `None`
+            :attr:`nphot` (int, optional):
+                The number of photons to use for the calculation. Default: `1e6`
+            :attr:`code` (str, optional):
+                Which underlying radiative transfer modeling code to use for 
+                the radiative equilibrium calculation. `radmc3d` or `hyperion`. 
+                Default: `radmc3d`
+            :attr:`kwargs` (optional):
+                Can be used to pass arguments to either 
+                :code:`Model.run_scattering_hyperion` or 
+                :code:`Model.run_scattering_radmc3d`, depending on the value of 
+                :code:`code`.
+        """
+
         if (code == "radmc3d"):
             self.run_visibilities_radmc3d(name=name, nphot=nphot, **keywords)
         else:
@@ -536,6 +825,19 @@ class Model:
                 radmc3d.write.microturbulence(microturbulence)
 
     def read(self, filename=None, usefile=None):
+        r"""
+        Read a model in from an HDF5 model file.
+
+        Args:
+            :attr:`filename` (`str`, optional):
+                The filename of the file storing the model to read in. 
+                Default: `None`
+            :attr:`usefile` (`h5py.File`, optional):
+                If :code:`filename = None`, then use this keyword to provide an
+                instance of an :code:`h5py.File` that has already be opened 
+                that the model can be read from.
+        """
+
         if (usefile == None):
             f = h5py.File(filename, "r")
         else:
@@ -569,6 +871,19 @@ class Model:
             f.close()
 
     def write(self, filename=None, usefile=None):
+        r"""
+        Write a model to an HDF5 model file.
+
+        Args:
+            :attr:`filename` (`str`, optional):
+                The filename of the file that will be written out with the 
+                model. Default: `None`
+            :attr:`usefile` (`h5py.File`, optional):
+                If :code:`filename = None`, then use this keyword to provide an
+                instance of an :code:`h5py.File` that has already be opened 
+                that the model can be written to.
+        """
+
         if (usefile == None):
             f = h5py.File(filename, "w")
         else:

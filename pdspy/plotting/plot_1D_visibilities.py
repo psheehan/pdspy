@@ -5,6 +5,44 @@ import numpy
 def plot_1D_visibilities(visibilities, model, parameters, params, index=0, \
         fig=None, plot_disk=False, color="k", markersize=8, linewidth=1, \
         line_color="g", disk_only_color="gray", fontsize="medium"):
+    r"""
+    Plot the 1D azimuthally averaged visibility data along with the specified model.
+
+    Args:
+        :attr:`visibilities` (`dict`):
+            Dictionary containing the visibility data, typically as loaded by :code:`utils.load_config` and :code:`utils.load_data`.
+        :attr:`model` (`modeling.Model`):
+            The radiative transfer model that you would like to plot the visibilities of. Typically this is the output of modeling.run_disk_model.
+        :attr:`parameters` (`dict`):
+            The parameters dictionary in the config module as loaded in by :code:`utils.load_config`
+        :attr:`params` (`dict`):
+            The parameters of the model, typically as a dictionary mapping parameter keys from the :code:`parameters` dictionary to their values.
+        :attr:`index` (`int`, optional):
+            The visibilities dictionary typically contains a list of datasets. `index` indicates which one to plot.
+        :attr:`fig` (`tuple`, `(matplotlib.Figure, matplotlib.Axes)`, optional):
+            If you've already created a figure and axes to put the plot in, you can supply them here. Otherwise, `plot_1D_visibilities` will generate them for you. Default: `None`
+        :attr:`plot_disk` (`bool`, optional):
+            Should :code:`plot_1D_visibilities` show the disk-only contribution to the model? Default: `False`
+        :attr:`color` (str, optional):
+            The color to use for plotting the visibility data. Default: `"k"`
+        :attr:`markersize` (`int`, optional):
+            The size of the markers to use for plotting the visibility data. Default: `8`
+        :attr:`linewidth` (int, optional):
+            What linewidth to use for plotting the model. Default: 1
+        :attr:`line_color` (str, optional):
+            The color to use for plotting the model visibilities. Default: `"g"`
+        :attr:`disk_only_color` (str, optional):
+            The color to use for plotting the disk-only model visibilities. Default: `"gray"`
+        :attr:`fontsize` (`str` or `int`):
+            What fontsize to use for labels, ticks, etc. Default: `"medium"`
+
+    Returns:
+        :attr:`fig` (`matplotlib.Figure`):
+            The matplotlib figure that was used for the plot.
+        :attr:`ax` (`matplotlib.Axes`):
+            The matplotlib axes that were used for the plot.
+    """
+
 
     # Generate a figure and axes if not provided.
 

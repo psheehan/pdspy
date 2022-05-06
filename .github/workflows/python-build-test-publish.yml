@@ -11,6 +11,9 @@ name: Test build pdspy package across platforms and versions
 on:
   push:
     branches: [master]
+    paths-ignore:
+      - 'docs/*'
+      - '.readthedocs.yaml'
   release:
     branches: [master]
 

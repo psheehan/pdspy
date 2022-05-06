@@ -22,6 +22,9 @@ from ..misc import B_nu
 from ..imaging import Image, imtovis
 
 class YSOModel(Model):
+    r"""
+    A Model that specifically represents a young star, including a star, disk, and envelope.
+    """
 
     def add_star(self, mass=0.5, luminosity=1, temperature=4000.):
         self.grid.add_star(Star(mass=mass, luminosity=luminosity, \
