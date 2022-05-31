@@ -32,7 +32,9 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
         plot=False, ncpus=1, ncpus_highmass=1, with_hyperion=False, \
         timelimit=3600, source="disk", nice=None, disk_vis=False, \
         no_radiative_transfer=False, nlam_SED=50, run_thermal=True, \
-        surrogate=[], verbose=False, ftcode="galario"):
+        surrogate=[], verbose=False, ftcode="galario", \
+        percentile=99., absolute=2., relative=1.02, \
+        increase_photons_until_convergence=False):
 
     # Set the values of all of the parameters.
 
@@ -100,18 +102,16 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
 
     if p["M_disk"] > 0.001 or p["R_disk"] < 50 or p["M_env"] > 0.001 or \
             p["R_env"] < 500 or p["h_0"] > 0.25:
-        if with_hyperion:
-            nphi = 201
-            code = "hyperion"
-            nprocesses = ncpus_highmass
-        else:
-            nphi = 101
-            code = "radmc3d"
-            nprocesses = ncpus_highmass
+        nprocesses = ncpus_highmass
+    else:
+        nprocesses = ncpus
+
+    if with_hyperion:
+        nphi = 201
+        code = "hyperion"
     else:
         nphi = 101
         code = "radmc3d"
-        nprocesses = ncpus
 
     m = YSOModel()
     m.add_star(mass=p["M_star"],luminosity=p["L_star"],temperature=p["T_star"])
@@ -119,7 +119,8 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
     if p["envelope_type"] == "ulrich":
         p["R_grid"] = p["R_env"]
     else:
-        p["R_grid"] = max(5*p["R_disk"],300)
+        #p["R_grid"] = max(5*p["R_disk"],300)
+        p["R_grid"] = 5*p["R_disk"]
     m.set_spherical_grid(p["R_in"], p["R_grid"], 100, nphi, 2, code=code)
 
     if p["disk_type"] == "exptaper":
@@ -203,6 +204,9 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
     else:
         pass
 
+    if p["ambient_medium"]:
+        m.add_ambient_medium()
+
     m.grid.set_wavelength_grid(0.1,1.0e5,500,log=True)
 
     # If we just want to generate the model, quit here.
@@ -226,8 +230,11 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
     else:
         if code == "hyperion" and run_thermal:
             m.run_thermal(code="hyperion", nphot=2e5, mrw=True, pda=True, \
-                    niterations=20, mpi=True, nprocesses=nprocesses, \
-                    verbose=verbose)
+                    niterations=10, mpi=True if nprocesses > 1 else False, \
+                    nprocesses=nprocesses, verbose=verbose, timeout=timelimit, \
+                    percentile=percentile, absolute=absolute, \
+                    relative=relative, increase_photons_until_convergence=\
+                    increase_photons_until_convergence)
 
             # Convert model to radmc-3d format.
 
