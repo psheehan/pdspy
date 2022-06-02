@@ -58,7 +58,6 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
     # Make sure alpha is defined.
 
     p["alpha"] = p["gamma"] + p["beta"]
-    p["alpha_large"] = p["gamma"] + p["beta_large"]
 
     # If we're using a Pringle disk, make sure the scale height is set correctly
 
@@ -124,9 +123,9 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
     m.set_spherical_grid(p["R_in"], p["R_grid"], 100, nphi, 2, code=code)
 
     if p["disk_type"] == "exptaper":
-        m.add_pringle_disk(mass=p["M_disk"]*p["f_M_large"], rmin=p["R_in"], \
-                rmax=p["R_disk"], plrho=p["alpha_large"], \
-                h0=p["h_0"]*p["f_h_large"], plh=p["beta_large"], dust=ddust, \
+        m.add_pringle_disk(mass=p["M_disk"], rmin=p["R_in"], \
+                rmax=p["R_disk"], plrho=p["alpha"], \
+                h0=p["h_0"], plh=p["beta"], dust=ddust, \
                 t0=p["T0"], plt=p["q"], \
                 gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"],\
                 p["R_in_gap3"]], gap_rout=[p["R_cav"],p["R_out_gap1"],\
@@ -170,9 +169,9 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                 amin=p["a_min"], amax=p["a_max"], pla=p["p"], na=p["na"], \
                 alpha_settle=p["alpha_settle"], gamma_taper=p["gamma_taper"])
     else:
-        m.add_disk(mass=p["M_disk"]*p["f_M_large"], rmin=p["R_in"], \
-                rmax=p["R_disk"], plrho=p["alpha_large"], \
-                h0=p["h_0"]*p["f_h_large"], plh=p["beta_large"], dust=ddust, \
+        m.add_disk(mass=p["M_disk"], rmin=p["R_in"], \
+                rmax=p["R_disk"], plrho=p["alpha"], \
+                h0=p["h_0"], plh=p["beta"], dust=ddust, \
                 t0=p["T0"], plt=p["q"], \
                 gap_rin=[p["R_in"],p["R_in_gap1"],p["R_in_gap2"],\
                 p["R_in_gap3"]], gap_rout=[p["R_cav"],p["R_out_gap1"],\
