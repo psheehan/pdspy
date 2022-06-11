@@ -82,6 +82,7 @@ setup(name="pdspy", \
         scripts=[\
         'bin/config_template.py',\
         'bin/upgrade_to_pdspy2.py',\
+        'bin/generate_surrogate_model.py',\
         'bin/disk_model_emcee3.py',\
         'bin/disk_model_nested.py',\
         'bin/disk_model_dynesty.py',\
