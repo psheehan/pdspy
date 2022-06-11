@@ -154,10 +154,11 @@ def run_models(grid="train", key=None):
         if True:
             model = modeling.run_disk_model(config.visibilities, config.images,\
                     config.spectra, parameters[i], config.parameters, \
-                    timelimit=72000, with_hyperion=True, percentile=99.5, \
-                    absolute=1.1, relative=1.01, ncpus=args.ncpus, \
-                    ncpus_highmass=args.ncpus, \
-                    verbose=True, increase_photons_until_convergence=True)
+                    timelimit=72000, with_hyperion=True, \
+                    percentile=config.percentile, absolute=config.absolute, \
+                    relative=config.relative, ncpus=args.ncpus, \
+                    ncpus_highmass=args.ncpus, verbose=True, \
+                    increase_photons_until_convergence=True)
 
             # Write out the file.
 
@@ -771,16 +772,18 @@ if (args.action == 'make'):
 
             os.chdir(key)
 
-            parameters, samples = generate_samples(8, mode="LHS", \
-                    grid_keys=[key])
+            parameters, samples = generate_samples(config.nsamples_1d, \
+                    mode="LHS", grid_keys=[key])
             numpy.save("parameters.npy", parameters)
 
             os.chdir("..")
     elif grid == "TestGrid/":
-        parameters, samples = generate_samples(250, mode="random")
+        parameters, samples = generate_samples(config.nsamples_test, \
+                mode="random")
         numpy.save("parameters.npy", parameters)
     else:
-        parameters, samples = generate_samples(125, mode="LHS")
+        parameters, samples = generate_samples(config.nsamples_train, \
+                mode="LHS")
         numpy.save("parameters.npy", parameters)
 
     os.chdir("..")
