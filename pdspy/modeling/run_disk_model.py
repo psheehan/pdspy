@@ -228,18 +228,23 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
             m.grid.add_temperature(temperature)
     else:
         if code == "hyperion" and run_thermal:
-            m.run_thermal(code="hyperion", nphot=2e5, mrw=True, pda=True, \
-                    niterations=10, mpi=True if nprocesses > 1 else False, \
-                    nprocesses=nprocesses, verbose=verbose, timeout=timelimit, \
-                    percentile=percentile, absolute=absolute, \
-                    relative=relative, increase_photons_until_convergence=\
-                    increase_photons_until_convergence)
+            try:
+                m.run_thermal(code="hyperion", nphot=2e5, mrw=True, pda=True, \
+                        niterations=10, mpi=True if nprocesses > 1 else False, \
+                        nprocesses=nprocesses, verbose=verbose, \
+                        timeout=timelimit, percentile=percentile, \
+                        absolute=absolute, relative=relative, \
+                        increase_photons_until_convergence=\
+                        increase_photons_until_convergence)
 
-            # Convert model to radmc-3d format.
+                # Convert model to radmc-3d format.
 
-            m.make_hyperion_symmetric()
+                m.make_hyperion_symmetric()
 
-            m.convert_hyperion_to_radmc3d()
+                m.convert_hyperion_to_radmc3d()
+            except:
+                os.chdir(original_dir)
+                return 0.
         elif run_thermal:
             try:
                 t1 = time.time()
