@@ -130,6 +130,10 @@ def run_models(grid="train", key=None):
     parameters = numpy.load(directory+"parameters.npy", allow_pickle=True)
     print(parameters.size)
 
+    # Load the list of models that have been tried.
+
+    tried_models = numpy.loadtxt(directory+"tried_models.txt", dtype=str)
+
     # Run the model:
 
     start = args.index
@@ -146,15 +150,16 @@ def run_models(grid="train", key=None):
             continue
         elif os.path.exists(directory+parameters[i]["filename"]):
             continue
+        elif parameters[i]["filename"] in tried_models:
+            continue
 
         if not os.path.exists(directory):
             os.mkdir(directory)
 
-        #try:
-        if True:
+        try:
             model = modeling.run_disk_model(config.visibilities, config.images,\
                     config.spectra, parameters[i], config.parameters, \
-                    timelimit=72000, with_hyperion=True, \
+                    timelimit=7200, with_hyperion=True, \
                     percentile=config.percentile, absolute=config.absolute, \
                     relative=config.relative, ncpus=args.ncpus, \
                     ncpus_highmass=args.ncpus, verbose=True, \
@@ -163,12 +168,16 @@ def run_models(grid="train", key=None):
             # Write out the file.
 
             model.write_yso(directory+parameters[i]["filename"])
-        #except:
-        else:
-            bad.append(i)
+        except:
+            f = open(directory+"tried_models.txt","a")
+            f.write(parameters[i]["filename"]+"\n")
+            f.close()
+            #bad.append(i)
 
+        """
         new_parameters = numpy.delete(parameters, bad)
         numpy.save(directory+"parameters.npy", new_parameters)
+        """
 
 ################################################################################
 #
