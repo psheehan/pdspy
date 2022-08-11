@@ -1,5 +1,5 @@
 {% set name = "pdspy" %}
-{% set version = "1.5.2" %}
+{% set version = "1.5.5" %}
 
 package:
     name: {{ name|lower }}
