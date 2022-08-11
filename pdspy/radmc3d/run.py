@@ -76,9 +76,9 @@ def sed(nrrefine=None, fluxcons=None, norefine=None, nofluxcons=None, \
         loadlambda=None, verbose=True, nice=None):
 
     if nice != None:
-        command="nice -{0:d} radmc3d sed ".format(nice)
+        command="nice -{0:d} radmc3d spectrum ".format(nice)
     else:
-        command="radmc3d sed "
+        command="radmc3d spectrum "
 
     if (nrrefine != None):
         command += "nrrefine {0:i} ".format(nrrefine)
