@@ -28,7 +28,7 @@ read = cythonize([Extension('pdspy.radmc3d.read', ["pdspy/radmc3d/read.pyx"], \
 # Now define the setup for the package.
 
 setup(name="pdspy", \
-        version="1.5.6", \
+        version="1.5.7", \
         author="Patrick Sheehan", \
         author_email="psheehan@northwestern.edu", \
         description="Radiative transfer modeling of protoplanetary disks", \
@@ -63,20 +63,7 @@ setup(name="pdspy", \
         'pdspy.interferometry': ['*.pyx'], \
         'pdspy.gas': ['data/*.dat'], \
         'pdspy.radmc3d': ['*.pyx'], \
-        'pdspy.spectroscopy': ['btsettle_data/*.txt'], \
-        'pdspy.stars': ['evolutionary_tracks/*',\
-            'evolutionary_tracks/bressan2012/*',\
-            'evolutionary_tracks/bressan2012/Z0.014Y0.273/*',\
-            'evolutionary_tracks/bressan2012/Z0.017Y0.279/*',\
-            'evolutionary_tracks/dotter2008/*',\
-            'evolutionary_tracks/feiden2016/mag/*',\
-            'evolutionary_tracks/feiden2016/std/*',\
-            'evolutionary_tracks/siess_2000/*',\
-            'evolutionary_tracks/tognelli2011/Z0.02000_Y0.2700_XD2E5_ML1.68_AS05/*',\
-            'evolutionary_tracks/tognelli2011/Z0.02000_Y0.2700_XD4E5_ML1.68_AS05/*',\
-            'evolutionary_tracks/tognelli2011/Z0.02000_Y0.2880_XD2E5_ML1.68_AS05/*',\
-            'evolutionary_tracks/tognelli2011/Z0.02000_Y0.2880_XD4E5_ML1.68_AS05/*']}, \
-        
+        'pdspy.spectroscopy': ['btsettle_data/*.txt']}, \
         ext_modules=[libinterferometry, libimaging, bhmie, \
         bhcoat, dmilay, read], \
         scripts=[\
