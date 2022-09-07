@@ -222,7 +222,7 @@ class Disk:
         self.h0 = f['h0'][()]
         self.plh = f['plh'][()]
         if 'gamma_taper' in f:
-            self.gamma_taper = gamma_taper
+            self.gamma_taper = f['gamma_taper']
 
         if 't0' in f:
             self.t0 = f['t0'][()]

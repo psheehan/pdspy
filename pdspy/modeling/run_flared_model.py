@@ -49,10 +49,10 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
     if p["disk_type"] in ["exptaper","dartois-exptaper"]:
         t_rdisk = p["T0"] * (p["R_disk"] / 1.)**-p["q"]
         p["h_0"] = ((k_b*(p["R_disk"]*AU)**3*t_rdisk) / (G*p["M_star"]*M_sun * \
-                2.37*m_p))**0.5 / AU
+                p["mu"]*m_p))**0.5 / AU
     else:
         p["h_0"] = ((k_b * AU**3 * p["T0"]) / (G*p["M_star"]*M_sun * \
-                2.37*m_p))**0.5 / AU
+                p["mu"]*m_p))**0.5 / AU
     p["beta"] = 0.5 * (3 - p["q"])
     p["alpha"] = p["gamma"] + p["beta"]
 

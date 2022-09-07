@@ -5,6 +5,9 @@ try:
     from hyperion.dust import IsotropicDust
     from hyperion.model import Model as HypModel
     from hyperion.model import ModelOutput
+    from hyperion.model.helpers import find_last_iteration
+    from hyperion.util.otf_hdf5 import _on_the_fly_hdf5
+    import h5py
 except:
     print("WARNING: Hyperion versions <= 0.9.10 will not work with astropy >= 4.0 because they depend on astropy.extern.six. Continuing without Hyperion.")
 from .. import radmc3d
@@ -71,7 +74,8 @@ class Model:
     def run_thermal_hyperion(self, nphot=1e6, mrw=False, pda=False, \
             niterations=20, percentile=99., absolute=2.0, relative=1.02, \
             max_interactions=1e8, mpi=False, nprocesses=None, \
-            sublimation_temperature=None, verbose=True):
+            sublimation_temperature=None, verbose=True, timeout=3600, \
+            increase_photons_until_convergence=False):
         """
         Run the radiative equilibrium calculation using the Hyperion radiative
         transfer code. As a result, the `Model.grid.temperature` list will be
@@ -158,18 +162,35 @@ class Model:
         m.set_pda(pda)
         m.set_max_interactions(max_interactions)
         m.set_n_initial_iterations(niterations)
-        m.set_n_photons(initial=nphot, imaging=0)
         m.conf.output.output_density = 'last'
         m.set_convergence(True, percentile=percentile, absolute=absolute, \
                 relative=relative)
 
-        m.write("temp.rtin")
+        converged = False
+        while not converged:
+            m.set_n_photons(initial=nphot, imaging=0)
+            m.write("temp.rtin")
 
-        if verbose:
-            m.run("temp.rtout", mpi=mpi, n_processes=nprocesses, overwrite=True)
-        else:
-            m.run("temp.rtout", mpi=mpi, n_processes=nprocesses, \
-                    overwrite=True, logfile="temp.log")
+            if verbose:
+                m.run("temp.rtout", mpi=mpi, n_processes=nprocesses, \
+                        overwrite=True, timeout=timeout)
+            else:
+                m.run("temp.rtout", mpi=mpi, n_processes=nprocesses, \
+                        overwrite=True, logfile="temp.log", timeout=timeout)
+
+            f = h5py.File("temp.rtout","r")
+            if verbose:
+                print("Ran ", find_last_iteration(f), "iterations")
+            if increase_photons_until_convergence and \
+                    find_last_iteration(f) == niterations:
+                if verbose:
+                    print("Convergence not reached, increasing nphot by a factor of 10 and trying again.")
+                nphot *= 10
+                m.use_quantities("temp.rtout", quantities=['specific_energy'])
+                os.system("rm temp.rtin temp.rtout temp.log")
+            else:
+                converged = True
+            f.close()
 
         n = ModelOutput("temp.rtout")
 

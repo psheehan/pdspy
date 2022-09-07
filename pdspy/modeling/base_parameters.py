@@ -50,6 +50,8 @@ base_parameters = {
         "logT0_env":{"fixed":True, "value":2.5, "limits":[1.,3.5]},
         "q_env":{"fixed":True, "value":0.25, "limits":[0.,1.5]},
         "loga_turb_env":{"fixed":True, "value":-1.0, "limits":[-1.5,1.]},
+        # Ambient medium?
+        "ambient_medium":{"fixed":True, "value":False, "limits":[0.,0.]},
         # Dust parameters.
         "dust_file":{"fixed":True, "value":"pollack_new.hdf5", "limits":[0.,0.]},
         "loga_min":{"fixed":True, "value":-1.3, "limits":[0.,5.]},
@@ -61,6 +63,7 @@ base_parameters = {
         "gas_file1":{"fixed":True, "value":"co.dat", "limits":[0.,0.]},
         "logabundance1":{"fixed":True, "value":-4., "limits":[-6.,-2.]},
         "freezeout1":{"fixed":True, "value":0., "limits":[0.,40.]},
+        "mu":{"fixed":True, "value":2.37, "limits":[0.,0.]},
         # Viewing parameters.
         "i":{"fixed":True, "value":45., "limits":[0.,180.]},
         "pa":{"fixed":True, "value":0., "limits":[0.,360.]},
