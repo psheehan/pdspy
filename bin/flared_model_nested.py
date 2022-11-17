@@ -163,7 +163,10 @@ labels = ["$"+key.replace("T0_env","T_0,env").replace("T0","T_0").\
 # Set up the MCMC simulation.
 
 if args.resume:
+    """
     sampler = utils.dynesty.load_sampler("sampler.p", pool=pool)
+    """
+    sampler = dynesty.NestedSampler.restore("sampler.save", pool=pool)
 
     # For backwards compatibility
     sampler.loglikelihood.args = [visibilities, images, spectra, \
@@ -186,50 +189,38 @@ else:
 # Run a few burner steps.
 
 if args.action == "run":
-    for it, results in enumerate(sampler.sample(dlogz=config.dlogz)):
-        # Save the state of the sampler (delete the pool first).
+    add_live = False
+    while not sampler.added_live:
+        sampler.run_nested(dlogz=config.dlogz, checkpoint_file="sampler.save", \
+                resume=args.resume, maxiter=1000, add_live=add_live, \
+                checkpoint_every=1800)
 
-        os.system("cp sampler.p sampler.p.backup")
-        utils.dynesty.save_sampler("sampler.p", sampler, pool=pool)
+        # Make plots of the status of the fit.
 
-        # Print out the status of the sampler.
-
-        dyres.print_fn(results, sampler.it - 1, sampler.ncall, \
-                dlogz=config.dlogz, logl_max=numpy.inf)
-
-        # Manually calculate the stopping criterion.
-
-        logz_remain = numpy.max(sampler.live_logl) + sampler.saved_logvol[-1]
-        delta_logz = numpy.logaddexp(sampler.saved_logz[-1], logz_remain) - \
-                sampler.saved_logz[-1]
-
-        # Every 1000 steps stop and make plots of the status.
-
-        if (sampler.it - 1) % 1000 == 0 and delta_logz >= config.dlogz:
-            # Add the live points and get the results.
-
+        if not add_live:
             sampler.add_final_live()
 
-            res = sampler.results
+        res = sampler.results
 
-            # Make plots of the current status of the fit.
+        utils.dynesty.plot_status(res, ptform=sampler.prior_transform, \
+                labels=labels, periodic=periodic)
 
-            utils.dynesty.plot_status(res, ptform=sampler.prior_transform, \
-                    labels=labels, periodic=periodic)
-
-            # If we haven't reached the stopping criteria yet, remove the 
-            # live points.
-
+        if not add_live:
             sampler._remove_live_points()
 
-    # Gather the results and make one final plot of the status.
+        # Manually calculate the stopping criterion to determine whether to 
+        # add live points.
 
-    sampler.add_final_live()
+        logz_remain = numpy.max(sampler.live_logl) + \
+                sampler.saved_run["logvol"][-1]
+        delta_logz = numpy.logaddexp(sampler.saved_run["logz"][-1], \
+                logz_remain) - sampler.saved_run["logz"][-1]
 
-    res = sampler.results
+        add_live = delta_logz < config.dlogz
 
-    utils.dynesty.plot_status(res, ptform=sampler.prior_transform, \
-            labels=labels, periodic=periodic)
+        # Once we've made it this far, we always want to resume.
+
+        args.resume = True
 
 # If we are just plotting, a few minor things to do.
 
