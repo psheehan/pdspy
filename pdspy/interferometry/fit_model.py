@@ -7,9 +7,9 @@ import dynesty.utils as dyfunc
 #import dynesty.plotting as dyplot
 from .model import model
 
-def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=numpy.inf, \
-        xmax=10., ymax=10., step_size=0.1, min_separation=1., \
-        primary_beam=None, image_rms=None):
+def fit_model(data, funct='point', max_size=numpy.inf, \
+        xmax=10., ymax=10., min_separation=1., \
+        primary_beam=None, image_rms=None, ncores=1):
 
     if type(funct) == str:
         funct = numpy.array([funct])
@@ -62,21 +62,25 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=numpy.inf, \
             periodic.append(int(nparams.sum()-2))
 
     ndim = int(nparams.sum())
-    nlive = int(4*xmax*ymax / step_size**2)
+    nlive = 250
+    nsteps = 1000
 
     xlim = [[-xmax, xmax] for i in range(funct.size)]
     ylim = [[-ymax, ymax] for i in range(funct.size)]
 
     # Set up the dynesty sampler.
+    use_pool = {'prior_transform': True, 'propose_point': True, 'update_bound': True, 'loglikelihood': True}
+    with dynesty.pool.Pool(njobs=ncores, loglike=lnlike, prior_transform=ptform,
+                           logl_args=(x, y, z, zerr, funct, nparams,
+                                      primary_beam, data.freq.mean()),
+                           ptform_args=(funct, nparams,xlim, ylim, max_size, 
+                                        min_separation, image_rms)
+        sampler = dynesty.NestedSampler(pool.loglike, pool.prior_transform, ndim=ndim,
+                                        nlive=nlive, bound='multi', walks=nsteps, 
+                                        periodic=periodic, pool=pool)
 
-    sampler = dynesty.NestedSampler(lnlike, ptform, ndim=ndim, nlive=250, \
-            bound='multi', logl_args=(x, y, z, zerr, funct, nparams,\
-            primary_beam, data.freq.mean()), ptform_args=(funct, nparams, \
-            xlim, ylim, max_size, min_separation, image_rms), periodic=periodic)
-
-    # Run the nested sampling.
-
-    sampler.run_nested(dlogz=0.05)
+        # Run the nested sampling.
+        sampler.run_nested(dlogz=0.05)
 
     # Get the samples.
 
