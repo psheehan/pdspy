@@ -177,7 +177,8 @@ def lnprior(params, parameters, priors, visibilities):
 
 def lnprob(p, visibilities, images, spectra, parameters, priors, plot, \
         model="disk", ncpus=1, ncpus_highmass=1, with_hyperion=False, \
-        timelimit=3600, source="ObjName", nice=19, verbose=False):
+        timelimit=3600, source="ObjName", nice=19, verbose=False, \
+        ftcode="galario"):
 
     keys = []
     for key in sorted(parameters.keys()):
@@ -194,4 +195,4 @@ def lnprob(p, visibilities, images, spectra, parameters, priors, plot, \
     return lp + lnlike(params, visibilities, images, spectra, parameters, \
             plot, model=model, ncpus=ncpus, ncpus_highmass=ncpus_highmass, \
             with_hyperion=with_hyperion, timelimit=timelimit, source=source, \
-            nice=nice, verbose=verbose)
+            nice=nice, verbose=verbose, ftcode=ftcode)
