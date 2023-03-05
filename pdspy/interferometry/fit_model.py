@@ -74,7 +74,7 @@ def fit_model(data, funct='point', max_size=numpy.inf, \
                            logl_args=(x, y, z, zerr, funct, nparams,
                                       primary_beam, data.freq.mean()),
                            ptform_args=(funct, nparams,xlim, ylim, max_size, 
-                                        min_separation, image_rms)
+                                        min_separation, image_rms)):
         sampler = dynesty.NestedSampler(pool.loglike, pool.prior_transform, ndim=ndim,
                                         nlive=nlive, bound='multi', walks=nsteps, 
                                         periodic=periodic, pool=pool)
