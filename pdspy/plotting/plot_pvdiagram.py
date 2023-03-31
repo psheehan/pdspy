@@ -1,3 +1,5 @@
+from pdspy.constants.astronomy import M_sun, AU
+from pdspy.constants.physics import G
 import pdspy.interferometry as uv
 import pdspy.imaging as im
 import matplotlib.pyplot as plt
@@ -8,7 +10,8 @@ def plot_pvdiagram(visibilities, model, parameters, params, index=0, \
         plot_vis=False, image="data", contours="model", \
         model_image="beam-convolve", maxiter=100, threshold=1., uvtaper=None, \
         weighting="natural", robust=2.0, length=100, width=9, \
-        image_cmap="Blues", levels=None, fontsize="medium", fig=None):
+        image_cmap="Blues", levels=None, fontsize="medium", fig=None, \
+        ignore_velocities=None, curve_masses=[0.2,0.5,1.0]):
     r"""
     Plot the millimeter channel maps, along with the best fit model.
 
@@ -148,6 +151,14 @@ def plot_pvdiagram(visibilities, model, parameters, params, index=0, \
         if plot_type == "data":
             plot_image = im.extract_pv_diagram(visibilities["image"][index], \
                     xy=(x0,y0), pa=pa, length=length, width=width)
+
+            if ignore_velocities != None:
+                scale = numpy.where(numpy.logical_or(plot_image.velocity/1e5 < \
+                        ignore_velocities[0], plot_image.velocity/1e5 > \
+                        ignore_velocities[1]), 1.0, 0.)
+            else:
+                scale = numpy.repeat(1.0, plot_image.velocity.size)
+
         elif plot_type == "model":
             if model_image == "beam-convolve":
                 model_image = model.images[visibilities["lam"][index]]
@@ -197,6 +208,9 @@ def plot_pvdiagram(visibilities, model, parameters, params, index=0, \
             plot_image = im.extract_pv_diagram(residuals_image, xy=(x0,y0), \
                     pa=pa, length=length, width=width)
 
+        for iv in range(plot_image.velocity.size):
+            plot_image.image[:,:,iv,:] *= scale[iv]
+
         if i == 0:
             # Plot the data.
 
@@ -211,14 +225,25 @@ def plot_pvdiagram(visibilities, model, parameters, params, index=0, \
             nx = plot_image.image.shape[1]
             nv = plot_image.image.shape[2]
 
-            transform_x = ticker.FuncFormatter(Transform(0, nx, dx, '%.0f"'))
-            transform_y = ticker.FuncFormatter(Transform(0, nv, dv, '%.0f'))
+            transform_x = ticker.FuncFormatter(Transform(0, plot_image.x[0], dx, '%.1f"'))
+            transform_y = ticker.FuncFormatter(Transform(0, plot_image.velocity[0]/1e5, dv, '%.0f'))
 
-            ticks_x = numpy.array([-6,-3,0,3,6])
-            ticks_y = numpy.array([-3,-2,-1,0,1,2,3])
+            #ticks_x = numpy.array([-6,-3,0,3,6])
+            ticks_x = visibilities["image_ticks"][index]
+            #ticks_y = numpy.array([-3,-2,-1,0,1,2,3])
+            print(plot_image.velocity)
+            ticks_y = numpy.linspace(numpy.ceil((plot_image.velocity/1e5).min()), \
+                    numpy.floor((plot_image.velocity/1e5).max()), \
+                    int(numpy.floor((plot_image.velocity/1e5).max()) - \
+                    numpy.ceil((plot_image.velocity/1e5).min())+1))
+            print(ticks_y)
 
+            """
             ax.set_xticks(nx/2+ticks_x/dx+0.5)
             ax.set_yticks(nv/2+ticks_y/dv-0.5)
+            """
+            ax.set_xticks((ticks_x - plot_image.x[0]) / dx)
+            ax.set_yticks((ticks_y - plot_image.velocity[0]/1e5) / dv)
             ax.get_xaxis().set_major_formatter(transform_x)
             ax.get_yaxis().set_major_formatter(transform_y)
 
@@ -239,6 +264,28 @@ def plot_pvdiagram(visibilities, model, parameters, params, index=0, \
             ax.set_xlim(0, nx-1)
             ax.set_ylim(0, nv-1)
 
+            # Plot Keplerian rotation curves for a variety of masses.
+
+            formats = ["-","--",":"]
+            for ind, mass in enumerate(curve_masses):
+                x = numpy.linspace(0, nx+1, 1000)
+
+                r = (x - nx/2) * dx * 140 * AU
+
+                v = numpy.sqrt(G*mass*M_sun / numpy.abs(r)) / 1e5 * \
+                        numpy.sin(75.*numpy.pi/180)
+                        #numpy.sin(params["i"]*numpy.pi/180)
+
+                v[r > 0] = -v[r > 0]
+
+                v = v / dv + (params["v_sys"] - \
+                        plot_image.velocity[0]/1e5) / dv
+
+                plt.plot(x[r > 0], v[r > 0], "r"+formats[ind], \
+                        label="$M_* = {0:3.1f}$ M$_{{\odot}}$".format(mass))
+                plt.plot(x[r < 0], v[r < 0], "r"+formats[ind])
+
+            ax.legend(loc="upper right", fontsize=fontsize, handlelength=1)
         else:
             # Contour the model data.
 
@@ -253,12 +300,13 @@ def plot_pvdiagram(visibilities, model, parameters, params, index=0, \
 # Define a useful class for plotting.
 
 class Transform:
-    def __init__(self, xmin, xmax, dx, fmt):
+    def __init__(self, xmin, xmin_val, dx, fmt):
         self.xmin = xmin
-        self.xmax = xmax
+        self.xmin_val = xmin_val
         self.dx = dx
         self.fmt = fmt
 
     def __call__(self, x, p):
-        return self.fmt% ((x-(self.xmax-self.xmin+1)/2)*self.dx)
+        #return self.fmt% ((x-(self.xmax-self.xmin+1)/2)*self.dx)
+        return self.fmt% ( self.xmin_val + (x - self.xmin)*self.dx )
 
