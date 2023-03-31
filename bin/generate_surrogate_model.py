@@ -4,11 +4,13 @@ import argparse
 import numpy
 import os
 import pyDOE
+import sys
 
 import pdspy.modeling as modeling
 import pdspy.utils as utils
 
 from sklearn.decomposition import PCA
+from sklearn.linear_model import LogisticRegression
 import matplotlib.pyplot as plt
 import pickle
 import glob
@@ -159,7 +161,7 @@ def run_models(grid="train", key=None):
         try:
             model = modeling.run_disk_model(config.visibilities, config.images,\
                     config.spectra, parameters[i], config.parameters, \
-                    timelimit=7200, with_hyperion=True, \
+                    timelimit=900, with_hyperion=True, \
                     percentile=config.percentile, absolute=config.absolute, \
                     relative=config.relative, ncpus=args.ncpus, \
                     ncpus_highmass=args.ncpus, verbose=True, \
@@ -724,6 +726,58 @@ def test_gp_full(plot=False):
 
 ################################################################################
 #
+# Predict whether a model will finish in the allowed time.
+#
+################################################################################
+
+def predict_model_success(x_test, fail_thresh=0.05, grid="train"):
+    # Get the directory to load from.
+
+    directory = get_directory(grid=grid)
+
+    # Load the parameters file.
+
+    parameters = numpy.load(directory+"parameters.npy", allow_pickle=True)
+
+    # Load the list of models that have been tried.
+
+    tried_models = numpy.loadtxt(directory+"tried_models.txt", dtype=str)
+
+    # Get the list of which models were successful and not.
+
+    good = numpy.repeat(False, parameters.size)
+    keep = numpy.repeat(True, parameters.size)
+    for i in range(parameters.size):
+        if os.path.exists(directory+parameters[i]["filename"]):
+            good[i] = True
+        elif parameters[i]["filename"] in tried_models:
+            good[i] = False
+        else:
+            #print("It appears you have models that have not been run. Please finish making your grid before moving on.")
+            #sys.exit(0)
+            keep[i] = False
+
+    good = good[keep]
+    parameters = parameters[keep]
+
+    x_train = numpy.array([list(parameters[i].values())[0:-1] for i in \
+            range(parameters.size)])
+
+    # Train the logistic regression model.
+
+    lr = LogisticRegression(max_iter=1000)
+    lr.fit(x_train, good)
+
+    # Evaluate the model on the data points in question.
+
+    prediction = lr.predict(x_test)
+    proba = lr.predict_proba(x_test)
+    decision = lr.decision_function(x_test)
+
+    return proba[:,0] < fail_thresh
+
+################################################################################
+#
 # Learn the next point at which to fill parameter space with.
 #
 ################################################################################
@@ -737,6 +791,17 @@ def learn_next_point():
 
     parameters, x_grid = generate_samples(10000, mode="random")
     y_grid = numpy.random.uniform(size=(10000,model.ncomponents))
+
+    # Only take the points that are likely to finish within the 15 minute 
+    # timeframe.
+
+    good = predict_model_success(x_grid, grid="train")
+
+    parameters = parameters[good]
+    x_grid = x_grid[good]
+    y_grid = y_grid[good]
+
+    # Use the GP to predict the variance and get the next point.
 
     test_x = torch.from_numpy(x_grid).float()
     test_y = torch.from_numpy(y_grid).float()
@@ -845,3 +910,20 @@ elif (args.action == 'learn'):
 
         run_pca_decomposition(plot=False)
         run_gp_fit()
+
+elif (args.action == "finish"):
+    directory = get_directory(grid="test")
+
+    parameters = numpy.load(directory+"parameters.npy", allow_pickle=True)
+
+    x_test = numpy.array([list(parameters[i].values())[0:-1] for i in \
+            range(parameters.size)])
+
+    good = predict_model_success(x_test, grid="train")
+    print(good.sum())
+
+    for i in range(parameters.size):
+        if not good[i]:
+            for key in parameters[i]:
+                print(key, parameters[i][key])
+            print()
