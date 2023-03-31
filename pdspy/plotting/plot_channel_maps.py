@@ -265,19 +265,6 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
                 scale = 1.
                 colorbar_label = "Jy beam$^{-1}$"
 
-            # Set vmin, vmax, and the levels for plotting contours.
-
-            if i == 0:
-                if vmin is None:
-                    vmin = numpy.nanmin(plot_image.image*scale)
-                if vmax is None:
-                    vmax = numpy.nanmax(plot_image.image*scale)
-
-            if i == 1:
-                if levels is None:
-                    levels = numpy.array([0.05, 0.25, 0.45, 0.65, 0.85, 0.95])*\
-                            plot_image.image.max()*scale
-
             # Get the correct range of pixels for making the sub-image.
 
             if plot_type in ["data","residuals"] or \
@@ -354,6 +341,22 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
             end = center + half*(skip + 1)
         else:
             start = visibilities["ind0"][index]
+
+        # Set vmin, vmax, and the levels for plotting contours.
+
+        if not plot_vis:
+            stop = start + (visibilities["nrows"][index] * \
+                    visibilities["ncols"][index]-1) * (skip + 1) + 1
+            if i == 0:
+                if vmin is None:
+                    vmin = numpy.nanmin(plot_image.image[ymin:ymax,xmin:xmax,start:stop,0]*scale)
+                if vmax is None:
+                    vmax = numpy.nanmax(plot_image.image[ymin:ymax,xmin:xmax,start:stop,0]*scale)
+
+            if i == 1:
+                if levels is None:
+                    levels = numpy.array([0.05, 0.25, 0.45, 0.65, 0.85, 0.95])*\
+                            plot_image.image.max()*scale
 
         # Now loop through the channels and plot.
 
