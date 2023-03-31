@@ -29,14 +29,19 @@ def lnlike(params, visibilities, images, spectra, parameters, plot, \
     # Calculate the chisq for the visibilities.
 
     for j in range(len(visibilities["file"])):
+        good = visibilities["data"][j].weights > 0
+
         chisq.append(-0.5*numpy.sum((visibilities["data"][j].real - \
                 m.visibilities[visibilities["lam"][j]].real)**2 * \
-                visibilities["data"][j].weights - \
-                numpy.log(visibilities["data"][j].weights/(2*numpy.pi))) + \
+                visibilities["data"][j].weights) - \
+                numpy.sum(numpy.log(visibilities["data"][j].weights[good]/ \
+                (2*numpy.pi))) + \
                 -0.5*numpy.sum((visibilities["data"][j].imag - \
                 m.visibilities[visibilities["lam"][j]].imag)**2 * \
-                visibilities["data"][j].weights - \
-                numpy.log(visibilities["data"][j].weights/(2*numpy.pi))))
+                visibilities["data"][j].weights) - \
+                numpy.sum(numpy.log(visibilities["data"][j].weights[good]/ \
+                (2*numpy.pi))))
+
 
     # Calculate the chisq for all of the images.
 
@@ -177,7 +182,8 @@ def lnprior(params, parameters, priors, visibilities):
 
 def lnprob(p, visibilities, images, spectra, parameters, priors, plot, \
         model="disk", ncpus=1, ncpus_highmass=1, with_hyperion=False, \
-        timelimit=3600, source="ObjName", nice=19, verbose=False):
+        timelimit=3600, source="ObjName", nice=19, verbose=False, \
+        ftcode="galario"):
 
     keys = []
     for key in sorted(parameters.keys()):
@@ -194,4 +200,4 @@ def lnprob(p, visibilities, images, spectra, parameters, priors, plot, \
     return lp + lnlike(params, visibilities, images, spectra, parameters, \
             plot, model=model, ncpus=ncpus, ncpus_highmass=ncpus_highmass, \
             with_hyperion=with_hyperion, timelimit=timelimit, source=source, \
-            nice=nice, verbose=verbose)
+            nice=nice, verbose=verbose, ftcode=ftcode)
