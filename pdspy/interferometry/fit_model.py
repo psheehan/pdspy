@@ -39,10 +39,11 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=numpy.inf, \
 
     # Set up the data properly.
 
-    x = data.u
-    y = data.v
-    z = numpy.concatenate((data.real, data.imag))[:,0]
-    zerr = 1./numpy.sqrt(numpy.concatenate((data.weights,data.weights)))[:,0]
+    good = data.weights[:,0] > 0
+    x = data.u[good]
+    y = data.v[good]
+    z = numpy.concatenate((data.real[good,:], data.imag[good,:]))[:,0]
+    zerr = 1./numpy.sqrt(numpy.concatenate((data.weights[good,:],data.weights[good,:])))[:,0]
 
     # Set up some parameters for dynesty.
 
