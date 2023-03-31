@@ -1,3 +1,4 @@
+from astropy.stats import mad_std
 from scipy.signal import fftconvolve
 from scipy.optimize import leastsq
 from ..imaging import Image
@@ -7,7 +8,7 @@ import numpy
 def clean(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
         weighting="natural", robust=2, npixels=0, centering=None, \
         mode='continuum', gain=0.1, maxiter=1000, threshold=0.001, \
-        uvtaper=None):
+        uvtaper=None, nsigma=5.):
 
     # First make the image.
 
@@ -49,21 +50,34 @@ def clean(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
         weights = numpy.abs(dirty_beam[:,:,i])*(dirty_beam[:,:,i] > 0.4)
 
         p, success = leastsq(errfunc, p0, args=(x,y,dirty_beam[:,:,i],weights))
+        print(p[0]*pixel_size, p[1]*pixel_size, p[2]*180./numpy.pi)
 
         clean_beam[:,:,i] = fitfunc(p, x, y)
-    
+
     # Generate a mask.
 
-    mask = numpy.ones(dirty.shape)
-    """
-    TODO: Add in auto-masking.
-    """
+    threshold = max((dirty_beam - clean_beam).max() * dirty.max(), \
+            5.*mad_std(dirty))
+    mask = numpy.zeros(dirty.shape)
+    mask[dirty > threshold] = 1.0
+    print("Cleaning to a threshold of ", threshold)
 
     # Now loop through and subtract off the beam.
 
     n = 0
     stop = False
     while n < maxiter and not stop:
+        # Update the mask if needed.
+
+        if (dirty*mask).max() < threshold:
+            threshold = max((dirty_beam - clean_beam).max() * dirty.max(), \
+                    5.*mad_std(dirty))
+            new_mask = numpy.zeros(dirty.shape)
+            new_mask[dirty > threshold] = 1.0
+
+            mask = numpy.logical_or(mask, new_mask)
+            print(n, "Updating mask with threshold ", threshold)
+
         # Determine the location of the maximum value inside the mask.
 
         maxval = dirty*mask == (dirty*mask).max()
@@ -84,7 +98,10 @@ def clean(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
         
         # Do we stop here?
 
-        stop = (dirty*mask).max() < threshold
+        stop = (dirty*mask).max() < nsigma * mad_std(dirty)
+
+        if stop:
+            print(n, "Reached a stopping threshold of ", nsigma, " at ", nsigma * mad_std(dirty))
 
         n = n + 1
 
@@ -103,5 +120,7 @@ def clean(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
             dirty_beam.shape[1],dirty_beam.shape[2],1)), freq=data.freq)
     clean_image = Image(clean_image.reshape(model.image.shape), \
             freq=data.freq)
+    mask = Image(mask.astype(float).reshape(model.image.shape), \
+            freq=data.freq)
     
-    return clean_image, residuals, beam, model
+    return clean_image, residuals, beam, model, mask
