@@ -9,7 +9,7 @@ from .model import model
 
 def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=numpy.inf, \
         xmax=10., ymax=10., step_size=0.1, min_separation=1., \
-        primary_beam=None, image_rms=None):
+        primary_beam=None, image_rms=None, nlive=250):
 
     if type(funct) == str:
         funct = numpy.array([funct])
@@ -70,7 +70,7 @@ def fit_model(data, funct='point', nsteps=1e3, niter=3, max_size=numpy.inf, \
 
     # Set up the dynesty sampler.
 
-    sampler = dynesty.NestedSampler(lnlike, ptform, ndim=ndim, nlive=250, \
+    sampler = dynesty.NestedSampler(lnlike, ptform, ndim=ndim, nlive=nlive, \
             bound='multi', logl_args=(x, y, z, zerr, funct, nparams,\
             primary_beam, data.freq.mean()), ptform_args=(funct, nparams, \
             xlim, ylim, max_size, min_separation, image_rms), periodic=periodic)
