@@ -782,7 +782,7 @@ def predict_model_success(x_test, fail_thresh=0.05, grid="train"):
 #
 ################################################################################
 
-def learn_next_point():
+def learn_next_point(nlearn=1):
     # Also load in the Gaussian process fits.
 
     model = GPModel(load=True)
@@ -821,9 +821,11 @@ def learn_next_point():
 
     # Now plot the residuals.
 
-    max_variance_index = torch.argmax(variance.sum(axis=1))
+    cum = torch.cumsum(variance.sum(axis=1), 0) / variance.sum()
+    max_variance_index = numpy.array([torch.argmax(cum[cum - numpy.random.uniform() < 0]) \
+            for i in range(nlearn)])
 
-    return parameters[max_variance_index:max_variance_index+1]
+    return parameters[numpy.array(numpy.unique(max_variance_index))]
 
 ################################################################################
 #
