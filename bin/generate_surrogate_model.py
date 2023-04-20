@@ -38,6 +38,7 @@ parser.add_argument('-t', '--total_array_tasks', type=int, default=1)
 parser.add_argument('-a', '--action')
 parser.add_argument('-n', '--ncpus', type=int, default=1)
 parser.add_argument('-l', '--nlearn', type=int, default=1)
+parser.add_argument('-m', '--nlearn_minor', type=int, default=1)
 parser.add_argument('-g', '--grid', type=str, default="train")
 args = parser.parse_args()
 
@@ -889,10 +890,10 @@ elif (args.action == 'learn'):
     run_pca_decomposition(plot=False)
     run_gp_fit()
 
-    for i in range(args.nlearn):
+    for i in range(args.nlearn // args.nlearn_minor):
         # Do stuff
 
-        new_parameters = learn_next_point()
+        new_parameters = learn_next_point(nlearn=args.nlearn_minor)
         print(new_parameters)
 
         # Update the parameters.
