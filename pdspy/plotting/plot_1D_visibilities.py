@@ -79,7 +79,7 @@ def plot_1D_visibilities(visibilities, model, parameters, params, index=0, \
     # Plot the visibilities.
 
     ax.errorbar(visibilities["data1d"][index].uvdist/1000, \
-            visibilities["data1d"][index].amp*1000, \
+            visibilities["data1d"][index].amp[:,0]*1000, \
             yerr=amp_unc*1000, \
             fmt="o", markersize=markersize, markeredgecolor=color, \
             markerfacecolor=color, ecolor=color)

@@ -16,11 +16,14 @@ def propose_point_emcee(parameters, model="disk"):
             parameters["logR_disk"]["limits"][0]), min(numpy.log10(500.), \
             r_env, parameters["logR_disk"]["limits"][1]),1)[0]
     r_in = numpy.random.uniform(parameters["logR_in"]["limits"][0],\
-            numpy.log10((10.**r_disk)/2),1)[0]
+            min(parameters["logR_in"]["limits"][1], \
+            numpy.log10((10.**r_disk)/2)),1)[0]
 
     # Also set up R_cav as it depends on those as well.
 
-    r_cav = numpy.random.uniform(r_in, numpy.log10(0.75*10.**r_disk),1)[0]
+    r_cav = numpy.random.uniform(max(r_in,parameters["logR_cav"]["limits"][0]),\
+            min(numpy.log10(0.75*10.**r_disk),\
+            parameters["logR_cav"]["limits"][1]),1)[0]
 
     # Same thing for R_gap and w_gap.
 
