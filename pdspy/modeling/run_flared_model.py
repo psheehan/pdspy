@@ -150,7 +150,8 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
     if p["envelope_type"] == "ulrich":
         m.add_ulrich_envelope(mass=p["M_env"], rmin=p["R_in"], rmax=p["R_env"],\
                 cavpl=p["ksi"], cavrfact=p["f_cav"], dust=edust, \
-                t0=p["T0_env"], tpl=p["q_env"], gas=gases, abundance=abundance,\
+                t0=p["T0_env"], tpl=p["q_env"], deltat_cav=p["deltat_cav"], \
+                deltacavpl=p["deltacavpl"], gas=gases, abundance=abundance,\
                 aturb=p["a_turb_env"], rcent=p["R_c"])
     elif p["envelope_type"] == "ulrich-extended":
         m.add_ulrichextended_envelope(mass=p["M_env"], rmin=p["R_in"], \

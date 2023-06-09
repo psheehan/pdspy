@@ -11,7 +11,8 @@ from ..gas import Gas
 class UlrichEnvelope:
 
     def __init__(self, mass=1.0e-3, rmin=0.1, rmax=1000, rcent=30, cavpl=1.0, \
-            cavrfact=0.2, t0=None, tpl=None, dust=None, aturb=None):
+            cavrfact=0.2, t0=None, tpl=None, deltat_cav=None, deltacavpl=None, \
+            dust=None, aturb=None):
         self.mass = mass
         self.rmin = rmin
         self.rmax= rmax
@@ -124,6 +125,13 @@ class UlrichEnvelope:
         t[(rr >= rout) ^ (rr <= rin)] = 0.1
 
         t[t > 10000.] = 10000.
+        
+        ##### Add an outflow cavity.
+
+        rho[numpy.logical_and(\
+                numpy.abs(zz)/AU-cavz0/AU-(RR/AU)**cavpl < 0.0, \
+                numpy.abs(zz)/AU-cavz0/AU-(RR/AU)**(cavpl+deltacavpl) > 0.0)] \
+                *= deltat_cav
         
         return t
 

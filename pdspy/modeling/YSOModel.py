@@ -539,20 +539,24 @@ class YSOModel(Model):
                     self.grid.r, self.grid.theta, self.grid.phi))
 
     def add_ulrich_envelope(self, mass=1.0e-3, rmin=0.1, rmax=1000, rcent=300, \
-            cavpl=1.0, cavrfact=0.2, t0=None, tpl=None, dust=None, gas=None, \
+            cavpl=1.0, cavrfact=0.2, t0=None, tpl=None, deltat_cav=None, \
+            deltacavpl=None, dust=None, gas=None, \
             abundance=None, tmid0=None, rcent_ne_rdisk=False, aturb=None):
         if rcent_ne_rdisk:
             self.envelope = UlrichEnvelope(mass=mass, rmin=rmin, rmax=rmax, \
                     rcent=rcent, cavpl=cavpl, cavrfact=cavrfact, t0=t0, \
-                    tpl=tpl, dust=dust, aturb=aturb)
+                    tpl=tpl, deltat_cav=deltat_cav, deltacavpl=deltacavpl, \
+                    dust=dust, aturb=aturb)
         elif hasattr(self, 'disk'):
             self.envelope = UlrichEnvelope(mass=mass, rmin=rmin, rmax=rmax, \
                     rcent=self.disk.rmax, cavpl=cavpl, cavrfact=cavrfact, \
-                    t0=t0, tpl=tpl, dust=dust, aturb=aturb)
+                    t0=t0, tpl=tpl, deltat_cav=deltat_cav, \
+                    deltacavpl=deltacavpl, dust=dust, aturb=aturb)
         else:
             self.envelope = UlrichEnvelope(mass=mass, rmin=rmin, rmax=rmax, \
                     rcent=rcent, cavpl=cavpl, cavrfact=cavrfact, t0=t0, \
-                    tpl=tpl, dust=dust, aturb=aturb)
+                    tpl=tpl, deltat_cav=deltat_cav, deltacavpl=deltacavpl, \
+                    dust=dust, aturb=aturb)
 
         if (dust != None):
             self.grid.add_density(self.envelope.density(self.grid.r, \
