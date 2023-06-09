@@ -731,7 +731,7 @@ def test_gp_full(plot=False):
 #
 ################################################################################
 
-def predict_model_success(x_test, fail_thresh=0.05, grid="train"):
+def predict_model_success(x_test, fail_thresh=0.95, grid="train"):
     # Get the directory to load from.
 
     directory = get_directory(grid=grid)
