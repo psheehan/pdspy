@@ -64,8 +64,9 @@ setup(name="pdspy", \
         'pdspy.gas': ['data/*.dat'], \
         'pdspy.radmc3d': ['*.pyx'], \
         'pdspy.spectroscopy': ['btsettle_data/*.txt']}, \
-        ext_modules=[libinterferometry, libimaging, bhmie, \
-        bhcoat, dmilay, read], \
+        #ext_modules=[libinterferometry, libimaging, bhmie, \
+        #bhcoat, dmilay, read], \
+        ext_modules=[libinterferometry, libimaging, read], \
         scripts=[\
         'bin/config_template.py',\
         'bin/upgrade_to_pdspy2.py',\
