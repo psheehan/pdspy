@@ -1,20 +1,20 @@
 from setuptools import setup
-from numpy.distutils.core import setup, Extension
+from setuptools.extension import Extension
 from Cython.Build import cythonize
-
-from distutils.command.sdist import sdist
-cmdclass={'sdist': sdist}
+import numpy as np
 
 # Set up the extension modules.
 
 libinterferometry = cythonize([\
         Extension('pdspy.interferometry.libinterferometry',\
             ["pdspy/interferometry/libinterferometry.pyx"],\
-            libraries=["m"], extra_compile_args=['-ffast-math'])])[0]
+            libraries=["m"], extra_compile_args=['-ffast-math'], \
+            include_dirs=[np.get_include()], \
+            define_macros=[('NPY_NO_DEPRECATED_API', 0)])])[0]
 
 libimaging = cythonize([Extension('pdspy.imaging.libimaging',\
         ["pdspy/imaging/libimaging.pyx"], libraries=[], \
-        extra_compile_args=[])])[0]
+        extra_compile_args=[], include_dirs=[np.get_include()])])[0]
 
 bhmie = Extension('pdspy.dust.bhmie', sources=['pdspy/dust/bhmie.f90'])
 
@@ -23,7 +23,8 @@ bhcoat = Extension('pdspy.dust.bhcoat', sources=['pdspy/dust/bhcoat.f90'])
 dmilay = Extension('pdspy.dust.dmilay', sources=['pdspy/dust/DMiLay.f90'])
 
 read = cythonize([Extension('pdspy.radmc3d.read', ["pdspy/radmc3d/read.pyx"], \
-        libraries=[], extra_compile_args=[])])[0]
+        libraries=[], extra_compile_args=[], \
+        include_dirs=[np.get_include()])])[0]
 
 # Now define the setup for the package.
 
@@ -80,6 +81,4 @@ setup(name="pdspy", \
         'bin/flared_model_dynesty.py'], \
         install_requires=['numpy','scipy','matplotlib','emcee','corner',\
         'hyperion','h5py','mpi4py','Cython','astropy','schwimmbad','dynesty',\
-        'scikit-learn'], \
-        cmdclass=cmdclass)
-
+        'scikit-learn'])
