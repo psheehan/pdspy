@@ -310,7 +310,9 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                     lam=None, loadlambda=True, incl=p["i"], \
                     pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                     mc_scat_maxtauabs=5, verbose=verbose,setthreads=nprocesses,\
-                    writeimage_unformatted=True, nice=nice, unstructured=True)
+                    writeimage_unformatted=True, nice=nice, unstructured=True,\
+                    camera_circ_nrphiinf=visibilities["nphi"][j], \
+                    camera_circ_dbdr=visibilities["nr"][j])
 
         # Account for the flux calibration uncertainties.
 
@@ -435,7 +437,9 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                             pa=p["pa"], dpc=p["dpc"], code="radmc3d", \
                             mc_scat_maxtauabs=5, verbose=verbose, \
                             setthreads=nprocesses, writeimage_unformatted=True,\
-                            nice=nice, unstructured=True)
+                            nice=nice, unstructured=True, \
+                            camera_circ_nrphiinf=visibilities["nphi"][j], \
+                            camera_circ_dbdr=visibilities["nr"][j])
 
                 m.visibilities[visibilities["lam"][j]+"_disk"] = \
                         uv.interpolate_model(u,v,visibilities["data"][j].freq, \

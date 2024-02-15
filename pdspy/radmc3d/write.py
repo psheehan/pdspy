@@ -17,7 +17,8 @@ def control(incl_dust=None, incl_lines=None, incl_freefree=None, \
         subbox_z0=None, subbox_z1=None, modified_random_walk=None, \
         mrw_gamma=None, mrw_tauthres=None, mrw_count_trigger=None, \
         setthreads=1, camera_scatsrc_allfreq=None, mc_scat_maxtauabs=None, \
-        writeimage_unformatted=None):
+        writeimage_unformatted=None, camera_circ_nrphiinf=None, \
+        camera_circ_dbdr=None):
 
     f = open("radmc3d.inp","w")
 
@@ -86,6 +87,10 @@ def control(incl_dust=None, incl_lines=None, incl_freefree=None, \
         f.write("camera_interpol_jnu = {0:d}\n".format(camera_interpol_jnu))
     if (camera_scatsrc_allfreq != None):
         f.write("camera_scatsrc_allfreq = {0:d}\n".format(camera_scatsrc_allfreq))
+    if (camera_circ_nrphiinf != None):
+        f.write("camera_circ_nrphiinf = {0:d}\n".format(camera_circ_nrphiinf))
+    if (camera_circ_dbdr != None):
+        f.write("camera_circ_dbdr = {0:d}\n".format(camera_circ_dbdr))
     if (mc_weighted_photons != None):
         f.write("mc_weighted_photons = {0:d}\n".format(mc_weighted_photons))
     if (optimized_motion != None):

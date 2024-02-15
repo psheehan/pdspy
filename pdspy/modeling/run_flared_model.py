@@ -22,7 +22,8 @@ import os
 ################################################################################
 
 def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
-        source="flared", plot_vis=False, nice=None, ftcode="galario"):
+        source="flared", plot_vis=False, nice=None, ftcode="galario", \
+        no_images=False):
 
     # Set the values of all of the parameters.
 
@@ -177,6 +178,9 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
 
     m.grid.set_wavelength_grid(0.1,1.0e5,500,log=True)
 
+    if no_images:
+        return m
+
     # Run the images/visibilities/SEDs.
 
     for j in range(len(visibilities["file"])):
@@ -251,7 +255,9 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                         incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
                         code="radmc3d", verbose=False, \
                         writeimage_unformatted=True, setthreads=ncpus, \
-                        nice=nice, unstructured=True, nostar=True)
+                        nice=nice, unstructured=True, nostar=True, \
+                        camera_circ_nrphiinf=visibilities["nphi"][j], \
+                        camera_circ_dbdr=visibilities["nr"][j])
 
                 m.run_image(name="cont", nphot=1e5, lam=None, \
                         tgas_eq_tdust=True, scattering_mode_max=0, \
@@ -259,7 +265,9 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                         incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
                         code="radmc3d", verbose=False, \
                         writeimage_unformatted=True, setthreads=ncpus, \
-                        nice=nice, unstructured=True, nostar=True)
+                        nice=nice, unstructured=True, nostar=True, \
+                        camera_circ_nrphiinf=visibilities["nphi"][j], \
+                        camera_circ_dbdr=visibilities["nr"][j])
 
                 m.images[visibilities["lam"][j]].image -= m.images["cont"].image
             else:
@@ -269,7 +277,11 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                         incl=p["i"], pa=p["pa"], dpc=p["dpc"], \
                         code="radmc3d", verbose=False, \
                         writeimage_unformatted=True, setthreads=ncpus, \
-                        nice=nice, unstructured=True, nostar=True)
+                        nice=nice, unstructured=True, nostar=True, \
+                        camera_circ_nrphiinf=visibilities["nphi"][j], \
+                        camera_circ_dbdr=visibilities["nr"][j])
+
+        print(m.images[visibilities["lam"][j]].image.shape)
 
         # Extinct the data, if included.
 
