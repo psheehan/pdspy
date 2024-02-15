@@ -50,7 +50,7 @@ def clean(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
         weights = numpy.abs(dirty_beam[:,:,i])*(dirty_beam[:,:,i] > 0.4)
 
         p, success = leastsq(errfunc, p0, args=(x,y,dirty_beam[:,:,i],weights))
-        print(p[0]*pixel_size, p[1]*pixel_size, p[2]*180./numpy.pi)
+        #print(p[0]*pixel_size, p[1]*pixel_size, p[2]*180./numpy.pi)
 
         clean_beam[:,:,i] = fitfunc(p, x, y)
 
