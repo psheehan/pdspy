@@ -131,7 +131,7 @@ def load_config(path=''):
         config.visibilities["nphi"] = [128 for i in range(len(\
                 config.visibilities["file"]))]
     if not "nr" in config.visibilities:
-        config.visibilities["nphi"] = [1 for i in range(len(\
+        config.visibilities["nr"] = [1 for i in range(len(\
                 config.visibilities["file"]))]
 
     # Make sure the spectra dictionary has a "weight" entry.

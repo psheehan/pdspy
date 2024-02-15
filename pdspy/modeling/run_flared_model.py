@@ -281,8 +281,6 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
                         camera_circ_nrphiinf=visibilities["nphi"][j], \
                         camera_circ_dbdr=visibilities["nr"][j])
 
-        print(m.images[visibilities["lam"][j]].image.shape)
-
         # Extinct the data, if included.
 
         velocity = c * (float(visibilities["freq"][j])*1.0e9 - freq)/ \
