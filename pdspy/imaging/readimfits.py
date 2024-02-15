@@ -16,20 +16,25 @@ def readimfits(filename):
     # Figure out the dimensions of each axis and create an array to put the data
     # into, and put the data into that array.
 
-    try:
+    if len(data[0].data.shape) == 4:
         npol, nfreq, ny, nx = data[0].data.shape
-    except:
+    elif len(data[0].data.shape) == 3:
         nfreq, ny, nx = data[0].data.shape
         npol = 1
+    elif len(data[0].data.shape) == 2:
+        ny, nx = data[0].data.shape
+        npol, nfreq = 1, 1
     
     image = numpy.zeros((ny,nx,nfreq,npol))
 
     for i in range(npol):
         for j in range(nfreq):
-            try:
+            if len(data[0].data.shape) == 4:
                 image[:,:,j,i] = data[0].data[i,j,:,:].reshape(ny,nx)
-            except:
+            if len(data[0].data.shape) == 3:
                 image[:,:,j,i] = data[0].data[j,:,:].reshape(ny,nx)
+            if len(data[0].data.shape) == 2:
+                image[:,:,j,i] = data[0].data[:,:].reshape(ny,nx)
 
     # Read in the x and y coordinate information, including the WCS info if it
     # is available.
@@ -50,7 +55,10 @@ def readimfits(filename):
         warnings.simplefilter('ignore', category=AstropyWarning)
 
         w = wcs.WCS(header)
-        w = w.dropaxis(2)
+        try:
+            w = w.dropaxis(2)
+        except:
+            pass
         try:
             w = w.dropaxis(3)
         except:
@@ -59,21 +67,24 @@ def readimfits(filename):
     #x, y = numpy.meshgrid(numpy.linspace(0,nx-1,nx), numpy.linspace(0,ny-1,ny))
     x, y = None, None
 
-    if header["CTYPE3"] in ["VELOCITY","VRAD"]:
-        v0 = data[0].header["CRVAL3"]
-        dv = data[0].header["CDELT3"]
-        n0 = data[0].header["CRPIX3"]
-        velocity = (numpy.arange(nfreq)-(n0-1))*dv/1000.+v0/1000.
+    if len(data[0].data.shape) >= 3:
+        if header["CTYPE3"] in ["VELOCITY","VRAD"]:
+            v0 = data[0].header["CRVAL3"]
+            dv = data[0].header["CDELT3"]
+            n0 = data[0].header["CRPIX3"]
+            velocity = (numpy.arange(nfreq)-(n0-1))*dv/1000.+v0/1000.
 
-        nu0 = data[0].header["RESTFREQ"]
-        freq = nu0 - velocity*1e5 * nu0 / c
-    elif header["CTYPE3"] == "FREQ":
-        nu0 = data[0].header["CRVAL3"]
-        dnu = data[0].header["CDELT3"]
-        n0 = data[0].header["CRPIX3"]
-        freq = (numpy.arange(nfreq)-(n0-1))*dnu + nu0
+            nu0 = data[0].header["RESTFREQ"]
+            freq = nu0 - velocity*1e5 * nu0 / c
+        elif header["CTYPE3"] == "FREQ":
+            nu0 = data[0].header["CRVAL3"]
+            dnu = data[0].header["CDELT3"]
+            n0 = data[0].header["CRPIX3"]
+            freq = (numpy.arange(nfreq)-(n0-1))*dnu + nu0
 
-        velocity = None
+            velocity = None
+    else:
+        velocity, freq = None, None
 
     data.close()
  
