@@ -1,4 +1,4 @@
-from ..interferometry import Visibilities, clean, average
+from ..interferometry import Visibilities, clean, average, center as uvcenter
 from ..constants.physics import c
 from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.patches as patches
@@ -12,12 +12,13 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
         weighting="natural", robust=2.0, \
         vmin=None, vmax=None, levels=None, negative_levels=None, \
         image_cmap="viridis", contours_colors=None, fontsize="medium", \
+        velocity_fontsize=None, \
         show_velocity=True, show_beam=True, vis_color="b", vis_model_color="g",\
         show_xlabel=True, show_ylabel=True, skip=0, \
         auto_center_velocity=False, v_width=10., beamxy=(0.15,0.15), \
         show_colorbar=False, cax=None, colorbar_location='right', \
         colorbar_orientation='vertical', colorbar_size='10%', \
-        colorbar_pad=0.01, units="Jy/beam", vis_marker="o"):
+        colorbar_pad=0.01, units="Jy/beam", vis_marker="o", image_data=False):
     r"""
     Plot the millimeter channel maps, along with the best fit model.
 
@@ -155,6 +156,11 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
     else:
         fig, ax = fig
 
+    # If no velocity fontsize was specified, use fontsize
+
+    if velocity_fontsize == None:
+        velocity_fontsize = fontsize
+
     # Calculate the velocity for each image.
 
     if plot_vis:
@@ -217,16 +223,37 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
             # Get the correct image/contours for plotting.
 
             if plot_type == "data":
-                plot_image = visibilities["image"][index]
+                if image_data:
+                    uncentered_vis = uvcenter(visibilities["data"][index], \
+                            (-visibilities["x0"][index], \
+                            -visibilities["y0"][index]))
+
+                    plot_image = clean(\
+                            uncentered_vis, \
+                            imsize=visibilities["image_npix"][index], \
+                            pixel_size=visibilities["image_pixelsize"][index], \
+                            weighting=weighting, robust=robust, \
+                            convolution="expsinc", mfs=False, \
+                            mode="spectralline", maxiter=maxiter, \
+                            threshold=threshold, uvtaper=uvtaper)[0]
+                else:
+                    plot_image = visibilities["image"][index]
             elif plot_type == "model":
                 if model_image == "beam-convolve":
                     plot_image = model.images[visibilities["lam"][index]]
+                    plot_image.image = plot_image.image[::-1,:,:,:]
                 else:
                     model.visibilities[visibilities["lam"][index]].weights = \
                         visibilities["data"][index].weights
 
+                    uncentered_vis = uvcenter(model.visibilities[\
+                            visibilities["lam"][index]], \
+                            (-visibilities["x0"][index], \
+                            -visibilities["y0"][index]))
+
                     plot_image = clean(\
-                            model.visibilities[visibilities["lam"][index]], \
+                            #model.visibilities[visibilities["lam"][index]], \
+                            uncentered_vis, \
                             imsize=visibilities["image_npix"][index], \
                             pixel_size=visibilities["image_pixelsize"][index], \
                             weighting=weighting, robust=robust, \
@@ -246,7 +273,11 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
                 residuals.imag -= model.visibilities[visibilities["lam"]\
                         [index]].imag
 
-                plot_image = clean(residuals, \
+                uncentered_vis = uvcenter(residuals, \
+                        (-visibilities["x0"][index], \
+                        -visibilities["y0"][index]))
+
+                plot_image = clean(uncentered_vis, \
                         imsize=visibilities["image_npix"][index], \
                         pixel_size=visibilities["image_pixelsize"][index], \
                         weighting=weighting, robust=robust, \
@@ -282,20 +313,20 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
 
                 xmin = int(round(x0 + visibilities["image_npix"][index]/2 - \
                       visibilities["x0"][index]/\
-                      visibilities["image_pixelsize"][index]+ \
+                      visibilities["image_pixelsize"][index] + \
                       ticks[0]/visibilities["image_pixelsize"][index]))
                 xmax = int(round(x0 + visibilities["image_npix"][index]/2 - \
                       visibilities["x0"][index]/\
-                      visibilities["image_pixelsize"][index]+ \
+                      visibilities["image_pixelsize"][index] + \
                       ticks[-1]/visibilities["image_pixelsize"][index]))
 
                 ymin = int(round(y0 + visibilities["image_npix"][index]/2 + \
                       visibilities["y0"][index]/\
-                      visibilities["image_pixelsize"][index]+ \
+                      visibilities["image_pixelsize"][index] + \
                       ticks[0]/visibilities["image_pixelsize"][index]))
                 ymax = int(round(y0 + visibilities["image_npix"][index]/2 + \
                       visibilities["y0"][index]/\
-                      visibilities["image_pixelsize"][index]+ \
+                      visibilities["image_pixelsize"][index] + \
                       ticks[-1]/visibilities["image_pixelsize"][index]))
             else:
                 if model_image == "beam-convolve":
@@ -349,9 +380,11 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
                     visibilities["ncols"][index]-1) * (skip + 1) + 1
             if i == 0:
                 if vmin is None:
-                    vmin = numpy.nanmin(plot_image.image[ymin:ymax,xmin:xmax,start:stop,0]*scale)
+                    #vmin = numpy.nanmin(plot_image.image[ymin:ymax,xmin:xmax,start:stop,0]*scale)
+                    vmin = numpy.nanmin(visibilities["image"][index].image[ymin:ymax,xmin:xmax,start:stop,0]*scale)
                 if vmax is None:
-                    vmax = numpy.nanmax(plot_image.image[ymin:ymax,xmin:xmax,start:stop,0]*scale)
+                    #vmax = numpy.nanmax(plot_image.image[ymin:ymax,xmin:xmax,start:stop,0]*scale)
+                    vmax = numpy.nanmax(visibilities["image"][index].image[ymin:ymax,xmin:xmax,start:stop,0]*scale)
 
             if i == 1:
                 if levels is None:
@@ -425,14 +458,14 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
                                     (v[ind]/1e5), xy=(0.95,0.85), \
                                     xycoords='axes fraction', \
                                     horizontalalignment="right", \
-                                    fontsize=fontsize)
+                                    fontsize=velocity_fontsize)
                         else:
                             txt = ax[k,l].annotate(r"$%{0:s}$ km s$^{{-1}}$".\
                                     format(visibilities["fmt"][index]) % \
                                     (v[ind]/1e5), xy=(0.95,0.85), \
                                     xycoords='axes fraction', \
                                     horizontalalignment="right", \
-                                    fontsize=fontsize)
+                                    fontsize=velocity_fontsize)
 
                     # Fix the axes labels.
 
