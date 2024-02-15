@@ -116,13 +116,13 @@ def plot_pvdiagram(visibilities, model, parameters, params, index=0, \
             if "x0" in params:
                 x0 = visibilities["image_npix"][index]/2 - \
                         visibilities["x0"][index]/\
-                        visibilities["image_pixelsize"][index]- \
+                        visibilities["image_pixelsize"][index] - \
                         params["x0"]/\
                         visibilities["image_pixelsize"][index]
             else:
                 x0 = visibilities["image_npix"][index]/2 - \
                         visibilities["x0"][index]/\
-                        visibilities["image_pixelsize"][index]- \
+                        visibilities["image_pixelsize"][index] - \
                         parameters["x0"]["value"]/\
                         visibilities["image_pixelsize"][index]
             if "y0" in params:
@@ -167,8 +167,14 @@ def plot_pvdiagram(visibilities, model, parameters, params, index=0, \
                 model.visibilities[visibilities["lam"][index]].weights = \
                     visibilities["data"][index].weights
 
+                uncentered_vis = uv.center(model.visibilities[\
+                        visibilities["lam"][index]], \
+                        (-visibilities["x0"][index], \
+                        -visibilities["y0"][index]))
+
                 model_image = uv.clean(\
-                        model.visibilities[visibilities["lam"][index]], \
+                        #model.visibilities[visibilities["lam"][index]], \
+                        uncentered_vis, \
                         imsize=visibilities["image_npix"][index], \
                         pixel_size=visibilities["image_pixelsize"][index], \
                         weighting=weighting, robust=robust, \
