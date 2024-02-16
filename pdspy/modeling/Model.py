@@ -12,9 +12,9 @@ except:
     print("WARNING: Hyperion versions <= 0.9.10 will not work with astropy >= 4.0 because they depend on astropy.extern.six. Continuing without Hyperion.")
 from .. import radmc3d
 from .Grid import Grid
-from ..imaging import Image, UnstructuredImage, imtovis
-from ..interferometry import Visibilities
-from ..spectroscopy import Spectrum
+from dishes.imaging import Image, UnstructuredImage, imtovis
+from dishes.interferometry import Visibilities
+from dishes.spectroscopy import Spectrum
 from ..constants.astronomy import AU, M_sun, R_sun, L_sun, Jy, arcsec, pc
 from ..constants.physics import c
 import time

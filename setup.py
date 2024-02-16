@@ -5,17 +5,6 @@ import numpy as np
 
 # Set up the extension modules.
 
-libinterferometry = cythonize([\
-        Extension('pdspy.interferometry.libinterferometry',\
-            ["pdspy/interferometry/libinterferometry.pyx"],\
-            libraries=["m"], extra_compile_args=['-ffast-math'], \
-            include_dirs=[np.get_include()], \
-            define_macros=[('NPY_NO_DEPRECATED_API', 0)])])[0]
-
-libimaging = cythonize([Extension('pdspy.imaging.libimaging',\
-        ["pdspy/imaging/libimaging.pyx"], libraries=[], \
-        extra_compile_args=[], include_dirs=[np.get_include()])])[0]
-
 bhmie = Extension('pdspy.dust.bhmie', sources=['pdspy/dust/bhmie.f90'])
 
 bhcoat = Extension('pdspy.dust.bhcoat', sources=['pdspy/dust/bhcoat.f90'])
@@ -41,14 +30,11 @@ setup(name="pdspy", \
         "pdspy.constants", \
         "pdspy.dust",\
         "pdspy.gas",\
-        "pdspy.imaging",\
-        "pdspy.interferometry", \
         "pdspy.mcmc",\
         "pdspy.misc",\
         "pdspy.modeling",\
         "pdspy.plotting", \
         "pdspy.radmc3d",\
-        "pdspy.spectroscopy",\
         "pdspy.stars",\
         "pdspy.statistics", \
         "pdspy.table", \
@@ -56,18 +42,14 @@ setup(name="pdspy", \
         package_dir={\
         "pdspy.dust": 'pdspy/dust', \
         "pdspy.gas": 'pdspy/gas', \
-        "pdspy.spectroscopy": 'pdspy/spectroscopy', \
         "pdspy.stars": 'pdspy/stars'}, \
         package_data={\
         'pdspy.dust': ['data/*','reddening/*.dat'], \
-        'pdspy.imaging': ['*.pyx'], \
-        'pdspy.interferometry': ['*.pyx'], \
         'pdspy.gas': ['data/*.dat'], \
-        'pdspy.radmc3d': ['*.pyx'], \
-        'pdspy.spectroscopy': ['btsettle_data/*.txt']}, \
+        'pdspy.radmc3d': ['*.pyx']}, \
         #ext_modules=[libinterferometry, libimaging, bhmie, \
         #bhcoat, dmilay, read], \
-        ext_modules=[libinterferometry, libimaging, read], \
+        ext_modules=[read], \
         scripts=[\
         'bin/config_template.py',\
         'bin/upgrade_to_pdspy2.py',\

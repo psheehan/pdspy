@@ -1,6 +1,6 @@
-from .. import interferometry as uv
-from .. import spectroscopy as sp
-from .. import imaging as im
+from dishes import interferometry as uv
+from dishes import spectroscopy as sp
+from dishes import imaging as im
 import numpy
 
 def load_data(config, model="disk", gridsize1D=20):

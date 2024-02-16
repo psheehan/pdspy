@@ -1,4 +1,4 @@
-import pdspy.interferometry as uv
+import dishes.interferometry as uv
 import matplotlib.pyplot as plt
 import numpy
 

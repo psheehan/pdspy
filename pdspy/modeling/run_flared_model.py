@@ -4,8 +4,8 @@ from ..constants.physics import c, m_p, G
 from ..constants.physics import k as k_b
 from ..constants.astronomy import M_sun, AU, arcsec
 from .YSOModel import YSOModel
-from .. import interferometry as uv
-from .. import spectroscopy as sp
+from dishes import interferometry as uv
+from dishes import spectroscopy as sp
 from .. import misc
 from .. import dust
 from .. import gas

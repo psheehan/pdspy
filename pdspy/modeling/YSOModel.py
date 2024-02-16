@@ -19,7 +19,7 @@ from ..constants.physics import h, c, G, m_p, k
 from ..constants.astronomy import AU, M_sun, kms, R_sun, Jy, pc
 from ..constants.math import pi
 from ..misc import B_nu
-from ..imaging import Image, imtovis
+from dishes.imaging import Image, imtovis
 
 class YSOModel(Model):
     r"""

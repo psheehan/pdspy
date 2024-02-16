@@ -4,8 +4,8 @@ from ..constants.astronomy import arcsec
 from ..constants.physics import c
 from .YSOModel import YSOModel
 from .get_surrogate_model import get_surrogate_model
-from .. import interferometry as uv
-from .. import spectroscopy as sp
+from dishes import interferometry as uv
+from dishes import spectroscopy as sp
 from .. import misc
 from .. import dust
 import scipy.signal

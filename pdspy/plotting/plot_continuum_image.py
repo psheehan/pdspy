@@ -1,5 +1,5 @@
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from ..interferometry import Visibilities, clean
+from dishes.interferometry import Visibilities, clean
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches

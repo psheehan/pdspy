@@ -1,7 +1,7 @@
 from pdspy.constants.astronomy import M_sun, AU
 from pdspy.constants.physics import G
-import pdspy.interferometry as uv
-import pdspy.imaging as im
+import dishes.interferometry as uv
+import dishes.imaging as im
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy

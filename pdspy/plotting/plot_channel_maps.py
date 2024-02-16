@@ -1,4 +1,4 @@
-from ..interferometry import Visibilities, clean, average, center as uvcenter
+from dishes.interferometry import Visibilities, clean, average, center as uvcenter
 from ..constants.physics import c
 from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.patches as patches
