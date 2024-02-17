@@ -301,7 +301,7 @@ class TaperedUlrichEnvelope:
 
         if self.t0 != None:
             f['t0'] = self.t0
-            f['tpl'] = self.plt
+            f['tpl'] = self.tpl
 
         if self.aturb != None:
             f['aturb'] = self.aturb
