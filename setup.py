@@ -30,19 +30,14 @@ setup(name="pdspy", \
         "pdspy.constants", \
         "pdspy.dust",\
         "pdspy.gas",\
-        "pdspy.mcmc",\
         "pdspy.misc",\
         "pdspy.modeling",\
         "pdspy.plotting", \
         "pdspy.radmc3d",\
-        "pdspy.stars",\
-        "pdspy.statistics", \
-        "pdspy.table", \
         "pdspy.utils"], \
         package_dir={\
         "pdspy.dust": 'pdspy/dust', \
-        "pdspy.gas": 'pdspy/gas', \
-        "pdspy.stars": 'pdspy/stars'}, \
+        "pdspy.gas": 'pdspy/gas'}, \
         package_data={\
         'pdspy.dust': ['data/*','reddening/*.dat'], \
         'pdspy.gas': ['data/*.dat'], \
