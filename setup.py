@@ -42,8 +42,6 @@ setup(name="pdspy", \
         'pdspy.dust': ['data/*','reddening/*.dat'], \
         'pdspy.gas': ['data/*.dat'], \
         'pdspy.radmc3d': ['*.pyx']}, \
-        #ext_modules=[libinterferometry, libimaging, bhmie, \
-        #bhcoat, dmilay, read], \
         ext_modules=[read], \
         scripts=[\
         'bin/config_template.py',\
@@ -58,4 +56,4 @@ setup(name="pdspy", \
         'bin/flared_model_dynesty.py'], \
         install_requires=['numpy','scipy','matplotlib','emcee','corner',\
         'hyperion','h5py','mpi4py','Cython','astropy','schwimmbad','dynesty',\
-        'scikit-learn'])
+        'scikit-learn','dishes @ git+https://github.com/psheehan/dishes.git'])
