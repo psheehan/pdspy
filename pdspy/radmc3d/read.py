@@ -6,11 +6,9 @@
 #==========================================================================
 #==========================================================================
 
-cimport cython
-cimport numpy
-
 from os.path import exists
 from numpy import array, empty, linspace, fromfile, loadtxt, intc, hstack
+import numba
 import sys
 
 #==========================================================================
@@ -21,16 +19,7 @@ import sys
 #-----------------------------------------------------------------
 #              READ THE RECTANGULAR TELESCOPE IMAGE
 #-----------------------------------------------------------------
-@cython.boundscheck(False)
 def image(filename=None,ext=None,binary=False):
-    
-    cdef unsigned int nx=0
-    cdef unsigned int ny=0
-    cdef unsigned int nf=0
-    cdef unsigned int index
-    cdef numpy.ndarray[ndim=1, dtype=double] data
-    sizepix_x=0.e0
-    sizepix_y=0.e0
     
     if (filename == None):
         if (ext == None):
@@ -99,23 +88,13 @@ def image(filename=None,ext=None,binary=False):
     
         f.readline()
 
-    cdef numpy.ndarray[ndim=4, dtype=double] image
     if stokes:
         image = empty((ny,nx,nf,4))
     else:
         image = empty((ny,nx,nf,1))
 
     if binary:
-        index = 6+nf
-        for i in range(nf):
-            for j in range(ny):
-                for k in range(nx):
-                    if stokes:
-                        image[j,k,i,:] = data[index:index+4]
-                        index += 4
-                    else:
-                        image[j,k,i,0] = data[index]
-                        index += 1
+        image_worker(data,image,nf,ny,nx,stokes)
     else:
         for i in range(nf):
             for j in range(ny):
@@ -146,10 +125,23 @@ def image(filename=None,ext=None,binary=False):
 
     # Compute the x and y coordinates
 
-    x = linspace(-(<int>nx-1)/2.,(<int>nx-1)/2.,<int>nx)*sizepix_x
-    y = linspace(-(<int>ny-1)/2.,(<int>ny-1)/2.,<int>ny)*sizepix_y
+    x = linspace(-(nx-1)/2.,(nx-1)/2.,nx)*sizepix_x
+    y = linspace(-(ny-1)/2.,(ny-1)/2.,ny)*sizepix_y
     
     return image, x, y, lam
+
+@numba.jit(nopython=True)
+def image_worker(data,image,nf,ny,nx,stokes):
+    index = 6+nf
+    for i in range(nf):
+        for j in range(ny):
+            for k in range(nx):
+                if stokes:
+                    image[j,k,i,:] = data[index:index+4]
+                    index += 4
+                else:
+                    image[j,k,i,0] = data[index]
+                    index += 1
 
 #-----------------------------------------------------------------
 #              READ AN UNSTRUCTURED IMAGE
@@ -169,16 +161,7 @@ def unstructured_image(filename=None,ext=None,binary=False):
 #-----------------------------------------------------------------
 #              READ THE CIRCULAR TELESCOPE IMAGE
 #-----------------------------------------------------------------
-@cython.boundscheck(False)
 def circimage(filename=None,ext=None,binary=False):
-    
-    cdef unsigned int nx=0
-    cdef unsigned int ny=0
-    cdef unsigned int nf=0
-    cdef unsigned int index
-    cdef numpy.ndarray[ndim=1, dtype=double] data
-    sizepix_x=0.e0
-    sizepix_y=0.e0
     
     if (filename == None):
         if (ext == None):
@@ -286,22 +269,13 @@ def circimage(filename=None,ext=None,binary=False):
     
         f.readline()
 
-    cdef numpy.ndarray[ndim=4, dtype=double] image
     if stokes:
         image = empty((nphi,nr+1,nf,4))
     else:
         image = empty((nphi,nr+1,nf,1))
 
     if binary:
-        for i in range(nf):
-            for j in range(nphi):
-                for k in range(nr+1):
-                    if stokes:
-                        image[j,k,i,:] = data[index:index+4]
-                        index += 4
-                    else:
-                        image[j,k,i,0] = data[index]
-                        index += 1
+        circimage_worker(data,image,nf,nphi,nr,index,stokes)
     else:
         for i in range(nf):
             for j in range(nphi):
@@ -325,6 +299,18 @@ def circimage(filename=None,ext=None,binary=False):
         flux = image.sum(axis=0).sum(axis=0)
 
     return image, rc, phic, lam
+
+@numba.jit(nopython=True)
+def circimage_worker(data,image,nf,nphi,nr,index,stokes):
+    for i in range(nf):
+            for j in range(nphi):
+                for k in range(nr+1):
+                    if stokes:
+                        image[j,k,i,:] = data[index:index+4]
+                        index += 4
+                    else:
+                        image[j,k,i,0] = data[index]
+                        index += 1
 
 #==========================================================================
 #                        ROUTINES FOR SPECTRA
