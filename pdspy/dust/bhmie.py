@@ -95,7 +95,7 @@ def bhmie(X,REFREL,NANG):
     if NANG > 1:
         DANG=.5*PII/float(NANG-1)
     for J in range(NANG):
-        THETA=float(J-1)*DANG
+        THETA=float(J)*DANG
         AMU[J]=np.cos(THETA)
 
     for J in range(NANG):
@@ -112,7 +112,7 @@ def bhmie(X,REFREL,NANG):
     #
     D[NMX]=0.+0.j
     NN=NMX-1
-    for N in range(NN):
+    for N in range(1,NN+1):
         EN=NMX-N+1
         D[NMX-N]=(EN/Y)-(1./(D[NMX-N+1]+EN/Y))
     #
@@ -127,8 +127,8 @@ def bhmie(X,REFREL,NANG):
     QSCA=0.E0
     GSCA=0.E0
     P=-1.
-    for N in range(NSTOP):
-        EN=N+1
+    for N in range(1,NSTOP+1):
+        EN=N
         FN=(2.E0*EN+1.)/(EN*(EN+1.))
         # for given N, PSI  = psi_n        CHI  = chi_n
         #              PSI1 = psi_{n-1}    CHI1 = chi_{n-1}
@@ -193,7 +193,7 @@ def bhmie(X,REFREL,NANG):
     #    Now compute QSCA,QEXT,QBACK,and GSCA
     GSCA=2.*GSCA/QSCA
     QSCA=(2./(DX*DX))*QSCA
-    QEXT=(4./(DX*DX))*(S1[1]).real
+    QEXT=(4./(DX*DX))*(S1[0]).real
     QBACK=(np.abs(S1[2*NANG-1])/DX)**2/PII
 
     return S1,S2,QEXT,QSCA,QBACK,GSCA

@@ -4,7 +4,7 @@ import h5py
 from ..constants.physics import c
 from ..constants.math import pi
 from .bhmie import bhmie
-#from .bhcoat import bhcoat
+from .bhcoat import bhcoat
 #from .dmilay import dmilay
 
 class Dust:
