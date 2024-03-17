@@ -1,19 +1,4 @@
 from setuptools import setup
-from setuptools.extension import Extension
-from Cython.Build import cythonize
-import numpy as np
-
-# Set up the extension modules.
-
-bhmie = Extension('pdspy.dust.bhmie', sources=['pdspy/dust/bhmie.f90'])
-
-bhcoat = Extension('pdspy.dust.bhcoat', sources=['pdspy/dust/bhcoat.f90'])
-
-dmilay = Extension('pdspy.dust.dmilay', sources=['pdspy/dust/DMiLay.f90'])
-
-read = cythonize([Extension('pdspy.radmc3d.read', ["pdspy/radmc3d/read.pyx"], \
-        libraries=[], extra_compile_args=[], \
-        include_dirs=[np.get_include()])])[0]
 
 # Now define the setup for the package.
 
@@ -40,9 +25,7 @@ setup(name="pdspy", \
         "pdspy.gas": 'pdspy/gas'}, \
         package_data={\
         'pdspy.dust': ['data/*','reddening/*.dat'], \
-        'pdspy.gas': ['data/*.dat'], \
-        'pdspy.radmc3d': ['*.pyx']}, \
-        ext_modules=[read], \
+        'pdspy.gas': ['data/*.dat']}, \
         scripts=[\
         'bin/config_template.py',\
         'bin/upgrade_to_pdspy2.py',\
@@ -55,5 +38,5 @@ setup(name="pdspy", \
         'bin/flared_model_nested.py', \
         'bin/flared_model_dynesty.py'], \
         install_requires=['numpy','scipy','matplotlib','emcee','corner',\
-        'hyperion','h5py','mpi4py','Cython','astropy','schwimmbad','dynesty',\
+        'hyperion','h5py','mpi4py','astropy','schwimmbad','dynesty',\
         'scikit-learn','dishes @ git+https://github.com/psheehan/dishes.git'])
