@@ -170,10 +170,12 @@ class DartoisDisk(Disk):
         
         rin = self.rmin * AU
         rout = self.rmax * AU
-        pltgas = self.pltgas
+        pltgas_mid = self.pltgas_mid
+        pltgas_atm = self.pltgas_atm
         tmid0 = self.tmid0
         tatm0 = self.tatm0
         zq0 = self.zq0 * AU
+        plz = self.plz
         delta = self.delta
 
         ##### Set up the coordinates
@@ -192,11 +194,11 @@ class DartoisDisk(Disk):
 
         ##### Make the dust density model for a protoplanetary disk.
         
-        zq = zq0 * (rr / (1*AU))**1.3
+        zq = zq0 * (rr / (1*AU))**plz
 
         with numpy.errstate(divide="ignore"):
-            tmid = numpy.where(rr > 0, tmid0 * (rr / (1*AU))**(-pltgas), 0.1)
-            tatm = numpy.where(rr > 0, tatm0 * (rr / (1*AU))**(-pltgas), 0.1)
+            tmid = numpy.where(rr > 0, tmid0 * (rr / (1*AU))**(-pltgas_mid), 0.1)
+            tatm = numpy.where(rr > 0, tatm0 * (rr / (1*AU))**(-pltgas_atm), 0.1)
 
         t = numpy.zeros(tatm.shape)
         t[zz >= zq] = tatm[zz >= zq]

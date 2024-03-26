@@ -117,11 +117,11 @@ class YSOModel(Model):
     def add_dartois_disk(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, \
             h0=0.1, plh=58./45., dust=None,  t0=None, plt=None, gas=None, \
             abundance=None, freezout=0., tmid0=None, tatm0=None, zq0=None, \
-            pltgas=None, delta=None, gap_rin=[], gap_rout=[], gap_delta=[], \
+            pltgas_mid=None, pltgas_atm=None, plz=None, delta=None, gap_rin=[], gap_rout=[], gap_delta=[], \
             gaussian_gaps=False, aturb=None):
         self.disk = DartoisDisk(mass=mass, rmin=rmin, rmax=rmax, plrho=plrho, \
                 h0=h0, plh=plh, dust=dust, t0=t0, plt=plt, tmid0=tmid0, \
-                tatm0=tatm0, zq0=zq0, pltgas=pltgas, delta=delta, \
+                tatm0=tatm0, zq0=zq0, pltgas_mid=pltgas_mid, pltgas_atm=pltgas_atm, plz=plz, delta=delta, \
                 gap_rin=gap_rin, gap_rout=gap_rout, gap_delta=gap_delta, \
                 aturb=aturb, gaussian_gaps=gaussian_gaps)
 
@@ -331,11 +331,11 @@ class YSOModel(Model):
     def add_dartois_pringle_disk(self, mass=1.0e-3, rmin=0.1, rmax=300, \
             plrho=2.37, h0=0.1, plh=58./45., dust=None,  t0=None, plt=None, \
             gas=None, abundance=None, freezeout=0., tmid0=None, tatm0=None, \
-            zq0=None, pltgas=None, delta=None, gap_rin=[], gap_rout=[], \
+            zq0=None, pltgas_mid=None, pltgas_atm=None, plz=None, delta=None, gap_rin=[], gap_rout=[], \
             gap_delta=[], gaussian_gaps=False, aturb=None, gamma_taper=None):
         self.disk = DartoisPringleDisk(mass=mass, rmin=rmin, rmax=rmax, \
                 plrho=plrho, h0=h0, plh=plh, dust=dust, t0=t0, plt=plt, \
-                tmid0=tmid0, tatm0=tatm0, zq0=zq0, pltgas=pltgas, delta=delta, \
+                tmid0=tmid0, tatm0=tatm0, zq0=zq0, pltgas_mid=pltgas_mid, pltgas_atm=pltgas_atm, plz=plz, delta=delta, \
                 gap_rin=gap_rin, gap_rout=gap_rout, gap_delta=gap_delta, \
                 aturb=aturb, gaussian_gaps=gaussian_gaps, \
                 gamma_taper=gamma_taper)

@@ -33,7 +33,9 @@ base_parameters = {
         "logTmid0":{"fixed":True, "value":2.0, "limits":[0.,3.]}, 
         "logTatm0":{"fixed":True, "value":2.5, "limits":[1.,3.]}, 
         "zq0":{"fixed":True, "value":0.1, "limits":[0.01,0.5]},
-        "pltgas":{"fixed":True, "value":0.5, "limits":[0.,1.]},
+        "plz":{"fixed":True, "value":1.3, "limits":[1.,1.5]},
+        "pltgas_mid":{"fixed":True, "value":0.5, "limits":[0.,1.]},
+        "pltgas_atm":{"fixed":True, "value":"pltgas_mid", "limits":[0.,1.]},
         "delta":{"fixed":True, "value":1.0, "limits":[0.5,1.5]},
         # Envelope parameters.
         "envelope_type":{"fixed":True, "value":"none", "limits":[0.,0.]},

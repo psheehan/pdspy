@@ -133,14 +133,14 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
         m.add_dartois_pringle_disk(mass=p["M_disk"], rmin=p["R_in"], \
                 rmax=p["R_disk"], plrho=p["alpha"], h0=p["h_0"], plh=p["beta"],\
                 dust=ddust, tmid0=p["Tmid0"], tatm0=p["Tatm0"], zq0=p["zq0"], \
-                pltgas=p["pltgas"], delta=p["delta"], gas=gases, \
+                pltgas_mid=p["pltgas_mid"], pltgas_atm=p["pltgas_atm"], plz=p["plz"], delta=p["delta"], gas=gases, \
                 abundance=abundance, freezeout=freezeout, aturb=p["a_turb"], \
                 gamma_taper=p["gamma_taper"])
     elif p["disk_type"] == "dartois-truncated":
         m.add_dartois_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \
                 plrho=p["alpha"], h0=p["h_0"], plh=p["beta"], dust=ddust, \
                 tmid0=p["Tmid0"], tatm0=p["Tatm0"], zq0=p["zq0"], \
-                pltgas=p["pltgas"], delta=p["delta"], gas=gases, \
+                pltgas_mid=p["pltgas_mid"], pltgas_atm=p["pltgas_atm"], plz=p["plz"], delta=p["delta"], gas=gases, \
                 abundance=abundance, freezeout=freezeout, aturb=p["a_turb"])
     else:
         m.add_disk(mass=p["M_disk"], rmin=p["R_in"], rmax=p["R_disk"], \

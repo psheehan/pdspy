@@ -10,7 +10,8 @@ from ..gas import Gas
 class Disk:
     def __init__(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, h0=0.1, \
             plh=58./45., t0=None, plt=None, dust=None, gap_rin=[], gap_rout=[],\
-            gap_delta=[], tmid0=None, tatm0=None, zq0=None, pltgas=None, \
+            gap_delta=[], tmid0=None, tatm0=None, zq0=None, pltgas_mid=None, \
+            pltgas_atm=None, plz=None, \
             delta=None, aturb=None, gaussian_gaps=False, gamma_taper=None):
         self.mass = mass
         self.rmin = rmin
@@ -36,7 +37,9 @@ class Disk:
         self.tmid0 = tmid0
         self.tatm0 = tatm0
         self.zq0 = zq0
-        self.pltgas = pltgas
+        self.pltgas_mid = pltgas_mid
+        self.pltgas_atm = pltgas_atm
+        self.plz = plz
         self.delta = delta
         self.aturb = aturb
 
