@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
-from ..constants.physics import c, m_p, G
-from ..constants.physics import k as k_b
-from ..constants.astronomy import M_sun, AU, arcsec
+from astropy.constants import c, m_p, G, k_B, M_sun, au 
+from scipy.constants import arcsec
 from .YSOModel import YSOModel
 from dishes import interferometry as uv
 from dishes import spectroscopy as sp
@@ -49,11 +48,11 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
 
     if p["disk_type"] in ["exptaper","dartois-exptaper"]:
         t_rdisk = p["T0"] * (p["R_disk"] / 1.)**-p["q"]
-        p["h_0"] = ((k_b*(p["R_disk"]*AU)**3*t_rdisk) / (G*p["M_star"]*M_sun * \
-                p["mu"]*m_p))**0.5 / AU
+        p["h_0"] = ((k_B*(p["R_disk"]*au.cgs.value)**3*t_rdisk) / (G.cgs.value*p["M_star"]*M_sun.cgs.value * \
+                p["mu"]*m_p.cgs.value))**0.5 / au.cgs.value
     else:
-        p["h_0"] = ((k_b * AU**3 * p["T0"]) / (G*p["M_star"]*M_sun * \
-                p["mu"]*m_p))**0.5 / AU
+        p["h_0"] = ((k_B * au.cgs.value**3 * p["T0"]) / (G.cgs.value*p["M_star"]*M_sun.cgs.value * \
+                p["mu"]*m_p.cgs.value))**0.5 / au.cgs.value
     p["beta"] = 0.5 * (3 - p["q"])
     p["alpha"] = p["gamma"] + p["beta"]
 
@@ -207,7 +206,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
         # Shift the wavelengths by the velocities.
 
         b = p["v_sys"]*1.0e5 / c
-        lam = c / freq / 1.0e-4
+        lam = c.cgs.value / freq / 1.0e-4
         wave = lam * numpy.sqrt((1. - b) / (1. + b))
 
         # Set the wavelengths for RADMC3D to use.
@@ -283,7 +282,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
 
         # Extinct the data, if included.
 
-        velocity = c * (float(visibilities["freq"][j])*1.0e9 - freq)/ \
+        velocity = c.cgs.value * (float(visibilities["freq"][j])*1.0e9 - freq)/ \
                 (float(visibilities["freq"][j])*1.0e9) / 1.0e5
 
         tau = p["tau0"] * numpy.exp(-(velocity - p["v_ext"])**2 / \
@@ -393,7 +392,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
 
             # Get the wavelengths.
 
-            lam = c / freq / 1.0e-4
+            lam = c.cgs.value / freq / 1.0e-4
             wave = lam * numpy.sqrt((1. - b) / (1. + b))
 
             m.set_camera_wavelength(wave)
@@ -430,7 +429,7 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
 
             # Extinct the data, if included.
 
-            velocity = c * (float(visibilities["freq"][j])*1.0e9 - freq) / \
+            velocity = c.cgs.value * (float(visibilities["freq"][j])*1.0e9 - freq) / \
                     (float(visibilities["freq"][j])*1.0e9) / 1.0e5
 
             tau = p["tau0"] * numpy.exp(-(velocity - p["v_ext"])**2 / \

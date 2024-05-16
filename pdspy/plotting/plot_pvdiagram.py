@@ -1,5 +1,4 @@
-from pdspy.constants.astronomy import M_sun, AU
-from pdspy.constants.physics import G
+from astropy.constants import M_sun, au, G
 import dishes.interferometry as uv
 import dishes.imaging as im
 import matplotlib.pyplot as plt
@@ -38,7 +37,7 @@ def plot_pvdiagram(visibilities, model, parameters, params, index=0, \
             can supply them here. Otherwise, `plot_channel_maps` will 
             generate them for you. It will use 
             :code:`visibilities["nrows"][index]` rows and 
-            :code:`visibilities["ncols"][index]` columns. Default: `None`
+            :code:`visibilities["ncols"][index]` columns. Defau.cgs.valuelt: `None`
         :attr:`image` (`str`, optional):
             Should the image show the `"data"`, `"model"`, or `"residuals"`.
             Default: `"data"`
@@ -276,9 +275,9 @@ def plot_pvdiagram(visibilities, model, parameters, params, index=0, \
             for ind, mass in enumerate(curve_masses):
                 x = numpy.linspace(0, nx+1, 1000)
 
-                r = (x - nx/2) * dx * 140 * AU
+                r = (x - nx/2) * dx * 140 * au.cgs.value
 
-                v = numpy.sqrt(G*mass*M_sun / numpy.abs(r)) / 1e5 * \
+                v = numpy.sqrt(G.cgs.value*mass*M_sun.cgs.value / numpy.abs(r)) / 1e5 * \
                         numpy.sin(75.*numpy.pi/180)
                         #numpy.sin(params["i"]*numpy.pi/180)
 

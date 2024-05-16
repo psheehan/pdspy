@@ -1,7 +1,6 @@
 import warnings
 
 
-from . import constants
 from . import dust
 from . import gas
 from . import misc

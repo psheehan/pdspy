@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from ..constants.astronomy import arcsec
-from ..constants.physics import c
+from scipy.constants import arcsec
+from astropy.constants import c
 from .YSOModel import YSOModel
 from .get_surrogate_model import get_surrogate_model
 from dishes import interferometry as uv
@@ -294,7 +294,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
     for j in range(len(visibilities["file"])):
         # Set the wavelengths for RADMC3D to use.
 
-        wave = c / visibilities["data"][j].freq / 1.0e-4
+        wave = c.cgs.value / visibilities["data"][j].freq / 1.0e-4
         m.set_camera_wavelength(wave)
 
         if ftcode == "galario":
@@ -375,7 +375,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
 
             # Run a millimeter image.
 
-            wave = c / visibilities["image"][j].freq / 1.0e-4
+            wave = c.cgs.value / visibilities["image"][j].freq / 1.0e-4
             m.set_camera_wavelength(wave)
 
             m.run_image(name=visibilities["lam"][j], nphot=1e5, \
@@ -419,7 +419,7 @@ def run_disk_model(visibilities, images, spectra, params, parameters, \
                 del m.grid.temperature[-1]
                 del m.grid.dust[-1]
 
-                wave = c / visibilities["data"][j].freq / 1.0e-4
+                wave = c.cgs.value / visibilities["data"][j].freq / 1.0e-4
                 m.set_camera_wavelength(wave)
 
                 if ftcode == "galario":

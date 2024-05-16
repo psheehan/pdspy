@@ -1,9 +1,8 @@
 import numpy
 from scipy.optimize import brenth
 from scipy.integrate import trapz
-from ..constants.astronomy import AU, M_sun
-from ..constants.math import pi
-from ..constants.physics import G, m_p
+from astropy.constants import au, M_sun, G, m_p
+from numpy import pi
 from ..dust import Dust
 from ..gas import Gas
 
@@ -32,21 +31,21 @@ class Envelope:
         #numpy.seterr(all='ignore')
         ##### Star parameters
 
-        mstar = M_sun
+        mstar = M_sun.cgs.value
         
         ##### Envelope parameters
 
-        rin = self.rmin * AU
-        rout = self.rmax * AU
-        mass = self.mass * M_sun
+        rin = self.rmin * au.cgs.value
+        rout = self.rmax * au.cgs.value
+        mass = self.mass * M_sun.cgs.value
         pl = self.pl
-        cavz0 = 1*AU
+        cavz0 = 1*au.cgs.value
         cavpl = self.cavpl
         cavrfact = self.cavrfact
 
         # Set up the coordinates.
         
-        rr, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+        rr, tt, pp = numpy.meshgrid(r*au.cgs.value, theta, phi,indexing='ij')
 
         mu = numpy.cos(tt)
 
@@ -80,14 +79,14 @@ class Envelope:
     def temperature(self, r, theta, phi):
         ##### Disk Parameters
         
-        rin = self.rmin * AU
-        rout = self.rmax * AU
+        rin = self.rmin * au.cgs.value
+        rout = self.rmax * au.cgs.value
         t0 = self.t0
         tpl = self.tpl
 
         ##### Set up the coordinates
 
-        rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+        rt, tt, pp = numpy.meshgrid(r*au.cgs.value, theta, phi,indexing='ij')
 
         rr = rt*numpy.sin(tt)
         zz = rt*numpy.cos(tt)
@@ -105,19 +104,19 @@ class Envelope:
     def number_density(self, r, theta, phi, gas=0):
         rho = self.density(r, theta, phi)
 
-        n_H2 = rho * 100. / (2*m_p)
+        n_H2 = rho * 100. / (2*m_p.cgs.value)
 
         n = n_H2 * self.abundance[gas]
 
         return n
 
     def velocity(self, r, theta, phi, mstar=0.5):
-        mstar *= M_sun
-        rcent = self.rcent * AU
+        mstar *= M_sun.cgs.value
+        rcent = self.rcent * au.cgs.value
 
         # Set up the coordinates.
         
-        rr, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+        rr, tt, pp = numpy.meshgrid(r*au.cgs.value, theta, phi,indexing='ij')
 
         mu = numpy.cos(tt)
 
@@ -132,10 +131,10 @@ class Envelope:
                 mu0[ir,it,0] = brenth(func,-1.0,1.0,args=(rr[ir,it,0], \
                         mu[ir,it,0],rcent))
 
-        v_r = -numpy.sqrt(G*mstar/rr)*numpy.sqrt(1 + mu/mu0)
-        v_theta = numpy.sqrt(G*mstar/rr) * (mu0 - mu) * \
+        v_r = -numpy.sqrt(G.cgs.value**mstar/rr)*numpy.sqrt(1 + mu/mu0)
+        v_theta = numpy.sqrt(G.cgs.value**mstar/rr) * (mu0 - mu) * \
                 numpy.sqrt((mu0 + mu) / (mu0 * numpy.sin(tt)))
-        v_phi = numpy.sqrt(G*mstar/rr) * numpy.sqrt((1 - mu0**2)/(1 - mu**2)) *\
+        v_phi = numpy.sqrt(G.cgs.value**mstar/rr) * numpy.sqrt((1 - mu0**2)/(1 - mu**2)) *\
                 numpy.sqrt(1 - mu/mu0)
 
         return numpy.array((v_r, v_theta, v_phi))

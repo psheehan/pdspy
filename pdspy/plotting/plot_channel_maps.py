@@ -1,5 +1,5 @@
 from dishes.interferometry import Visibilities, clean, average, center as uvcenter
-from ..constants.physics import c
+from astropy.constants import c
 from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.patches as patches
 import matplotlib.ticker as ticker
@@ -164,11 +164,11 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
     # Calculate the velocity for each image.
 
     if plot_vis:
-        v = c * (float(visibilities["freq"][index])*1.0e9 - \
+        v = c.cgs.value * (float(visibilities["freq"][index])*1.0e9 - \
                 visibilities["data"][index].freq)/ \
                 (float(visibilities["freq"][index])*1.0e9)
     else:
-        v = c * (float(visibilities["freq"][index])*1.0e9 - \
+        v = c.cgs.value * (float(visibilities["freq"][index])*1.0e9 - \
                 visibilities["image"][index].freq)/ \
                 (float(visibilities["freq"][index])*1.0e9)
 

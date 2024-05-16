@@ -1,10 +1,9 @@
 import numpy
 from scipy.optimize import brenth
 from scipy.integrate import trapz
-from ..constants.astronomy import AU, M_sun
-from ..constants.math import pi
-from ..constants.physics import G, m_p
-from ..constants.time import year
+from astropy.constants import au, M_sun, G, m_p
+from numpy import pi
+from astropy.units import year
 from ..dust import Dust
 from ..gas import Gas
 
@@ -38,25 +37,25 @@ class UlrichEnvelopeExtended:
         #numpy.seterr(all='ignore')
         ##### Star parameters
 
-        mstar = M_sun
+        mstar = M_sun.cgs.value
         
         ##### Envelope parameters
 
-        rin = self.rmin * AU
-        rout = self.rmax * AU
-        mass = self.mass * M_sun
-        rcent = self.rcent * AU
-        cavz0 = self.zoffset * AU
+        rin = self.rmin * au.cgs.value
+        rout = self.rmax * au.cgs.value
+        mass = self.mass * M_sun.cgs.value
+        rcent = self.rcent * au.cgs.value
+        cavz0 = self.zoffset * au.cgs.value
         cavpl = self.cavpl
         cavrfact = self.cavrfact
         theta_open = self.theta_open * numpy.pi / 180.
 
-        cava = (rout*numpy.sin(theta_open/2)/AU / numpy.tan(theta_open/2) - \
-                cavz0/AU) * (rout*numpy.sin(theta_open/2)/AU)**-cavpl
+        cava = (rout*numpy.sin(theta_open/2)/au.cgs.value / numpy.tan(theta_open/2) - \
+                cavz0/au.cgs.value) * (rout*numpy.sin(theta_open/2)/au)**-cavpl
 
         # Set up the coordinates.
         
-        rr, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+        rr, tt, pp = numpy.meshgrid(r*au.cgs.value, theta, phi,indexing='ij')
 
         mu = numpy.cos(tt)
 
@@ -93,7 +92,7 @@ class UlrichEnvelopeExtended:
 
         ##### Add an outflow cavity.
 
-        rho[numpy.abs(zz)/AU-cavz0/AU-cava*(RR/AU)**cavpl > 0.0] *= cavrfact
+        rho[numpy.abs(zz)/au.cgs.value-cavz0/au-cava*(RR/au)**cavpl > 0.0] *= cavrfact
         
         ##### Normalize the mass correctly.
         
@@ -112,21 +111,21 @@ class UlrichEnvelopeExtended:
     def temperature(self, r, theta, phi):
         ##### Disk Parameters
         
-        rin = self.rmin * AU
-        rout = self.rmax * AU
+        rin = self.rmin * au.cgs.value
+        rout = self.rmax * au.cgs.value
         t0 = self.t0
         tpl = self.tpl
 
         ##### Set up the coordinates
 
-        rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+        rt, tt, pp = numpy.meshgrid(r*au.cgs.value, theta, phi,indexing='ij')
 
         rr = rt*numpy.sin(tt)
         zz = rt*numpy.cos(tt)
 
         ##### Make the dust density model for a protoplanetary disk.
         
-        t = t0 * (rt / (1*AU))**(-tpl)
+        t = t0 * (rt / (1*au.cgs.value))**(-tpl)
 
         t[(rt >= rout) ^ (rt <= rin)] = 0e0
 
@@ -139,7 +138,7 @@ class UlrichEnvelopeExtended:
 
         rho_gas = rho * 100
 
-        n_H2 = rho_gas * 0.8 / (2.37*m_p)
+        n_H2 = rho_gas * 0.8 / (2.37*m_p.cgs.value)
 
         n = n_H2 * self.abundance[gas]
 
@@ -148,7 +147,7 @@ class UlrichEnvelopeExtended:
     def microturbulence(self, r, theta, phi):
         ##### Set up the coordinates
 
-        rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+        rt, tt, pp = numpy.meshgrid(r*au.cgs.value, theta, phi,indexing='ij')
 
         rr = rt*numpy.sin(tt)
         zz = rt*numpy.cos(tt)
@@ -160,12 +159,12 @@ class UlrichEnvelopeExtended:
         return aturb
 
     def velocity(self, r, theta, phi, mstar=0.5):
-        mstar *= M_sun
-        rcent = self.rcent * AU
+        mstar *= M_sun.cgs.value
+        rcent = self.rcent * au.cgs.value
 
         # Set up the coordinates.
         
-        rr, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+        rr, tt, pp = numpy.meshgrid(r*au.cgs.value, theta, phi,indexing='ij')
 
         mu = numpy.cos(tt)
 
@@ -180,10 +179,10 @@ class UlrichEnvelopeExtended:
                 mu0[ir,it,0] = brenth(func,-1.0,1.0,args=(rr[ir,it,0], \
                         mu[ir,it,0],rcent))
 
-        v_r = -numpy.sqrt(G*mstar/rr)*numpy.sqrt(1 + mu/mu0)
-        v_theta = numpy.sqrt(G*mstar/rr) * (mu0 - mu) * \
+        v_r = -numpy.sqrt(G.cgs.value*mstar/rr)*numpy.sqrt(1 + mu/mu0)
+        v_theta = numpy.sqrt(G.cgs.value*mstar/rr) * (mu0 - mu) * \
                 numpy.sqrt((mu0 + mu) / (mu0 * numpy.sin(tt)**2))
-        v_phi = numpy.sqrt(G*mstar/rr) * numpy.sqrt((1 - mu0**2)/(1 - mu**2)) *\
+        v_phi = numpy.sqrt(G.cgs.value*mstar/rr) * numpy.sqrt((1 - mu0**2)/(1 - mu**2)) *\
                 numpy.sqrt(1 - mu/mu0)
 
         return numpy.array((v_r, v_theta, v_phi))
@@ -192,21 +191,21 @@ class UlrichEnvelopeExtended:
         #numpy.seterr(all='ignore')
         ##### Star parameters
 
-        mstar *= M_sun
+        mstar *= M_sun.cgs.value
         
         ##### Envelope parameters
 
-        rin = self.rmin * AU
-        rout = self.rmax * AU
-        mass = 100 * self.mass * M_sun
-        rcent = self.rcent * AU
-        cavz0 = 1*AU
+        rin = self.rmin * au.cgs.value
+        rout = self.rmax * au.cgs.value
+        mass = 100 * self.mass * M_sun.cgs.value
+        rcent = self.rcent * au.cgs.value
+        cavz0 = 1*au.cgs.value
         cavpl = self.cavpl
         cavrfact = self.cavrfact
 
         # Set up the coordinates.
         
-        rr, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+        rr, tt, pp = numpy.meshgrid(r*au.cgs.value, theta, phi,indexing='ij')
 
         mu = numpy.cos(tt)
 
@@ -250,8 +249,8 @@ class UlrichEnvelopeExtended:
             prefix = mass/(4*pi*trapz(trapz(rho*rr**2*numpy.sin(tt),tt,axis=1),\
                     rr[:,0,:],axis=0))[0]
 
-        mdot = prefix * (4*numpy.pi * numpy.sqrt(G * mstar) * rcent**1.5) / \
-                (M_sun / year)
+        mdot = prefix * (4*numpy.pi * numpy.sqrt(G.cgs.value * mstar) * rcent**1.5) / \
+                (M_sun.cgs.value / year.cgs.value)
 
         return mdot
 

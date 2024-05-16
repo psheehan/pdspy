@@ -1,8 +1,8 @@
 import numpy
 import scipy
 import h5py
-from ..constants.physics import c
-from ..constants.math import pi
+from astropy.constants import c
+from numpy import pi
 
 class PAH:
 
@@ -140,7 +140,7 @@ class PAH:
 
         self.a = f['a'][...]
         self.lam = f['lam'][...]
-        self.nu = c / self.lam
+        self.nu = c.to('cm/s').value / self.lam
 
         if ('Qabs' in f):
             self.Qabs = f['Qabs'][...]

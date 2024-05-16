@@ -1,7 +1,6 @@
 import numpy
 import h5py
-from ..constants.physics import sigma
-from ..constants.astronomy import L_sun, R_sun
+from astropy.constants import L_sun, R_sun, sigma_sb
 
 class Star:
     def __init__(self, mass=0.5, luminosity=1.0, temperature=4000., x=0.0, \
@@ -9,8 +8,8 @@ class Star:
         self.mass = mass
         self.luminosity = luminosity
         self.temperature = temperature
-        self.radius = (luminosity*L_sun/ \
-                (4*numpy.pi*sigma*temperature**4))**(1./2)/R_sun
+        self.radius = (luminosity*L_sun.cgs.value/ \
+                (4*numpy.pi*sigma_sb.cgs.value*temperature**4))**(1./2)/R_sun.cgs.value
         self.x = x
         self.y = y
         self.z = z

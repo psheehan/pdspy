@@ -15,8 +15,9 @@ from .Grid import Grid
 from dishes.imaging import Image, UnstructuredImage, imtovis
 from dishes.interferometry import Visibilities
 from dishes.spectroscopy import Spectrum
-from ..constants.astronomy import AU, M_sun, R_sun, L_sun, Jy, arcsec, pc
-from ..constants.physics import c
+from astropy.constants import au, M_sun, L_sun, R_sun, pc, c
+from astropy.units import Jy
+from scipy.constants import arcsec
 import time
 
 class Model:
@@ -131,13 +132,13 @@ class Model:
 
         m = HypModel()
         if (self.grid.coordsystem == "cartesian"):
-            m.set_cartesian_grid(self.grid.w1*AU, self.grid.w2*AU, \
-                    self.grid.w3*AU)
+            m.set_cartesian_grid(self.grid.w1*au.cgs.value, self.grid.w2*au, \
+                    self.grid.w3*au.cgs.value)
         elif (self.grid.coordsystem == "cylindrical"):
-            m.set_cylindrical_polar_grid(self.grid.w1*AU, self.grid.w3*AU, \
+            m.set_cylindrical_polar_grid(self.grid.w1*au.cgs.value, self.grid.w3*au, \
                     self.grid.w2)
         elif (self.grid.coordsystem == "spherical"):
-            m.set_spherical_polar_grid(self.grid.w1*AU, self.grid.w2, \
+            m.set_spherical_polar_grid(self.grid.w1*au.cgs.value, self.grid.w2, \
                     self.grid.w3)
 
         for i in range(len(self.grid.density)):
@@ -154,8 +155,8 @@ class Model:
         sources = []
         for i in range(len(self.grid.stars)):
             sources.append(m.add_point_source())
-            sources[i].luminosity = self.grid.stars[i].luminosity * L_sun
-            #sources[i].radius = self.grid.stars[i].radius * R_sun
+            sources[i].luminosity = self.grid.stars[i].luminosity * L_sun.cgs.value
+            #sources[i].radius = self.grid.stars[i].radius * R_sun.cgs.value
             sources[i].temperature = self.grid.stars[i].temperature
 
         m.set_mrw(mrw)
@@ -427,13 +428,13 @@ class Model:
 
         m = HypModel()
         if (self.grid.coordsystem == "cartesian"):
-            m.set_cartesian_grid(self.grid.w1*AU, self.grid.w2*AU, \
-                    self.grid.w3*AU)
+            m.set_cartesian_grid(self.grid.w1*au.cgs.value, self.grid.w2*au, \
+                    self.grid.w3*au.cgs.value)
         elif (self.grid.coordsystem == "cylindrical"):
-            m.set_cylindrical_polar_grid(self.grid.w1*AU, self.grid.w3*AU, \
+            m.set_cylindrical_polar_grid(self.grid.w1*au.cgs.value, self.grid.w3*au, \
                     self.grid.w2)
         elif (self.grid.coordsystem == "spherical"):
-            m.set_spherical_polar_grid(self.grid.w1*AU, self.grid.w2, \
+            m.set_spherical_polar_grid(self.grid.w1*au.cgs.value, self.grid.w2, \
                     self.grid.w3)
 
         for i in range(len(self.grid.density)):
@@ -450,22 +451,22 @@ class Model:
         sources = []
         for i in range(len(self.grid.stars)):
             sources.append(m.add_spherical_source())
-            sources[i].luminosity = self.grid.stars[i].luminosity * L_sun
-            sources[i].radius = self.grid.stars[i].radius * R_sun
+            sources[i].luminosity = self.grid.stars[i].luminosity * L_sun.cgs.value
+            sources[i].radius = self.grid.stars[i].radius * R_sun.cgs.value
             sources[i].temperature = self.grid.stars[i].temperature
 
         m.set_raytracing(True)
         
         if npix%2 == 0:
-            zoomau = [-pixelsize*dpc*AU * (npix+1)/2, \
-                    pixelsize*dpc*AU * (npix-1)/2, \
-                    -pixelsize*dpc*AU * (npix+1)/2, \
-                    pixelsize*dpc*AU * (npix-1)/2]
+            zoomau = [-pixelsize*dpc*au.cgs.value * (npix+1)/2, \
+                    pixelsize*dpc*au.cgs.value * (npix-1)/2, \
+                    -pixelsize*dpc*au.cgs.value * (npix+1)/2, \
+                    pixelsize*dpc*au.cgs.value * (npix-1)/2]
         else:
-            zoomau = [-pixelsize*dpc*AU * npix/2, \
-                    pixelsize*dpc*AU * npix/2, \
-                    -pixelsize*dpc*AU * npix/2, \
-                    pixelsize*dpc*AU * npix/2]
+            zoomau = [-pixelsize*dpc*au.cgs.value * npix/2, \
+                    pixelsize*dpc*au.cgs.value * npix/2, \
+                    -pixelsize*dpc*au.cgs.value * npix/2, \
+                    pixelsize*dpc*au.cgs.value * npix/2]
 
         m.set_monochromatic(True, wavelengths=[lam])
         image = m.add_peeled_images(sed=False, image=True)
@@ -495,7 +496,7 @@ class Model:
 
         n = ModelOutput("temp.rtout")
 
-        image = n.get_image(inclination=0, distance=dpc*pc, units='Jy')
+        image = n.get_image(inclination=0, distance=dpc*pc.cgs.value, units='Jy')
 
         self.images[name] = Image(image.val.reshape(image.val.shape+(1,)), \
                 wave=image.wav*1.0e-4)
@@ -503,7 +504,7 @@ class Model:
         if track_origin == "detailed":
             for component in ["source_emit","source_scat","dust_emit", \
                     "dust_scat"]:
-                image = n.get_image(inclination=0, distance=dpc*pc, \
+                image = n.get_image(inclination=0, distance=dpc*pc.cgs.value, \
                         units='Jy', component=component)
 
                 self.images[name+"-"+component] = Image(image.val.reshape(\
@@ -542,7 +543,7 @@ class Model:
 
             r, phi = numpy.meshgrid(r, phi)
             
-            r = r / (dpc*pc) / arcsec
+            r = r / (dpc*pc.cgs.value) / arcsec
 
             x = -r*numpy.cos(phi)
             y = r*numpy.sin(phi)
@@ -552,7 +553,7 @@ class Model:
             image = numpy.concatenate((image[0:1,0,:,0], image[:,1:,:,0].\
                     reshape((image[:,1:,0,0].size,image.shape[2]))))
 
-            image = image / Jy
+            image = image / (1*Jy).cgs.value
 
             self.images[name] = UnstructuredImage(image, x=x, y=y, \
                     wave=lam*1.0e-4)
@@ -563,8 +564,8 @@ class Model:
             else:
                 image, x, y, lam = radmc3d.read.image()
 
-            image = image / Jy * ((x[1] - x[0]) / (dpc * pc)) * \
-                    ((y[1] - y[0]) / (dpc * pc))
+            image = image / (1*Jy).cgs.value * ((x[1] - x[0]) / (dpc * pc.cgs.value)) * \
+                    ((y[1] - y[0]) / (dpc * pc.cgs.value))
 
             x = (x - x[int(npix/2)]) * pixelsize / (x[1] - x[0])
             y = (y - y[int(npix/2)]) * pixelsize / (y[1] - y[0])
@@ -643,7 +644,7 @@ class Model:
 
         flux, lam = radmc3d.read.spectrum()
 
-        flux = flux / Jy * (1. / dpc)**2
+        flux = flux / (1*Jy).cgs.value * (1. / dpc)**2
 
         self.spectra[name] = Spectrum(wave=lam, flux=flux)
 
@@ -705,8 +706,8 @@ class Model:
         else:
             image, x, y, lam = radmc3d.read.image()
 
-        image = image / Jy * ((x[1] - x[0]) / (dpc * pc)) * \
-                ((y[1] - y[0]) / (dpc * pc))
+        image = image / (1*Jy).cgs.value * ((x[1] - x[0]) / (dpc * pc.cgs.value)) * \
+                ((y[1] - y[0]) / (dpc * pc.cgs.value))
 
         x = x * pixelsize / (x[1] - x[0])
         y = y * pixelsize / (y[1] - y[0])
@@ -731,11 +732,11 @@ class Model:
         tstar = []
 
         for i in range(len(self.grid.stars)):
-            mstar.append(self.grid.stars[i].mass*M_sun)
-            rstar.append(self.grid.stars[i].radius*R_sun)
-            xstar.append(self.grid.stars[i].x*AU)
-            ystar.append(self.grid.stars[i].y*AU)
-            zstar.append(self.grid.stars[i].z*AU)
+            mstar.append(self.grid.stars[i].mass*M_sun.cgs.value)
+            rstar.append(self.grid.stars[i].radius*R_sun.cgs.value)
+            xstar.append(self.grid.stars[i].x*au.cgs.value)
+            ystar.append(self.grid.stars[i].y*au.cgs.value)
+            zstar.append(self.grid.stars[i].z*au.cgs.value)
             tstar.append(self.grid.stars[i].temperature)
 
         radmc3d.write.stars(rstar, mstar, self.grid.lam, xstar, ystar, zstar, \
@@ -746,13 +747,13 @@ class Model:
             radmc3d.write.camera_wavelength_micron(self.camera_wavelength)
 
         if (self.grid.coordsystem == "cartesian"):
-            radmc3d.write.amr_grid(self.grid.w1*AU, self.grid.w2*AU, \
-                    self.grid.w3*AU, coordsystem=self.grid.coordsystem)
+            radmc3d.write.amr_grid(self.grid.w1*au.cgs.value, self.grid.w2*au, \
+                    self.grid.w3*au.cgs.value, coordsystem=self.grid.coordsystem)
         elif(self.grid.coordsystem == "cylindrical"):
-            radmc3d.write.amr_grid(self.grid.w1*AU, self.grid.w2, \
-                    self.grid.w3*AU, coordsystem=self.grid.coordsystem)
+            radmc3d.write.amr_grid(self.grid.w1*au.cgs.value, self.grid.w2, \
+                    self.grid.w3*au.cgs.value, coordsystem=self.grid.coordsystem)
         elif(self.grid.coordsystem == "spherical"):
-            radmc3d.write.amr_grid(self.grid.w1*AU, self.grid.w2, \
+            radmc3d.write.amr_grid(self.grid.w1*au.cgs.value, self.grid.w2, \
                     self.grid.w3, coordsystem=self.grid.coordsystem)
 
         radmc3d.write.dust_density(self.grid.density)

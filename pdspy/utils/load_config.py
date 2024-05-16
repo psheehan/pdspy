@@ -1,4 +1,4 @@
-from ..constants.astronomy import arcsec
+from scipy.constants import arcsec
 from ..modeling import check_parameters
 from ..modeling import base_parameters
 import importlib

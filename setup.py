@@ -12,7 +12,6 @@ setup(name="pdspy", \
         url="https://github.com/psheehan/pdspy", \
         packages=[\
         "pdspy",\
-        "pdspy.constants", \
         "pdspy.dust",\
         "pdspy.gas",\
         "pdspy.misc",\

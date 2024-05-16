@@ -1,5 +1,5 @@
-from pdspy.constants.astronomy import Jy
-from pdspy.constants.physics import c as c_l
+from astropy.units import Jy
+from astropy.constants import c as c_l
 import matplotlib.pyplot as plt
 
 def plot_SED(spectra, model, SED=False, fig=None, model_color="g", 
@@ -43,18 +43,18 @@ def plot_SED(spectra, model, SED=False, fig=None, model_color="g",
         if spectra["bin?"][j]:
             if SED:
                 ax.plot(spectra["data"][j].wave, \
-                        c_l / spectra["data"][j].wave / 1.0e-4 * \
-                        spectra["data"][j].flux * Jy, "k-")
+                        c_l.cgs.value / spectra["data"][j].wave / 1.0e-4 * \
+                        (spectra["data"][j].flux * Jy).cgs.value, "k-")
             else:
                 ax.plot(spectra["data"][j].wave, spectra["data"][j].flux, \
                         "k-")
         else:
             if SED:
                 ax.errorbar(spectra["data"][j].wave, \
-                        c_l / spectra["data"][j].wave / 1.0e-4 * \
-                        spectra["data"][j].flux * Jy, fmt="ko", \
-                        yerr=c_l / spectra["data"][j].wave / 1.0e-4 * \
-                        spectra["data"][j].unc * Jy, markeredgecolor="k")
+                        c_l.cgs.value / spectra["data"][j].wave / 1.0e-4 * \
+                        (spectra["data"][j].flux * Jy).cgs.value, fmt="ko", \
+                        yerr=c_l.cgs.value / spectra["data"][j].wave / 1.0e-4 * \
+                        (spectra["data"][j].unc * Jy).cgs.value, markeredgecolor="k")
             else:
                 ax.errorbar(spectra["data"][j].wave, \
                         spectra["data"][j].flux, fmt="ko", \
@@ -62,8 +62,8 @@ def plot_SED(spectra, model, SED=False, fig=None, model_color="g",
 
     if len(spectra["file"]) > 0:
         if SED:
-            ax.plot(model.spectra["SED"].wave, c_l/model.spectra["SED"].wave / \
-                    1.0e-4 * model.spectra["SED"].flux * Jy, "-", \
+            ax.plot(model.spectra["SED"].wave, c_l.cgs.value/model.spectra["SED"].wave / \
+                    1.0e-4 * (model.spectra["SED"].flux * Jy).cgs.value, "-", \
                     color=model_color, linewidth=linewidth)
         else:
             ax.plot(model.spectra["SED"].wave, model.spectra["SED"].flux, "-", \

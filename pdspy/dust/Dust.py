@@ -1,8 +1,8 @@
 import numpy
 import scipy
 import h5py
-from ..constants.physics import c
-from ..constants.math import pi
+from astropy.constants import c
+from numpy import pi
 from .bhmie import bhmie
 from .bhcoat import bhcoat
 #from .dmilay import dmilay
@@ -19,7 +19,7 @@ class Dust:
         k = f(lam)
 
         self.lam = lam
-        self.nu = c / self.lam
+        self.nu = c.to('cm/s').value / self.lam
 
         self.n = n
         self.k = k
@@ -127,7 +127,7 @@ class Dust:
 
     def set_optical_constants(self, lam, n, k):
         self.lam = lam
-        self.nu = c / self.lam
+        self.nu = c.to('cm/s').value / self.lam
 
         self.n = n
         self.k = k
@@ -137,7 +137,7 @@ class Dust:
         opt_data = numpy.loadtxt(filename)
 
         self.lam = numpy.flipud(opt_data[:,0])*1.0e-4
-        self.nu = c / self.lam
+        self.nu = c.to('cm/s').value / self.lam
 
         self.n = numpy.flipud(opt_data[:,3])+1.0
         self.k = numpy.flipud(opt_data[:,4])
@@ -147,7 +147,7 @@ class Dust:
         opt_data = numpy.loadtxt(filename)
 
         self.lam = opt_data[:,0]*1.0e-4
-        self.nu = c / self.lam
+        self.nu = c.to('cm/s').value / self.lam
 
         self.n = opt_data[:,1]
         self.k = opt_data[:,2]
@@ -165,14 +165,14 @@ class Dust:
             self.n = numpy.flipud(opt_data[:,1])
             self.k = numpy.flipud(opt_data[:,2])
 
-        self.nu = c / self.lam
+        self.nu = c.to('cm/s').value / self.lam
         self.m = self.n+1j*self.k
 
     def set_optical_constants_from_oss(self, filename):
         opt_data = numpy.loadtxt(filename)
         
         self.lam = opt_data[:,0] # in cm
-        self.nu = c / self.lam
+        self.nu = c.to('cm/s').value / self.lam
 
         self.n = opt_data[:,1]
         self.k = opt_data[:,2]
@@ -180,7 +180,7 @@ class Dust:
 
     def set_properties(self, lam, kabs, ksca):
         self.lam = lam
-        self.nu = c / self.lam
+        self.nu = c.to('cm/s').value / self.lam
 
         self.kabs = kabs
         self.ksca = ksca
@@ -194,7 +194,7 @@ class Dust:
             f = usefile
 
         self.lam = f['lam'][...]
-        self.nu = c / self.lam
+        self.nu = c.to('cm/s').value / self.lam
 
         if ('n' in f):
             self.n = f['n'][...]

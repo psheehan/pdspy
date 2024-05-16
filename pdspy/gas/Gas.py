@@ -1,4 +1,4 @@
-from pdspy.constants.physics import m_p, c, h
+from astropy.constants import c, h
 import numpy
 import h5py
 
@@ -36,7 +36,7 @@ class Gas:
                     self.E_u[i] = tuple(f.readline().split())
 
         self.nu *= 1.0e9
-        self.B_ul = c**2 * self.A_ul / (2*h*self.nu**3)
+        self.B_ul = c.to('cm/s').value**2 * self.A_ul / (2*h.to('erg s').value*self.nu**3)
 
         f.readline()
         npartners = int(f.readline())
@@ -87,7 +87,7 @@ class Gas:
         self.nu = f['nu'][...]
         self.E_u = f['E_u'][...]
 
-        self.B_ul = c**2 * self.A_ul / (2*h*self.nu**3)
+        self.B_ul = c.to('cm/s').value**2 * self.A_ul / (2*h.to('erg s').value*self.nu**3)
 
         self.partners = []
         self.temp = []

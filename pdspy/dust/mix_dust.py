@@ -1,7 +1,7 @@
 import numpy
 import scipy
 from .Dust import Dust
-from ..constants.math import pi
+from numpy import pi
 
 def mix_dust(dust, abundance, medium=None, rule="Bruggeman", filling=1.):
 

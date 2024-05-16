@@ -1,9 +1,8 @@
 import numpy
 import h5py
 from scipy.integrate import trapz
-from ..constants.physics import G, m_p
-from ..constants.astronomy import AU, M_sun
-from ..constants.math import pi
+from astropy.constants import G, m_p, au, M_sun
+from numpy import pi
 from ..dust import Dust
 from ..gas import Gas
 
@@ -55,7 +54,7 @@ class TwoLayerDisk:
     def density(self, r, theta, phi):
         ##### Set up the coordinates
 
-        rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+        rt, tt, pp = numpy.meshgrid(r*au.cgs.value, theta, phi,indexing='ij')
 
         rr = rt*numpy.sin(tt)
         zz = rt*numpy.cos(tt)
@@ -70,8 +69,8 @@ class TwoLayerDisk:
 
         ##### Make the gas density model for a protoplanetary disk.
 
-        Sigma = self.surface_density(rr/AU)
-        h_g = self.scale_height(rr/AU)
+        Sigma = self.surface_density(rr/au.cgs.value)
+        h_g = self.scale_height(rr/au.cgs.value)
 
         rho = numpy.zeros(Sigma.shape + (100,))
 
@@ -94,15 +93,15 @@ class TwoLayerDisk:
     def number_density(self, r, theta, phi, gas=0):
         ##### Set up the coordinates
 
-        rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+        rt, tt, pp = numpy.meshgrid(r*au.cgs.value, theta, phi,indexing='ij')
 
         rr = rt*numpy.sin(tt)
         zz = rt*numpy.cos(tt)
 
         # Get the surface density and scale height.
 
-        Sigma = self.surface_density(rr/AU)
-        h_g = self.scale_height(rr/AU)
+        Sigma = self.surface_density(rr/au.cgs.value)
+        h_g = self.scale_height(rr/au.cgs.value)
 
         # Now calculate the density.
 
@@ -110,10 +109,10 @@ class TwoLayerDisk:
 
         rho_gas = rho * 100
 
-        rho_gas_critical = (100. / 0.8) * 2.37*m_p
+        rho_gas_critical = (100. / 0.8) * 2.37*m_p.cgs.value
         rho_gas[rho_gas < rho_gas_critical] = 1.0e-50
 
-        n_H2 = rho_gas * 0.8 / (2.37*m_p)
+        n_H2 = rho_gas * 0.8 / (2.37*m_p.cgs.value)
 
         n = n_H2 * self.abundance[gas]
 
@@ -122,19 +121,19 @@ class TwoLayerDisk:
     def surface_density(self, r, normalize=True):
         # Get the disk parameters.
 
-        rin = self.rmin * AU
-        rout = self.rmax * AU
-        mass = self.mass * M_sun
+        rin = self.rmin * au.cgs.value
+        rout = self.rmax * au.cgs.value
+        mass = self.mass * M_sun.cgs.value
         gamma = self.plrho - self.plh
 
         # Set up the surface density.
 
-        Sigma0 = (2-gamma)*mass/(2*pi*(1*AU)**(gamma)) / \
+        Sigma0 = (2-gamma)*mass/(2*pi*(1*au.cgs.value)**(gamma)) / \
                 (rout**(-gamma+2) - rin**(-gamma+2))
 
         Sigma = Sigma0 * r**(-gamma)
 
-        Sigma[(r >= rout/AU) ^ (r <= rin/AU)] = 0e0
+        Sigma[(r >= rout/au.cgs.value) ^ (r <= rin/au)] = 0e0
 
         # In case of r == 0 (a singularity), get the value from slightly off 0.
 
@@ -161,33 +160,33 @@ class TwoLayerDisk:
                     numpy.log10(self.rmax), 1000)
             Sigma_high = self.surface_density(r_high, normalize=False)
 
-            scale = mass / (2*numpy.pi*trapz(r_high*AU*Sigma_high, r_high*AU))
+            scale = mass / (2*numpy.pi*trapz(r_high*au.cgs.value*Sigma_high, r_high*au))
 
             Sigma *= scale
 
         return Sigma
 
     def scale_height(self, r):
-        return self.h0 * AU * r**self.plh
+        return self.h0 * au.cgs.value * r**self.plh
 
     def temperature(self, r, theta, phi):
         ##### Disk Parameters
         
-        rin = self.rmin * AU
-        rout = self.rmax * AU
+        rin = self.rmin * au.cgs.value
+        rout = self.rmax * au.cgs.value
         t0 = self.t0
         plt = self.plt
 
         ##### Set up the coordinates
 
-        rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+        rt, tt, pp = numpy.meshgrid(r*au.cgs.value, theta, phi,indexing='ij')
 
         rr = rt*numpy.sin(tt)
         zz = rt*numpy.cos(tt)
 
         ##### Make the dust density model for a protoplanetary disk.
         
-        t = t0 * (rr / (1*AU))**(-plt)
+        t = t0 * (rr / (1*au.cgs.value))**(-plt)
 
         t[(rr >= rout) ^ (rr <= rin)] = 0e0
 
@@ -196,14 +195,14 @@ class TwoLayerDisk:
         return t
 
     def temperature_1d(self, r):
-        rin = self.rmin * AU
-        rout = self.rmax * AU
+        rin = self.rmin * au.cgs.value
+        rout = self.rmax * au.cgs.value
         t0 = self.t0
         plt = self.plt
 
         T = t0 * r**(-plt)
 
-        T[(r >= rout/AU) ^ (r <= rin/AU)] = 0.0
+        T[(r >= rout/au.cgs.value) ^ (r <= rin/au)] = 0.0
 
         dr = r[r > 0].min()
         T[r == 0] = t0 * (0.7*dr)**(-plt)
@@ -213,8 +212,8 @@ class TwoLayerDisk:
     def gas_temperature(self, r, theta, phi):
         ##### Disk Parameters
         
-        rin = self.rmin * AU
-        rout = self.rmax * AU
+        rin = self.rmin * au.cgs.value
+        rout = self.rmax * au.cgs.value
         pltgas = self.pltgas
         tmid0 = self.tmid0
         tatm0 = self.tatm0
@@ -223,7 +222,7 @@ class TwoLayerDisk:
 
         ##### Set up the coordinates
 
-        rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+        rt, tt, pp = numpy.meshgrid(r*au.cgs.value, theta, phi,indexing='ij')
 
         rr = rt*numpy.sin(tt)
         zz = rt*numpy.cos(tt)
@@ -245,14 +244,14 @@ class TwoLayerDisk:
     def microturbulence(self, r, theta, phi):
         ##### Disk Parameters
         
-        rin = self.rmin * AU
-        rout = self.rmax * AU
+        rin = self.rmin * au.cgs.value
+        rout = self.rmax * au.cgs.value
         t0 = self.t0
         plt = self.plt
 
         ##### Set up the coordinates
 
-        rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+        rt, tt, pp = numpy.meshgrid(r*au.cgs.value, theta, phi,indexing='ij')
 
         rr = rt*numpy.sin(tt)
         zz = rt*numpy.cos(tt)
@@ -264,16 +263,16 @@ class TwoLayerDisk:
         return aturb
 
     def velocity(self, r, theta, phi, mstar=0.5):
-        mstar *= M_sun
+        mstar *= M_sun.cgs.value
 
-        rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+        rt, tt, pp = numpy.meshgrid(r*au.cgs.value, theta, phi,indexing='ij')
 
         rr = rt*numpy.sin(tt)
         zz = rt*numpy.cos(tt)
 
         v_r = numpy.zeros(rr.shape)
         v_theta = numpy.zeros(rr.shape)
-        v_phi = numpy.sqrt(G*mstar*rr**2/rt**3)
+        v_phi = numpy.sqrt(G.cgs.value*mstar*rr**2/rt**3)
 
         return numpy.array((v_r, v_theta, v_phi))
 

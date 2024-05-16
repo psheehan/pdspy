@@ -1,9 +1,8 @@
 import numpy
 import h5py
 from scipy.integrate import trapz
-from ..constants.physics import G, m_p
-from ..constants.astronomy import AU, M_sun
-from ..constants.math import pi
+from astropy.constants import G, m_p, au, M_sun
+from numpy import pi
 from ..dust import Dust
 from ..gas import Gas
 from .Disk import Disk
@@ -12,10 +11,10 @@ class PringleDisk(Disk):
     def surface_density(self, r, normalize=True):
         # Get the disk parameters.
 
-        rr = r * AU
-        rin = self.rmin * AU
-        rout = self.rmax * AU
-        mass = self.mass * M_sun
+        rr = r * au.cgs.value
+        rin = self.rmin * au.cgs.value
+        rout = self.rmax * au.cgs.value
+        mass = self.mass * M_sun.cgs.value
         gamma = self.plrho - self.plh
         if self.gamma_taper != None:
             gamma_taper = self.gamma_taper
@@ -29,7 +28,7 @@ class PringleDisk(Disk):
         Sigma = Sigma0 * (rr/rout)**(-gamma) * \
                 numpy.exp(-(rr/rout)**(2-gamma_taper))
 
-        Sigma[r <= rin/AU] = 0e0
+        Sigma[r <= rin/au.cgs.value] = 0e0
 
         # In case of r == 0 (a singularity), get the value from slightly off 0.
 
@@ -57,33 +56,33 @@ class PringleDisk(Disk):
                     numpy.log10(10*self.rmax), 1000)
             Sigma_high = self.surface_density(r_high, normalize=False)
 
-            scale = mass / (2*numpy.pi*trapz(r_high*AU*Sigma_high, r_high*AU))
+            scale = mass / (2*numpy.pi*trapz(r_high*au.cgs.value*Sigma_high, r_high*au))
 
             Sigma *= scale
 
         return Sigma
 
     def scale_height(self, r):
-        return self.h0 * AU * (r / self.rmax)**self.plh
+        return self.h0 * au.cgs.value * (r / self.rmax)**self.plh
 
     def temperature(self, r, theta, phi):
         ##### Disk Parameters
         
-        rin = self.rmin * AU
-        rout = self.rmax * AU
+        rin = self.rmin * au.cgs.value
+        rout = self.rmax * au.cgs.value
         t0 = self.t0
         plt = self.plt
 
         ##### Set up the coordinates
 
-        rt, tt, pp = numpy.meshgrid(r*AU, theta, phi,indexing='ij')
+        rt, tt, pp = numpy.meshgrid(r*au.cgs.value, theta, phi,indexing='ij')
 
         rr = rt*numpy.sin(tt)
         zz = rt*numpy.cos(tt)
 
         ##### Make the dust density model for a protoplanetary disk.
         
-        t = t0 * (rr / (1*AU))**(-plt)
+        t = t0 * (rr / (1*au.cgs.value))**(-plt)
 
         t[rr <= rin] = 0e0
 
@@ -92,14 +91,14 @@ class PringleDisk(Disk):
         return t
 
     def temperature_1d(self, r):
-        rin = self.rmin * AU
-        rout = self.rmax * AU
+        rin = self.rmin * au.cgs.value
+        rout = self.rmax * au.cgs.value
         t0 = self.t0
         plt = self.plt
 
         T = t0 * r**(-plt)
 
-        T[r <= rin/AU] = 0.0
+        T[r <= rin/au.cgs.value] = 0.0
 
         dr = r[r > 0].min()
         T[r == 0] = t0 * (0.7*dr)**(-plt)

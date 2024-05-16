@@ -15,11 +15,14 @@ from .UlrichEnvelopeExtended import UlrichEnvelopeExtended
 from .TaperedUlrichEnvelope import TaperedUlrichEnvelope
 from .TaperedUlrichEnvelopeExtended import TaperedUlrichEnvelopeExtended
 from .Star import Star
-from ..constants.physics import h, c, G, m_p, k
-from ..constants.astronomy import AU, M_sun, kms, R_sun, Jy, pc
-from ..constants.math import pi
-from ..misc import B_nu
+from astropy.constants import h, c, G, m_p, k_B, au, M_sun, R_sun, pc
+from astropy.units import Jy
+import astropy.units as u
+from numpy import pi
+from astropy.modeling.physical_models import BlackBody
 from dishes.imaging import Image, imtovis
+
+kms = u.km / u.s
 
 class YSOModel(Model):
     r"""
@@ -795,7 +798,8 @@ class YSOModel(Model):
 
         T = self.disk.temperature_1d(rpp)
 
-        B = B_nu(nu*1e9, T)
+        BB = BlackBody(T)
+        B = BB(nu*1e9).value
 
         beta = beta0 + delta_beta * (rpp / r0beta)**plbeta
 
@@ -807,8 +811,8 @@ class YSOModel(Model):
 
         # Adjust the scale of I to be in the appropriate units.
 
-        I = I / Jy * ((xx[1] - xx[0]) * AU / (dpc * pc)) * \
-                ((yy[1] - yy[0]) * AU / (dpc * pc))
+        I = I / (1*Jy).cgs.value * ((xx[1] - xx[0]) * au.cgs.value / (dpc * pc.cgs.value)) * \
+                ((yy[1] - yy[0]) * au.cgs.value / (dpc * pc.cgs.value))
 
         self.images[name] =  Image(I.reshape((npix,npix,1,1)), x=xx/dpc, \
                 y=yy/dpc, freq=numpy.array([nu])*1.0e9)
@@ -832,14 +836,14 @@ class YSOModel(Model):
 
         A = self.disk.gas[species].A_ul[trans]
         nu0 = self.disk.gas[species].nu[trans]
-        m_mol = self.disk.gas[species].mass * m_p
+        m_mol = self.disk.gas[species].mass * m_p.cgs.value
 
         # Set up the image plane.
 
         xx = numpy.linspace(-(npix-1)/2*dx, (npix-1)/2*dx, 256)
         yy = numpy.linspace(-(npix-1)/2*dx, (npix-1)/2*dx, 256)
-        v = numpy.linspace(vstart*kms, (vstart+(nv-1)*dv)*kms, nv)
-        nn = nu0 * (1 - v/c)
+        v = numpy.linspace(vstart*kms.cgs.value, (vstart+(nv-1)*dv)*kms.cgs.value, nv)
+        nn = nu0 * (1 - v/c.cgs.value)
 
         x, y, nu = numpy.meshgrid(xx, yy, nn)
 
@@ -856,19 +860,19 @@ class YSOModel(Model):
 
         T = self.disk.temperature_1d(rpp, T_0=T0, p=plT)
 
-        a_tot = numpy.sqrt(2*k*T/m_mol)
+        a_tot = numpy.sqrt(2*k_B.cgs.value*T/m_mol)
         print(a_tot.min(), a_tot.max())
 
         phi_dot_n = numpy.sin(phipp)*numpy.sin(i)*numpy.cos(pa) - \
                 numpy.cos(phipp)*numpy.sin(i)*numpy.sin(pa)
 
-        v_dot_n = numpy.sqrt(G*self.grid.stars[0].mass*M_sun/(rpp*AU)) * \
+        v_dot_n = numpy.sqrt(G.cgs.value*self.grid.stars[0].mass*M_sun.cgs.value/(rpp*au.cgs.value)) * \
                 phi_dot_n + v_z
         v_dot_n[(rpp >= self.disk.rmax) ^ (rpp <= self.disk.rmin)] = 0.0
 
         phi = numpy.zeros(rpp.shape)
         phi[a_tot != 0] = c / (a_tot[a_tot != 0]*nu0*numpy.sqrt(pi)) * \
-                numpy.exp(-c**2*(nu[a_tot != 0]*(1 + v_dot_n[a_tot != 0]/c) - \
+                numpy.exp(-c**2*(nu[a_tot != 0]*(1 + v_dot_n[a_tot != 0]/c.cgs.value) - \
                 nu0)**2 / (a_tot[a_tot != 0]**2 * nu0**2))
 
         # Now do the actual calculation.
