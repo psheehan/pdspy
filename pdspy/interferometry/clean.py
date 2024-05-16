@@ -80,7 +80,7 @@ def clean(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
 
         # Determine the location of the maximum value inside the mask.
 
-        maxval = dirty*mask == (dirty*mask).max()
+        maxval = numpy.where(dirty*mask == (dirty*mask).max())
 
         # Add that value to the model (with some gain).
         
@@ -88,11 +88,12 @@ def clean(data, imsize=256, pixel_size=0.25, convolution="pillbox", mfs=False,\
 
         # Also subtract off that value from the image.
         
-        subtract = numpy.zeros(dirty.shape)
-        subtract[maxval] = dirty[maxval]*gain
+        #for i in range(nfreq):
+        for i in maxval[2]:
+            subtract = numpy.zeros(dirty[:,:,i].shape)
+            subtract[maxval[0:2]] = dirty[maxval]*gain
         
-        for i in range(nfreq):
-            dirty[:,:,i] = dirty[:,:,i] - fftconvolve(subtract[:,:,i], \
+            dirty[:,:,i] = dirty[:,:,i] - fftconvolve(subtract[:,:], \
                     dirty_beam[:,:,i], mode='same')
         dirty[wherezero] = 0.
         
