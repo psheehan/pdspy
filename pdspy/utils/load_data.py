@@ -54,6 +54,12 @@ def load_data(config, model="disk", gridsize1D=20):
             data = uv.Visibilities()
             data.read(config.visibilities["file"][j])
 
+        # If we are considering continuum data and there are multiple channels
+        # we need to flatten the dataset.
+
+        if model == "disk" and data.real.shape[1] > 0:
+            data = uv.freqcorrect(data)
+
         # Center the data. => need to update!
 
         data = uv.center(data, [config.visibilities["x0"][j], \
