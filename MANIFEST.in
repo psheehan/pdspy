@@ -5,3 +5,8 @@ include *.md
 
 # Include the license file
 include LICENSE
+
+# Include the optical constants data
+include pdspy/dust/optical_constants/*.txt
+include pdspy/dust/reddening/*.dat
+include pdspy/gas/data/*.dat
