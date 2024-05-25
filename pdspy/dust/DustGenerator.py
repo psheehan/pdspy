@@ -9,8 +9,13 @@ class DustGenerator:
     recipes = ["draine","pollack","diana","diana_wice"]
 
     def __init__(self, dust, with_dhs=False, fmax=0.8, nf=50, singlesize=False):
+        write_recipe = False
+
         if type(dust) == str:
-            if dust in self.recipes:
+            recipe_file = os.environ["HOME"]+"/.pdspy/data/dust/"+dust+".hdf5"
+
+            if dust in self.recipes and not os.path.exists(recipe_file):
+                write_recipe = True
                 recipe_dict = {
                     "draine":{
                         "dust":["astronomical_silicates","graphite_parallel_0.01","graphite_perpendicular_0.01"],
@@ -76,6 +81,9 @@ class DustGenerator:
                     with_dhs = recipe_dict[dust]["with_dhs"]
 
                 dust = mix_dust(species, abundances, filling=recipe_dict[dust]["filling"])
+            elif dust in self.recipes and os.path.exists(recipe_file):
+                self.read(recipe_file)
+                return
             else:
                 self.read(dust)
                 return
@@ -139,6 +147,12 @@ class DustGenerator:
         self.ksca = numpy.array(self.ksca)
         self.kext = numpy.array(self.kext)
         self.albedo = numpy.array(self.albedo)
+
+        if write_recipe:
+            if not os.path.exists(os.path.dirname(recipe_file)):
+                os.makedirs(os.path.dirname(recipe_file))
+
+            self.write(recipe_file)
 
     def __call__(self, amax, p=None):
         if self.old:
