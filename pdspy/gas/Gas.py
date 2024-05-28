@@ -1,10 +1,28 @@
 from astropy.constants import c, h
+import urllib
+import requests
 import numpy
 import h5py
+import os
 
 class Gas:
 
     def set_properties_from_lambda(self, filename):
+        if not os.path.exists(filename):
+            if os.path.exists(os.environ["HOME"]+"/.pdspy/data/gas/"+filename):
+                filename = os.environ["HOME"]+"/.pdspy/data/gas/"+filename
+            else:
+                web_data_location = 'https://home.strw.leidenuniv.nl/~moldata/datafiles/'+filename
+                response = requests.get(web_data_location)
+                if response.status_code == 200:
+                    urllib.request.urlretrieve(web_data_location, 
+                            os.environ["HOME"]+"/.pdspy/data/gas/"+filename)
+                    filename = os.environ["HOME"]+"/.pdspy/data/gas/"+filename
+                else:
+                    print(web_data_location+' does not exist')
+                    return
+                
+
         f = open(filename)
 
         for i in range(3):
