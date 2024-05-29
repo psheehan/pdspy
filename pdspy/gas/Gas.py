@@ -15,6 +15,8 @@ class Gas:
                 web_data_location = 'https://home.strw.leidenuniv.nl/~moldata/datafiles/'+filename
                 response = requests.get(web_data_location)
                 if response.status_code == 200:
+                    if not os.path.exists(os.environ["HOME"]+"/.pdspy/data/gas"):
+                        os.makedirs(os.environ["HOME"]+"/.pdspy/data/gas")
                     urllib.request.urlretrieve(web_data_location, 
                             os.environ["HOME"]+"/.pdspy/data/gas/"+filename)
                     filename = os.environ["HOME"]+"/.pdspy/data/gas/"+filename
