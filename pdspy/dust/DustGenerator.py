@@ -54,17 +54,17 @@ class DustGenerator:
                 }
 
                 water_ice = Dust()
-                water_ice.set_optical_constants_from_henn(os.path.dirname(__file__)+"/optical_constants/water_ice.txt")
+                water_ice.set_optical_constants_from_henn("water_ice.txt")
 
                 species = []
-                for i in range(len(recipe_dict[dust])):
+                for i in range(len(recipe_dict[dust]["dust"])):
                     species.append(Dust())
                     if recipe_dict[dust]["format"][i] == "henn":
-                        species[-1].set_optical_constants_from_henn(os.path.dirname(__file__)+"/optical_constants/"+recipe_dict[dust]["dust"][i]+".txt")
+                        species[-1].set_optical_constants_from_henn(recipe_dict[dust]["dust"][i]+".txt")
                         if "extrapolated" in recipe_dict[dust]["dust"][i]:
                             species[-1].calculate_optical_constants_on_wavelength_grid(water_ice.lam)
                     elif recipe_dict[dust]["format"][i] == "draine":
-                        species[-1].set_optical_constants_from_draine(os.path.dirname(__file__)+"/optical_constants/graphite_parallel_0.01.txt")
+                        species[-1].set_optical_constants_from_draine(recipe_dict[dust]["dust"][i]+".txt")
                         species[-1].calculate_optical_constants_on_wavelength_grid(water_ice.lam)
 
                     species[-1].set_density(recipe_dict[dust]["density"][i])

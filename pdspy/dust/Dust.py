@@ -6,6 +6,9 @@ from numpy import pi
 from .bhmie import bhmie
 from .bhcoat import bhcoat
 #from .dmilay import dmilay
+import urllib
+import requests
+import os
 
 class Dust:
 
@@ -133,8 +136,29 @@ class Dust:
         self.k = k
         self.m = n+1j*k
 
-    def set_optical_constants_from_draine(self, filename):
+    def load_optical_constants_file_generic(self, filename):
+        if not os.path.exists(filename):
+            if os.path.exists(os.environ["HOME"]+"/.pdspy/data/optical_constants/"+filename):
+                filename = os.environ["HOME"]+"/.pdspy/data/optical_constants/"+filename
+            else:
+                web_data_location = 'https://raw.githubusercontent.com/psheehan/pdspy/master/pdspy/dust/data/optical_constants/'+filename
+                response = requests.get(web_data_location)
+                if response.status_code == 200:
+                    if not os.path.exists(os.environ["HOME"]+"/.pdspy/data/optical_constants"):
+                        os.makedirs(os.environ["HOME"]+"/.pdspy/data/optical_constants")
+                    urllib.request.urlretrieve(web_data_location, 
+                            os.environ["HOME"]+"/.pdspy/data/optical_constants/"+filename)
+                    filename = os.environ["HOME"]+"/.pdspy/data/optical_constants/"+filename
+                else:
+                    print(web_data_location+' does not exist')
+                    return
+
         opt_data = numpy.loadtxt(filename)
+
+        return opt_data
+
+    def set_optical_constants_from_draine(self, filename):
+        opt_data = self.load_optical_constants_file_generic(filename)
 
         self.lam = numpy.flipud(opt_data[:,0])*1.0e-4
         self.nu = c.to('cm/s').value / self.lam
@@ -144,7 +168,7 @@ class Dust:
         self.m = self.n+1j*self.k
 
     def set_optical_constants_from_henn(self, filename):
-        opt_data = numpy.loadtxt(filename)
+        opt_data = self.load_optical_constants_file_generic(filename)
 
         self.lam = opt_data[:,0]*1.0e-4
         self.nu = c.to('cm/s').value / self.lam
@@ -154,7 +178,7 @@ class Dust:
         self.m = self.n+1j*self.k
 
     def set_optical_constants_from_jena(self, filename, type="standard"):
-        opt_data = numpy.loadtxt(filename)
+        opt_data = self.load_optical_constants_file_generic(filename)
 
         if type == "standard":
             self.lam = numpy.flipud(1./opt_data[:,0])
@@ -169,7 +193,7 @@ class Dust:
         self.m = self.n+1j*self.k
 
     def set_optical_constants_from_oss(self, filename):
-        opt_data = numpy.loadtxt(filename)
+        opt_data = self.load_optical_constants_file_generic(filename)
         
         self.lam = opt_data[:,0] # in cm
         self.nu = c.to('cm/s').value / self.lam
