@@ -30,16 +30,16 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     
-    - name: Symlink gfortran (macOS)
-      if: runner.os == 'macOS'
-      run: |
+    #- name: Symlink gfortran (macOS)
+    #  if: runner.os == 'macOS'
+    #  run: |
         # make sure gfortran is available
         # https://github.com/actions/virtual-environments/issues/2524
         # https://github.com/cbg-ethz/dce/blob/master/.github/workflows/pkgdown.yaml
-        sudo ln -s /usr/local/bin/gfortran-11 /usr/local/bin/gfortran
-        sudo mkdir /usr/local/gfortran
-        sudo ln -s /usr/local/Cellar/gcc@11/*/lib/gcc/11 /usr/local/gfortran/lib
-        gfortran --version
+    #    sudo ln -s /usr/local/bin/gfortran-11 /usr/local/bin/gfortran
+    #    sudo mkdir /usr/local/gfortran
+    #    sudo ln -s /usr/local/Cellar/gcc@11/*/lib/gcc/11 /usr/local/gfortran/lib
+    #    gfortran --version
     
     - name: Build wheels
       uses: pypa/cibuildwheel@v2.2.2
