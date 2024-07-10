@@ -298,6 +298,10 @@ def run_flared_model(visibilities, params, parameters, plot=False, ncpus=1, \
             for i in range(len(m.images[visibilities["lam"][j]].freq)):
                 m.images[visibilities["lam"][j]].image[:,i] *= extinction[i]
 
+        # Account for the flux calibration uncertainties.
+
+        m.images[visibilities["lam"][j]].image *= p["flux_unc{0:d}".format(j+1)]
+
         # And then if sub-sampling, sum the image along the frequency axis to
         # get back to the right size, and also Hanning smooth.
 
