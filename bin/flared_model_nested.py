@@ -152,6 +152,9 @@ for key in sorted(config.parameters.keys()):
         if key == "pa":
             periodic.append(ndim-1)
 
+if len(periodic) == 0:
+    periodic = None
+
 # Make the labels nice with LaTeX.
 
 labels = ["$"+key.replace("T0_env","T_0,env").replace("T0","T_0").\
