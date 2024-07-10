@@ -11,7 +11,7 @@ def plot_pvdiagram(visibilities, model, parameters, params, index=0, \
         model_image="beam-convolve", maxiter=100, threshold=1., uvtaper=None, \
         weighting="natural", robust=2.0, length=100, width=9, \
         image_cmap="Blues", levels=None, fontsize="medium", fig=None, \
-        ignore_velocities=None, curve_masses=[0.2,0.5,1.0]):
+        ignore_velocities=None, curve_masses=[0.2,0.5,1.0], vtick_divisor=0):
     r"""
     Plot the millimeter channel maps, along with the best fit model.
 
@@ -240,8 +240,8 @@ def plot_pvdiagram(visibilities, model, parameters, params, index=0, \
             print(plot_image.velocity)
             ticks_y = numpy.linspace(numpy.ceil((plot_image.velocity/1e5).min()), \
                     numpy.floor((plot_image.velocity/1e5).max()), \
-                    int(numpy.floor((plot_image.velocity/1e5).max()) - \
-                    numpy.ceil((plot_image.velocity/1e5).min())+1))
+                    int((numpy.floor((plot_image.velocity/1e5).max()) - \
+                    numpy.ceil((plot_image.velocity/1e5).min()))/vtick_divisor+1))
             print(ticks_y)
 
             """

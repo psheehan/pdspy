@@ -18,7 +18,8 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
         auto_center_velocity=False, v_width=10., beamxy=(0.15,0.15), \
         show_colorbar=False, cax=None, colorbar_location='right', \
         colorbar_orientation='vertical', colorbar_size='10%', \
-        colorbar_pad=0.01, units="Jy/beam", vis_marker="o", image_data=False):
+        colorbar_pad=0.01, units="Jy/beam", vis_marker="o", image_data=False, \
+        clean_residual_map=False):
     r"""
     Plot the millimeter channel maps, along with the best fit model.
 
@@ -163,7 +164,7 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
 
     # Calculate the velocity for each image.
 
-    if plot_vis:
+    if plot_vis or image_data:
         v = c * (float(visibilities["freq"][index])*1.0e9 - \
                 visibilities["data"][index].freq)/ \
                 (float(visibilities["freq"][index])*1.0e9)
@@ -175,6 +176,8 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
     # Set the ticks.
 
     ticks = visibilities["image_ticks"][index]
+
+    loaded_data = {}
 
     for i in range(2):
         # First pass through plot the image, second pass through, plot contours.
@@ -222,67 +225,73 @@ def plot_channel_maps(visibilities, model, parameters, params, index=0, \
         else:
             # Get the correct image/contours for plotting.
 
-            if plot_type == "data":
-                if image_data:
-                    uncentered_vis = uvcenter(visibilities["data"][index], \
+            if plot_type in loaded_data:
+                plot_image = loaded_data[plot_type]
+            else:
+                if plot_type == "data":
+                    if image_data:
+                        uncentered_vis = uvcenter(visibilities["data"][index], \
+                                (-visibilities["x0"][index], \
+                                -visibilities["y0"][index]))
+
+                        plot_image = clean(\
+                                uncentered_vis, \
+                                imsize=visibilities["image_npix"][index], \
+                                pixel_size=visibilities["image_pixelsize"][index], \
+                                weighting=weighting, robust=robust, \
+                                convolution="expsinc", mfs=False, \
+                                mode="spectralline", maxiter=maxiter, \
+                                threshold=threshold, uvtaper=uvtaper)[0]
+                    else:
+                        plot_image = visibilities["image"][index]
+                elif plot_type == "model":
+                    if model_image == "beam-convolve":
+                        plot_image = model.images[visibilities["lam"][index]]
+                        plot_image.image = plot_image.image[::-1,:,:,:]
+                    else:
+                        model.visibilities[visibilities["lam"][index]].weights = \
+                            visibilities["data"][index].weights
+
+                        uncentered_vis = uvcenter(model.visibilities[\
+                                visibilities["lam"][index]], \
+                                (-visibilities["x0"][index], \
+                                -visibilities["y0"][index]))
+
+                        plot_image = clean(\
+                                #model.visibilities[visibilities["lam"][index]], \
+                                uncentered_vis, \
+                                imsize=visibilities["image_npix"][index], \
+                                pixel_size=visibilities["image_pixelsize"][index], \
+                                weighting=weighting, robust=robust, \
+                                convolution="expsinc", mfs=False, \
+                                mode="spectralline", maxiter=maxiter, \
+                                threshold=threshold, uvtaper=uvtaper)[0]
+                elif plot_type == "residuals":
+                    residuals = Visibilities(visibilities["data"][index].u, \
+                            visibilities["data"][index].v, \
+                            visibilities["data"][index].freq, \
+                            visibilities["data"][index].real.copy(), \
+                            visibilities["data"][index].imag.copy(),\
+                            visibilities["data"][index].weights)
+
+                    residuals.real -= model.visibilities[visibilities["lam"]\
+                            [index]].real
+                    residuals.imag -= model.visibilities[visibilities["lam"]\
+                            [index]].imag
+
+                    uncentered_vis = uvcenter(residuals, \
                             (-visibilities["x0"][index], \
                             -visibilities["y0"][index]))
 
-                    plot_image = clean(\
-                            uncentered_vis, \
+                    plot_image = clean(uncentered_vis, \
                             imsize=visibilities["image_npix"][index], \
                             pixel_size=visibilities["image_pixelsize"][index], \
                             weighting=weighting, robust=robust, \
-                            convolution="expsinc", mfs=False, \
-                            mode="spectralline", maxiter=maxiter, \
-                            threshold=threshold, uvtaper=uvtaper)[0]
-                else:
-                    plot_image = visibilities["image"][index]
-            elif plot_type == "model":
-                if model_image == "beam-convolve":
-                    plot_image = model.images[visibilities["lam"][index]]
-                    plot_image.image = plot_image.image[::-1,:,:,:]
-                else:
-                    model.visibilities[visibilities["lam"][index]].weights = \
-                        visibilities["data"][index].weights
+                            convolution="expsinc", mfs=False, mode="spectralline", \
+                            maxiter=maxiter if clean_residual_map else 0, \
+                            uvtaper=uvtaper)[0]
 
-                    uncentered_vis = uvcenter(model.visibilities[\
-                            visibilities["lam"][index]], \
-                            (-visibilities["x0"][index], \
-                            -visibilities["y0"][index]))
-
-                    plot_image = clean(\
-                            #model.visibilities[visibilities["lam"][index]], \
-                            uncentered_vis, \
-                            imsize=visibilities["image_npix"][index], \
-                            pixel_size=visibilities["image_pixelsize"][index], \
-                            weighting=weighting, robust=robust, \
-                            convolution="expsinc", mfs=False, \
-                            mode="spectralline", maxiter=maxiter, \
-                            threshold=threshold, uvtaper=uvtaper)[0]
-            elif plot_type == "residuals":
-                residuals = Visibilities(visibilities["data"][index].u, \
-                        visibilities["data"][index].v, \
-                        visibilities["data"][index].freq, \
-                        visibilities["data"][index].real.copy(), \
-                        visibilities["data"][index].imag.copy(),\
-                        visibilities["data"][index].weights)
-
-                residuals.real -= model.visibilities[visibilities["lam"]\
-                        [index]].real
-                residuals.imag -= model.visibilities[visibilities["lam"]\
-                        [index]].imag
-
-                uncentered_vis = uvcenter(residuals, \
-                        (-visibilities["x0"][index], \
-                        -visibilities["y0"][index]))
-
-                plot_image = clean(uncentered_vis, \
-                        imsize=visibilities["image_npix"][index], \
-                        pixel_size=visibilities["image_pixelsize"][index], \
-                        weighting=weighting, robust=robust, \
-                        convolution="expsinc", mfs=False, mode="spectralline", \
-                        maxiter=0, uvtaper=uvtaper)[0]
+                loaded_data[plot_type] = plot_image
 
             # Get the appropriate scaling for the image.
 
