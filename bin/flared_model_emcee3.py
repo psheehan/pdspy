@@ -14,8 +14,7 @@ import os
 import emcee
 import corner
 from mpi4py import MPI
-
-comm = MPI.COMM_WORLD
+import mpi4py.util.pkl5
 
 ################################################################################
 #
@@ -36,9 +35,15 @@ parser.add_argument('-b', '--trim', type=str, default="")
 parser.add_argument('-i', '--nice', action='store_true')
 parser.add_argument('-l', '--nicelevel', type=int, default=19)
 parser.add_argument('-f', '--ftcode', type=str, default="galario")
+parser.add_argument('--largedata', action='store_true')
 args = parser.parse_args()
 
 # Check whether we are using MPI.
+
+if args.largedata:
+    comm = mpi4py.util.pkl5.Intracomm(MPI.COMM_WORLD)
+else:
+    comm = MPI.COMM_WORLD
 
 withmpi = comm.Get_size() > 1
 
@@ -94,7 +99,7 @@ os.system("rm -r /tmp/temp_{0:s}_{1:d}".format(source, comm.Get_rank()))
 
 if args.action == "run":
     if withmpi:
-        pool = schwimmbad.MPIPool()
+        pool = schwimmbad.MPIPool(comm)
 
         if not pool.is_master():
             pool.wait()
