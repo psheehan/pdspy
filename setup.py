@@ -76,6 +76,7 @@ setup(name="pdspy", \
         'bin/disk_model_nested.py',\
         'bin/disk_model_dynesty.py',\
         'bin/disk_model_powerlaw.py',\
+        'bin/rml_model_pso.py',\
         'bin/flared_model_emcee3.py',\
         'bin/flared_model_nested.py', \
         'bin/flared_model_dynesty.py'], \
