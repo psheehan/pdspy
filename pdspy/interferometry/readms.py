@@ -4,7 +4,7 @@ import astropy.table
 import casatools
 import numpy
 
-def readms(filename, spw='all', tolerance=0.01, time_tolerance=0., \
+def readms(filename, field='all', spw='all', tolerance=0.01, time_tolerance=0., \
         datacolumn="corrected", corr=["I"]):
     """Testing
 
@@ -42,6 +42,8 @@ def readms(filename, spw='all', tolerance=0.01, time_tolerance=0., \
     for i in spw:
         ms.selectinit(datadescid=i)
         ms.selectpolarization(corr)
+        if field != 'all':
+            ms.select({'field_id':[field]})
         data.append(ms.getdata(items=["u","v",prefix+"real",prefix+\
                 "imaginary","weight","flag","axis_info","uvdist",\
                 "antenna1","antenna2","time"]))
