@@ -116,7 +116,7 @@ class YSOModel(Model):
 
     def add_dartois_disk(self, mass=1.0e-3, rmin=0.1, rmax=300, plrho=2.37, \
             h0=0.1, plh=58./45., dust=None,  t0=None, plt=None, gas=None, \
-            abundance=None, freezout=0., tmid0=None, tatm0=None, zq0=None, \
+            abundance=None, freezeout=0., tmid0=None, tatm0=None, zq0=None, \
             pltgas=None, delta=None, gap_rin=[], gap_rout=[], gap_delta=[], \
             gaussian_gaps=False, aturb=None):
         self.disk = DartoisDisk(mass=mass, rmin=rmin, rmax=rmax, plrho=plrho, \
