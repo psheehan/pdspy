@@ -102,7 +102,7 @@ def load_config(path=''):
     # corrected or data column in it.
 
     if not "spw" in config.visibilities:
-        config.visibilities["spw"] = [['all'] for i in range(len(\
+        config.visibilities["spw"] = ['all' for i in range(len(\
                 config.visibilities["file"]))]
     if not "tolerance" in config.visibilities:
         config.visibilities["tolerance"] = [0.01 for i in range(len(\
