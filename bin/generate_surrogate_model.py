@@ -391,7 +391,7 @@ def run_pca_decomposition(plot=False):
     # Now that we know how many features to use, generate the final PCA and 
     # save it.
 
-    pca = PCA(n_components=50).fit(data)
+    pca = PCA(n_components=25).fit(data)
 
     pickle.dump(pca, (open("pca.pkl","wb")))
 
@@ -586,14 +586,108 @@ def run_gp_fit():
 
 ################################################################################
 #
+# Neural Net model class
+#
+################################################################################
+
+class NNModel(torch.nn.Module):
+    def __init__(self, nparameters, ncomponents, load=False):
+        super().__init__()
+
+        self.hidden1 = torch.nn.Linear(nparameters, 800)
+        #self.act1 = torch.nn.ReLU()
+        self.act1 = torch.nn.Sigmoid()
+        self.hidden2 = torch.nn.Linear(800, 800)
+        self.act2 = torch.nn.Sigmoid()
+        self.hidden3 = torch.nn.Linear(800, 800)
+        self.act3 = torch.nn.Sigmoid()
+        self.output = torch.nn.Linear(800, ncomponents)
+
+        if load:
+            self.load_state_dict(torch.load('nn.pth'))
+            self.eval()
+
+    def forward(self, x):
+        x = self.act1(self.hidden1(x))
+        x = self.act2(self.hidden2(x))
+        x = self.act3(self.hidden3(x))
+        x = self.output(x)
+
+        return x
+
+################################################################################
+#
+# Create a function to do the Neural Network fit.
+#
+################################################################################
+
+def run_nn_fit():
+    # Load in the data.
+
+    x, y, ncomponents = load_data(grid="train", pca=True)
+
+    # Set up the data as tensors.
+
+    train_x = torch.from_numpy(x).float()
+    train_y = torch.from_numpy(y[:,:ncomponents]).float()
+
+    # Create the Gaussian process.
+
+    model = NNModel(train_x.size(-1), ncomponents)
+
+    # If a GPU is available, put the data there.
+
+    if torch.cuda.is_available():
+        train_x = train_x.cuda()
+        train_y = train_y.cuda()
+        model = model.cuda()
+
+    train_dataset = TensorDataset(train_x, train_y)
+    train_loader = DataLoader(train_dataset, batch_size=1000, shuffle=True)
+
+    # Set up the loss function and optimizer.
+
+    loss_fn = torch.nn.MSELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
+
+    n_epochs = 100000
+
+    for epoch in range(n_epochs):
+        for Xbatch, Ybatch in train_loader:
+            y_pred = model(Xbatch)
+
+            loss = loss_fn(y_pred, Ybatch)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+        print(f'Finished epoch {epoch}, latest loss {loss}')
+
+    # Bring the data and models back from the GPU, if they were there.
+
+    if torch.cuda.is_available():
+        train_x = train_x.cpu()
+        train_y = train_y.cpu()
+        model = model.cpu()
+
+    # Finally, save the model.
+
+    torch.save(model.state_dict(), "nn.pth")
+
+################################################################################
+#
 # Test the GP fit against 1D slices.
 #
 ################################################################################
 
-def test_in_1d():
+def test_in_1d(version='GP'):
     # Directory to read results from.
 
-    fitdir = "gpfit_plots"
+    if version == 'GP':
+        fitdir = "gpfit_plots"
+    elif version == 'NN':
+        fitdir = 'nnfit_plots'
 
     if not os.path.exists(fitdir):
         os.mkdir(fitdir)
@@ -614,12 +708,15 @@ def test_in_1d():
 
     # Also the transformed data
 
-    model = GPModel(load=True)
+    if version == 'GP':
+        model = GPModel(load=True)
 
-    likelihood = gpytorch.likelihoods.MultitaskGaussianLikelihood(\
-            num_tasks=ncomponents, rank=0, has_global_noise=False)
-    likelihood.load_state_dict(torch.load('likelihood.pth'))
-    likelihood.eval()
+        likelihood = gpytorch.likelihoods.MultitaskGaussianLikelihood(\
+                num_tasks=ncomponents, rank=0, has_global_noise=False)
+        likelihood.load_state_dict(torch.load('likelihood.pth'))
+        likelihood.eval()
+    elif version == 'NN':
+        model = NNModel(x[key].shape[-1], ncomponents, load=True)
 
     # Loop through the different parameters and plot.
 
@@ -632,7 +729,8 @@ def test_in_1d():
             # Generate a predicted curve and uncertainties.
 
             model.eval()
-            likelihood.eval()
+            if version == 'GP':
+                likelihood.eval()
 
             with torch.no_grad(), gpytorch.settings.fast_pred_var():
                 # The x-values at which to predict values from the Gaussian 
@@ -644,18 +742,23 @@ def test_in_1d():
                         numpy.repeat(config.parameters[k]["value"], 500).\
                         reshape((-1,1)) for k in keys], axis=1)).float()
 
-                observed_pred = likelihood(model(x_pred))
+                if version == 'GP':
+                    observed_pred = likelihood(model(x_pred))
+                    pred = observed_pred.mean
 
-                lower, upper = observed_pred.confidence_region()
+                    lower, upper = observed_pred.confidence_region()
+                elif version == 'NN':
+                    pred = model(x_pred)
 
             # Now make a plot of the best fit Gaussian process
 
             ax.errorbar(x[key], y[key][:,icomp], fmt=".k", capsize=0)
 
-            ax.plot(x_pred[:,ikey].numpy(), observed_pred.mean[:,icomp].\
+            ax.plot(x_pred[:,ikey].numpy(), pred[:,icomp].\
                     numpy(), 'k', alpha=0.5)
-            ax.fill_between(x_pred[:,ikey].numpy(), lower[:,icomp].numpy(), \
-                    upper[:,icomp].numpy(), color="k", alpha=0.25)
+            if version == 'GP':
+                ax.fill_between(x_pred[:,ikey].numpy(), lower[:,icomp].numpy(), \
+                        upper[:,icomp].numpy(), color="k", alpha=0.25)
 
             ax.set_xlim(config.parameters[key]["limits"][0], \
                     config.parameters[key]["limits"][1])
@@ -671,15 +774,19 @@ def test_in_1d():
 #
 ################################################################################
 
-def test_gp_full(plot=False):
+def test_gp_full(version='GP', plot=False):
     # Also the transformed data
 
     x_grid, y_grid, ncomponents = load_data(grid="test", pca=True)
     residuals = y_grid.copy()
+    y_model = y_grid.copy()
 
     # Also load in the Gaussian process fits.
 
-    model = GPModel(load=True)
+    if version == 'GP':
+        model = GPModel(load=True)
+    elif version == 'NN':
+        model = NNModel(x_grid.shape[-1], ncomponents, load=True)
 
     # Subtract off the mean from the original data.
 
@@ -692,10 +799,14 @@ def test_gp_full(plot=False):
     with torch.no_grad():
         index = 0
         for x_batch, y_batch in test_loader:
-            preds = model(x_batch)
-            means = preds.mean
+            if version == 'GP':
+                preds = model(x_batch)
+                means = preds.mean
+            else:
+                means = model(x_batch)
 
-            residuals[index:index+1000,:model.ncomponents] -= means.numpy()
+            residuals[index:index+1000,:ncomponents] -= means.numpy()
+            y_model[index:index+1000,:ncomponents] = means.numpy()
 
             index += 1000
 
@@ -720,7 +831,7 @@ def test_gp_full(plot=False):
 
         # Now plot the residuals.
 
-        ax.scatter3D(x_grid[:,0], x_grid[:,1], x_grid[:,2], \
+        ax.scatter3D(x_grid[:,3], x_grid[:,4], x_grid[:,5], \
                 c=residuals[:,icomp])
 
         plt.show()
@@ -878,11 +989,14 @@ elif (args.action == 'pca'):
 elif (args.action == 'gpfit'):
     run_gp_fit()
 
+elif (args.action == 'nnfit'):
+    run_nn_fit()
+
 elif (args.action == "test"):
     if "1" in args.grid:
-        test_in_1d()
+        test_in_1d(version='NN')
     elif args.grid == "test":
-        test_gp_full(plot=True)
+        test_gp_full(version='NN', plot=True)
 
 elif (args.action == 'learn'):
     directory = get_directory(grid="train")
